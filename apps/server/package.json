@@ -1,0 +1,14 @@
+{
+  "name": "@honey-wallet/server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Thin wrapper so Turborepo can run cargo tasks. Cargo.toml is the source of truth.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "cargo run",
+    "build": "cargo build --release",
+    "test": "cargo test",
+    "lint": "cargo fmt --check && cargo clippy --all-targets -- -D warnings",
+    "clean": "cargo clean"
+  }
+}

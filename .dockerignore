@@ -1,0 +1,11 @@
+**/node_modules
+**/target
+**/dist
+**/.expo
+**/.turbo
+**/.env
+**/.env.*
+.git
+apps/web
+apps/mobile
+packages
