@@ -82,8 +82,10 @@ docker run --rm -p 8080:8080 honey-server
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md) first. To report a security issue, follow [SECURITY.md](SECURITY.md). **Do not open a public issue.**
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and our [Code of Conduct](CODE_OF_CONDUCT.md) first. Before your first pull request can be merged, you will be asked to sign the [CLA](CLA.md). To report a security issue, follow [SECURITY.md](SECURITY.md). **Do not open a public issue.**
 
 ## License
 
 Honey Wallet is **source-available** under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may use, modify and share it for any noncommercial purpose: personal projects, research, education, and use by charities and public institutions. **Commercial use is not permitted** under this license. Contact the maintainers if you need a commercial license.
+
+All rights in the software, including commercial rights, belong to Honey Wallet. Contributions are welcome and voluntary: contributors sign our [Contributor License Agreement](CLA.md), which assigns their contributions to Honey Wallet and confirms that no payment is owed for them.

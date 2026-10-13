@@ -52,9 +52,18 @@ pnpm dev
 
 Put apps in `apps/` and libraries in `packages/`, and name them `@honey-wallet/<name>`. Give the package `typecheck` / `test` / `lint` / `build` scripts as appropriate, and Turborepo will pick it up automatically.
 
-## Licensing of contributions
+## Contributor License Agreement
 
-Honey Wallet is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE). By submitting a pull request, you agree that your contribution is licensed under the same terms and that you have the right to license it.
+Before we can merge your first pull request, you need to sign the [Contributor License Agreement](CLA.md). A bot will comment on your PR with a link; signing takes a minute and covers all your future contributions.
+
+In short, the CLA says:
+
+- **Honey Wallet owns the project.** You assign the rights in your contributions to Honey Wallet, including the right to use them commercially or under other licenses.
+- **Contributing is voluntary and unpaid.** You are not owed any payment, royalty or other compensation for your contributions.
+- **You can still use your own code.** You keep a license to reuse what you wrote, for any purpose.
+- **You have the right to contribute it.** The work is yours, or you have permission (for example from your employer).
+
+The project itself is available to everyone under the [PolyForm Noncommercial License 1.0.0](LICENSE). This summary is for convenience; the [CLA](CLA.md) text is what applies.
 
 ## Reviews
 

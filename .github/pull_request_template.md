@@ -12,6 +12,7 @@
 
 ## Checklist
 
+- [ ] I have signed the [Contributor License Agreement](https://github.com/honey-wallet/monorepo/blob/main/CLA.md) (the CLA bot will prompt you on your first PR)
 - [ ] `pnpm lint`, `pnpm typecheck` and `pnpm test` pass locally
 - [ ] Added or updated tests where it makes sense
 - [ ] Updated `packages/api-client` types if a server response shape changed

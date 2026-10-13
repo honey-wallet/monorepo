@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for taking the time to report a bug!
-        **Do not report security vulnerabilities here.** See [SECURITY.md](../blob/main/SECURITY.md).
+        **Do not report security vulnerabilities here.** See [SECURITY.md](https://github.com/honey-wallet/monorepo/blob/main/SECURITY.md).
   - type: dropdown
     id: area
     attributes:
