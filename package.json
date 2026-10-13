@@ -1,0 +1,26 @@
+{
+  "name": "honey-wallet",
+  "private": true,
+  "description": "Honey Wallet monorepo: Rust API server, React web app and Expo mobile app.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "packageManager": "pnpm@10.26.0",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:server": "turbo run dev --filter=@honey-wallet/server",
+    "dev:web": "turbo run dev --filter=@honey-wallet/web --filter=@honey-wallet/server",
+    "dev:mobile": "turbo run dev --filter=@honey-wallet/mobile --filter=@honey-wallet/server",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "biome check . && turbo run lint",
+    "format": "biome check --write .",
+    "clean": "turbo run clean && rm -rf node_modules .turbo"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "turbo": "^2.11.8"
+  }
+}

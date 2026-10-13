@@ -1,0 +1,19 @@
+{
+  "name": "@honey-wallet/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Typed client for the Honey Wallet API, shared by the web and mobile apps.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

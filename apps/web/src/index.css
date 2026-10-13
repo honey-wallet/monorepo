@@ -1,0 +1,38 @@
+:root {
+  --text: #3f3a45;
+  --bg: #fff;
+  --ok: #15803d;
+  --err: #b91c1c;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e5e7eb;
+    --bg: #16171d;
+    --ok: #4ade80;
+    --err: #f87171;
+  }
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 4rem 1rem;
+}
+
+.status-online {
+  color: var(--ok);
+}
+
+.status-offline {
+  color: var(--err);
+}

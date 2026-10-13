@@ -1,0 +1,43 @@
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      cargo:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directories: [/, /apps/web, /packages/*]
+    schedule:
+      interval: weekly
+    groups:
+      npm:
+        update-types: [minor, patch]
+
+  # Expo pins compatible versions of React, React Native and its own modules per
+  # SDK. Upgrade them together with `pnpm exec expo install --fix` in
+  # apps/mobile instead of letting Dependabot bump them one at a time.
+  - package-ecosystem: npm
+    directory: /apps/mobile
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: expo
+      - dependency-name: expo-*
+      - dependency-name: '@expo/*'
+      - dependency-name: react
+      - dependency-name: react-dom
+      - dependency-name: react-native
+      - dependency-name: react-native-*
+      - dependency-name: '@react-native/*'
+      - dependency-name: '@types/react*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
