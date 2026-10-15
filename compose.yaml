@@ -1,0 +1,20 @@
+# Run the API server from its production image on a single host.
+#   docker compose up --build -d
+# Set HONEY_SERVER_PORT if 8080 is taken on this machine.
+services:
+  server:
+    build:
+      context: .
+      dockerfile: apps/server/Dockerfile
+    image: honey-server:local
+    ports:
+      - "127.0.0.1:${HONEY_SERVER_PORT:-8080}:8080"
+    env_file:
+      - path: apps/server/.env
+        required: false
+    environment:
+      # Always bind inside the container, whatever apps/server/.env says.
+      HOST: 0.0.0.0
+      PORT: 8080
+    read_only: true
+    restart: unless-stopped

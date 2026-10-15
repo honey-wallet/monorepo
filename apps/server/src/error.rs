@@ -14,6 +14,12 @@ pub enum AppError {
     NotFound,
     #[error("{0}")]
     BadRequest(String),
+    /// The chain cannot do what was asked (e.g. commit-delay-reveal on Bitcoin).
+    #[error("{0}")]
+    Unsupported(String),
+    /// Skeleton endpoint; the payload names the feature still to be built.
+    #[error("not implemented yet: {0}")]
+    NotImplemented(&'static str),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -34,6 +40,8 @@ impl IntoResponse for AppError {
         let (status, code) = match &self {
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found"),
             Self::BadRequest(_) => (StatusCode::BAD_REQUEST, "bad_request"),
+            Self::Unsupported(_) => (StatusCode::UNPROCESSABLE_ENTITY, "unsupported"),
+            Self::NotImplemented(_) => (StatusCode::NOT_IMPLEMENTED, "not_implemented"),
             Self::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal"),
         };
 

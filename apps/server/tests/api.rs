@@ -7,17 +7,20 @@ use http_body_util::BodyExt;
 use serde_json::Value;
 use tower::ServiceExt;
 
-async fn get(uri: &str) -> (StatusCode, axum::http::HeaderMap, Value) {
-    let app = build_router(&Config::default());
-    let response = app
-        .oneshot(Request::get(uri).body(Body::empty()).unwrap())
+/// Sends one request through a fresh router and parses the JSON body.
+async fn send(request: Request<Body>) -> (StatusCode, axum::http::HeaderMap, Value) {
+    let response = build_router(&Config::default())
+        .oneshot(request)
         .await
         .unwrap();
-
     let status = response.status();
     let headers = response.headers().clone();
     let bytes = response.into_body().collect().await.unwrap().to_bytes();
     (status, headers, serde_json::from_slice(&bytes).unwrap())
+}
+
+async fn get(uri: &str) -> (StatusCode, axum::http::HeaderMap, Value) {
+    send(Request::get(uri).body(Body::empty()).unwrap()).await
 }
 
 #[tokio::test]
@@ -46,4 +49,35 @@ async fn unknown_route_returns_json_404() {
 async fn responses_carry_request_id() {
     let (_, headers, _) = get("/health").await;
     assert!(headers.contains_key("x-request-id"));
+}
+
+#[tokio::test]
+async fn chains_lists_all_five_with_capabilities() {
+    let (status, _, body) = get("/api/v1/chains").await;
+    assert_eq!(status, StatusCode::OK);
+    let chains: Vec<&str> = body
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|c| c["chain"].as_str().unwrap())
+        .collect();
+    assert_eq!(chains, ["evm", "solana", "bitcoin", "tron", "xrpl"]);
+
+    let bitcoin = &body[2];
+    assert_eq!(bitcoin["commitDelayReveal"], "no");
+    assert_eq!(bitcoin["tierB"], "no");
+    assert_eq!(bitcoin["sessionAnchor"], "identity_address");
+}
+
+#[tokio::test]
+async fn skeleton_endpoints_return_501() {
+    let request = Request::post("/api/v1/session-signatures/verify")
+        .header("content-type", "application/json")
+        .body(Body::from(
+            r#"{"chain":"evm","address":"0x0","message":"hi","signature":"0x0"}"#,
+        ))
+        .unwrap();
+    let (status, _, body) = send(request).await;
+    assert_eq!(status, StatusCode::NOT_IMPLEMENTED);
+    assert_eq!(body["error"]["code"], "not_implemented");
 }

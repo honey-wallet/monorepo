@@ -16,5 +16,4 @@ function resolveBaseUrl(): string {
   return `http://${devHost ?? 'localhost'}:${SERVER_PORT}`;
 }
 
-export const apiBaseUrl = resolveBaseUrl();
-export const api = createApiClient({ baseUrl: apiBaseUrl });
+export const api = createApiClient({ baseUrl: resolveBaseUrl() });

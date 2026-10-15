@@ -75,10 +75,17 @@ To target one package: `pnpm turbo run test --filter=@honey-wallet/web`.
 
 ## Docker
 
+The server ships as one small image (distroless, non-root, read-only filesystem, built-in health check) for `linux/amd64` and `linux/arm64`, so it runs on any container host: a VM with Docker, Kubernetes, Fly.io, Cloud Run, ECS and similar.
+
 ```sh
-docker build -f apps/server/Dockerfile -t honey-server .
-docker run --rm -p 8080:8080 honey-server
+docker compose up --build -d          # build and run locally on 127.0.0.1:8080
+HONEY_SERVER_PORT=8095 docker compose up --build -d   # if 8080 is taken
+
+docker build -f apps/server/Dockerfile -t honey-server .   # image for this machine's architecture
+docker run --rm -p 8080:8080 --read-only honey-server
 ```
+
+Configuration is environment variables only (see `apps/server/.env.example`). Point platform health probes at `GET /health`. On every push to `main` and every `v*` tag, CI publishes a multi-arch image to `ghcr.io/honey-wallet/honey-server`, tagged with the branch, version and commit.
 
 ## Contributing
 

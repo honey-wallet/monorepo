@@ -1,0 +1,141 @@
+// Motion: transitions.dev "Tabs sliding" (https://transitions.dev), ported to
+// Reanimated. A lighter pill slides to the selected segment and resizes to its width
+// (250ms, smooth ease-out); it snaps into place on first paint.
+import { useEffect, useRef, useState } from 'react';
+import { type LayoutRectangle, Pressable, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { tap } from '@/lib/haptics';
+import { makeStyles } from '@/theme';
+import { DURATION, EASE } from '@/theme/motion';
+
+const SLIDE = { duration: DURATION.fast, easing: EASE.smoothOut };
+
+type Props<T extends string> = {
+  options: readonly T[];
+  value: T;
+  onChange: (value: T) => void;
+  /** No bar background; segments share the full width (e.g. chart ranges). */
+  bare?: boolean;
+  /** Spans the row with equal segments (½, ⅓, ¼…), e.g. Trade's products. */
+  fill?: boolean;
+};
+
+/** A segmented control for a few mutually exclusive views, e.g. Swap / Perps. */
+export function SegmentedTabs<T extends string>({
+  options,
+  value,
+  onChange,
+  bare,
+  fill,
+}: Props<T>) {
+  const styles = useStyles();
+  const reduceMotion = useReducedMotion();
+  const [layouts, setLayouts] = useState<Partial<Record<T, LayoutRectangle>>>({});
+  const x = useSharedValue(0);
+  const width = useSharedValue(0);
+  const placed = useRef(false);
+
+  useEffect(() => {
+    const layout = layouts[value];
+    if (!layout) return;
+    const animate = placed.current && !reduceMotion;
+    x.value = animate ? withTiming(layout.x, SLIDE) : layout.x;
+    width.value = animate ? withTiming(layout.width, SLIDE) : layout.width;
+    placed.current = true;
+  }, [value, layouts, reduceMotion, x, width]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    width: width.value,
+    transform: [{ translateX: x.value }],
+  }));
+
+  return (
+    <View
+      style={[styles.bar, bare && styles.bare, fill && styles.fill]}
+      accessibilityRole="tablist"
+    >
+      <Animated.View style={[styles.pill, pillStyle]} />
+      {options.map((option) => {
+        const active = option === value;
+        return (
+          <Pressable
+            key={option}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: active }}
+            onLayout={(e) => {
+              const layout = e.nativeEvent.layout;
+              setLayouts((prev) => ({ ...prev, [option]: layout }));
+            }}
+            onPress={() => {
+              if (active) return;
+              tap();
+              onChange(option);
+            }}
+            style={[styles.tab, (bare || fill) && styles.stretch, fill && styles.tight]}
+          >
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.label, active && styles.labelActive]}
+            >
+              {option}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+const useStyles = makeStyles((c) => ({
+  bar: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    gap: 3,
+    padding: 3,
+    borderRadius: 48,
+    backgroundColor: c.tabsBar,
+  },
+  bare: {
+    alignSelf: 'stretch',
+    backgroundColor: 'transparent',
+  },
+  stretch: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  pill: {
+    position: 'absolute',
+    top: 3,
+    bottom: 3,
+    left: 0,
+    borderRadius: 48,
+    backgroundColor: c.tabsPill,
+  },
+  tab: {
+    height: 34,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    borderRadius: 48,
+  },
+  fill: {
+    alignSelf: 'stretch',
+  },
+  // Five products still fit on narrow phones.
+  tight: {
+    paddingHorizontal: 4,
+  },
+  label: {
+    color: c.textSecondary,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  labelActive: {
+    color: c.text,
+  },
+}));

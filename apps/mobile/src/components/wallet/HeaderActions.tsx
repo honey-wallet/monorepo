@@ -1,0 +1,64 @@
+import { router } from 'expo-router';
+import { Text, View } from 'react-native';
+import { PressableScale } from '@/components/motion/PressableScale';
+import { HEADER_BUTTON, HeaderIconButton } from '@/components/wallet/parts';
+import { tap } from '@/lib/haptics';
+import { BALANCE, formatUsd } from '@/lib/mock-wallet';
+import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
+import { makeStyles } from '@/theme';
+
+/**
+ * Top-right of the Trade, Savings and Search tabs: your balance in dollars (opens
+ * the balance sheet, where you can deposit more) and a settings gear. The gear opens the app's Settings unless the tab
+ * passes its own (Trade opens the current product's settings).
+ */
+export function HeaderActions({
+  settingsLabel = 'Settings',
+  onSettings = () => router.push('/settings'),
+}: {
+  settingsLabel?: string;
+  onSettings?: () => void;
+}) {
+  const styles = useStyles();
+  const { hideBalance } = useSettings();
+  const balance = hideBalance ? HIDDEN_AMOUNT : formatUsd(BALANCE);
+  return (
+    <View style={styles.row}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={
+          hideBalance ? 'Balance hidden. Deposit more' : `Balance ${balance}. Deposit more`
+        }
+        scaleTo={0.94}
+        onPress={() => {
+          tap();
+          router.push('/balance');
+        }}
+        style={styles.balance}
+      >
+        <Text style={styles.balanceText}>{balance}</Text>
+      </PressableScale>
+      <HeaderIconButton icon="settings" label={settingsLabel} onPress={onSettings} />
+    </View>
+  );
+}
+
+const useStyles = makeStyles((c) => ({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  balance: {
+    height: HEADER_BUTTON,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: HEADER_BUTTON / 2,
+    backgroundColor: c.raised,
+  },
+  balanceText: {
+    color: c.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+}));

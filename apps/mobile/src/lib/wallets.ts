@@ -1,0 +1,74 @@
+import { ADDRESS, BALANCE, otherWallets, type Wallet } from '@/lib/mock-wallet';
+import { useProfile } from '@/lib/profile';
+import { createStore } from '@/lib/store';
+
+/**
+ * A wallet added this session. Watched addresses can be viewed but not spent from;
+ * burners are disposable wallets for sites you don't fully trust.
+ */
+export type AddedWallet = Wallet & { watchOnly?: boolean; burner?: boolean };
+
+/** The wallet the app is showing, and any wallets added this session. */
+export const wallets = createStore<{ activeId: string; added: AddedWallet[] }>({
+  activeId: 'main',
+  added: [],
+});
+
+export const useWallets = wallets.use;
+
+/** The user's own wallet plus the others, as one list. */
+export function allWallets(name: string, added: AddedWallet[]): AddedWallet[] {
+  return [
+    { id: 'main', kind: 'wallet', label: name, address: ADDRESS, usd: BALANCE },
+    ...otherWallets(name),
+    ...added,
+  ];
+}
+
+export function setActiveWallet(id: string) {
+  wallets.set((prev) => ({ ...prev, activeId: id }));
+}
+
+/** Adds a wallet and switches to it. Returns its id. */
+export function addWallet(wallet: Omit<AddedWallet, 'id'>) {
+  const id = `added-${Date.now()}`;
+  wallets.set((prev) => ({ activeId: id, added: [...prev.added, { ...wallet, id }] }));
+  return id;
+}
+
+/** The label for the next created wallet, e.g. "Wallet 4". */
+export function nextWalletLabel(name: string) {
+  const count = allWallets(name, wallets.get().added).filter((w) => w.kind === 'wallet').length;
+  return `Wallet ${count + 1}`;
+}
+
+/** The label for the next burner, e.g. "Burner 2". */
+export function nextBurnerLabel() {
+  return `Burner ${wallets.get().added.filter((w) => w.burner).length + 1}`;
+}
+
+/** A random-looking address for wallets created in the demo. */
+export function demoAddress() {
+  const hex = '0123456789abcdef';
+  let out = '0x';
+  for (let i = 0; i < 40; i++) out += hex[Math.floor(Math.random() * 16)];
+  return out;
+}
+
+/** True for a full EVM address, e.g. "0x7a3F…aB3c" written out in full. */
+export function isEvmAddress(value: string) {
+  return /^0x[0-9a-fA-F]{40}$/.test(value.trim());
+}
+
+/** True for a Honey handle, e.g. "maya.honey". */
+export function isHoneyHandle(value: string) {
+  return /^[^\s.]+\.honey$/i.test(value.trim());
+}
+
+/** The wallet currently shown on home, kept up to date as it changes. */
+export function useActiveWallet(): AddedWallet {
+  const { activeId, added } = useWallets();
+  const { name } = useProfile();
+  const list = allWallets(name, added);
+  return list.find((w) => w.id === activeId) ?? list[0];
+}

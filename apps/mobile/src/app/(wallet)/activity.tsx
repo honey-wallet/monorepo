@@ -1,0 +1,168 @@
+import { router } from 'expo-router';
+import { Text, View } from 'react-native';
+import { Icon, type IconName } from '@/components/Icon';
+import { PressableRow } from '@/components/motion/PressableRow';
+import { HeaderActions } from '@/components/wallet/HeaderActions';
+import { EmptyState, TokenIcon } from '@/components/wallet/parts';
+import { TabScreen } from '@/components/wallet/TabScreen';
+import { tap } from '@/lib/haptics';
+import { ACTIVITY, type Activity } from '@/lib/mock-wallet';
+import { type ActivityFilter, useSectionPrefs } from '@/lib/section-prefs';
+import { makeStyles, useTheme } from '@/theme';
+
+const KIND: Record<Activity['kind'], { title: string; badge: IconName }> = {
+  sent: { title: 'Sent', badge: 'arrowUp' },
+  received: { title: 'Received', badge: 'arrowDown' },
+  swapped: { title: 'Swapped', badge: 'trade' },
+  approved: { title: 'Approved', badge: 'check' },
+};
+
+const FILTER_KIND: Record<Exclude<ActivityFilter, 'All'>, Activity['kind']> = {
+  Sent: 'sent',
+  Received: 'received',
+  Swaps: 'swapped',
+};
+
+export default function ActivityScreen() {
+  const styles = useStyles();
+  const { activityFilter, activityHideApprovals } = useSectionPrefs();
+  // What Activity settings asks to show.
+  const shown = ACTIVITY.filter(
+    (a) =>
+      (activityFilter === 'All' || a.kind === FILTER_KIND[activityFilter]) &&
+      !(activityHideApprovals && a.kind === 'approved'),
+  );
+  const months = [...new Set(shown.map((a) => a.month))];
+
+  return (
+    <TabScreen
+      title="Activity"
+      right={
+        <HeaderActions
+          settingsLabel="Activity settings"
+          onSettings={() =>
+            router.push({ pathname: '/section-settings', params: { section: 'activity' } })
+          }
+        />
+      }
+    >
+      {months.map((month) => (
+        <View key={month} style={styles.month}>
+          <Text style={styles.monthLabel}>{month}</Text>
+          {shown
+            .filter((a) => a.month === month)
+            .map((a) => (
+              <ActivityRow key={a.id} activity={a} />
+            ))}
+        </View>
+      ))}
+      {shown.length === 0 && (
+        <EmptyState
+          icon="history"
+          title="Nothing to show"
+          hint="Change what Activity shows from its settings."
+        />
+      )}
+    </TabScreen>
+  );
+}
+
+function ActivityRow({ activity: a }: { activity: Activity }) {
+  const styles = useStyles();
+  const c = useTheme();
+  const kind = KIND[a.kind];
+  return (
+    <PressableRow
+      onPress={() => {
+        tap();
+        router.push({ pathname: '/activity/[id]', params: { id: a.id } });
+      }}
+      style={styles.row}
+    >
+      <View>
+        <TokenIcon symbol={a.symbol} size={42} />
+        <View style={styles.badge}>
+          <Icon name={kind.badge} size={9} color={c.canvas} />
+        </View>
+      </View>
+      <View style={styles.flex}>
+        <Text style={styles.title}>{kind.title}</Text>
+        {a.swap ? (
+          <View style={styles.swap}>
+            <TokenIcon symbol={a.swap.from[0]} size={16} />
+            <Text style={styles.swapText}>
+              {a.swap.from[1]} {a.swap.from[0]} →
+            </Text>
+            <TokenIcon symbol={a.swap.to[0]} size={16} />
+            <Text style={styles.swapText}>
+              {a.swap.to[1]} {a.swap.to[0]}
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.detail} numberOfLines={1}>
+            {a.detail}
+          </Text>
+        )}
+      </View>
+      <Text style={styles.date}>{a.date}</Text>
+    </PressableRow>
+  );
+}
+
+const useStyles = makeStyles((c) => ({
+  flex: {
+    flex: 1,
+  },
+  month: {
+    marginBottom: 12,
+  },
+  monthLabel: {
+    marginBottom: 6,
+    color: c.textSecondary,
+    fontSize: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingVertical: 10,
+    marginHorizontal: -18,
+    paddingHorizontal: 18,
+  },
+  badge: {
+    position: 'absolute',
+    right: -3,
+    bottom: -3,
+    width: 19,
+    height: 19,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.success,
+    borderWidth: 2,
+    borderColor: c.canvas,
+  },
+  title: {
+    color: c.textSecondary,
+    fontSize: 16,
+  },
+  detail: {
+    marginTop: 2,
+    color: c.text,
+    fontSize: 17,
+  },
+  swap: {
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  swapText: {
+    color: c.text,
+    fontSize: 17,
+  },
+  date: {
+    color: c.textSecondary,
+    fontSize: 15,
+  },
+}));

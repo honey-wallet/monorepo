@@ -9,7 +9,13 @@ pub struct VersionInfo {
 }
 
 pub fn router() -> Router {
-    Router::new().route("/version", get(version))
+    Router::new()
+        .route("/version", get(version))
+        .merge(super::chains::router())
+        .merge(super::accounts::router())
+        .merge(super::session_signatures::router())
+        .merge(super::relay::router())
+        .merge(super::monitoring::router())
 }
 
 async fn version() -> Json<VersionInfo> {
