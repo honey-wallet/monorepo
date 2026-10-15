@@ -34,7 +34,7 @@ import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
-const CHART_HEIGHT = 230;
+const CHART_HEIGHT = 190;
 type Scope = 'all' | 'month' | 'week';
 type Grouping = 'Tokens' | 'Networks';
 
@@ -182,19 +182,21 @@ export default function PortfolioScreen() {
             triggerLabel={scope === 'all' ? 'All' : scope === 'month' ? 'Month' : 'Week'}
           />
         </View>
-        <Animated.View layout={RESIZE} style={styles.perfCard}>
-          <Text style={styles.perfLabel}>Total return</Text>
-          <Signed value={unrealized + realized} large />
-          <View style={styles.perfSplit}>
-            <View style={styles.flex}>
-              <Text style={styles.perfLabel}>Unrealized</Text>
-              <Signed value={unrealized} />
-            </View>
-            <View style={styles.perfDivider} />
-            <View style={styles.flex}>
-              <Text style={styles.perfLabel}>Realized</Text>
-              <Signed value={realized} />
-            </View>
+        {/* One row, so Allocation fits on screen without scrolling. */}
+        <Animated.View layout={RESIZE} style={[styles.perfCard, styles.perfRow]}>
+          <View style={styles.flex}>
+            <Text style={styles.perfLabel}>Total return</Text>
+            <Signed value={unrealized + realized} strong />
+          </View>
+          <View style={styles.perfDivider} />
+          <View style={styles.flex}>
+            <Text style={styles.perfLabel}>Unrealized</Text>
+            <Signed value={unrealized} />
+          </View>
+          <View style={styles.perfDivider} />
+          <View style={styles.flex}>
+            <Text style={styles.perfLabel}>Realized</Text>
+            <Signed value={realized} />
           </View>
         </Animated.View>
 
@@ -249,22 +251,18 @@ export default function PortfolioScreen() {
   );
 }
 
-/** A dollar amount with its up/down triangle; `large` for the headline figure. */
-function Signed({ value, large }: { value: number; large?: boolean }) {
+/** A dollar amount with its up/down triangle; `strong` for the total. */
+function Signed({ value, strong }: { value: number; strong?: boolean }) {
   const styles = useStyles();
   const c = useTheme();
   return (
     <View style={styles.signed}>
       {Math.abs(value) >= 0.005 && (
-        <Icon
-          name={value < 0 ? 'down' : 'up'}
-          size={large ? 12 : 9}
-          color={value < 0 ? c.error : c.success}
-        />
+        <Icon name={value < 0 ? 'down' : 'up'} size={9} color={value < 0 ? c.error : c.success} />
       )}
       <TextSoftSwap
         text={formatUsd(Math.abs(value))}
-        style={[styles.value, large && styles.valueLarge]}
+        style={[styles.value, strong && styles.valueStrong]}
       />
     </View>
   );
@@ -305,15 +303,15 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
   },
   chart: {
-    marginTop: 22,
+    marginTop: 16,
   },
   ranges: {
     marginTop: 8,
     paddingHorizontal: 12,
   },
   section: {
-    marginTop: 26,
-    paddingTop: 18,
+    marginTop: 18,
+    paddingTop: 16,
     borderTopWidth: 1,
     borderColor: c.divider,
   },
@@ -340,22 +338,16 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 14,
   },
-  perfSplit: {
-    marginTop: 14,
-    paddingTop: 14,
+  perfRow: {
     flexDirection: 'row',
-    gap: 16,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: c.divider,
+    gap: 12,
   },
   perfDivider: {
     width: StyleSheet.hairlineWidth,
     backgroundColor: c.divider,
   },
-  valueLarge: {
-    fontSize: 28,
+  valueStrong: {
     fontWeight: '600',
-    letterSpacing: -0.5,
   },
   signed: {
     flexDirection: 'row',
@@ -367,7 +359,7 @@ const useStyles = makeStyles((c) => ({
     fontSize: 16,
   },
   allocationHeader: {
-    marginTop: 22,
+    marginTop: 18,
   },
   allocation: {
     flexDirection: 'row',
