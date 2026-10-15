@@ -48,7 +48,7 @@ export function Chip({
       accessibilityRole={accessibilityRole}
       accessibilityState={{ selected }}
       accessibilityLabel={accessibilityLabel}
-      scaleTo={0.95}
+      scaleTo={0.97}
       onPress={() => {
         tap();
         onPress();

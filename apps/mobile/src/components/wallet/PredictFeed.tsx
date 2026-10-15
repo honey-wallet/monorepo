@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import Animated, {
+  Easing,
   FadeIn,
   FadeOut,
   useAnimatedStyle,
@@ -220,7 +221,7 @@ function SideButton({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={detail ? `Buy ${side} at ${detail}` : `Buy ${side}`}
-      scaleTo={0.96}
+      scaleTo={0.97}
       onPress={onPress}
       style={[small ? styles.smallButton : styles.bigButton, { backgroundColor: `${color}26` }]}
     >
@@ -296,7 +297,7 @@ function Footer({ market }: { market: PredictMarket }) {
         accessibilityLabel={saved ? 'Remove from saved' : 'Save market'}
         accessibilityState={{ selected: saved }}
         hitSlop={10}
-        scaleTo={0.85}
+        scaleTo={0.97}
         onPress={() => {
           tap();
           toggleSaved(market.id);
@@ -312,14 +313,15 @@ function Footer({ market }: { market: PredictMarket }) {
   );
 }
 
-/** A red dot that pulses like a recording light, then "LIVE". */
+/** A red dot that pulses like a recording light (still under Reduce Motion), then "LIVE". */
 function LiveBadge() {
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
   const pulse = useSharedValue(1);
   useEffect(() => {
     if (reduceMotion) return;
-    pulse.value = withRepeat(withTiming(0.25, { duration: 800 }), -1, true);
+    // Constant, ambient motion runs on a linear clock; it stops under Reduce Motion.
+    pulse.value = withRepeat(withTiming(0.25, { duration: 800, easing: Easing.linear }), -1, true);
   }, [reduceMotion, pulse]);
   const dotStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
   return (

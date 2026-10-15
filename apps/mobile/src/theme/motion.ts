@@ -1,28 +1,59 @@
 import { Easing, LinearTransition } from 'react-native-reanimated';
 
 /**
- * Motion tokens, ported from the transitions.dev shared scale
- * (https://transitions.dev, Transitions.dev License). Use these rather than
- * one-off timings so the app moves as one.
+ * Motion tokens, following Emil Kowalski's "Animations on the Web" course
+ * (https://animations.dev). Use these rather than one-off timings so the app moves
+ * as one. The rules behind them:
+ * - Ask how often the user sees it first. Anything done 100+ times a day (typing on
+ *   the keypad) doesn't animate; things seen tens of times a day barely do.
+ * - Interface motion stays under ~300ms; exits are shorter than entries. Only rare,
+ *   first-time moments (onboarding, celebrations) go longer.
+ * - Custom, asymmetric curves: ease-out to enter or leave, ease-in-out to move
+ *   something already on screen, never ease-in.
+ * - No bounce by default; overshoot is reserved for a drag being released.
+ * - Under Reduce Motion, keep the fades and drop the movement (gentler, not zero).
  */
 export const DURATION = {
+  /** Stagger between items in a group (30–80ms; decorative, never blocking). */
   stagger: 40,
   micro: 80,
+  /** Press feedback, exits, tooltips. */
   quick: 150,
-  fast: 250,
-  medium: 350,
-  slow: 400,
-  verySlow: 500,
+  /** Dropdowns, swaps, tabs. */
+  fast: 200,
+  /** Small sheets and panels, height changes. */
+  medium: 250,
+  /** The ceiling for everyday interface motion. */
+  slow: 300,
+  /** Rare, first-time moments only (onboarding, a completed swap). */
+  verySlow: 400,
 } as const;
 
 export const EASE = {
-  /** Opens, closes, slides and resizes. */
-  smoothOut: Easing.bezier(0.22, 1, 0.36, 1),
-  /** Icon and text swaps. */
-  inOut: Easing.inOut(Easing.ease),
-  /** A small settle past the target, e.g. the toggle thumb. */
-  bounce: Easing.bezier(0.34, 1.36, 0.64, 1),
+  /** Entering or leaving: a strong ease-out (fast start, long gentle settle). */
+  smoothOut: Easing.bezier(0.19, 1, 0.22, 1),
+  /** Moving or morphing something already on screen. */
+  inOut: Easing.bezier(0.645, 0.045, 0.355, 1),
+  /** Press feedback. */
+  press: Easing.bezier(0.25, 0.46, 0.45, 0.94),
+  /** Sheets and drawers (iOS sheet curve, extremely steep start). */
+  sheet: Easing.bezier(0.32, 0.72, 0, 1),
+  /** Height changes: a snappy ease-out. */
+  height: Easing.bezier(0.25, 1, 0.5, 1),
+  /** Opacity and colour on their own. */
+  ease: Easing.bezier(0.25, 0.1, 0.25, 1),
 } as const;
+
+/** Springs for interruptible motion: critically damped (no bounce) unless released from a drag. */
+export const SPRING = {
+  /** State and position changes that may be interrupted (toggles, tabs, stacks). */
+  ui: { duration: 300, dampingRatio: 1 },
+  /** Settling after the finger lets go of a drag: a slight, earned overshoot. */
+  release: { duration: 450, dampingRatio: 0.82 },
+} as const;
+
+/** Press feedback is felt, not seen. Large surfaces (cards) can use 0.98. */
+export const PRESS_SCALE = 0.97;
 
 export const DISTANCE = {
   micro: 4,
@@ -32,7 +63,7 @@ export const DISTANCE = {
 } as const;
 
 /** Layout move for items that shift when siblings appear, vanish or reorder. */
-export const LAYOUT_MOVE = LinearTransition.duration(DURATION.fast).easing(EASE.smoothOut);
+export const LAYOUT_MOVE = LinearTransition.duration(DURATION.medium).easing(EASE.inOut);
 
 /**
  * Builds an animation on first use instead of when the module loads. Keyframes with

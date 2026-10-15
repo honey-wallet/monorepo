@@ -1,6 +1,7 @@
-// Motion: transitions.dev "Tabs sliding" (https://transitions.dev), ported to
-// Reanimated. A lighter pill slides under the active tab (250ms, smooth ease-out) and
-// snaps into place without animating on first paint; icons fade between muted and active.
+// Switching tabs happens tens of times a day, so the motion stays quick: a lighter
+// pill glides under the active tab in 200ms on ease-in-out (an on-screen move),
+// starting from wherever it is so rapid taps never jump. It snaps into place on first
+// paint and under Reduce Motion; icons crossfade between muted and active in 150ms.
 import type { Tabs } from 'expo-router';
 import { type ComponentProps, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -29,7 +30,8 @@ const PILL_TABS: { name: string; icon: IconName; label: string }[] = [
 
 const PAD = 4;
 const GAP = 3;
-const SLIDE = { duration: DURATION.fast, easing: EASE.smoothOut };
+const SLIDE = { duration: DURATION.fast, easing: EASE.inOut };
+const FADE = { duration: DURATION.quick, easing: EASE.ease };
 
 /** How far above the bar the content fade starts. */
 const FADE_EXTRA = 36;
@@ -59,7 +61,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
       offset.value = placed.current && !reduceMotion ? withTiming(to, SLIDE) : to;
       placed.current = true;
     }
-    visible.value = withTiming(index >= 0 ? 1 : 0, SLIDE);
+    visible.value = withTiming(index >= 0 ? 1 : 0, FADE);
   }, [index, tabWidth, reduceMotion, offset, visible]);
 
   const pillStyle = useAnimatedStyle(() => ({
@@ -125,7 +127,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
           accessibilityRole="button"
           accessibilityLabel="Trade"
           onPress={() => go('trade')}
-          scaleTo={0.95}
+          scaleTo={0.97}
           style={styles.fab}
         >
           <Icon name="trade" size={30} color={c.onPrimary} />
@@ -140,7 +142,7 @@ function TabIcon({ icon, active }: { icon: IconName; active: boolean }) {
   const c = useTheme();
   const progress = useSharedValue(active ? 1 : 0);
   useEffect(() => {
-    progress.value = withTiming(active ? 1 : 0, SLIDE);
+    progress.value = withTiming(active ? 1 : 0, FADE);
   }, [active, progress]);
   // The piggy bank drawing has more built-in padding than the SF Symbols.
   const iconSize = icon === 'piggyBank' ? 31 : 28;

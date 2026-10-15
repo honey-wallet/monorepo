@@ -1,21 +1,27 @@
-// Drag to reorder: hold a row's ⠿ handle and drag. The row lifts (scale 1.02, the
-// fast clock), the others slide out of its way on the smooth ease-out curve, and it
-// settles into its slot on release. Each change of slot ticks a haptic.
+// Drag to reorder: hold a row's ⠿ handle and drag. While the finger is down the row
+// IS the finger (1:1, no easing), with rubber-band resistance past either end. It
+// lifts slightly (scale 1.02); the others move out of its way on a critically damped
+// spring, so a row passed back and forth never jumps. On release it springs into its
+// slot carrying the finger's velocity, with the small overshoot a drag earns. Each
+// change of slot ticks a haptic. Under Reduce Motion there is no lift or overshoot.
 import { type ReactNode, useEffect } from 'react';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedReaction,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { tap } from '@/lib/haptics';
 import { makeStyles } from '@/theme';
-import { DURATION, EASE } from '@/theme/motion';
+import { DURATION, EASE, SPRING } from '@/theme/motion';
 
-const SETTLE = { duration: DURATION.fast, easing: EASE.smoothOut };
+/** How far past an end the row follows the finger: a fifth, like iOS rubber-banding. */
+const ELASTIC = 0.2;
 
 type Props<T extends string> = {
   items: readonly T[];
@@ -90,6 +96,7 @@ function Row<T extends string>({
   renderRow: Props<T>['renderRow'];
 }) {
   const styles = useStyles();
+  const reduceMotion = useReducedMotion();
   const top = useSharedValue(slots.value[item] * rowHeight);
   const lifted = useSharedValue(0);
   const dragging = useSharedValue(false);
@@ -99,7 +106,7 @@ function Row<T extends string>({
   useAnimatedReaction(
     () => slots.value[item],
     (slot, previous) => {
-      if (slot !== previous && !dragging.value) top.value = withTiming(slot * rowHeight, SETTLE);
+      if (slot !== previous && !dragging.value) top.value = withSpring(slot * rowHeight, SPRING.ui);
     },
   );
 
@@ -108,29 +115,35 @@ function Row<T extends string>({
     .onBegin(() => {
       dragging.value = true;
       start.value = top.value;
-      lifted.value = withTiming(1, { duration: DURATION.quick, easing: EASE.smoothOut });
+      if (!reduceMotion)
+        lifted.value = withTiming(1, { duration: DURATION.quick, easing: EASE.smoothOut });
       scheduleOnRN(tap);
     })
     .onUpdate((e) => {
       const max = (count - 1) * rowHeight;
-      top.value = Math.min(Math.max(start.value + e.translationY, 0), max);
-      const to = Math.round(top.value / rowHeight);
+      const raw = start.value + e.translationY;
+      // Past either end the row moves a fraction of the finger's travel.
+      top.value = raw < 0 ? raw * ELASTIC : raw > max ? max + (raw - max) * ELASTIC : raw;
+      const to = Math.min(Math.max(Math.round(top.value / rowHeight), 0), count - 1);
       const from = slots.value[item];
       if (to === from) return;
       slots.value = moveTo(slots.value, item, to);
       scheduleOnRN(tap);
     })
-    .onFinalize(() => {
+    .onFinalize((e) => {
       dragging.value = false;
-      top.value = withTiming(slots.value[item] * rowHeight, SETTLE);
-      lifted.value = withTiming(0, SETTLE);
+      const slot = slots.value[item] * rowHeight;
+      top.value = reduceMotion
+        ? withTiming(slot, { duration: DURATION.quick, easing: EASE.smoothOut })
+        : withSpring(slot, { ...SPRING.release, velocity: e.velocityY });
+      lifted.value = withTiming(0, { duration: DURATION.quick, easing: EASE.smoothOut });
       scheduleOnRN(onCommit, slots.value);
     });
 
+  // Position is a transform (composited), not `top`, so dragging never relayouts.
   const style = useAnimatedStyle(() => ({
-    top: top.value,
     zIndex: dragging.value ? 10 : 0,
-    transform: [{ scale: 1 + lifted.value * 0.02 }],
+    transform: [{ translateY: top.value }, { scale: 1 + lifted.value * 0.02 }],
     shadowOpacity: lifted.value * 0.3,
   }));
 
@@ -182,6 +195,7 @@ function DragDots() {
 const useStyles = makeStyles((c) => ({
   row: {
     position: 'absolute',
+    top: 0,
     left: 0,
     right: 0,
     justifyContent: 'center',

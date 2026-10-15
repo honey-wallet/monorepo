@@ -171,6 +171,12 @@ export default function SettingsScreen() {
 
         <SheetSection title="About" />
         <SheetRow icon="book" title="About" onPress={open('/settings-about')} accessory="chevron" />
+        <SheetRow
+          icon="sparkles"
+          title="Motion gallery"
+          onPress={open('/motion-gallery')}
+          accessory="chevron"
+        />
         <SheetRow icon="info" title="Version" value={Constants.expoConfig?.version ?? '—'} />
         <SheetRow
           icon="server"

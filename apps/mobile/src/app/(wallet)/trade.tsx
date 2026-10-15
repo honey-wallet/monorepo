@@ -1,9 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
+import { useErrorShake } from '@/components/motion/ErrorShake';
+import { MatrixLoader } from '@/components/motion/MatrixLoader';
+import { PanelReveal } from '@/components/motion/PanelReveal';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { ShimmerText } from '@/components/motion/ShimmerText';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -12,6 +17,7 @@ import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet
 import { PerpsMarkets } from '@/components/wallet/PerpsMarkets';
 import { PredictFeed } from '@/components/wallet/PredictFeed';
 import { HeaderIconButton, TokenIcon } from '@/components/wallet/parts';
+import { SwapReview } from '@/components/wallet/SwapReview';
 import { TabScreen } from '@/components/wallet/TabScreen';
 import {
   AmountCard,
@@ -87,6 +93,9 @@ export default function TradeScreen() {
 // ---------------------------------------------------------------------------
 // Swap
 
+/** How long a fresh quote takes before the rate shows. */
+const QUOTE_MS = 700;
+
 function SwapForm() {
   const styles = useStyles();
   const c = useTheme();
@@ -106,6 +115,36 @@ function SwapForm() {
   const out = value * rate;
   const usd = value * priceOf(sell);
   const tooMuch = value > balance;
+  const route = bridging ? 'Across + Uniswap' : 'Uniswap';
+  const networkCost = bridging ? '$1.20' : '$0.42';
+  const [reviewing, setReviewing] = useState(false);
+
+  // Each new amount gets a fresh quote: "Finding best route" for a moment, then the
+  // rate. The details panel opens with the first quote and stays while re-quoting.
+  const quoteKey = value ? `${value}-${sellKey}-${buy}-${pair.buy.chain}` : '';
+  const [quoting, setQuoting] = useState(false);
+  const [quoted, setQuoted] = useState(false);
+  useEffect(() => {
+    if (!quoteKey) {
+      setQuoting(false);
+      setQuoted(false);
+      return;
+    }
+    setQuoting(true);
+    const done = setTimeout(() => {
+      setQuoting(false);
+      setQuoted(true);
+    }, QUOTE_MS);
+    return () => clearTimeout(done);
+  }, [quoteKey]);
+
+  // Shake the amount once when it first runs past the balance, not on every key.
+  const { shake, style: shakeStyle } = useErrorShake();
+  const wasTooMuch = useRef(false);
+  useEffect(() => {
+    if (tooMuch && !wasTooMuch.current) shake();
+    wasTooMuch.current = tooMuch;
+  }, [tooMuch, shake]);
 
   const flip = () => {
     tap();
@@ -117,12 +156,12 @@ function SwapForm() {
       <View>
         <View style={styles.card}>
           <Text style={styles.cardLabel}>Sell</Text>
-          <View style={styles.cardRow}>
+          <Animated.View style={[styles.cardRow, shakeStyle]}>
             <View style={styles.flex}>
               <TypedAmount value={amount} size={40} align="left" />
             </View>
             <TokenPill side="sell" token={pair.sell} />
-          </View>
+          </Animated.View>
           <View style={styles.cardRow}>
             <TextSwap text={formatUsd(usd)} style={styles.meta} />
             <Text style={[styles.meta, tooMuch && styles.error]}>
@@ -134,7 +173,7 @@ function SwapForm() {
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel="Switch tokens"
-          scaleTo={0.9}
+          scaleTo={0.97}
           onPress={flip}
           style={styles.flip}
         >
@@ -150,12 +189,26 @@ function SwapForm() {
             />
             <TokenPill side="buy" token={pair.buy} />
           </View>
-          <Text style={styles.meta}>
-            1 {sell} = {Number(rate.toPrecision(6))} {buy}
-            {bridging && ` · Bridges ${pair.sell.chain} → ${pair.buy.chain}`}
-          </Text>
+          {quoting ? (
+            <View style={styles.quoting}>
+              <MatrixLoader dot={3} />
+              <ShimmerText text="Finding best route" style={styles.meta} />
+            </View>
+          ) : (
+            <Text style={styles.meta}>
+              1 {sell} = {Number(rate.toPrecision(6))} {buy}
+              {bridging && ` · Bridges ${pair.sell.chain} → ${pair.buy.chain}`}
+            </Text>
+          )}
         </View>
       </View>
+
+      <PanelReveal open={quoted} style={styles.details}>
+        <DetailRow label="Route" value={route} />
+        <DetailRow label="Network cost" value={networkCost} />
+        <DetailRow label="Max slippage" value="Auto · 5.5%" />
+        <DetailRow label="Price impact" value="<0.01%" />
+      </PanelReveal>
 
       {/* As in Uniswap: cards at the top, keypad and button at the bottom, open space between. */}
       <View style={styles.flex} />
@@ -166,9 +219,42 @@ function SwapForm() {
       <PillButton
         label={!value ? 'Enter an amount' : tooMuch ? `Not enough ${sell}` : 'Review swap'}
         disabled={!value || tooMuch}
-        onPress={() => showDemoToast(`swapped ${amount} ${sell} for ${buy}`)}
+        onPress={() => {
+          tap();
+          setReviewing(true);
+        }}
         style={styles.swapCta}
       />
+
+      <SwapReview
+        visible={reviewing}
+        pay={{ amount, symbol: sell, chain: pair.sell.chain, usd: formatUsd(usd) }}
+        get={{
+          amount: Number(out.toPrecision(6)).toString(),
+          symbol: buy,
+          chain: pair.buy.chain,
+          usd: formatUsd(out * priceOf(buy)),
+        }}
+        route={route}
+        networkCost={networkCost}
+        bridging={bridging}
+        onClose={() => setReviewing(false)}
+        onDone={() => {
+          setReviewing(false);
+          setAmount('');
+        }}
+      />
+    </View>
+  );
+}
+
+/** One line of the swap's details panel, e.g. Network cost … $0.42. */
+function DetailRow({ label, value }: { label: string; value: string }) {
+  const styles = useStyles();
+  return (
+    <View style={styles.detailRow}>
+      <Text style={styles.meta}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
     </View>
   );
 }
@@ -181,7 +267,7 @@ function TokenPill({ side, token }: { side: 'sell' | 'buy'; token: TokenRef }) {
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${side === 'sell' ? 'Sell' : 'Buy'} ${token.symbol} on ${token.chain}. Change token`}
-      scaleTo={0.95}
+      scaleTo={0.97}
       onPress={() => {
         tap();
         router.push({ pathname: '/token-picker', params: { side } });
@@ -320,6 +406,28 @@ const useStyles = makeStyles((c) => ({
   },
   placeholder: {
     color: c.placeholder,
+  },
+  quoting: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  details: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    gap: 6,
+    borderRadius: 20,
+    backgroundColor: c.card,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  detailValue: {
+    color: c.text,
+    fontSize: 14,
+    fontWeight: '500',
   },
   meta: {
     color: c.textSecondary,

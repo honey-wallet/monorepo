@@ -7,7 +7,7 @@ export type Action = { label: string; icon: IconName; onPress: () => void };
 
 /**
  * A standard round header button (••• by default) that opens a list of actions,
- * using the same transitions.dev "Menu dropdown" motion as the sort menu.
+ * growing out of the button with the same motion as the sort menu.
  */
 export function ActionMenu({
   actions,

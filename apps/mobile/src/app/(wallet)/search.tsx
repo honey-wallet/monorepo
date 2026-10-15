@@ -126,7 +126,7 @@ export default function SearchScreen() {
                   <PressableScale
                     accessibilityLabel={editing ? 'Done editing' : 'Edit favorites'}
                     hitSlop={10}
-                    scaleTo={0.9}
+                    scaleTo={0.97}
                     onPress={() => {
                       tap();
                       setEditing((v) => !v);
@@ -168,7 +168,7 @@ export default function SearchScreen() {
                           <PressableScale
                             accessibilityLabel={`Remove ${token.symbol} from favorites`}
                             hitSlop={8}
-                            scaleTo={0.85}
+                            scaleTo={0.97}
                             onPress={() => {
                               tap();
                               toggleFavorite(token.symbol);

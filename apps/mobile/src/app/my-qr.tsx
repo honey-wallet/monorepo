@@ -5,6 +5,7 @@ import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextsReveal } from '@/components/motion/TextsReveal';
+import { TiltCard } from '@/components/motion/TiltCard';
 import { TokenIcon } from '@/components/wallet/parts';
 import { QRCode } from '@/components/wallet/QRCode';
 import { SheetScreen } from '@/components/wallet/Sheet';
@@ -57,7 +58,8 @@ export default function MyQRSheet() {
           </Text>
         }
       />
-      <View style={styles.qr}>
+      {/* Press and drag to tilt the code toward your finger; it rests flat to scan. */}
+      <TiltCard style={styles.qr}>
         <QRCode
           value={`ethereum:${ADDRESS}`}
           size={QR_SIZE}
@@ -68,7 +70,7 @@ export default function MyQRSheet() {
             </View>
           }
         />
-      </View>
+      </TiltCard>
 
       <Pressable onPress={copy} style={styles.addressBox}>
         <View style={styles.addressLabelRow}>

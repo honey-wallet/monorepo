@@ -1,10 +1,10 @@
-// Motion: transitions.dev "Like button" (https://transitions.dev), ported to
-// Reanimated. On like the heart fills (150ms), pops 1 → 0.82 → 1 (350ms, overshoot)
-// and eight particles fly 20px out and fade (600ms). Unliking only reverses the fill.
+// Motion: favouriting a token is occasional, so it earns a small moment of delight,
+// kept quiet: the heart fills (150ms), dips to 0.9 and settles back to 1 (250ms,
+// ease-out, no overshoot), and eight particles drift 16px out and fade (400ms).
+// Unliking only reverses the fill. Under Reduce Motion only the fill crossfades.
 import { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -17,9 +17,8 @@ import { tap } from '@/lib/haptics';
 import { useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
-const POP_EASE = Easing.bezier(0.34, 1.96, 0.64, 1);
 const PARTICLES = 8;
-const DISTANCE = 20;
+const DISTANCE = 16;
 
 type Props = { liked: boolean; onToggle: () => void; size?: number };
 
@@ -38,11 +37,11 @@ export function LikeButton({ liked, onToggle, size = 24 }: Props) {
     tap();
     if (!liked && !reduceMotion) {
       scale.value = withSequence(
-        withTiming(0.82, { duration: DURATION.medium * 0.3 }),
-        withTiming(1, { duration: DURATION.medium * 0.7, easing: POP_EASE }),
+        withTiming(0.9, { duration: DURATION.micro, easing: EASE.press }),
+        withTiming(1, { duration: DURATION.medium - DURATION.micro, easing: EASE.smoothOut }),
       );
       burst.value = 0;
-      burst.value = withTiming(1, { duration: 600, easing: Easing.out(Easing.quad) });
+      burst.value = withTiming(1, { duration: DURATION.verySlow, easing: EASE.smoothOut });
     }
     onToggle();
   };

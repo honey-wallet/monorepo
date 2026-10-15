@@ -1,12 +1,13 @@
-// Motion: transitions.dev "Skeleton loader and reveal" (https://transitions.dev),
-// ported to Reanimated. Placeholder bars pulse (1000ms, down to 0.5 opacity), then the
-// skeleton and the real content cross-fade over 400ms. The 2px blur is omitted.
+// Motion: placeholder bars breathe between full and half opacity on a steady 1000ms
+// cycle, then the skeleton and the real content crossfade (200ms, ease) so the
+// content doesn't pop in. Under Reduce Motion the pulse (decorative) stops; the
+// crossfade stays because it has no movement.
 import { type ReactNode, useEffect } from 'react';
 import { type DimensionValue, View } from 'react-native';
 import Animated, {
-  Easing,
   FadeIn,
   FadeOut,
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -14,9 +15,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useTheme } from '@/theme';
-import { DURATION } from '@/theme/motion';
+import { DURATION, EASE } from '@/theme/motion';
 
-const REVEAL = Easing.inOut(Easing.ease);
+const PULSE = { duration: 500, easing: EASE.ease } as const;
+const REVEAL = { duration: DURATION.fast, easing: EASE.ease } as const;
 
 /** A pulsing placeholder bar. */
 export function SkeletonBar({
@@ -33,7 +35,7 @@ export function SkeletonBar({
   const opacity = useSharedValue(1);
   useEffect(() => {
     if (reduceMotion) return;
-    opacity.value = withRepeat(withTiming(0.5, { duration: 500, easing: REVEAL }), -1, true);
+    opacity.value = withRepeat(withTiming(0.5, PULSE), -1, true);
   }, [reduceMotion, opacity]);
   const style = useAnimatedStyle(() => ({ opacity: opacity.value }));
   return (
@@ -56,11 +58,21 @@ export function SkeletonReveal({
   return (
     <View>
       {loading ? (
-        <Animated.View key="skeleton" exiting={FadeOut.duration(DURATION.slow).easing(REVEAL)}>
+        <Animated.View
+          key="skeleton"
+          exiting={FadeOut.duration(REVEAL.duration)
+            .easing(REVEAL.easing)
+            .reduceMotion(ReduceMotion.Never)}
+        >
           {skeleton}
         </Animated.View>
       ) : (
-        <Animated.View key="content" entering={FadeIn.duration(DURATION.slow).easing(REVEAL)}>
+        <Animated.View
+          key="content"
+          entering={FadeIn.duration(REVEAL.duration)
+            .easing(REVEAL.easing)
+            .reduceMotion(ReduceMotion.Never)}
+        >
           {children}
         </Animated.View>
       )}

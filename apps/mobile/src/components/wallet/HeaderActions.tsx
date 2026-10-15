@@ -29,7 +29,7 @@ export function HeaderActions({
         accessibilityLabel={
           hideBalance ? 'Balance hidden. Deposit more' : `Balance ${balance}. Deposit more`
         }
-        scaleTo={0.94}
+        scaleTo={0.97}
         onPress={() => {
           tap();
           router.push('/balance');

@@ -1,6 +1,7 @@
-// Motion: transitions.dev "Tabs sliding" (https://transitions.dev), ported to
-// Reanimated, in an underline style: a honey bar slides and resizes to the selected
-// tab (250ms, smooth ease-out) and snaps into place on first paint.
+// Tab switches happen tens of times a day, so the motion stays quick: the honey
+// underline glides to the selected tab and resizes to it in 200ms on ease-in-out (an
+// on-screen move). Each move starts from wherever the bar is, so rapid taps never
+// jump; it snaps into place on first paint and under Reduce Motion.
 import { useEffect, useRef, useState } from 'react';
 import { type LayoutRectangle, Pressable, Text, View } from 'react-native';
 import Animated, {
@@ -14,7 +15,7 @@ import { tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
-const SLIDE = { duration: DURATION.fast, easing: EASE.smoothOut };
+const SLIDE = { duration: DURATION.fast, easing: EASE.inOut };
 
 /** Above this many tabs the symbols are dropped, so every label still fits. */
 const MAX_WITH_ICONS = 3;

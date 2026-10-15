@@ -27,7 +27,7 @@ const light = {
   // Wallet: honey-tinted tiles and accent text, like Uniswap's pink surfaces.
   accentSurface: '#FFF3D1',
   accentText: '#8F6200',
-  // Segmented tabs (transitions.dev "Tabs sliding"): flat bar, lighter sliding pill.
+  // Segmented tabs: flat bar, lighter sliding pill.
   tabsBar: '#F0F0F0',
   tabsPill: '#FFFFFF',
   // Floating nav: lifted above page content with a shadow and hairline edge.

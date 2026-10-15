@@ -1,5 +1,5 @@
 import type { Href } from 'expo-router';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useMemo } from 'react';
 import {
   Pressable,
   ScrollView,
@@ -9,6 +9,13 @@ import {
   View,
   type ViewStyle,
 } from 'react-native';
+import Animated, {
+  useAnimatedProps,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Mask, Path, Rect, Stop, SvgXml } from 'react-native-svg';
 import { Icon, type IconName } from '@/components/Icon';
@@ -17,6 +24,7 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { useEntrancePlaying } from '@/components/motion/Rise';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { TOKEN_LOGOS } from '@/components/wallet/token-logos';
 import { tap } from '@/lib/haptics';
@@ -24,6 +32,7 @@ import { BALANCE, CHAINS, type Chain, chainSymbol, formatUsd, type Token } from 
 import { goBackOr } from '@/lib/navigation';
 import { HIDDEN_AMOUNT, toggleHideBalance, useSettings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
+import { DURATION, EASE } from '@/theme/motion';
 
 /**
  * The token's full-colour coin logo; unknown tokens get a generic coin. With
@@ -156,9 +165,17 @@ export function LabeledRule({ label }: { label: string }) {
   );
 }
 
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+
+/** The sparkline draws in just after the balance beside it has landed. */
+const SPARK_DRAW = { duration: 600, easing: EASE.smoothOut } as const;
+const SPARK_DELAY = DURATION.stagger * 2;
+
 /**
  * Balance sparkline after Uniswap: a thin line that fades in from the left, over
- * a faint glow that fades the same way, so the chart has no hard left edge.
+ * a faint glow that fades the same way, so the chart has no hard left edge. On a
+ * screen's first-visit entrance the line draws itself in left to right and the glow
+ * follows; under Reduce Motion it fades in whole.
  */
 export function Sparkline({
   data,
@@ -170,17 +187,45 @@ export function Sparkline({
   height: number;
 }) {
   const c = useTheme();
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const span = max - min || 1;
-  const points = data.map((v, i) => [
-    (i / (data.length - 1)) * width,
-    3 + (1 - (v - min) / span) * (height - 6),
-  ]);
-  const line = points
-    .map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`)
-    .join(' ');
+  const reduceMotion = useReducedMotion();
+  const { play, revealed } = useEntrancePlaying();
+  const { line, length } = useMemo(() => {
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const span = max - min || 1;
+    const points = data.map((v, i) => [
+      (i / (data.length - 1)) * width,
+      3 + (1 - (v - min) / span) * (height - 6),
+    ]);
+    let len = 0;
+    for (let i = 1; i < points.length; i++) {
+      len += Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]);
+    }
+    return {
+      line: points.map(([x, y], i) => `${i ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`).join(' '),
+      length: len,
+    };
+  }, [data, width, height]);
   const color = data[data.length - 1] < data[0] ? c.error : c.success;
+
+  const drawn = useSharedValue(play ? 0 : 1);
+  useEffect(() => {
+    if (!play || !revealed) return;
+    drawn.value = withDelay(
+      SPARK_DELAY,
+      withTiming(1, reduceMotion ? { duration: DURATION.fast, easing: EASE.ease } : SPARK_DRAW),
+    );
+  }, [play, revealed, reduceMotion, drawn]);
+  const lineProps = useAnimatedProps(() =>
+    reduceMotion
+      ? { strokeDashoffset: 0, strokeOpacity: drawn.value }
+      : { strokeDashoffset: length * (1 - drawn.value), strokeOpacity: 1 },
+  );
+  // The glow trails the line, filling in over the back half of the draw.
+  const glowProps = useAnimatedProps(() => ({
+    opacity: reduceMotion ? drawn.value : Math.max(0, drawn.value * 2 - 1),
+  }));
+
   return (
     <Svg width={width} height={height}>
       <Defs>
@@ -201,18 +246,21 @@ export function Sparkline({
           <Rect width={width} height={height} fill="url(#sparkMaskFade)" />
         </Mask>
       </Defs>
-      <Path
+      <AnimatedPath
         d={`${line} L${width} ${height} L0 ${height} Z`}
         fill="url(#sparkGlow)"
         mask="url(#sparkMask)"
+        animatedProps={glowProps}
       />
-      <Path
+      <AnimatedPath
         d={line}
         stroke="url(#sparkFadeIn)"
         strokeWidth={1.5}
         fill="none"
         strokeLinejoin="round"
         strokeLinecap="round"
+        strokeDasharray={[length, length]}
+        animatedProps={lineProps}
       />
     </Svg>
   );
@@ -286,7 +334,7 @@ export function HeaderIconButton({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={label}
-      scaleTo={0.9}
+      scaleTo={0.97}
       onPress={() => {
         tap();
         onPress();

@@ -5,3 +5,8 @@ import { getProfile } from '@/lib/profile';
 export function tap() {
   if (getProfile().haptics) Haptics.selectionAsync();
 }
+
+/** The success notification buzz, for a finished send or swap. */
+export function success() {
+  if (getProfile().haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+}

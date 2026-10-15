@@ -42,7 +42,7 @@ export default function AdvancedSheet() {
       <SheetRow
         icon="gas"
         title="Network cost"
-        // The value swaps (transitions.dev "Text states swap") when it changes.
+        // The value crossfades with a small lift when it changes.
         accessory={
           <View style={styles.trailing}>
             <TextSwap text={networkCost === 'auto' ? 'Auto' : 'Custom'} style={styles.value} />

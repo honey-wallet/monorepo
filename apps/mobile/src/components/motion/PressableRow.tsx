@@ -1,5 +1,6 @@
-// Press feedback for list rows: the row's background fades to a highlight on the
-// transitions.dev quick clock and fades back on the fast clock (smooth ease-out).
+// Press feedback for list rows. Rows are tapped constantly, so the highlight is near
+// instant: it appears in 80ms and fades back in 150ms (plain ease, since only the
+// colour changes).
 import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -25,11 +26,11 @@ export function PressableRow({ style, onPressIn, onPressOut, ...props }: Props) 
     <AnimatedPressable
       {...props}
       onPressIn={(event) => {
-        pressed.value = withTiming(1, { duration: DURATION.quick, easing: EASE.smoothOut });
+        pressed.value = withTiming(1, { duration: DURATION.micro, easing: EASE.ease });
         onPressIn?.(event);
       }}
       onPressOut={(event) => {
-        pressed.value = withTiming(0, { duration: DURATION.fast, easing: EASE.smoothOut });
+        pressed.value = withTiming(0, { duration: DURATION.quick, easing: EASE.ease });
         onPressOut?.(event);
       }}
       style={[style, animatedStyle]}

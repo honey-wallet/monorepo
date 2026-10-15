@@ -1,11 +1,12 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
+import { LearnMore } from '@/components/motion/LearnMore';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION } from '@/theme/motion';
+import { DURATION, EASE } from '@/theme/motion';
 
 /**
  * The intro banner at the top of a Trade product (Perps, Predict): a graphic, a
@@ -30,8 +31,12 @@ export function IntroBanner({
 }) {
   const styles = useStyles();
   const c = useTheme();
+  const [pressed, setPressed] = useState(false);
   return (
-    <Animated.View exiting={FadeOut.duration(DURATION.quick)} style={styles.banner}>
+    <Animated.View
+      exiting={FadeOut.duration(DURATION.quick).easing(EASE.ease)}
+      style={styles.banner}
+    >
       <PressableScale
         accessibilityRole="button"
         accessibilityHint={`Opens a short guide: ${link}`}
@@ -40,20 +45,24 @@ export function IntroBanner({
           tap();
           onOpen();
         }}
+        onPressIn={() => setPressed(true)}
+        onPressOut={() => setPressed(false)}
         style={styles.open}
       >
         <View style={styles.graphic}>{graphic}</View>
         <View style={styles.flex}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.body}>{body}</Text>
-          <Text style={styles.link}>{link} ›</Text>
+          {/* The chevron draws back while the banner is held. */}
+          <View style={styles.linkRow}>
+            <LearnMore label={link} active={pressed} color={c.accentText} style={styles.link} />
+          </View>
         </View>
       </PressableScale>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel="Dismiss"
         hitSlop={10}
-        scaleTo={0.88}
         onPress={() => {
           tap();
           onDismiss();
@@ -106,9 +115,11 @@ const useStyles = makeStyles((c) => ({
     fontSize: 14,
     lineHeight: 19,
   },
-  link: {
+  linkRow: {
     marginTop: 6,
-    color: c.accentText,
+    alignSelf: 'flex-start',
+  },
+  link: {
     fontSize: 14,
     fontWeight: '500',
   },

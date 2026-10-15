@@ -1,35 +1,22 @@
-// Motion: transitions.dev "Toggle" (https://transitions.dev), ported to Reanimated.
-// The thumb travels 1px past the end, swings back and settles (55% / 80% / 100% of
-// 350ms); the track colour switches at once. No animation on first render.
+// Motion: the thumb slides on a critically damped spring (no overshoot), so a quick
+// double-tap reverses it from wherever it is; the track colour switches at once. No
+// animation on first render; under Reduce Motion the thumb jumps.
 import { useEffect, useRef } from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withSequence,
-  withTiming,
+  withSpring,
 } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION, EASE } from '@/theme/motion';
+import { SPRING } from '@/theme/motion';
 
 const WIDTH = 52;
 const THUMB = 26;
 const PAD = 3;
 const TRAVEL = WIDTH - THUMB - PAD * 2;
-const OVERSHOOT = 1;
-const TOGGLE_DURATION = DURATION.medium;
-
-function travel(to: number, from: number) {
-  const past = to > from ? to + OVERSHOOT : to - OVERSHOOT;
-  const ease = { easing: EASE.bounce };
-  return withSequence(
-    withTiming(past, { duration: TOGGLE_DURATION * 0.55, ...ease }),
-    withTiming(to, { duration: TOGGLE_DURATION * 0.25, ...ease }),
-    withTiming(to, { duration: TOGGLE_DURATION * 0.2 }),
-  );
-}
 
 type Props = {
   value: boolean;
@@ -49,7 +36,7 @@ export function Toggle({ value, onValueChange, accessibilityLabel }: Props) {
     const to = value ? TRAVEL : 0;
     // Skip the first run so switches don't animate when the screen opens.
     if (!mounted.current || reduceMotion) x.value = to;
-    else x.value = travel(to, x.value);
+    else x.value = withSpring(to, SPRING.ui);
     mounted.current = true;
   }, [value, reduceMotion, x]);
 

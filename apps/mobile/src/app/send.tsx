@@ -50,7 +50,7 @@ export default function SendSheet() {
         <PressableScale
           accessibilityLabel="Scan a QR code"
           hitSlop={8}
-          scaleTo={0.9}
+          scaleTo={0.97}
           onPress={() => {
             tap();
             router.push('/scan');

@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
-import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
+import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SuccessCheck } from '@/components/motion/SuccessCheck';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import {
@@ -16,33 +17,44 @@ import {
   trimNumber,
 } from '@/components/wallet/Keypad';
 import { TokenIcon } from '@/components/wallet/parts';
+import { SearchField } from '@/components/wallet/SearchField';
 import { closeSheet, SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
-import { tap } from '@/lib/haptics';
+import { TokenList } from '@/components/wallet/TokenList';
+import { useCopy } from '@/lib/copy';
+import { success, tap } from '@/lib/haptics';
 import {
+  type Chain,
   chainSymbol,
   formatBalance,
   formatUsd,
-  marketOf,
+  HOLDINGS,
   RECENT_RECIPIENTS,
   shortAddress,
-  TOKENS,
 } from '@/lib/mock-wallet';
 import { showDemoToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 
-type Page = 'amount' | 'review';
-const PAGES: Page[] = ['amount', 'review'];
+type Page = 'pick' | 'amount' | 'review' | 'sent';
+/** In slide order: the token list sits to the left of the amount, so it opens from there. */
+const PAGES: Page[] = ['pick', 'amount', 'review', 'sent'];
 type Unit = 'usd' | 'token';
-const WALLET_TOKENS = TOKENS.filter((t) => !t.hidden);
+/** What you can send: one choice per token per network you hold it on, largest first. */
+const SENDABLE = HOLDINGS.filter((h) => h.amount > 0);
 
-/** Who a send goes to: a saved label, or a shortened address. */
+/** Who a send goes to: a saved label, or a shortened address, plus the full address to copy. */
 function describeRecipient(to: string) {
   const known = RECENT_RECIPIENTS.find(
     (r) => r.label === to || r.address.toLowerCase() === to.toLowerCase(),
   );
-  if (known?.label) return { title: known.label, subtitle: shortAddress(known.address, 8, 6) };
+  if (known?.label) {
+    return {
+      title: known.label,
+      subtitle: shortAddress(known.address, 8, 6),
+      address: known.address,
+    };
+  }
   const long = to.length > 18;
-  return { title: long ? shortAddress(to, 8, 6) : to || 'Unknown', subtitle: null };
+  return { title: long ? shortAddress(to, 8, 6) : to || 'Unknown', subtitle: null, address: to };
 }
 
 /** Send, step two: how much of which token, then a review before sending. */
@@ -53,16 +65,18 @@ export default function SendAmountSheet() {
   }>();
   const styles = useStyles();
   const c = useTheme();
-  const [symbol, setSymbol] = useState(
-    WALLET_TOKENS.some((t) => t.symbol === initial) ? initial : 'USDC',
-  );
+  // The largest holding of the requested token, so its network is the sensible default.
+  const [picked, setPicked] = useState(() => {
+    const first = SENDABLE.find((h) => h.symbol === initial) ?? SENDABLE[0];
+    return { symbol: first.symbol, chain: first.chain };
+  });
+  const { symbol, chain } = picked;
   const [unit, setUnit] = useState<Unit>('usd');
   const [amount, setAmount] = useState('');
-  const [picking, setPicking] = useState(false);
   const [page, setPage] = useState<Page>('amount');
   const [area, setArea] = useState(0);
 
-  const token = WALLET_TOKENS.find((t) => t.symbol === symbol) ?? WALLET_TOKENS[0];
+  const token = SENDABLE.find((h) => h.symbol === symbol && h.chain === chain) ?? SENDABLE[0];
   const price = token.usd / token.amount;
   const value = Number(amount) || 0;
   const tokenValue = unit === 'usd' ? value / price : value;
@@ -72,7 +86,7 @@ export default function SendAmountSheet() {
   const label = !value ? 'Enter an amount' : insufficient ? 'Insufficient balance' : 'Review';
 
   const recipient = describeRecipient(to);
-  const chain = marketOf(symbol)?.chain ?? 'Ethereum';
+  const { copied, copy } = useCopy(recipient.address);
 
   const go = (next: Page) => {
     tap();
@@ -81,19 +95,28 @@ export default function SendAmountSheet() {
 
   const flipUnit = () => {
     tap();
-    setPicking(false);
     if (value) setAmount(unit === 'usd' ? trimNumber(tokenValue, 8) : trimNumber(usdValue, 2));
     setUnit(unit === 'usd' ? 'token' : 'usd');
   };
 
-  const pick = (next: string) => {
+  // The token list is a page of this sheet rather than a sheet over it: a sheet
+  // stacked on a full-height sheet leaves it stretched under the status bar on iOS 26.
+  const [query, setQuery] = useState('');
+  const choose = (next: { symbol: string; chain: Chain }) => {
     tap();
-    setSymbol(next);
+    setPicked(next);
     setAmount('');
-    setPicking(false);
+    setQuery('');
+    setPage('amount');
   };
 
   const send = () => {
+    success();
+    setPage('sent');
+  };
+
+  const finish = () => {
+    tap();
     showDemoToast('nothing was sent');
     router.dismissAll();
   };
@@ -101,10 +124,11 @@ export default function SendAmountSheet() {
   return (
     // Each page keeps its own button so it slides in with that page's content.
     <SheetScreen
-      title={page === 'review' ? 'Review send' : 'Send'}
+      title={page === 'review' ? 'Review send' : page === 'pick' ? 'Choose token' : 'Send'}
       size="fill"
       onBack={() => {
-        if (page === 'review') go('amount');
+        if (page === 'review' || page === 'pick') go('amount');
+        else if (page === 'sent') finish();
         else {
           tap();
           closeSheet();
@@ -114,7 +138,23 @@ export default function SendAmountSheet() {
       <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
         <ContentSwap id={page} index={PAGES.indexOf(page)}>
           <View style={{ height: area }}>
-            {page === 'amount' ? (
+            {page === 'pick' ? (
+              <>
+                <SearchField
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder="Search your tokens"
+                  style={styles.pickSearch}
+                />
+                <ScrollView
+                  style={styles.flex}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                >
+                  <TokenList query={query} sending onChoose={choose} />
+                </ScrollView>
+              </>
+            ) : page === 'amount' ? (
               <>
                 <View style={styles.toCard}>
                   <Text style={styles.toLabel}>To</Text>
@@ -123,52 +163,69 @@ export default function SendAmountSheet() {
                     <Text style={styles.toTitle} numberOfLines={1}>
                       {recipient.title}
                     </Text>
-                    {recipient.subtitle ? (
-                      <Text style={styles.toSubtitle}>{recipient.subtitle}</Text>
+                    {/* Swaps to a confirmation for a moment after copying. */}
+                    {recipient.subtitle || copied ? (
+                      <View style={styles.toSubtitleLine}>
+                        <TextSwap
+                          text={copied ? 'Address copied' : (recipient.subtitle ?? '')}
+                          style={[styles.toSubtitle, copied && styles.toCopied]}
+                        />
+                      </View>
                     ) : null}
                   </View>
+                  {recipient.address ? (
+                    <PressableScale
+                      accessibilityRole="button"
+                      accessibilityLabel={copied ? 'Address copied' : 'Copy address'}
+                      hitSlop={8}
+                      onPress={copy}
+                      style={styles.copy}
+                    >
+                      <IconSwap
+                        name={copied ? 'check' : 'copy'}
+                        size={15}
+                        color={copied ? c.success : c.textSecondary}
+                      />
+                    </PressableScale>
+                  ) : null}
                 </View>
 
                 <View style={styles.tokenBar}>
                   <PressableScale
                     accessibilityRole="button"
-                    accessibilityLabel={`Token: ${symbol}. Change token`}
-                    accessibilityState={{ expanded: picking }}
+                    accessibilityLabel={`Sending ${symbol} on ${chain}. Change token or network`}
                     onPress={() => {
                       tap();
-                      setPicking((v) => !v);
+                      setPage('pick');
                     }}
                     style={styles.pill}
                   >
-                    <TokenIcon symbol={symbol} size={26} />
-                    <Text style={styles.pillLabel}>{symbol}</Text>
-                    <AccordionChevron open={picking} size={12} color={c.textSecondary} />
+                    <TokenIcon symbol={symbol} chain={chain} size={26} ring={c.sheet} />
+                    <View>
+                      <Text style={styles.pillLabel}>{symbol}</Text>
+                      <Text style={styles.pillChain}>{chain}</Text>
+                    </View>
+                    <Icon name="chevronDown" size={12} color={c.textSecondary} />
                   </PressableScale>
-                  <TextSwap
-                    text={`Balance: ${formatBalance(token.amount)} ${symbol}`}
-                    style={styles.balance}
-                  />
-                </View>
-                <Accordion open={picking}>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.chooser}
+                  {/* Tapping the balance sends all of it, like Max. */}
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel={`Balance ${formatBalance(token.amount)} ${symbol}`}
+                    accessibilityHint="Enters your whole balance"
+                    hitSlop={10}
+                    onPress={() => {
+                      tap();
+                      setAmount(
+                        unit === 'usd' ? trimNumber(token.usd, 2) : trimNumber(token.amount, 8),
+                      );
+                    }}
                   >
-                    {WALLET_TOKENS.map((t) => (
-                      <PressableScale
-                        key={t.symbol}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: t.symbol === symbol }}
-                        onPress={() => pick(t.symbol)}
-                        style={[styles.choice, t.symbol === symbol && styles.choiceActive]}
-                      >
-                        <TokenIcon symbol={t.symbol} size={22} />
-                        <Text style={styles.choiceLabel}>{t.symbol}</Text>
-                      </PressableScale>
-                    ))}
-                  </ScrollView>
-                </Accordion>
+                    <TextSwap
+                      text={`Balance: ${formatBalance(token.amount)} ${symbol}`}
+                      style={styles.balance}
+                    />
+                  </PressableScale>
+                </View>
 
                 <View style={styles.amountArea}>
                   <View style={styles.amountRow}>
@@ -214,6 +271,22 @@ export default function SendAmountSheet() {
                   style={styles.cta}
                 />
               </>
+            ) : page === 'sent' ? (
+              // A rare, earned moment: the check draws on, then the details follow.
+              <>
+                <View style={styles.flex} />
+                <View style={styles.sent}>
+                  <SuccessCheck />
+                  <Text style={styles.sentTitle} accessibilityRole="header">
+                    Sent
+                  </Text>
+                  <Text style={styles.sentDetail}>
+                    {formatBalance(tokenValue)} {symbol} on {chain} to {recipient.title}
+                  </Text>
+                </View>
+                <View style={styles.flex} />
+                <PillButton label="Done" onPress={finish} style={styles.cta} />
+              </>
             ) : (
               <>
                 <View style={styles.summary}>
@@ -222,7 +295,7 @@ export default function SendAmountSheet() {
                     {formatBalance(tokenValue)} {symbol}
                   </Text>
                   <View style={styles.summaryUsd}>
-                    <TokenIcon symbol={symbol} size={20} />
+                    <TokenIcon symbol={symbol} chain={chain} size={20} ring={c.sheet} />
                     <Text style={styles.summaryUsdLabel}>{formatUsd(usdValue)}</Text>
                   </View>
                 </View>
@@ -270,6 +343,9 @@ const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
   },
+  pickSearch: {
+    marginBottom: 12,
+  },
   toCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -289,8 +365,26 @@ const useStyles = makeStyles((c) => ({
     fontSize: 16,
     fontWeight: '500',
   },
-  toSubtitle: {
+  // Fixed height, so the outgoing and incoming text overlap rather than stack.
+  toSubtitleLine: {
     marginTop: 1,
+    height: 18,
+  },
+  toCopied: {
+    color: c.success,
+  },
+  copy: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.raised,
+  },
+  toSubtitle: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
     color: c.textSecondary,
     fontSize: 13,
   },
@@ -304,43 +398,26 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    height: 40,
-    paddingLeft: 6,
+    // Two lines: the token, and the network it's sent from.
+    height: 46,
+    paddingLeft: 8,
     paddingRight: 12,
-    borderRadius: 20,
+    borderRadius: 23,
     borderWidth: 1,
     borderColor: c.divider,
   },
   pillLabel: {
     color: c.text,
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '600',
+  },
+  pillChain: {
+    color: c.textSecondary,
+    fontSize: 12,
   },
   balance: {
     color: c.textSecondary,
     fontSize: 14,
-  },
-  chooser: {
-    gap: 8,
-    paddingTop: 10,
-  },
-  choice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 36,
-    paddingLeft: 6,
-    paddingRight: 12,
-    borderRadius: 18,
-    backgroundColor: c.raised,
-  },
-  choiceActive: {
-    backgroundColor: c.accentSurface,
-  },
-  choiceLabel: {
-    color: c.text,
-    fontSize: 15,
-    fontWeight: '500',
   },
   amountArea: {
     flex: 1,
@@ -421,6 +498,22 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 16,
     fontWeight: '600',
+  },
+  sent: {
+    alignItems: 'center',
+  },
+  sentTitle: {
+    marginTop: 16,
+    color: c.text,
+    fontSize: 22,
+    fontWeight: '600',
+  },
+  sentDetail: {
+    marginTop: 6,
+    color: c.textSecondary,
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: 'center',
   },
   note: {
     marginBottom: 6,

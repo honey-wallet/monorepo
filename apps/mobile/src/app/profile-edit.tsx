@@ -85,7 +85,7 @@ export default function ProfileEditSheet() {
             accessibilityLabel="More options"
             accessibilityState={{ expanded: menuOpen }}
             hitSlop={12}
-            scaleTo={0.9}
+            scaleTo={0.97}
             onPress={() => {
               tap();
               setMenuOpen((v) => !v);
@@ -119,7 +119,7 @@ export default function ProfileEditSheet() {
             <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Change profile photo"
-              scaleTo={0.95}
+              scaleTo={0.97}
               onPress={choosePhoto}
               style={styles.avatarRing}
             >

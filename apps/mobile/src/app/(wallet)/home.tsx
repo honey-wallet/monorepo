@@ -1,20 +1,29 @@
 import { type Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
-import Animated, { Keyframe } from 'react-native-reanimated';
+import { Pressable, Text, View } from 'react-native';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  Keyframe,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from '@/components/Icon';
 import { Accordion } from '@/components/motion/Accordion';
+import { AvatarGroup } from '@/components/motion/AvatarGroup';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap, Swap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { Entrance, Rise } from '@/components/motion/Rise';
 import { TextSwap } from '@/components/motion/TextSwap';
+import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import {
   BalanceAmount,
   EmptyState,
-  HeaderIconButton,
   LabeledDivider,
   Sparkline,
   TokenIcon,
@@ -32,6 +41,7 @@ import {
   shortAddress,
   TOKENS,
 } from '@/lib/mock-wallet';
+import { useUnreadNotifications } from '@/lib/notifications';
 import { useProfile } from '@/lib/profile';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
 import { useActiveWallet } from '@/lib/wallets';
@@ -56,6 +66,8 @@ export default function HomeScreen() {
   const profile = useProfile();
   const [section, setSection] = useState<(typeof SECTIONS)[number]>('Tokens');
   const [showHidden, setShowHidden] = useState(false);
+  const [promoPressed, setPromoPressed] = useState(false);
+  const unread = useUnreadNotifications();
   const wallet = useActiveWallet();
   const isMain = wallet.id === 'main';
   const { copied, copy: copyAddress } = useCopy(wallet.address, 'Address copied');
@@ -71,218 +83,281 @@ export default function HomeScreen() {
     router.push(href);
   };
 
-  return (
-    <View style={styles.root}>
-      <ScrollView
-        style={styles.root}
-        contentContainerStyle={{
-          paddingTop: insets.top + 12,
-          paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 24,
-        }}
-      >
-        <StatusBar style="auto" />
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
-        {/* Profile, wallet switcher and shortcuts */}
-        <View style={[styles.row, styles.gutter]}>
-          <View style={styles.identity}>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel="Switch wallet"
-              scaleTo={0.94}
-              onPress={() => open('/wallets')}
-            >
-              <Swap id={wallet.id} size={48}>
-                {isMain ? (
-                  <Avatar
-                    name={wallet.label}
-                    size={48}
-                    uri={profile.photo}
-                    seed={profile.avatarSeed}
-                  />
-                ) : (
-                  <Avatar name={wallet.label} size={48} seed={wallet.id} />
-                )}
-              </Swap>
-            </PressableScale>
-            <View style={styles.flex}>
-              <View style={styles.nameRow}>
-                <HandleName
-                  name={wallet.label}
-                  handle={isMain ? handleFor(profile.name) : undefined}
-                />
+  return (
+    <Entrance id="home">
+      <View style={styles.root}>
+        <Animated.ScrollView
+          style={styles.root}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={{
+            paddingTop: insets.top + 12,
+            paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 24,
+          }}
+        >
+          <StatusBar style="auto" />
+
+          {/* Profile, wallet switcher and shortcuts (above the balance, so tooltips overlap it) */}
+          <Rise index={0} style={styles.header}>
+            <View style={[styles.row, styles.gutter]}>
+              <View style={styles.identity}>
                 <PressableScale
+                  accessibilityRole="button"
                   accessibilityLabel="Switch wallet"
-                  hitSlop={10}
-                  scaleTo={0.85}
+                  scaleTo={0.97}
                   onPress={() => open('/wallets')}
                 >
-                  <Icon name="chevronDown" size={13} color={c.textSecondary} />
+                  <Swap id={wallet.id} size={48}>
+                    {isMain ? (
+                      <Avatar
+                        name={wallet.label}
+                        size={48}
+                        uri={profile.photo}
+                        seed={profile.avatarSeed}
+                      />
+                    ) : (
+                      <Avatar name={wallet.label} size={48} seed={wallet.id} />
+                    )}
+                  </Swap>
+                </PressableScale>
+                <View style={styles.flex}>
+                  <View style={styles.nameRow}>
+                    <HandleName
+                      name={wallet.label}
+                      handle={isMain ? handleFor(profile.name) : undefined}
+                    />
+                    <PressableScale
+                      accessibilityLabel="Switch wallet"
+                      hitSlop={10}
+                      scaleTo={0.97}
+                      onPress={() => open('/wallets')}
+                    >
+                      <Icon name="chevronDown" size={13} color={c.textSecondary} />
+                    </PressableScale>
+                  </View>
+                  <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
+                    <TextSwap text={shortAddress(wallet.address)} style={styles.address} />
+                    <IconSwap name={copied ? 'check' : 'copy'} size={13} color={c.textSecondary} />
+                  </Pressable>
+                </View>
+              </View>
+              <View style={styles.shortcuts}>
+                <HeaderShortcut
+                  icon="bell"
+                  label="Notifications"
+                  badge={unread}
+                  onPress={() => router.push('/notifications')}
+                />
+                <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
+                <HeaderShortcut
+                  icon="settings"
+                  label="Settings"
+                  onPress={() => router.push('/settings')}
+                />
+              </View>
+            </View>
+          </Rise>
+
+          {/* Balance and today's change */}
+          <Rise index={1}>
+            <View style={[styles.row, styles.gutter, styles.balanceRow]}>
+              <View style={styles.flex}>
+                {/* Tap the balance to hide or show it. */}
+                <BalanceAmount style={styles.balance} fractionStyle={styles.cents} />
+                <PressableScale
+                  style={styles.changeRow}
+                  hitSlop={6}
+                  scaleTo={0.98}
+                  onPress={() => open('/portfolio')}
+                >
+                  <Icon name={BALANCE_CHANGE < 0 ? 'down' : 'up'} size={9} color={changeColor} />
+                  <Text style={styles.changeText}>
+                    <Text style={styles.changeAmount}>
+                      {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(BALANCE_CHANGE))} (
+                      {Math.abs(changePct).toFixed(2)}%)
+                    </Text>{' '}
+                    today
+                  </Text>
+                  <Icon name="chevronRight" size={11} color={c.textSecondary} />
                 </PressableScale>
               </View>
-              <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
-                <TextSwap text={shortAddress(wallet.address)} style={styles.address} />
-                <IconSwap name={copied ? 'check' : 'copy'} size={13} color={c.textSecondary} />
-              </Pressable>
+              <PressableScale
+                accessibilityLabel="Portfolio"
+                scaleTo={0.97}
+                onPress={() => open('/portfolio')}
+              >
+                <Sparkline data={BALANCE_HISTORY} width={116} height={60} />
+              </PressableScale>
             </View>
-          </View>
-          <View style={styles.shortcuts}>
-            <HeaderIconButton
-              bare
-              icon="bell"
-              label="Notifications"
-              onPress={() => router.push('/notifications')}
-            />
-            <HeaderIconButton bare icon="scan" label="Scan" onPress={() => router.push('/scan')} />
-            <HeaderIconButton
-              bare
-              icon="settings"
-              label="Settings"
-              onPress={() => router.push('/settings')}
-            />
-          </View>
-        </View>
+          </Rise>
 
-        {/* Balance and today's change */}
-        <View style={[styles.row, styles.gutter, styles.balanceRow]}>
-          <View style={styles.flex}>
-            {/* Tap the balance to hide or show it. */}
-            <BalanceAmount style={styles.balance} fractionStyle={styles.cents} />
-            <PressableScale
-              style={styles.changeRow}
-              hitSlop={6}
-              scaleTo={0.98}
-              onPress={() => open('/portfolio')}
-            >
-              <Icon name={BALANCE_CHANGE < 0 ? 'down' : 'up'} size={9} color={changeColor} />
-              <Text style={styles.changeText}>
-                <Text style={styles.changeAmount}>
-                  {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(BALANCE_CHANGE))} (
-                  {Math.abs(changePct).toFixed(2)}%)
-                </Text>{' '}
-                today
-              </Text>
-              <Icon name="chevronRight" size={11} color={c.textSecondary} />
-            </PressableScale>
-          </View>
-          <PressableScale
-            accessibilityLabel="Portfolio"
-            scaleTo={0.97}
-            onPress={() => open('/portfolio')}
-          >
-            <Sparkline data={BALANCE_HISTORY} width={116} height={60} />
-          </PressableScale>
-        </View>
-
-        {/* Send / Receive / Buy / Sell */}
-        <View style={[styles.actions, styles.gutter]}>
-          {ACTIONS.map((action) => (
-            <PressableScale
-              key={action.label}
-              accessibilityRole="button"
-              onPress={() => open(action.href)}
-              style={styles.action}
-            >
-              <Icon name={action.icon} size={22} color={c.accentText} />
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </PressableScale>
-          ))}
-        </View>
-
-        {/* Promoted feature */}
-        <PressableScale
-          onPress={() => open({ pathname: '/earn/[symbol]', params: { symbol: 'USDC' } })}
-          scaleTo={0.98}
-          style={[styles.promo, styles.gutterMargin]}
-        >
-          <Text style={styles.promoText}>
-            Earn with a <Text style={styles.promoAccent}>Honey Jar</Text>
-          </Text>
-          <View style={styles.coins}>
-            {TOKENS.slice(0, 3).map((t, i) => (
-              <View key={t.symbol} style={[styles.coin, i > 0 && styles.coinOverlap]}>
-                <TokenIcon symbol={t.symbol} size={26} />
-              </View>
+          {/* Send / Receive / Buy / Sell, rising one after another */}
+          <View style={[styles.actions, styles.gutter]}>
+            {ACTIONS.map((action, i) => (
+              <Rise key={action.label} index={2 + i} style={styles.flex}>
+                <PressableScale
+                  accessibilityRole="button"
+                  onPress={() => open(action.href)}
+                  style={styles.action}
+                >
+                  <Icon name={action.icon} size={22} color={c.accentText} />
+                  <Text style={styles.actionLabel}>{action.label}</Text>
+                </PressableScale>
+              </Rise>
             ))}
           </View>
-          <Icon name="chevronRight" size={13} color={c.textSecondary} />
-        </PressableScale>
 
-        {/* Tokens / NFTs / Positions */}
-        <View style={[styles.sections, styles.gutter]}>
-          {SECTIONS.map((name) => (
+          {/* Promoted feature */}
+          <Rise index={6}>
             <PressableScale
-              key={name}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: section === name }}
-              hitSlop={8}
-              onPress={() => {
-                tap();
-                setSection(name);
-              }}
+              onPress={() => open({ pathname: '/earn/[symbol]', params: { symbol: 'USDC' } })}
+              onPressIn={() => setPromoPressed(true)}
+              onPressOut={() => setPromoPressed(false)}
+              scaleTo={0.98}
+              style={[styles.promo, styles.gutterMargin]}
             >
-              <Text style={[styles.section, section === name && styles.sectionActive]}>{name}</Text>
-            </PressableScale>
-          ))}
-        </View>
-
-        <ContentSwap id={section} index={SECTIONS.indexOf(section)}>
-          <View style={styles.gutter}>
-            {section === 'Tokens' && (
-              <>
-                {visible.map((token) => (
-                  <TokenRow
-                    key={token.symbol}
-                    token={token}
-                    onPress={() => open(tokenHref(token.symbol))}
-                  />
+              <Text style={styles.promoText}>
+                Earn with a <Text style={styles.promoAccent}>Honey Jar</Text>
+              </Text>
+              {/* The coins lift with a falloff while the row is held. */}
+              <AvatarGroup lifted={promoPressed}>
+                {TOKENS.slice(0, 3).map((t, i) => (
+                  <View key={t.symbol} style={[styles.coin, i > 0 && styles.coinOverlap]}>
+                    <TokenIcon symbol={t.symbol} size={26} />
+                  </View>
                 ))}
-                {hidden.length > 0 && (
-                  <>
-                    <LabeledDivider
-                      label={`Hidden tokens (${hidden.length})`}
-                      open={showHidden}
-                      onPress={() => setShowHidden((v) => !v)}
-                    />
-                    {/* Bleeds with the rows so the accordion doesn't clip their highlight. */}
-                    <View style={styles.bleed}>
-                      <Accordion open={showHidden}>
-                        <View style={styles.gutter}>
-                          {hidden.map((token) => (
-                            <TokenRow
-                              key={token.symbol}
-                              token={token}
-                              onPress={() => open(tokenHref(token.symbol))}
-                            />
-                          ))}
-                        </View>
-                      </Accordion>
-                    </View>
-                  </>
-                )}
-              </>
-            )}
-            {section === 'NFTs' && (
-              <EmptyState
-                icon="image"
-                title="No NFTs yet"
-                hint="Collectibles you own will show up here."
-              />
-            )}
-            {section === 'Positions' && (
-              <EmptyState
-                icon="layers"
-                title="No open positions"
-                hint="Liquidity and staking positions will show up here."
-              />
-            )}
-          </View>
-        </ContentSwap>
-      </ScrollView>
-      {/* Keeps scrolled content from running under the status bar. */}
-      <View style={[styles.statusCover, { height: insets.top }]} />
-    </View>
+              </AvatarGroup>
+              <Icon name="chevronRight" size={13} color={c.textSecondary} />
+            </PressableScale>
+          </Rise>
+
+          {/* Tokens / NFTs / Positions */}
+          <Rise index={7}>
+            <View style={[styles.sections, styles.gutter]}>
+              {SECTIONS.map((name) => (
+                <PressableScale
+                  key={name}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: section === name }}
+                  hitSlop={8}
+                  onPress={() => {
+                    tap();
+                    setSection(name);
+                  }}
+                >
+                  <Text style={[styles.section, section === name && styles.sectionActive]}>
+                    {name}
+                  </Text>
+                </PressableScale>
+              ))}
+            </View>
+          </Rise>
+
+          <ContentSwap id={section} index={SECTIONS.indexOf(section)}>
+            <View style={styles.gutter}>
+              {section === 'Tokens' && (
+                <>
+                  {visible.map((token, i) => (
+                    <Rise key={token.symbol} index={8 + i}>
+                      <TokenRow token={token} onPress={() => open(tokenHref(token.symbol))} />
+                    </Rise>
+                  ))}
+                  {hidden.length > 0 && (
+                    <Rise index={8 + visible.length}>
+                      <LabeledDivider
+                        label={`Hidden tokens (${hidden.length})`}
+                        open={showHidden}
+                        onPress={() => setShowHidden((v) => !v)}
+                      />
+                      {/* Bleeds with the rows so the accordion doesn't clip their highlight. */}
+                      <View style={styles.bleed}>
+                        <Accordion open={showHidden}>
+                          <View style={styles.gutter}>
+                            {hidden.map((token) => (
+                              <TokenRow
+                                key={token.symbol}
+                                token={token}
+                                onPress={() => open(tokenHref(token.symbol))}
+                              />
+                            ))}
+                          </View>
+                        </Accordion>
+                      </View>
+                    </Rise>
+                  )}
+                </>
+              )}
+              {section === 'NFTs' && (
+                <EmptyState
+                  icon="image"
+                  title="No NFTs yet"
+                  hint="Collectibles you own will show up here."
+                />
+              )}
+              {section === 'Positions' && (
+                <EmptyState
+                  icon="layers"
+                  title="No open positions"
+                  hint="Liquidity and staking positions will show up here."
+                />
+              )}
+            </View>
+          </ContentSwap>
+        </Animated.ScrollView>
+        {/* Keeps scrolled content from running under the status bar. */}
+        <View style={[styles.statusCover, { height: insets.top }]} />
+        <CompactBalance scrollY={scrollY} top={insets.top} />
+      </View>
+    </Entrance>
   );
 }
+
+/** Scroll distance over which the compact balance fades in, as the big one passes under the status bar. */
+const COMPACT_FROM = 70;
+const COMPACT_TO = 110;
+
+/**
+ * Once the big balance scrolls away, a slim bar with the total settles in at the top
+ * (fading in and dropping the last 4px), so the number is never out of sight. It
+ * follows the scroll directly, so it can't lag the finger.
+ */
+function CompactBalance({
+  scrollY,
+  top,
+}: {
+  scrollY: ReturnType<typeof useSharedValue<number>>;
+  top: number;
+}) {
+  const styles = useStyles();
+  const { hideBalance } = useSettings();
+  const shown = useAnimatedStyle(() => {
+    const p = interpolate(scrollY.value, [COMPACT_FROM, COMPACT_TO], [0, 1], Extrapolation.CLAMP);
+    return { opacity: p };
+  });
+  const content = useAnimatedStyle(() => {
+    const p = interpolate(scrollY.value, [COMPACT_FROM, COMPACT_TO], [0, 1], Extrapolation.CLAMP);
+    return { transform: [{ translateY: (1 - p) * -4 }] };
+  });
+  return (
+    <Animated.View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.compact, { paddingTop: top, height: top + COMPACT_BAR }, shown]}
+    >
+      <Animated.Text style={[styles.compactAmount, content]}>
+        {hideBalance ? HIDDEN_AMOUNT : formatUsd(BALANCE)}
+      </Animated.Text>
+    </Animated.View>
+  );
+}
+
+const COMPACT_BAR = 40;
 
 const handleIn = lazy(() =>
   new Keyframe({
@@ -362,6 +437,23 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  compact: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.canvas,
+    borderBottomWidth: 1,
+    borderBottomColor: c.divider,
+  },
+  compactAmount: {
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
   statusCover: {
     position: 'absolute',
     top: 0,
@@ -406,6 +498,9 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 15,
   },
+  header: {
+    zIndex: 2,
+  },
   shortcuts: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -445,7 +540,6 @@ const useStyles = makeStyles((c) => ({
     gap: 8,
   },
   action: {
-    flex: 1,
     height: 82,
     padding: 12,
     borderRadius: 18,
@@ -476,9 +570,6 @@ const useStyles = makeStyles((c) => ({
   promoAccent: {
     color: c.accentText,
     fontWeight: '500',
-  },
-  coins: {
-    flexDirection: 'row',
   },
   coin: {
     borderRadius: 15,

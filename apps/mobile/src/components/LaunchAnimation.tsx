@@ -1,18 +1,18 @@
 // Opening animation, played once per cold start over the app. It starts exactly where
 // the native splash leaves off (the mark, 110pt wide, centred on white or black), then:
-//   pop    – the mark dips to 0.9 and springs past 1 (anticipation, then settle)
+//   pop    – the mark gives a small press-like dip (0.96) and eases back, barely past 1
 //   lift   – the mark rises as the "honey" wordmark fades and rises in beneath it
 //   blink  – the eyes close and open twice
 //   reveal – everything fades out and grows slightly, uncovering the app
-// Under Reduce Motion it holds briefly, then fades. Built from the transitions.dev
-// motion tokens (smooth ease-out, ease-in-out).
+// It's a once-per-cold-start brand moment, so it may take its time (about 1.4s in all),
+// but every step uses ease-out or ease-in-out (never ease-in) and the exit is a short
+// 250ms fade. Under Reduce Motion it holds briefly, then just fades.
 
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -28,6 +28,7 @@ import {
   WORDMARK_PATH,
   WORDMARK_VIEWBOX,
 } from '@/components/logo/paths';
+import { revealApp } from '@/lib/launch';
 import { useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
@@ -53,8 +54,8 @@ const SPLASH = {
 } as const;
 
 /** When the overlay starts fading out to reveal the app. */
-const FADE_AT = 1550;
-const REDUCED_FADE_AT = 500;
+const FADE_AT = 1150;
+const REDUCED_FADE_AT = 400;
 
 const smooth = (duration: number) => ({ duration, easing: EASE.smoothOut });
 
@@ -76,19 +77,23 @@ export function LaunchAnimation({ onDone }: { onDone: () => void }) {
     started.current = true;
     SplashScreen.hideAsync().catch(() => {});
     if (reduceMotion) {
-      fade.value = withDelay(REDUCED_FADE_AT, withTiming(0, { duration: DURATION.fast }));
+      fade.value = withDelay(
+        REDUCED_FADE_AT,
+        withTiming(0, { duration: DURATION.fast, easing: EASE.ease }),
+      );
+      reveal.current = setTimeout(revealApp, REDUCED_FADE_AT);
       end.current = setTimeout(onDone, REDUCED_FADE_AT + DURATION.fast);
       return;
     }
     scale.value = withSequence(
-      withTiming(0.9, { duration: 180, easing: Easing.in(Easing.quad) }),
-      withTiming(1.08, smooth(260)),
-      withTiming(1, { duration: 220, easing: EASE.inOut }),
+      withTiming(0.96, { duration: 120, easing: EASE.press }),
+      withTiming(1.02, smooth(200)),
+      withTiming(1, { duration: 160, easing: EASE.inOut }),
     );
-    lift.value = withDelay(420, withTiming(LIFT, smooth(DURATION.slow)));
-    word.value = withDelay(480, withTiming(1, smooth(DURATION.slow)));
+    lift.value = withDelay(300, withTiming(LIFT, smooth(DURATION.slow)));
+    word.value = withDelay(340, withTiming(1, smooth(DURATION.slow)));
     blink.value = withDelay(
-      900,
+      700,
       withSequence(
         withTiming(0.1, { duration: 70 }),
         withTiming(1, { duration: 110 }),
@@ -99,10 +104,20 @@ export function LaunchAnimation({ onDone }: { onDone: () => void }) {
     fade.value = withDelay(FADE_AT, withTiming(0, smooth(DURATION.medium)));
     // Unmount on the JS clock once the fade has finished (no worklet callback needed).
     end.current = setTimeout(onDone, FADE_AT + DURATION.medium);
+    // Screens start their entrances as the overlay starts to fade.
+    reveal.current = setTimeout(revealApp, FADE_AT);
   };
 
   const end = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(end.current), []);
+  const reveal = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(
+    () => () => {
+      clearTimeout(end.current);
+      clearTimeout(reveal.current);
+      revealApp();
+    },
+    [],
+  );
 
   const root = useAnimatedStyle(() => ({ opacity: fade.value }));
   const content = useAnimatedStyle(() => ({

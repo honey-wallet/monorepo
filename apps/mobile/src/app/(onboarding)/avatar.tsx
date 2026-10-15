@@ -73,7 +73,7 @@ export default function AvatarScreen() {
             accessibilityLabel="Shuffle avatar"
             hitSlop={8}
             onPress={shuffle}
-            scaleTo={0.9}
+            scaleTo={0.97}
             style={styles.shuffle}
           >
             <ShuffleIcon color={c.onPrimary} />

@@ -1,8 +1,8 @@
-// Motion: transitions.dev "Menu dropdown" (https://transitions.dev), ported to
-// Reanimated. The menu grows from the corner nearest its trigger (0.97 → 1, 250ms)
-// and closes faster (→ 0.99, 150ms), both on the smooth ease-out curve.
+// The menu grows out of the footer button that opens it: from its bottom-right corner,
+// 0.97 → 1 with a fade (200ms, strong ease-out), and closes faster with barely any
+// shrink (→ 0.99, 150ms). Under Reduce Motion it only fades.
 import { Pressable, Text } from 'react-native';
-import Animated, { Keyframe } from 'react-native-reanimated';
+import Animated, { Keyframe, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/Icon';
 import { tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
@@ -23,6 +23,25 @@ const exit = lazy(() =>
     0: { opacity: 1, transform: [{ scale: 1 }] },
     100: { opacity: 0, transform: [{ scale: 0.99 }], easing: EASE.smoothOut },
   }).duration(DURATION.quick),
+);
+
+// Reduce Motion: the same fades with no scale, played rather than skipped.
+const fadeIn = lazy(() =>
+  new Keyframe({
+    0: { opacity: 0 },
+    100: { opacity: 1, easing: EASE.ease },
+  })
+    .duration(DURATION.fast)
+    .reduceMotion(ReduceMotion.Never),
+);
+
+const fadeOut = lazy(() =>
+  new Keyframe({
+    0: { opacity: 1 },
+    100: { opacity: 0, easing: EASE.ease },
+  })
+    .duration(DURATION.quick)
+    .reduceMotion(ReduceMotion.Never),
 );
 
 /**
@@ -46,13 +65,14 @@ export function PopoverMenu({
 }) {
   const styles = useStyles();
   const c = useTheme();
+  const reduceMotion = useReducedMotion();
   if (!open) return null;
   return (
     <>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close menu" />
       <Animated.View
-        entering={enter()}
-        exiting={exit()}
+        entering={reduceMotion ? fadeIn() : enter()}
+        exiting={reduceMotion ? fadeOut() : exit()}
         accessibilityRole="menu"
         style={[styles.menu, { bottom, right }]}
       >

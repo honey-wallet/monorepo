@@ -1,23 +1,20 @@
-// Motion: transitions.dev "Number pop-in" (https://transitions.dev), ported to
-// Reanimated. Each character rises 8px into place; the decimal point and the digits
-// after it follow 70ms and 140ms later so the cents feel alive without looking
-// chaotic. Replays whenever the value changes. The 2px blur is omitted (no iOS filter).
+// Motion: when a balance or price changes, each character rises 6px into place
+// (250ms, ease-out, no overshoot); the point and the cents follow one 40ms stagger
+// step behind so the whole part reads first. Numbers change occasionally, so this
+// stays short and quiet. Under Reduce Motion the new value just fades in.
 import type { StyleProp, TextStyle } from 'react-native';
 import { View } from 'react-native';
-import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { DISTANCE } from '@/theme/motion';
+import Animated, { Keyframe, useReducedMotion } from 'react-native-reanimated';
+import { DISTANCE, DURATION, EASE } from '@/theme/motion';
+import { fadeIn } from './reducedFade';
 
-const DIGIT_DURATION = 500;
-const DIGIT_STAGGER = 70;
-const DIGIT_EASE = Easing.bezier(0.34, 1.45, 0.64, 1);
-
-/** One character's pop-in, e.g. a digit typed into a code box. */
+/** One character rising into place, e.g. a digit of a changed balance. */
 export const popIn = (delay = 0) =>
   new Keyframe({
-    0: { opacity: 0, transform: [{ translateY: DISTANCE.base }] },
-    100: { opacity: 1, transform: [{ translateY: 0 }], easing: DIGIT_EASE },
+    0: { opacity: 0, transform: [{ translateY: DISTANCE.small }] },
+    100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
   })
-    .duration(DIGIT_DURATION)
+    .duration(DURATION.medium)
     .delay(delay);
 
 type Props = {
@@ -28,6 +25,7 @@ type Props = {
 };
 
 export function NumberPopIn({ value, style, fractionStyle }: Props) {
+  const reduceMotion = useReducedMotion();
   const point = value.indexOf('.');
   return (
     <View key={value} accessible accessibilityLabel={value} style={{ flexDirection: 'row' }}>
@@ -38,7 +36,7 @@ export function NumberPopIn({ value, style, fractionStyle }: Props) {
           <Animated.Text
             // biome-ignore lint/suspicious/noArrayIndexKey: characters repeat; position is the identity.
             key={i}
-            entering={popIn(stagger * DIGIT_STAGGER)}
+            entering={reduceMotion ? fadeIn() : popIn(stagger * DURATION.stagger)}
             style={[style, stagger > 0 && fractionStyle]}
           >
             {char}

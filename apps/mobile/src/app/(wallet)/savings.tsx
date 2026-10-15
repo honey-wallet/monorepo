@@ -10,7 +10,9 @@ import Animated, {
 import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
+import { PlusMenuMorph } from '@/components/motion/PlusMenuMorph';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SpinningCounter } from '@/components/motion/SpinningCounter';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
@@ -61,7 +63,10 @@ export default function SavingsScreen() {
         <View style={styles.summaryTop}>
           <View style={styles.flex}>
             <Text style={styles.summaryLabel}>Total saved</Text>
-            <Text style={styles.summaryValue}>{formatUsd(saved)}</Text>
+            {/* Spins in like reels when the tab opens and whenever the total changes. */}
+            <View style={styles.summaryValueRow}>
+              <SpinningCounter value={formatUsd(saved)} style={styles.summaryValue} />
+            </View>
             <Text style={styles.summaryHint}>
               {jars.length
                 ? `of ${formatUsd(goal)} across ${jars.length} ${jars.length === 1 ? 'jar' : 'jars'}`
@@ -77,16 +82,23 @@ export default function SavingsScreen() {
       <View style={styles.sectionHeader}>
         <Text style={styles.section}>Your jars</Text>
         {jars.length ? (
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="New jar"
-            hitSlop={10}
-            scaleTo={0.9}
-            onPress={newJar}
-            style={styles.add}
-          >
-            <Icon name="plus" size={14} color={c.accentText} />
-          </PressableScale>
+          // The + grows into a short menu: a new jar, or straight into earning.
+          <PlusMenuMorph
+            label="Add"
+            title="Add to savings"
+            items={[
+              {
+                label: 'New jar',
+                leading: <Icon name="target" size={20} color={c.accentText} />,
+                onPress: newJar,
+              },
+              ...(['USDC', 'USDT'] as const).map((symbol) => ({
+                label: `Earn with ${symbol}`,
+                leading: <TokenIcon symbol={symbol} size={24} />,
+                onPress: () => router.push({ pathname: '/earn/[symbol]', params: { symbol } }),
+              })),
+            ]}
+          />
         ) : null}
       </View>
       {jars.length ? (
@@ -201,18 +213,22 @@ function JarCard({ jar }: { jar: Jar }) {
   );
 }
 
-/** A honey bar that fills to `progress` (0–1) on the smooth ease-out curve. */
+/**
+ * A honey bar that fills to `progress` (0–1). Savings is opened often, so the fill is
+ * short (300ms, strong ease-out) and grows with a transform rather than its width, so
+ * it never relayouts. Under Reduce Motion it's simply drawn at its value.
+ */
 function ProgressBar({ progress }: { progress: number }) {
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
   const fill = useSharedValue(0);
   useEffect(() => {
     fill.value = withTiming(Math.min(Math.max(progress, 0), 1), {
-      duration: reduceMotion ? 0 : DURATION.verySlow * 2,
+      duration: reduceMotion ? 0 : DURATION.slow,
       easing: EASE.smoothOut,
     });
   }, [progress, reduceMotion, fill]);
-  const style = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
+  const style = useAnimatedStyle(() => ({ transform: [{ scaleX: fill.value }] }));
   return (
     <View style={styles.track}>
       <Animated.View style={[styles.fill, style]} />
@@ -239,8 +255,10 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     fontWeight: '500',
   },
-  summaryValue: {
+  summaryValueRow: {
     marginTop: 4,
+  },
+  summaryValue: {
     color: c.text,
     fontSize: 36,
     fontWeight: '600',
@@ -255,6 +273,8 @@ const useStyles = makeStyles((c) => ({
     marginTop: 16,
   },
   sectionHeader: {
+    // Above the jars, so the + menu opens over them.
+    zIndex: 1,
     marginTop: 28,
     marginBottom: 12,
     flexDirection: 'row',
@@ -269,14 +289,6 @@ const useStyles = makeStyles((c) => ({
   earnHeading: {
     marginTop: 28,
     marginBottom: 12,
-  },
-  add: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: c.accentSurface,
   },
   jars: {
     gap: 10,
@@ -331,6 +343,7 @@ const useStyles = makeStyles((c) => ({
   fill: {
     height: 8,
     borderRadius: 4,
+    transformOrigin: 'left',
     backgroundColor: c.primary,
   },
   actions: {

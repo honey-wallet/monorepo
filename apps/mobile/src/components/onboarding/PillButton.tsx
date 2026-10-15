@@ -1,5 +1,6 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { TextMorph } from '@/components/motion/TextMorph';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { makeStyles } from '@/theme';
 
@@ -8,10 +9,13 @@ type Props = {
   onPress: () => void;
   variant?: 'primary' | 'secondary';
   disabled?: boolean;
+  /** Morph between labels that share letters ("Save" → "Saved") instead of swapping. */
+  morph?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-export function PillButton({ label, onPress, variant = 'primary', disabled, style }: Props) {
+export function PillButton({ label, onPress, variant = 'primary', disabled, morph, style }: Props) {
+  const Label = morph ? TextMorph : TextSwap;
   const styles = useStyles();
   const secondary = variant === 'secondary';
   return (
@@ -26,7 +30,7 @@ export function PillButton({ label, onPress, variant = 'primary', disabled, styl
         style,
       ]}
     >
-      <TextSwap
+      <Label
         text={label}
         style={[
           styles.label,

@@ -1,11 +1,14 @@
 import { type Href, router } from 'expo-router';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
+import { LearnMore } from '@/components/motion/LearnMore';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { BalanceAmount } from '@/components/wallet/parts';
 import { SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
 import { BALANCE, BALANCE_CHANGE, formatUsd } from '@/lib/mock-wallet';
+import { leaveSheetTo } from '@/lib/navigation';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -26,6 +29,7 @@ export default function BalanceSheet() {
   const c = useTheme();
   const down = BALANCE_CHANGE < 0;
   const { hideBalance } = useSettings();
+  const [linkPressed, setLinkPressed] = useState(false);
 
   const go = (href: Href) => {
     tap();
@@ -50,7 +54,7 @@ export default function BalanceSheet() {
             key={d.label}
             accessibilityRole="button"
             accessibilityLabel={`${d.label}, ${d.hint}`}
-            scaleTo={0.96}
+            scaleTo={0.98}
             onPress={() => go(d.href)}
             style={styles.tile}
           >
@@ -66,12 +70,22 @@ export default function BalanceSheet() {
       <PressableScale
         accessibilityRole="link"
         hitSlop={8}
-        scaleTo={0.96}
-        onPress={() => go('/portfolio')}
+        scaleTo={0.97}
+        onPress={() => {
+          tap();
+          // Portfolio is a full screen: close this sheet rather than replace it.
+          leaveSheetTo('/portfolio');
+        }}
+        onPressIn={() => setLinkPressed(true)}
+        onPressOut={() => setLinkPressed(false)}
         style={styles.portfolio}
       >
-        <Text style={styles.portfolioText}>View portfolio</Text>
-        <Icon name="chevronRight" size={12} color={c.accentText} />
+        <LearnMore
+          label="View portfolio"
+          active={linkPressed}
+          color={c.accentText}
+          style={styles.portfolioText}
+        />
       </PressableScale>
     </SheetScreen>
   );
@@ -128,12 +142,8 @@ const useStyles = makeStyles((c) => ({
   portfolio: {
     marginTop: 18,
     alignSelf: 'center',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
   portfolioText: {
-    color: c.accentText,
     fontSize: 15,
     fontWeight: '500',
   },

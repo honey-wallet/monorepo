@@ -10,6 +10,7 @@ import { LikeButton } from '@/components/motion/LikeButton';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
 import { PopoverMenu } from '@/components/motion/PopoverMenu';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { RESIZE } from '@/components/motion/resize';
 import { SegmentedTabs } from '@/components/motion/SegmentedTabs';
 import { SkeletonBar, SkeletonReveal } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
@@ -240,31 +241,34 @@ export default function TokenScreen() {
       )}
 
       {/* Earn banner */}
+      {/* Glides with the Breakdown above as it opens and closes. */}
       {vault && (
-        <PressableScale
-          scaleTo={0.98}
-          onPress={() => {
-            tap();
-            router.push({ pathname: '/earn/[symbol]', params: { symbol } });
-          }}
-          style={[styles.earn, styles.gutterMargin]}
-        >
-          <View style={styles.earnIcon}>
-            <Icon name="sparkles" size={18} color={c.accentText} />
-          </View>
-          <View style={styles.flex}>
-            <Text style={styles.earnTitle}>
-              Earn <Text style={styles.accent}>{vault.apy.toFixed(2)}% APY</Text> on your {symbol}
-            </Text>
-            <Text style={styles.earnHint}>No lockup. Withdraw any time.</Text>
-          </View>
-          <Icon name="chevronRight" size={13} color={c.textSecondary} />
-        </PressableScale>
+        <Animated.View layout={RESIZE}>
+          <PressableScale
+            scaleTo={0.98}
+            onPress={() => {
+              tap();
+              router.push({ pathname: '/earn/[symbol]', params: { symbol } });
+            }}
+            style={[styles.earn, styles.gutterMargin]}
+          >
+            <View style={styles.earnIcon}>
+              <Icon name="sparkles" size={18} color={c.accentText} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.earnTitle}>
+                Earn <Text style={styles.accent}>{vault.apy.toFixed(2)}% APY</Text> on your {symbol}
+              </Text>
+              <Text style={styles.earnHint}>No lockup. Withdraw any time.</Text>
+            </View>
+            <Icon name="chevronRight" size={13} color={c.textSecondary} />
+          </PressableScale>
+        </Animated.View>
       )}
 
       {/* Performance */}
       {held && info && (
-        <View style={[styles.section, styles.gutter]}>
+        <Animated.View layout={RESIZE} style={[styles.section, styles.gutter]}>
           <Text style={styles.heading}>Performance (all time)</Text>
           <StatRow label="Average cost" value={formatPrice(info.performance.averageCost)} />
           <StatRow
@@ -276,7 +280,7 @@ export default function TokenScreen() {
             label="Total return"
             value={<Signed value={info.performance.unrealized + info.performance.realized} />}
           />
-        </View>
+        </Animated.View>
       )}
 
       {/* About */}

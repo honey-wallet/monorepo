@@ -1,7 +1,8 @@
-// Illustrations for the Predict guide. Each one rises into place when its step opens
-// (FadeInDown on the smooth ease-out curve); the faded background and back cards lag
-// a little behind the front card, so the scene builds up. Step 3 adds falling honey
-// confetti, which stays still under Reduce Motion.
+// Illustrations for the Predict guide, seen once while learning the feature, so they
+// can carry a little delight. Each piece rises into place on a strong ease-out, the
+// most important (front) card first and the background and back cards a beat later,
+// so the scene builds by importance. Step 3 adds falling honey confetti (decorative,
+// about a second); under Reduce Motion it stays still.
 import { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
@@ -230,7 +231,7 @@ function Piece({
   const fall = useSharedValue(reduceMotion ? 1 : 0);
   useEffect(() => {
     if (reduceMotion) return;
-    fall.value = withDelay(delay, withTiming(1, { duration: 1600, easing: EASE.smoothOut }));
+    fall.value = withDelay(delay, withTiming(1, { duration: 1000, easing: EASE.smoothOut }));
   }, [delay, fall, reduceMotion]);
   const style = useAnimatedStyle(() => ({
     opacity: reduceMotion ? 0.8 : 1 - Math.max(fall.value - 0.75, 0) * 4,

@@ -1,6 +1,7 @@
-// Motion: transitions.dev "Menu dropdown" (https://transitions.dev), ported to
-// Reanimated. The menu grows from the trigger's corner (0.97 → 1, 250ms) and closes
-// faster (→ 0.99, 150ms), both on the smooth ease-out curve.
+// A menu grows out of its trigger, never the screen's centre: from the trigger's
+// corner, 0.97 → 1 with a fade (200ms, strong ease-out). It closes faster and barely
+// shrinks (→ 0.99, 150ms), since the choice is already made. Under Reduce Motion it
+// only fades.
 import { type ReactNode, useRef, useState } from 'react';
 import {
   Modal,
@@ -74,8 +75,8 @@ export function MenuDropdown<T extends string>({
       closing.value = false;
       progress.value = 0;
       progress.value = withTiming(1, {
-        duration: reduceMotion ? 0 : DURATION.fast,
-        easing: EASE.smoothOut,
+        duration: DURATION.fast,
+        easing: reduceMotion ? EASE.ease : EASE.smoothOut,
       });
     });
   };
@@ -83,14 +84,14 @@ export function MenuDropdown<T extends string>({
   const hide = () => {
     closing.value = true;
     progress.value = withTiming(0, {
-      duration: reduceMotion ? 0 : DURATION.quick,
-      easing: EASE.smoothOut,
+      duration: DURATION.quick,
+      easing: reduceMotion ? EASE.ease : EASE.smoothOut,
     });
-    setTimeout(() => setOpen(false), reduceMotion ? 0 : DURATION.quick);
+    setTimeout(() => setOpen(false), DURATION.quick);
   };
 
   const menuStyle = useAnimatedStyle(() => {
-    const from = closing.value ? CLOSING_SCALE : PRE_SCALE;
+    const from = reduceMotion ? 1 : closing.value ? CLOSING_SCALE : PRE_SCALE;
     return {
       opacity: progress.value,
       transform: [{ scale: from + (1 - from) * progress.value }],

@@ -36,7 +36,7 @@ export default function ReceiveSheet() {
         </View>
         <PressableScale
           accessibilityLabel="Copy address"
-          scaleTo={0.9}
+          scaleTo={0.97}
           onPress={copy}
           style={styles.round}
         >
@@ -44,7 +44,7 @@ export default function ReceiveSheet() {
         </PressableScale>
         <PressableScale
           accessibilityLabel="Show QR code"
-          scaleTo={0.9}
+          scaleTo={0.97}
           onPress={() => {
             tap();
             router.push('/my-qr');

@@ -1,32 +1,71 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { ActionMenu } from '@/components/motion/ActionMenu';
 import { MenuDropdown } from '@/components/motion/MenuDropdown';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
+import { RESIZE } from '@/components/motion/resize';
 import { SegmentedTabs } from '@/components/motion/SegmentedTabs';
+import { TextSoftSwap } from '@/components/motion/TextSoftSwap';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { ActionFooter } from '@/components/wallet/ActionFooter';
+import { DonutChart } from '@/components/wallet/DonutChart';
 import { PriceChart } from '@/components/wallet/PriceChart';
 import { PushedScreen } from '@/components/wallet/parts';
 import {
   BALANCE,
   BALANCE_CHANGE,
+  type Chain,
+  chainSymbol,
   formatUsd,
+  HOLDINGS,
   RANGE_LABEL,
   RANGES,
   type Range,
   series,
   TOKEN_INFO,
+  TOKENS,
 } from '@/lib/mock-wallet';
 import { useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
+import { DURATION } from '@/theme/motion';
 
 const CHART_HEIGHT = 230;
 type Scope = 'all' | 'month' | 'week';
+type Grouping = 'Tokens' | 'Networks';
+
+/** Each held token's colour, matching its logo; a network takes its native token's. */
+const SEGMENT_COLOR: Record<string, string> = {
+  ETH: '#627EEA',
+  BTC: '#F7931A',
+  USDC: '#2775CA',
+  SOL: '#9945FF',
+  TRX: '#EB0029',
+  XRP: '#8C96A3',
+};
+/** One segment per token you hold, largest first; a network maps onto its native token. */
+const SEGMENT_IDS = TOKENS.filter((t) => !t.hidden && t.usd > 0)
+  .sort((a, b) => b.usd - a.usd)
+  .map((t) => t.symbol);
+const CHAIN_OF: Record<string, Chain> = Object.fromEntries(
+  HOLDINGS.map((h) => [chainSymbol(h.chain), h.chain]),
+);
+
+/** Your balance split by token or by network, as `{ id, label, value }` per segment. */
+function allocation(grouping: Grouping) {
+  return SEGMENT_IDS.map((id) => {
+    if (grouping === 'Tokens') {
+      return { id, label: id, value: TOKENS.find((t) => t.symbol === id)?.usd ?? 0 };
+    }
+    const chain = CHAIN_OF[id];
+    const value = HOLDINGS.filter((h) => h.chain === chain).reduce((s, h) => s + h.usd, 0);
+    return { id, label: chain ?? id, value: chain ? value : 0 };
+  });
+}
 
 /** Portfolio value over time, after Uniswap's: scrub the chart, switch ranges. */
 export default function PortfolioScreen() {
@@ -37,6 +76,9 @@ export default function PortfolioScreen() {
   const [range, setRange] = useState<Range>('1D');
   const [scrub, setScrub] = useState<number | null>(null);
   const [scope, setScope] = useState<Scope>('all');
+  const [grouping, setGrouping] = useState<Grouping>('Tokens');
+  const shares = allocation(grouping);
+  const sharesTotal = shares.reduce((s, x) => s + x.value, 0) || 1;
 
   const todayPct = (BALANCE_CHANGE / (BALANCE - BALANCE_CHANGE)) * 100;
   const data = series('portfolio', range, BALANCE, range === '1D' ? todayPct : undefined);
@@ -104,9 +146,17 @@ export default function PortfolioScreen() {
         )}
         <View style={styles.changeRow}>
           <Icon name={delta < 0 ? 'down' : 'up'} size={9} color={color} />
-          <Text style={styles.changeAmount}>
-            {formatUsd(Math.abs(delta))} ({Math.abs(pct).toFixed(2)}%)
-          </Text>
+          {/* Soft cross-fade when the range changes; plain while scrubbing. */}
+          {scrub === null ? (
+            <TextSoftSwap
+              text={`${formatUsd(Math.abs(delta))} (${Math.abs(pct).toFixed(2)}%)`}
+              style={styles.changeAmount}
+            />
+          ) : (
+            <Text style={styles.changeAmount}>
+              {formatUsd(Math.abs(delta))} ({Math.abs(pct).toFixed(2)}%)
+            </Text>
+          )}
           <TextSwap text={scrub === null ? RANGE_LABEL[range] : ''} style={styles.changeLabel} />
         </View>
       </View>
@@ -132,7 +182,7 @@ export default function PortfolioScreen() {
             triggerLabel={scope === 'all' ? 'All' : scope === 'month' ? 'Month' : 'Week'}
           />
         </View>
-        <View style={styles.perfCard}>
+        <Animated.View layout={RESIZE} style={styles.perfCard}>
           <Text style={styles.perfLabel}>Total return</Text>
           <Signed value={unrealized + realized} large />
           <View style={styles.perfSplit}>
@@ -146,7 +196,54 @@ export default function PortfolioScreen() {
               <Signed value={realized} />
             </View>
           </View>
+        </Animated.View>
+
+        {/* Allocation: switching the grouping morphs every segment to its new share. */}
+        <View style={[styles.sectionHeader, styles.allocationHeader]}>
+          <Text style={styles.heading}>Allocation</Text>
+          <SegmentedTabs<Grouping>
+            options={['Tokens', 'Networks']}
+            value={grouping}
+            onChange={setGrouping}
+          />
         </View>
+        <Animated.View layout={RESIZE} style={[styles.perfCard, styles.allocation]}>
+          <DonutChart
+            size={124}
+            segments={shares.map((x) => ({
+              id: x.id,
+              value: x.value,
+              color: SEGMENT_COLOR[x.id] ?? c.textSecondary,
+            }))}
+          >
+            <Text style={styles.donutTotal}>{formatUsd(BALANCE)}</Text>
+            <Text style={styles.donutLabel}>Total</Text>
+          </DonutChart>
+          <View style={styles.legend}>
+            {shares
+              .filter((x) => x.value > 0)
+              .map((x) => (
+                <Animated.View
+                  key={x.id}
+                  // Exits are shorter than entries: the change has already happened.
+                  entering={FadeIn.duration(DURATION.fast)}
+                  exiting={FadeOut.duration(DURATION.quick)}
+                  layout={RESIZE}
+                  style={styles.legendRow}
+                >
+                  <View style={[styles.legendDot, { backgroundColor: SEGMENT_COLOR[x.id] }]} />
+                  <View style={styles.flex}>
+                    <TextSoftSwap text={x.label} style={styles.legendLabel} />
+                  </View>
+                  <TextSoftSwap
+                    text={`${((x.value / sharesTotal) * 100).toFixed(0)}%`}
+                    style={styles.legendValue}
+                    align="end"
+                  />
+                </Animated.View>
+              ))}
+          </View>
+        </Animated.View>
       </View>
     </PushedScreen>
   );
@@ -165,7 +262,10 @@ function Signed({ value, large }: { value: number; large?: boolean }) {
           color={value < 0 ? c.error : c.success}
         />
       )}
-      <Text style={[styles.value, large && styles.valueLarge]}>{formatUsd(Math.abs(value))}</Text>
+      <TextSoftSwap
+        text={formatUsd(Math.abs(value))}
+        style={[styles.value, large && styles.valueLarge]}
+      />
     </View>
   );
 }
@@ -196,8 +296,8 @@ const useStyles = makeStyles((c) => ({
     gap: 5,
   },
   changeAmount: {
-    color: c.text,
-    opacity: 0.85,
+    // 85% text, as a colour: an opacity here would fight the soft swap's fade.
+    color: `${c.text}D9`,
     fontSize: 15,
   },
   changeLabel: {
@@ -265,5 +365,46 @@ const useStyles = makeStyles((c) => ({
   value: {
     color: c.text,
     fontSize: 16,
+  },
+  allocationHeader: {
+    marginTop: 22,
+  },
+  allocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+  },
+  donutTotal: {
+    color: c.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  donutLabel: {
+    marginTop: 1,
+    color: c.textSecondary,
+    fontSize: 12,
+  },
+  legend: {
+    flex: 1,
+    gap: 8,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendLabel: {
+    color: c.text,
+    fontSize: 14,
+  },
+  legendValue: {
+    color: c.textSecondary,
+    fontSize: 14,
+    fontVariant: ['tabular-nums'],
   },
 }));

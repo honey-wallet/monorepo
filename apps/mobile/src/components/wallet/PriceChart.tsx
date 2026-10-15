@@ -21,7 +21,11 @@ import { DURATION, EASE } from '@/theme/motion';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-const DRAW_DURATION = 700;
+/**
+ * The line draws itself in on a strong ease-out whenever the data changes. Charts open
+ * and change range often, so it stays short; under Reduce Motion it fades in instead.
+ */
+const DRAW_DURATION = 500;
 const PAD_Y = 12;
 /** Room on the right so the end dot's pulse isn't clipped. */
 const PAD_RIGHT = 10;
@@ -67,17 +71,26 @@ export function PriceChart({ data, width, height, onScrub }: Props) {
 
   // Draw in whenever the data changes (first load, or a new range).
   const drawn = useSharedValue(0);
+  const shown = useSharedValue(0);
   // biome-ignore lint/correctness/useExhaustiveDependencies: `line` is the trigger; a new line replays the draw-in.
   useEffect(() => {
+    if (reduceMotion) {
+      // No travel along the line: show it whole and fade it in.
+      drawn.value = 1;
+      shown.value = 0;
+      shown.value = withTiming(1, { duration: DURATION.fast, easing: EASE.ease });
+      return;
+    }
+    shown.value = 1;
     drawn.value = 0;
-    drawn.value = withTiming(1, {
-      duration: reduceMotion ? 0 : DRAW_DURATION,
-      easing: EASE.smoothOut,
-    });
-  }, [line, reduceMotion, drawn]);
+    drawn.value = withTiming(1, { duration: DRAW_DURATION, easing: EASE.smoothOut });
+  }, [line, reduceMotion, drawn, shown]);
 
-  const lineProps = useAnimatedProps(() => ({ strokeDashoffset: length * (1 - drawn.value) }));
-  const areaStyle = useAnimatedStyle(() => ({ opacity: drawn.value }));
+  const lineProps = useAnimatedProps(() => ({
+    strokeDashoffset: length * (1 - drawn.value),
+    strokeOpacity: shown.value,
+  }));
+  const areaStyle = useAnimatedStyle(() => ({ opacity: drawn.value * shown.value }));
 
   // Pulse on the last point, like a live price.
   const pulse = useSharedValue(0);
@@ -116,7 +129,7 @@ export function PriceChart({ data, width, height, onScrub }: Props) {
       scrubX.value = e.x;
     })
     .onFinalize(() => {
-      scrubbing.value = withTiming(0, { duration: DURATION.fast, easing: EASE.smoothOut });
+      scrubbing.value = withTiming(0, { duration: DURATION.quick, easing: EASE.smoothOut });
       scrubX.value = -1;
       scheduleOnRN(report, null);
     });

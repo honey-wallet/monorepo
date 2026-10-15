@@ -1,6 +1,7 @@
-// Motion: transitions.dev "Accordion" (https://transitions.dev), ported to Reanimated.
-// The panel's height eases between 0 and its content height while the content fades
-// (250ms, smooth ease-out); the header chevron flips from "v" to "^" via scaleY.
+// The panel's height eases between 0 and its content height while the content fades,
+// on the snappy height ease-out (250ms; collapsing is quicker, 200ms). The header
+// chevron flips from "v" to "^" through a flat line on ease-in-out, since it moves in
+// place. Under Reduce Motion the height jumps and only the content fades.
 import { type ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -12,9 +13,9 @@ import Animated, {
 import { Icon } from '@/components/Icon';
 import { DURATION, EASE } from '@/theme/motion';
 
-const timing = (reduce: boolean) => ({
-  duration: reduce ? 0 : DURATION.fast,
-  easing: EASE.smoothOut,
+const panelTiming = (open: boolean) => ({
+  duration: open ? DURATION.medium : DURATION.fast,
+  easing: EASE.height,
 });
 
 /** A collapsible panel. Renders its children even when closed, to measure them. */
@@ -22,14 +23,19 @@ export function Accordion({ open, children }: { open: boolean; children: ReactNo
   const reduceMotion = useReducedMotion();
   const [height, setHeight] = useState(0);
   const progress = useSharedValue(open ? 1 : 0);
+  const fade = useSharedValue(open ? 1 : 0);
 
   useEffect(() => {
-    progress.value = withTiming(open ? 1 : 0, timing(reduceMotion));
-  }, [open, reduceMotion, progress]);
+    progress.value = reduceMotion ? (open ? 1 : 0) : withTiming(open ? 1 : 0, panelTiming(open));
+    fade.value = withTiming(open ? 1 : 0, {
+      duration: open ? DURATION.medium : DURATION.fast,
+      easing: EASE.ease,
+    });
+  }, [open, reduceMotion, progress, fade]);
 
   const panelStyle = useAnimatedStyle(() => ({
     height: progress.value * height,
-    opacity: progress.value,
+    opacity: fade.value,
   }));
 
   return (
@@ -60,7 +66,11 @@ export function AccordionChevron({
   const reduceMotion = useReducedMotion();
   const flip = useSharedValue(open ? -1 : 1);
   useEffect(() => {
-    flip.value = withTiming(open ? -1 : 1, timing(reduceMotion));
+    flip.value = reduceMotion
+      ? open
+        ? -1
+        : 1
+      : withTiming(open ? -1 : 1, { duration: DURATION.medium, easing: EASE.inOut });
   }, [open, reduceMotion, flip]);
   const style = useAnimatedStyle(() => ({ transform: [{ scaleY: flip.value }] }));
   return (

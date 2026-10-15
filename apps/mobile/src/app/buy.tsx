@@ -1,7 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
-import { SheetRow, SheetScreen } from '@/components/wallet/Sheet';
+import { PressableScale } from '@/components/motion/PressableScale';
+import { SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -36,32 +37,65 @@ export default function BuySheet() {
   ];
 
   return (
-    <SheetScreen>
-      {options.map((o) => (
-        <SheetRow
-          key={o.title}
-          title={o.title}
-          subtitle={o.hint}
-          leading={
+    <SheetScreen title={selling ? `Sell ${what}` : `Buy ${what}`}>
+      <View style={styles.options}>
+        {options.map((o) => (
+          <PressableScale
+            key={o.title}
+            accessibilityRole="button"
+            accessibilityLabel={`${o.title}. ${o.hint}`}
+            scaleTo={0.98}
+            onPress={() => {
+              tap();
+              o.onPress();
+            }}
+            style={styles.option}
+          >
             <View style={styles.icon}>
-              <Icon name={o.icon} size={19} color={c.accentText} />
+              <Icon name={o.icon} size={22} color={c.accentText} />
             </View>
-          }
-          onPress={() => {
-            tap();
-            o.onPress();
-          }}
-        />
-      ))}
+            <View style={styles.text}>
+              <Text style={styles.title}>{o.title}</Text>
+              <Text style={styles.hint}>{o.hint}</Text>
+            </View>
+            <Icon name="chevronRight" size={13} color={c.textSecondary} />
+          </PressableScale>
+        ))}
+      </View>
     </SheetScreen>
   );
 }
 
 const useStyles = makeStyles((c) => ({
+  options: {
+    gap: 10,
+  },
+  // Each way to buy or sell is its own card, so the sheet reads as a clear choice.
+  option: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16,
+    borderRadius: 20,
+    backgroundColor: c.card,
+  },
+  text: {
+    flex: 1,
+  },
+  title: {
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  hint: {
+    marginTop: 3,
+    color: c.textSecondary,
+    fontSize: 14,
+  },
   icon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,

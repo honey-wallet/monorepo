@@ -4,7 +4,9 @@ import { Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
+  FadeIn,
   Keyframe,
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -51,20 +53,29 @@ const DEVICES: Record<Device, { name: string; steps: { title: string; hint: stri
   },
 };
 
-/** Steps rise in one after another, after the "Texts reveal" headline (transitions.dev). */
-const rise = (i: number) =>
-  new Keyframe({
-    0: { opacity: 0, transform: [{ translateY: DISTANCE.medium }] },
-    100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
-  })
-    .duration(DURATION.verySlow)
-    .delay(DURATION.stagger * (i + 2));
+/**
+ * Steps rise in one after another (40ms apart) after the headline: a rare setup flow,
+ * so they get the longer 400ms on a strong ease-out. Under Reduce Motion only the fade
+ * remains (Reanimated would otherwise skip it entirely).
+ */
+const rise = (i: number, reduced: boolean) =>
+  reduced
+    ? FadeIn.duration(DURATION.fast)
+        .delay(DURATION.stagger * (i + 2))
+        .reduceMotion(ReduceMotion.Never)
+    : new Keyframe({
+        0: { opacity: 0, transform: [{ translateY: DISTANCE.medium }] },
+        100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
+      })
+        .duration(DURATION.verySlow)
+        .delay(DURATION.stagger * (i + 2));
 
 /**
  * Connect a hardware wallet. Ledger (`device=ledger`, the default): steps, a short
  * Bluetooth search, then the result. Keystone: steps, then the QR scanner. Demo only.
  */
 export default function HardwareWalletSheet() {
+  const reduceMotion = useReducedMotion();
   const styles = useStyles();
   const c = useTheme();
   const params = useLocalSearchParams<{ device?: Device }>();
@@ -113,7 +124,11 @@ export default function HardwareWalletSheet() {
           <View>
             <View style={styles.steps}>
               {steps.map((step, i) => (
-                <Animated.View key={step.title} entering={rise(i)} style={styles.step}>
+                <Animated.View
+                  key={step.title}
+                  entering={rise(i, reduceMotion)}
+                  style={styles.step}
+                >
                   <View style={styles.number}>
                     <Text style={styles.numberLabel}>{i + 1}</Text>
                   </View>
@@ -180,7 +195,8 @@ function Spinner() {
   const turn = useSharedValue(0);
   useEffect(() => {
     if (reduceMotion) return;
-    turn.value = withRepeat(withTiming(360, { duration: 900, easing: Easing.linear }), -1);
+    // Constant motion is linear; a quicker turn makes the search feel faster.
+    turn.value = withRepeat(withTiming(360, { duration: 750, easing: Easing.linear }), -1);
     return () => cancelAnimation(turn);
   }, [reduceMotion, turn]);
   const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value}deg` }] }));

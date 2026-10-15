@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { goBackOr } from '@/lib/navigation';
+import { goBackOr, leaveSheetTo } from '@/lib/navigation';
 import { TRADE_MODES, useSettings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -132,7 +132,7 @@ export function SheetHeader({ title, onBack }: { title: string; onBack?: () => v
             accessibilityRole="button"
             accessibilityLabel="Back"
             hitSlop={12}
-            scaleTo={0.9}
+            scaleTo={0.97}
             onPress={onBack}
           >
             <Icon name="chevronLeft" size={18} color={c.textSecondary} />
@@ -198,7 +198,7 @@ export function WalletSettingsRow({ tradeTabs = false }: { tradeTabs?: boolean }
         title="Wallet settings"
         subtitle="Theme, currency, security and more"
         accessory="chevron"
-        onPress={() => router.replace('/settings')}
+        onPress={() => leaveSheetTo('/settings')}
       />
     </View>
   );

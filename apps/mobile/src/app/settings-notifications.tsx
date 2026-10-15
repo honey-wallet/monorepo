@@ -1,5 +1,10 @@
 import { Linking, Text, View } from 'react-native';
-import Animated, { Keyframe } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  Keyframe,
+  ReduceMotion,
+  useReducedMotion,
+} from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { TextsReveal } from '@/components/motion/TextsReveal';
@@ -15,18 +20,26 @@ const PREVIEW = [
   { title: 'Your Honey Jar hit 50%', body: 'Halfway to your "Summer trip" goal' },
 ];
 
-// The transitions.dev "Texts reveal" rise, applied to each card in turn.
-const rise = (index: number) =>
-  new Keyframe({
-    0: { opacity: 0, transform: [{ translateY: DISTANCE.medium * 2 }] },
-    100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
-  })
-    .duration(DURATION.verySlow)
-    .delay(DURATION.fast + index * DURATION.stagger * 2);
+// The preview cards rise in turn, 80ms apart, once the sheet has settled: a one-off
+// permission prompt, so they may take 400ms on a strong ease-out.
+// Under Reduce Motion the rise is dropped and only the fade remains (gentler, not
+// zero): Reanimated would otherwise skip the entrance entirely.
+const rise = (index: number, reduced: boolean) =>
+  reduced
+    ? FadeIn.duration(DURATION.fast)
+        .delay(DURATION.fast + index * DURATION.stagger * 2)
+        .reduceMotion(ReduceMotion.Never)
+    : new Keyframe({
+        0: { opacity: 0, transform: [{ translateY: DISTANCE.medium }] },
+        100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
+      })
+        .duration(DURATION.verySlow)
+        .delay(DURATION.fast + index * DURATION.stagger * 2);
 
 /** Asks for notification permission, previewing the kind of alerts Honey sends. */
 export default function NotificationsSheet() {
   const styles = useStyles();
+  const reduceMotion = useReducedMotion();
   const c = useTheme();
 
   return (
@@ -65,7 +78,7 @@ export default function NotificationsSheet() {
         </View>
         <View style={styles.cards}>
           {PREVIEW.map((n, i) => (
-            <Animated.View key={n.title} entering={rise(i)} style={styles.card}>
+            <Animated.View key={n.title} entering={rise(i, reduceMotion)} style={styles.card}>
               <View style={styles.appIcon}>
                 <HoneyLogo variant="mark" height={22} />
               </View>

@@ -60,7 +60,7 @@ export default function WalletsSheet() {
         accessibilityRole="button"
         accessibilityLabel="Close"
         hitSlop={10}
-        scaleTo={0.9}
+        scaleTo={0.97}
         onPress={() => router.back()}
         style={styles.close}
       >

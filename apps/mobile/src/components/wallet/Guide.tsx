@@ -7,7 +7,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
 import { makeStyles } from '@/theme';
-import { DURATION, EASE } from '@/theme/motion';
+import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 export type GuideStep = {
   title: string;
@@ -21,19 +21,22 @@ export type GuideStep = {
 /** Height of the illustration area, shared so every step's art lines up. */
 export const GUIDE_ART_HEIGHT = 240;
 
-/** Entrance for guide illustration pieces: fade and rise 24px; stagger with `delay`. */
+/**
+ * Entrance for guide illustration pieces: fade and rise 12px (a guide is seen once, so
+ * it can take the rare-moment 400ms). Stagger with `delay`, most important piece first.
+ */
 export const riseIn = (delay = 0) =>
-  FadeInDown.duration(DURATION.slow)
+  FadeInDown.duration(DURATION.verySlow)
     .delay(delay)
     .easing(EASE.smoothOut)
     .withInitialValues({
-      transform: [{ translateY: 24 }],
+      transform: [{ translateY: DISTANCE.medium }],
     });
 
 /**
  * A short numbered how-to in a sheet: illustration, "1. Title", explanation, page
- * dots, Next / Get started. Steps slide side by side (transitions.dev "Page
- * side-by-side"); the last button runs `onDone` (closing the sheet by default).
+ * dots, Next / Get started. Steps crossfade with a small sideways hint, forward to
+ * the left; the last button runs `onDone` (closing the sheet by default).
  */
 export function Guide({
   steps,
@@ -129,8 +132,9 @@ function StepText({ step, number }: { step: GuideStep; number: number }) {
 function Dot({ active }: { active: boolean }) {
   const styles = useStyles();
   const style = useAnimatedStyle(() => ({
-    width: withTiming(active ? 18 : 6, { duration: DURATION.fast, easing: EASE.smoothOut }),
-    opacity: withTiming(active ? 1 : 0.35, { duration: DURATION.fast }),
+    // The dot reshapes in place, so ease-in-out.
+    width: withTiming(active ? 18 : 6, { duration: DURATION.fast, easing: EASE.inOut }),
+    opacity: withTiming(active ? 1 : 0.35, { duration: DURATION.fast, easing: EASE.ease }),
   }));
   return <Animated.View style={[styles.dot, style]} />;
 }

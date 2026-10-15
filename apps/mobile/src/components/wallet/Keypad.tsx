@@ -1,11 +1,9 @@
 import { type StyleProp, Text, View, type ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
-import { popIn } from '@/components/motion/NumberPopIn';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { useHasMounted } from '@/components/motion/useHasMounted';
 import { tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
+import { PRESS_SCALE } from '@/theme/motion';
 
 export type Key = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | '0' | 'back';
 const KEYS: Key[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'back'];
@@ -50,7 +48,7 @@ export function PercentChips({
         <PressableScale
           key={label}
           accessibilityRole="button"
-          scaleTo={0.94}
+          scaleTo={PRESS_SCALE}
           onPress={() => {
             tap();
             onPick(trimNumber(balance * share, decimals));
@@ -94,7 +92,8 @@ export function Keypad({
           key={key}
           accessibilityRole="button"
           accessibilityLabel={key === 'back' ? 'Delete' : key}
-          scaleTo={0.9}
+          // Keys are hit constantly: feedback is felt, not seen.
+          scaleTo={PRESS_SCALE}
           onPress={() => {
             tap();
             onKey(key);
@@ -116,8 +115,9 @@ export function Keypad({
 }
 
 /**
- * A typed amount: each new character pops in (transitions.dev "Number pop-in");
- * characters already there stay put. Shows `placeholder` dimmed when empty.
+ * A typed amount. Typing is keyboard-like input done constantly, so new characters
+ * appear instantly with no animation (it would make typing feel slow). Shows
+ * `placeholder` dimmed when empty.
  */
 export function TypedAmount({
   value,
@@ -134,24 +134,15 @@ export function TypedAmount({
   align?: 'center' | 'left';
 }) {
   const styles = useStyles();
-  const mounted = useHasMounted();
   const text = value ? prefix + value : prefix + placeholder;
   return (
-    <View
-      style={[styles.amount, align === 'left' && styles.amountLeft]}
-      accessible
-      accessibilityLabel={text}
-    >
-      {[...text].map((char, i) => (
-        <Animated.Text
-          // biome-ignore lint/suspicious/noArrayIndexKey: position is the identity; new positions animate in.
-          key={i}
-          entering={mounted && value ? popIn() : undefined}
-          style={[styles.amountChar, { fontSize: size }, !value && styles.placeholder]}
-        >
-          {char}
-        </Animated.Text>
-      ))}
+    <View style={[styles.amount, align === 'left' && styles.amountLeft]}>
+      <Text
+        accessibilityLabel={text}
+        style={[styles.amountChar, { fontSize: size }, !value && styles.placeholder]}
+      >
+        {text}
+      </Text>
     </View>
   );
 }

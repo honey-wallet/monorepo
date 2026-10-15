@@ -1,8 +1,15 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, Keyframe } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  Keyframe,
+  ReduceMotion,
+  useReducedMotion,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { Checkbox } from '@/components/motion/Checkbox';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar } from '@/components/motion/Skeleton';
@@ -32,14 +39,21 @@ const WORDS = [
 ];
 const HALF = WORDS.length / 2;
 
-// Words rise in one after another, the transitions.dev "Texts reveal" step per word.
-const rise = (index: number) =>
-  new Keyframe({
-    0: { opacity: 0, transform: [{ translateY: DISTANCE.medium }] },
-    100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
-  })
-    .duration(DURATION.verySlow)
-    .delay(index * DURATION.stagger);
+// Words rise in one after another, 40ms apart. Revealing the phrase is a rare,
+// first-time moment, so each word may take the longer 400ms on a strong ease-out.
+// Under Reduce Motion the rise is dropped and only the fade remains (gentler, not
+// zero): Reanimated would otherwise skip the entrance entirely.
+const rise = (index: number, reduced: boolean) =>
+  reduced
+    ? FadeIn.duration(DURATION.fast)
+        .delay(index * DURATION.stagger)
+        .reduceMotion(ReduceMotion.Never)
+    : new Keyframe({
+        0: { opacity: 0, transform: [{ translateY: DISTANCE.medium }] },
+        100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
+      })
+        .duration(DURATION.verySlow)
+        .delay(index * DURATION.stagger);
 
 const panelIn = lazy(() =>
   new Keyframe({
@@ -62,6 +76,7 @@ export default function RecoveryPhraseScreen() {
   const c = useTheme();
   const [warning, setWarning] = useState(true);
   const [revealed, setRevealed] = useState(false);
+  const [writtenDown, setWrittenDown] = useState(false);
 
   const view = () => {
     tap();
@@ -80,12 +95,13 @@ export default function RecoveryPhraseScreen() {
     else setWarning(true);
   };
 
+  const reduceMotion = useReducedMotion();
   const column = (start: number) => (
     <View style={styles.column}>
       {WORDS.slice(start, start + HALF).map((word, i) => (
         <View key={word} style={styles.wordSlot}>
           {revealed ? (
-            <Animated.View entering={rise(start + i)} style={styles.word}>
+            <Animated.View entering={rise(start + i, reduceMotion)} style={styles.word}>
               <Text style={styles.index}>{start + i + 1}</Text>
               <Text style={styles.wordText}>{word}</Text>
             </Animated.View>
@@ -152,11 +168,21 @@ export default function RecoveryPhraseScreen() {
         </Text>
       </View>
 
+      {revealed ? (
+        <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.confirm}>
+          <Checkbox
+            label="I've written it down somewhere safe"
+            checked={writtenDown}
+            onChange={setWrittenDown}
+          />
+        </Animated.View>
+      ) : null}
+
       {!warning ? (
         <PressableScale
           accessibilityRole="button"
           onPress={toggleHidden}
-          scaleTo={0.96}
+          scaleTo={0.97}
           style={styles.hide}
         >
           <IconSwap name={revealed ? 'eyeSlash' : 'eye'} size={18} color={c.text} />
@@ -183,6 +209,9 @@ const useStyles = makeStyles((c) => ({
   },
   column: {
     flex: 1,
+  },
+  confirm: {
+    marginTop: 20,
   },
   wordSlot: {
     height: 32,

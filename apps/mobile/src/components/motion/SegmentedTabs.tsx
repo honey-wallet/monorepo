@@ -1,6 +1,8 @@
-// Motion: transitions.dev "Tabs sliding" (https://transitions.dev), ported to
-// Reanimated. A lighter pill slides to the selected segment and resizes to its width
-// (250ms, smooth ease-out); it snaps into place on first paint.
+// Tab switches happen tens of times a day, so the motion stays quick: the lighter
+// pill glides to the selected segment and resizes to it in 200ms on ease-in-out (it
+// is already on screen, so it accelerates and brakes). Each move starts from wherever
+// the pill is, so rapid taps never jump; it snaps into place on first paint and
+// under Reduce Motion.
 import { useEffect, useRef, useState } from 'react';
 import { type LayoutRectangle, Pressable, Text, View } from 'react-native';
 import Animated, {
@@ -13,7 +15,7 @@ import { tap } from '@/lib/haptics';
 import { makeStyles } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
-const SLIDE = { duration: DURATION.fast, easing: EASE.smoothOut };
+const SLIDE = { duration: DURATION.fast, easing: EASE.inOut };
 
 type Props<T extends string> = {
   options: readonly T[];

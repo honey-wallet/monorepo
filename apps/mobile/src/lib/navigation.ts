@@ -8,3 +8,13 @@ export function goBackOr(fallback: Href) {
   if (router.canGoBack()) router.back();
   else router.replace(fallback);
 }
+
+/**
+ * From a sheet, opens a full screen: closes the sheet first, then pushes. Replacing
+ * the sheet instead would show the screen inside the sheet's card (grey band, rounded
+ * top, doubled status-bar gap).
+ */
+export function leaveSheetTo(href: Href) {
+  router.dismiss();
+  router.push(href);
+}

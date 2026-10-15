@@ -16,7 +16,7 @@ import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const CHIP_PAD = 3;
-const SLIDE = { duration: DURATION.fast, easing: EASE.smoothOut };
+const SLIDE = { duration: DURATION.fast, easing: EASE.inOut };
 
 /**
  * Shared pieces of the trade order forms (Perps, Futures, Options, Predict), on the
@@ -103,8 +103,9 @@ export function SideToggle<T extends Side>({
 
 /**
  * One choice from a few, e.g. leverage or expiry: a segmented track where a soft
- * honey pill slides to the selected option (250ms, smooth ease-out; snaps on first
- * paint).
+ * honey pill glides to the selected option in 200ms on ease-in-out (an on-screen
+ * move), from wherever it is so quick taps never jump; it snaps on first paint and
+ * under Reduce Motion.
  */
 export function OptionChips<T extends string>({
   options,

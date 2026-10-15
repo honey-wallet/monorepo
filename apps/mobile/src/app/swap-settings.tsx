@@ -21,6 +21,8 @@ import { makeStyles, useTheme } from '@/theme';
 type Page = 'settings' | 'slippage' | 'options';
 const ORDER: Page[] = ['settings', 'slippage', 'options'];
 const DEADLINES = [10, 20, 30, 60];
+/** How long "Saved" shows before the sheet closes. */
+const SAVED_HOLD = 600;
 
 /** Swap settings, after Uniswap's: nested pages slide side by side inside one sheet. */
 export default function SwapSettingsSheet() {
@@ -36,10 +38,16 @@ export default function SwapSettingsSheet() {
     tap();
     setPage(next);
   };
+  const [saved, setSaved] = useState(false);
   const save = () => {
+    if (saved) return;
     tap();
-    showToast('Swap settings saved');
-    closeSheet();
+    // "Save" morphs to "Saved", then the sheet closes.
+    setSaved(true);
+    setTimeout(() => {
+      closeSheet();
+      showToast('Swap settings saved');
+    }, SAVED_HOLD);
   };
   const step = (delta: number) => {
     tap();
@@ -48,7 +56,7 @@ export default function SwapSettingsSheet() {
   };
 
   return (
-    <SheetScreen footer={<PillButton label="Save" onPress={save} />}>
+    <SheetScreen footer={<PillButton label={saved ? 'Saved' : 'Save'} morph onPress={save} />}>
       <ContentSwap id={page} index={ORDER.indexOf(page)}>
         {page === 'settings' && (
           <View>
@@ -99,7 +107,7 @@ export default function SwapSettingsSheet() {
             <View style={styles.stepper}>
               <PressableScale
                 accessibilityLabel="Decrease"
-                scaleTo={0.88}
+                scaleTo={0.97}
                 onPress={() => step(-0.5)}
                 style={styles.stepButton}
               >
@@ -112,7 +120,7 @@ export default function SwapSettingsSheet() {
                     setAutoSlippage(true);
                     setSlippage(5.5);
                   }}
-                  scaleTo={0.95}
+                  scaleTo={0.97}
                 >
                   <Text style={[styles.auto, !autoSlippage && styles.autoOff]}>Auto</Text>
                 </PressableScale>
@@ -121,7 +129,7 @@ export default function SwapSettingsSheet() {
               </View>
               <PressableScale
                 accessibilityLabel="Increase"
-                scaleTo={0.88}
+                scaleTo={0.97}
                 onPress={() => step(0.5)}
                 style={styles.stepButton}
               >

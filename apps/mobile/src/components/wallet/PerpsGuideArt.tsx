@@ -1,5 +1,6 @@
-// Illustrations for the Perps guide, in the same style as Predict's: each piece
-// rises into place (riseIn) with the back pieces a little behind the front one.
+// Illustrations for the Perps guide, in the same style as Predict's: each piece rises
+// into place (riseIn, strong ease-out) with the most important one first and the back
+// pieces a beat behind, so the scene builds by importance.
 import { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';

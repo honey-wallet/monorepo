@@ -1,24 +1,31 @@
 import { useSyncExternalStore } from 'react';
 import { tap } from '@/lib/haptics';
 
-/** The toast currently on screen, if any. Each show() gets a fresh id. */
-type Toast = { id: number; message: string } | null;
+/** A toast on screen. Each show() gets a fresh id. */
+export type Toast = { id: number; message: string };
 
-let current: Toast = null;
+/** Newest first. Up to three stay visible, stacked; a fourth sends the oldest out. */
+const MAX_STACK = 3;
+
+let toasts: Toast[] = [];
 let nextId = 1;
-let timer: ReturnType<typeof setTimeout> | undefined;
 const listeners = new Set<() => void>();
 
-function set(toast: Toast) {
-  current = toast;
+function set(next: Toast[]) {
+  toasts = next;
   for (const listener of listeners) listener();
 }
 
 /** Shows a short confirmation, e.g. "Address copied", then hides it. */
 export function showToast(message: string, ms = 1800) {
-  clearTimeout(timer);
-  set({ id: nextId++, message });
-  timer = setTimeout(() => set(null), ms);
+  const id = nextId++;
+  set([{ id, message }, ...toasts].slice(0, MAX_STACK));
+  setTimeout(() => set(toasts.filter((t) => t.id !== id)), ms);
+}
+
+/** Removes a toast early, e.g. when it's swiped away. */
+export function dismissToast(id: number) {
+  set(toasts.filter((t) => t.id !== id));
 }
 
 /**
@@ -30,12 +37,13 @@ export function showDemoToast(what: string) {
   showToast(`Demo: ${what}`);
 }
 
-export function useToast(): Toast {
+/** The toasts on screen, newest first. */
+export function useToasts(): Toast[] {
   return useSyncExternalStore(
     (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    () => current,
+    () => toasts,
   );
 }

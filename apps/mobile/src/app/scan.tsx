@@ -62,7 +62,7 @@ export default function ScanScreen() {
         <PressableScale
           accessibilityLabel="Close"
           hitSlop={10}
-          scaleTo={0.9}
+          scaleTo={0.97}
           onPress={close}
           style={styles.close}
         >
@@ -93,7 +93,7 @@ export default function ScanScreen() {
         </View>
         <PressableScale
           accessibilityLabel="Choose from photos"
-          scaleTo={0.9}
+          scaleTo={0.97}
           onPress={scanPhoto}
           style={styles.photo}
         >
