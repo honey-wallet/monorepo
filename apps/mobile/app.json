@@ -8,6 +8,7 @@
     "scheme": "honeywallet",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.honeywallet.app",
       "icon": {
         "light": "./assets/images/ios-light.png",
         "dark": "./assets/images/ios-dark.png",
