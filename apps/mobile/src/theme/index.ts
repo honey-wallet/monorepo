@@ -27,6 +27,8 @@ const light = {
   // Wallet: honey-tinted tiles and accent text, like Uniswap's pink surfaces.
   accentSurface: '#FFF3D1',
   accentText: '#8F6200',
+  // A deep amber for the Honey Jar name and art: rich on white, warm on ink.
+  honey: '#B5730A',
   // Segmented tabs: flat bar, lighter sliding pill.
   tabsBar: '#F0F0F0',
   tabsPill: '#FFFFFF',
@@ -65,6 +67,7 @@ const dark: Palette = {
   heroTop: '#5C4722',
   accentSurface: '#29241B',
   accentText: '#F3C969',
+  honey: '#F0B347',
   tabsBar: '#202020',
   tabsPill: '#3A3A3A',
   navBar: '#262626',

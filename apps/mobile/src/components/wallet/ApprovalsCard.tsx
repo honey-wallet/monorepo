@@ -1,7 +1,9 @@
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { Accordion } from '@/components/motion/Accordion';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { MemberAvatar, networkLabel, ProposalRow } from '@/components/wallet/MultisigParts';
 import { tap } from '@/lib/haptics';
 import {
@@ -14,6 +16,7 @@ import {
   walletName,
   YOU,
 } from '@/lib/multisig';
+import { createStore } from '@/lib/store';
 import { makeStyles, useTheme } from '@/theme';
 
 const openProposal = (id: string) => {
@@ -89,7 +92,11 @@ export function ApprovalsNudge() {
   const c = useTheme();
   const waiting = useNeedsMyApproval();
   const { multisigs } = useMultisigState();
+  const dismissed = dismissedNudge.use();
   if (!waiting.length) return null;
+  // Closed until something new is waiting (the bell still has them all).
+  const shown = waiting.some((p) => !dismissed.includes(p.id));
+  const dismiss = () => dismissedNudge.set(waiting.map((p) => p.id));
   const wallets = new Set(waiting.map((p) => p.walletId)).size;
   const first = waiting[0];
   const where = wallets > 1 ? `In ${wallets} shared wallets` : `In ${walletName(first.walletId)}`;
@@ -101,34 +108,65 @@ export function ApprovalsNudge() {
     if (askers.length === 2) break;
   }
   return (
-    <PressableScale onPress={() => openProposal(first.id)} scaleTo={0.98} style={styles.nudge}>
-      {askers.length ? (
-        <View style={styles.faces2}>
-          {askers.map((m, i) => (
-            <View key={m.id} style={[styles.face2, i === 1 && styles.face2Back]}>
-              <MemberAvatar member={m} size={askers.length === 1 ? 38 : 30} />
+    <Accordion open={shown}>
+      <SwipeDismiss onDismiss={dismiss}>
+        {(throwAway) => (
+          <PressableScale
+            onPress={() => openProposal(first.id)}
+            scaleTo={0.98}
+            style={styles.nudge}
+          >
+            {askers.length ? (
+              <View style={styles.faces2}>
+                {askers.map((m, i) => (
+                  <View key={m.id} style={[styles.face2, i === 1 && styles.face2Back]}>
+                    <MemberAvatar member={m} size={askers.length === 1 ? ICON - 4 : PAIR_ITEM} />
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.nudgeIcon}>
+                <Icon name="multisig" size={18} color={c.accentText} />
+              </View>
+            )}
+            <View style={styles.flex}>
+              <Text style={styles.title} numberOfLines={1}>
+                {waiting.length} {waiting.length === 1 ? 'approval' : 'approvals'} waiting
+              </Text>
+              <Text style={styles.sub} numberOfLines={1}>
+                {where}
+              </Text>
             </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.nudgeIcon}>
-          <Icon name="multisig" size={18} color={c.accentText} />
-        </View>
-      )}
-      <View style={styles.flex}>
-        <Text style={styles.title} numberOfLines={1}>
-          {waiting.length} {waiting.length === 1 ? 'approval' : 'approvals'} waiting
-        </Text>
-        <Text style={styles.sub} numberOfLines={1}>
-          {where}
-        </Text>
-      </View>
-      <View style={styles.pill}>
-        <Text style={styles.pillLabel}>Review</Text>
-      </View>
-    </PressableScale>
+            <View style={styles.pill}>
+              <Text style={styles.pillLabel}>Review</Text>
+            </View>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss"
+              hitSlop={12}
+              onPress={() => {
+                tap();
+                throwAway();
+              }}
+              style={styles.close}
+            >
+              <Icon name="close" size={11} color={c.textSecondary} />
+            </PressableScale>
+          </PressableScale>
+        )}
+      </SwipeDismiss>
+    </Accordion>
   );
 }
+
+/** Home cards' leading icon: one size, so their titles start in line. */
+export const CARD_ICON = 40;
+const ICON = CARD_ICON;
+/** Each of the two overlapping faces. */
+const PAIR_ITEM = 28;
+
+/** Waiting proposals whose Home card was closed; it comes back when a new one arrives. */
+const dismissedNudge = createStore<string[]>([]);
 
 const useStyles = makeStyles((c) => ({
   flex: {
@@ -192,9 +230,10 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
     backgroundColor: c.card,
   },
+  // The same 40pt square as the Earn card's icon below, so both titles line up.
   faces2: {
-    width: 44,
-    height: 38,
+    width: ICON,
+    height: ICON,
   },
   face2: {
     position: 'absolute',
@@ -206,14 +245,22 @@ const useStyles = makeStyles((c) => ({
     borderColor: c.card,
   },
   face2Back: {
-    left: 14,
-    top: 8,
+    left: ICON - PAIR_ITEM - 4,
+    top: ICON - PAIR_ITEM - 4,
     zIndex: 0,
   },
+  close: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.raised,
+  },
   nudgeIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: ICON,
+    height: ICON,
+    borderRadius: ICON / 2,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,

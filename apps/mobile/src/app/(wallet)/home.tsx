@@ -15,6 +15,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from '@/components/Icon';
+import { HoneyJar } from '@/components/logo/HoneyJar';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap, Swap } from '@/components/motion/IconSwap';
@@ -26,7 +27,7 @@ import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { ApprovalsNudge, SharedWalletCard } from '@/components/wallet/ApprovalsCard';
+import { ApprovalsNudge, CARD_ICON, SharedWalletCard } from '@/components/wallet/ApprovalsCard';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import { NftGallery } from '@/components/wallet/NftGallery';
 import { TradesList, useHasTrades } from '@/components/wallet/PositionsList';
@@ -61,8 +62,8 @@ const ACTIONS: { label: string; icon: IconName; href: Href }[] = [
 
 const SECTIONS = ['Tokens', 'NFTs', 'Trades'] as const;
 
-/** The best Honey Jar rate, for the promo. */
-const TOP_APY = Math.max(...EARN.map((e) => e.apy));
+/** The tokens a Honey Jar earns on, best rate first. */
+const EARN_BY_RATE = [...EARN].sort((a, b) => b.apy - a.apy);
 
 const tokenHref = (symbol: string): Href => ({ pathname: '/token/[symbol]', params: { symbol } });
 
@@ -237,13 +238,18 @@ export default function HomeScreen() {
                       }}
                       style={styles.promoRow}
                     >
+                      <View style={styles.promoIcon}>
+                        <HoneyJar size={26} />
+                      </View>
                       <Text style={styles.promoText}>
-                        Earn up to <Text style={styles.promoAccent}>{TOP_APY}% APY</Text>
+                        Earn with a <Text style={styles.promoAccent}>Honey Jar</Text>
                       </Text>
+                      {/* Every token a Honey Jar can earn on, best rate first. */}
+                      {/* Side by side, as Uniswap's, at the size of the faces above. */}
                       <View style={styles.coins}>
-                        {EARN.map((e, i) => (
+                        {EARN_BY_RATE.map((e, i) => (
                           <View key={e.symbol} style={[styles.coin, i > 0 && styles.coinOverlap]}>
-                            <TokenIcon symbol={e.symbol} size={22} />
+                            <TokenIcon symbol={e.symbol} size={28} />
                           </View>
                         ))}
                       </View>
@@ -251,25 +257,21 @@ export default function HomeScreen() {
                     </PressableScale>
                     <Accordion open={promoOpen}>
                       <View style={styles.promoList}>
-                        {[...EARN]
-                          .sort((x, y) => y.apy - x.apy)
-                          .map((e) => (
-                            <PressableRow
-                              key={e.symbol}
-                              accessibilityRole="button"
-                              onPress={() =>
-                                open({ pathname: '/earn/[symbol]', params: { symbol: e.symbol } })
-                              }
-                              style={styles.promoOption}
-                            >
-                              <TokenIcon symbol={e.symbol} size={28} />
-                              <Text style={[styles.flex, styles.promoOptionText]}>
-                                Earn with {e.symbol}
-                              </Text>
-                              <Text style={styles.promoAccent}>{e.apy.toFixed(2)}%</Text>
-                              <Icon name="chevronRight" size={12} color={c.textSecondary} />
-                            </PressableRow>
-                          ))}
+                        {EARN_BY_RATE.map((e) => (
+                          <PressableRow
+                            key={e.symbol}
+                            accessibilityRole="button"
+                            onPress={() =>
+                              open({ pathname: '/earn/[symbol]', params: { symbol: e.symbol } })
+                            }
+                            style={styles.promoOption}
+                          >
+                            <TokenIcon symbol={e.symbol} size={28} />
+                            <Text style={[styles.flex, styles.promoOptionText]}>{e.symbol}</Text>
+                            <Text style={styles.promoAccent}>{e.apy.toFixed(2)}% APY</Text>
+                            <Icon name="chevronRight" size={12} color={c.textSecondary} />
+                          </PressableRow>
+                        ))}
                         <PressableScale
                           accessibilityRole="button"
                           hitSlop={8}
@@ -661,41 +663,51 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     fontWeight: '500',
   },
-  // Uniswap's earn row: outlined rather than filled, one line, coins on the right.
+  // One line that opens into the ways to earn, on the same filled card as the
+  // approvals one above it.
   promo: {
     marginTop: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: c.divider,
+    borderRadius: 18,
+    backgroundColor: c.card,
     overflow: 'hidden',
   },
-  promoRow: {
-    height: 50,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
+  promoIcon: {
+    width: CARD_ICON,
+    height: CARD_ICON,
+    borderRadius: CARD_ICON / 2,
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
+    backgroundColor: c.accentSurface,
   },
-  promoText: {
-    flex: 1,
-    color: c.textSecondary,
-    fontSize: 16,
-  },
-  promoAccent: {
-    color: c.accentText,
-    fontSize: 16,
-    fontWeight: '500',
-  },
+  // Same padding and gap as the approvals card, so the two read as a pair.
   coins: {
     flexDirection: 'row',
   },
   coin: {
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: c.canvas,
+    borderColor: c.card,
   },
   coinOverlap: {
-    marginLeft: -8,
+    marginLeft: -10,
+  },
+  promoRow: {
+    height: CARD_ICON + 28,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  promoText: {
+    flex: 1,
+    color: c.text,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  promoAccent: {
+    color: c.honey,
+    fontSize: 16,
+    fontWeight: '500',
   },
   promoList: {
     paddingBottom: 6,
