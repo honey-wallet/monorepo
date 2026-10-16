@@ -15,20 +15,9 @@ import { Sticky } from '@/components/motion/Sticky';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { HeaderActions } from '@/components/wallet/HeaderActions';
-import {
-  applyKey,
-  Keypad,
-  PercentChips,
-  TypedAmount,
-  trimNumber,
-} from '@/components/wallet/Keypad';
-import { PerpsMarkets } from '@/components/wallet/PerpsMarkets';
-import { PredictFeed } from '@/components/wallet/PredictFeed';
-import { EmptyState, HeaderIconButton, TokenIcon } from '@/components/wallet/parts';
-import { SearchField } from '@/components/wallet/SearchField';
-import { SwapReview } from '@/components/wallet/SwapReview';
-import { TabScreen } from '@/components/wallet/TabScreen';
+import { PerpsMarkets } from '@/components/trade/PerpsMarkets';
+import { PredictFeed } from '@/components/trade/PredictFeed';
+import { SwapReview } from '@/components/trade/SwapReview';
 import {
   AmountCard,
   FieldLabel,
@@ -38,7 +27,18 @@ import {
   type Side,
   SideToggle,
   Summary,
-} from '@/components/wallet/TradeForm';
+} from '@/components/trade/TradeForm';
+import { HeaderActions } from '@/components/wallet/HeaderActions';
+import {
+  applyKey,
+  Keypad,
+  PercentChips,
+  TypedAmount,
+  trimNumber,
+} from '@/components/wallet/Keypad';
+import { EmptyState, HeaderIconButton, TokenIcon } from '@/components/wallet/parts';
+import { SearchField } from '@/components/wallet/SearchField';
+import { TabScreen } from '@/components/wallet/TabScreen';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import {

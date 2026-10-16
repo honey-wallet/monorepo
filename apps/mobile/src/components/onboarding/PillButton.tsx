@@ -7,7 +7,8 @@ import { makeStyles } from '@/theme';
 type Props = {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  /** `danger` is for the one irreversible action on a screen (e.g. Sign out). */
+  variant?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
   /** Morph between labels that share letters ("Save" → "Saved") instead of swapping. */
   morph?: boolean;
@@ -18,6 +19,7 @@ export function PillButton({ label, onPress, variant = 'primary', disabled, morp
   const Label = morph ? TextMorph : TextSwap;
   const styles = useStyles();
   const secondary = variant === 'secondary';
+  const danger = variant === 'danger';
   return (
     <PressableScale
       accessibilityRole="button"
@@ -26,7 +28,15 @@ export function PillButton({ label, onPress, variant = 'primary', disabled, morp
       onPress={onPress}
       style={[
         styles.button,
-        secondary ? styles.secondary : disabled ? styles.disabled : styles.primary,
+        secondary
+          ? styles.secondary
+          : danger
+            ? disabled
+              ? styles.dangerDisabled
+              : styles.danger
+            : disabled
+              ? styles.disabled
+              : styles.primary,
         style,
       ]}
     >
@@ -35,7 +45,8 @@ export function PillButton({ label, onPress, variant = 'primary', disabled, morp
         style={[
           styles.label,
           secondary && styles.secondaryLabel,
-          disabled && !secondary && styles.disabledLabel,
+          danger && !disabled && styles.dangerLabel,
+          disabled && !secondary && (danger ? styles.dangerDisabledLabel : styles.disabledLabel),
         ]}
       />
     </PressableScale>
@@ -45,6 +56,8 @@ export function PillButton({ label, onPress, variant = 'primary', disabled, morp
 const useStyles = makeStyles((c) => ({
   button: {
     height: 50,
+    // Room either side, so a button sized to its label never crowds it.
+    paddingHorizontal: 24,
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
@@ -62,6 +75,19 @@ const useStyles = makeStyles((c) => ({
     color: c.onPrimary,
     fontSize: 19,
     fontWeight: '600',
+  },
+  danger: {
+    backgroundColor: c.error,
+  },
+  dangerLabel: {
+    color: '#FFFFFF',
+  },
+  // Faded red rather than the honey tint, which means a disabled honey button.
+  dangerDisabled: {
+    backgroundColor: `${c.error}2E`,
+  },
+  dangerDisabledLabel: {
+    color: `${c.error}99`,
   },
   secondaryLabel: {
     color: c.text,

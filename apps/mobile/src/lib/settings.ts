@@ -47,6 +47,8 @@ export type Settings = {
   tradeTabs: TradeMode[];
   /** Home's "Earn with a Honey Jar" card, until it's swiped or closed away. */
   earnPromo: boolean;
+  /** DEMO: every confirm fails, to review the failure pages (see `lib/outcomes.ts`). */
+  simulateFailures: boolean;
 };
 
 export const settings = createStore<Settings>({
@@ -65,6 +67,7 @@ export const settings = createStore<Settings>({
   hideBalance: false,
   tradeTabs: [...AVAILABLE_TRADE_MODES],
   earnPromo: true,
+  simulateFailures: false,
 });
 
 export const useSettings = settings.use;

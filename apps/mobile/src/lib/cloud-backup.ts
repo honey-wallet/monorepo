@@ -4,6 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import { createStore } from '@/lib/store';
 import { readPrimaryMnemonic } from '@/lib/vault';
 
 /**
@@ -16,12 +17,43 @@ import { readPrimaryMnemonic } from '@/lib/vault';
  * format stays the same, so files saved by hand keep working.
  */
 
-export const CLOUD = Platform.OS === 'android' ? 'Google Drive' : 'iCloud';
+export type CloudProvider = 'icloud' | 'gdrive';
+
+/** Where each provider lives in the share sheet, so the user knows what to tap. */
+export const PROVIDERS: Record<CloudProvider, { name: string; tip: string }> = {
+  icloud: {
+    name: 'iCloud Drive',
+    tip: 'When the share sheet opens, tap Save to Files, then iCloud Drive.',
+  },
+  gdrive: {
+    name: 'Google Drive',
+    tip:
+      Platform.OS === 'ios'
+        ? 'When the share sheet opens, tap Drive. Don’t see it? Install Google Drive first.'
+        : 'When the share sheet opens, tap Drive.',
+  },
+};
+
+/** iPhones can use either; Android has no iCloud. */
+export const AVAILABLE: CloudProvider[] = Platform.OS === 'ios' ? ['icloud', 'gdrive'] : ['gdrive'];
+
+/** Every place a backup can live, for copy like "From iCloud Drive or Google Drive". */
+export const CLOUD_NAMES = AVAILABLE.map((p) => PROVIDERS[p].name).join(' or ');
+
+/** The provider picked for the next backup, and where the last one went. */
+export const backupPrefs = createStore<{ provider: CloudProvider; savedTo: CloudProvider | null }>({
+  provider: AVAILABLE[0] ?? 'gdrive',
+  savedTo: null,
+});
+export const useBackupPrefs = backupPrefs.use;
+
+export const setBackupProvider = (provider: CloudProvider) =>
+  backupPrefs.set((prev) => ({ ...prev, provider }));
 
 const FILE_NAME = 'Honey wallet backup.json';
 
-/** Encrypts the device's phrase and opens the share sheet to save it. */
-export async function saveBackupFile(password: string) {
+/** Encrypts the device's phrase and opens the share sheet to save it to `provider`. */
+export async function saveBackupFile(password: string, provider: CloudProvider) {
   const phrase = await readPrimaryMnemonic();
   if (!phrase) throw new Error('This device doesn’t have a recovery phrase yet');
   const backup = await encryptBackup(phrase, password, getRandomBytes);
@@ -33,12 +65,13 @@ export async function saveBackupFile(password: string) {
     await Sharing.shareAsync(file.uri, {
       mimeType: 'application/json',
       UTI: 'public.json',
-      dialogTitle: `Save your backup to ${CLOUD}`,
+      dialogTitle: `Save your backup to ${PROVIDERS[provider].name}`,
     });
   } finally {
     // The share sheet has made its own copy; don't leave one lying in the cache.
     file.delete();
   }
+  backupPrefs.set((prev) => ({ ...prev, savedTo: provider }));
 }
 
 /** Lets the user pick a backup file. Null if they cancel. */

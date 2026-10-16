@@ -75,75 +75,76 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(onboarding)" />
           <Stack.Screen name="(wallet)" options={{ gestureEnabled: false }} />
-          <Stack.Screen name="settings" />
-          <Stack.Screen name="notifications" />
-          <Stack.Screen name="token/[symbol]" />
-          <Stack.Screen name="perp/[symbol]" />
-          <Stack.Screen name="predict/[id]" />
-          <Stack.Screen name="portfolio" />
-          <Stack.Screen name="multisig/[id]" />
-          <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
-          <Stack.Screen name="wallets" options={sheet([0.75, 1])} />
-          <Stack.Screen name="earn/[symbol]" options={sheet('fitToContents')} />
-          <Stack.Screen name="savings-add" options={sheet([1])} />
-          <Stack.Screen name="receive" options={sheet('fitToContents')} />
-          <Stack.Screen name="my-qr" options={sheet('fitToContents')} />
-          <Stack.Screen name="networks" options={sheet('fitToContents')} />
-          <Stack.Screen name="send" options={sheet([1])} />
-          <Stack.Screen name="buy" options={sheet('fitToContents')} />
-          <Stack.Screen name="activity/[id]" options={sheet('fitToContents')} />
-          <Stack.Screen name="swap-settings" options={sheet('fitToContents')} />
-          <Stack.Screen name="trade-settings" options={sheet('fitToContents')} />
-          <Stack.Screen name="balance" options={sheet('fitToContents')} />
-          <Stack.Screen name="share-portfolio" options={sheet('fitToContents')} />
-          <Stack.Screen name="share-token" options={sheet('fitToContents')} />
-          <Stack.Screen name="section-settings" options={sheet('fitToContents')} />
-          <Stack.Screen name="trade-tabs" options={sheet('fitToContents')} />
-          <Stack.Screen name="token-picker" options={sheet([0.9])} />
-          <Stack.Screen name="network-picker" options={sheet([0.8])} />
-          <Stack.Screen name="step-help" options={sheet('fitToContents')} />
-          <Stack.Screen name="perp-order" options={sheet([1])} />
-          <Stack.Screen name="predict-order" options={sheet([1])} />
-          <Stack.Screen name="predict-guide" options={sheet('fitToContents')} />
-          <Stack.Screen name="perps-guide" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings" />
+          <Stack.Screen name="(activity)/notifications" />
+          <Stack.Screen name="(portfolio)/token/[symbol]" />
+          <Stack.Screen name="(trade)/perp/[symbol]" />
+          <Stack.Screen name="(trade)/predict/[id]" />
+          <Stack.Screen name="(portfolio)/portfolio" />
+          <Stack.Screen name="(shared)/multisig/[id]" />
+          <Stack.Screen name="(money)/scan" options={{ presentation: 'fullScreenModal' }} />
+          <Stack.Screen name="(keys)/wallets" options={sheet([0.75, 1])} />
+          <Stack.Screen name="(savings)/earn/[symbol]" options={sheet('fitToContents')} />
+          <Stack.Screen name="(savings)/savings-add" options={sheet([1])} />
+          <Stack.Screen name="(money)/receive" options={sheet('fitToContents')} />
+          <Stack.Screen name="(money)/my-qr" options={sheet('fitToContents')} />
+          <Stack.Screen name="(money)/networks" options={sheet('fitToContents')} />
+          <Stack.Screen name="(money)/send" options={sheet([1])} />
+          <Stack.Screen name="(money)/buy" options={sheet('fitToContents')} />
+          <Stack.Screen name="(activity)/activity/[id]" options={sheet('fitToContents')} />
+          <Stack.Screen name="(trade)/swap-settings" options={sheet('fitToContents')} />
+          <Stack.Screen name="(trade)/trade-settings" options={sheet('fitToContents')} />
+          <Stack.Screen name="(money)/balance" options={sheet('fitToContents')} />
+          <Stack.Screen name="(portfolio)/share-portfolio" options={sheet('fitToContents')} />
+          <Stack.Screen name="(portfolio)/share-token" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/section-settings" options={sheet('fitToContents')} />
+          <Stack.Screen name="(trade)/trade-tabs" options={sheet('fitToContents')} />
+          <Stack.Screen name="(money)/token-picker" options={sheet([0.9])} />
+          <Stack.Screen name="(money)/network-picker" options={sheet([0.8])} />
+          <Stack.Screen name="(account)/step-help" options={sheet('fitToContents')} />
+          <Stack.Screen name="(trade)/perp-order" options={sheet([1])} />
+          <Stack.Screen name="(trade)/predict-order" options={sheet([1])} />
+          <Stack.Screen name="(trade)/predict-guide" options={sheet('fitToContents')} />
+          <Stack.Screen name="(trade)/perps-guide" options={sheet('fitToContents')} />
           {/* Money flows */}
-          <Stack.Screen name="send-amount" options={sheet([1])} />
-          <Stack.Screen name="buy-cash" options={sheet([1])} />
-          <Stack.Screen name="add-wallet" options={sheet('fitToContents')} />
-          <Stack.Screen name="burner-wallet" options={sheet('fitToContents')} />
-          <Stack.Screen name="import-wallet" options={sheet([1])} />
-          <Stack.Screen name="pair-extension" options={sheet([1])} />
-          <Stack.Screen name="restore-backup" options={sheet('fitToContents')} />
-          <Stack.Screen name="watch-wallet" options={sheet([1])} />
-          <Stack.Screen name="hardware-wallet" options={sheet('fitToContents')} />
-          <Stack.Screen name="jar-new" options={sheet([1])} />
-          <Stack.Screen name="jar-move" options={sheet([1])} />
+          <Stack.Screen name="(money)/send-amount" options={sheet([1])} />
+          <Stack.Screen name="(money)/buy-cash" options={sheet([1])} />
+          <Stack.Screen name="(keys)/add-wallet" options={sheet('fitToContents')} />
+          <Stack.Screen name="(keys)/burner-wallet" options={sheet('fitToContents')} />
+          <Stack.Screen name="(keys)/import-wallet" options={sheet([1])} />
+          <Stack.Screen name="(keys)/pair-extension" options={sheet([1])} />
+          <Stack.Screen name="(keys)/restore-backup" options={sheet('fitToContents')} />
+          <Stack.Screen name="(keys)/watch-wallet" options={sheet([1])} />
+          <Stack.Screen name="(keys)/hardware-wallet" options={sheet('fitToContents')} />
+          <Stack.Screen name="(savings)/jar-new" options={sheet([1])} />
+          <Stack.Screen name="(savings)/jar-move" options={sheet([1])} />
           {/* Shared wallets */}
-          <Stack.Screen name="multisig-new" options={sheet([1])} />
-          <Stack.Screen name="proposal/[id]" options={sheet('fitToContents')} />
-          <Stack.Screen name="multisig-edit" options={sheet('fitToContents')} />
+          <Stack.Screen name="(shared)/multisig-new" options={sheet([1])} />
+          <Stack.Screen name="(shared)/proposal/[id]" options={sheet('fitToContents')} />
+          <Stack.Screen name="(shared)/multisig-edit" options={sheet('fitToContents')} />
           {/* Settings pages (pushed) and pickers (sheets) */}
-          <Stack.Screen name="profile-edit" options={sheet([1])} />
-          <Stack.Screen name="get-started" options={sheet('fitToContents')} />
-          <Stack.Screen name="setup" options={sheet('fitToContents')} />
-          <Stack.Screen name="app-data" />
-          <Stack.Screen name="smart-wallet" />
-          <Stack.Screen name="recovery-phrase" />
-          <Stack.Screen name="icloud-backup" />
-          <Stack.Screen name="disclosures" />
-          <Stack.Screen name="help" />
-          <Stack.Screen name="settings-theme" options={sheet('fitToContents')} />
-          <Stack.Screen name="settings-currency" options={sheet([0.8, 1])} />
-          <Stack.Screen name="settings-language" options={sheet([0.8, 1])} />
-          <Stack.Screen name="settings-notifications" options={sheet('fitToContents')} />
-          <Stack.Screen name="settings-balances" options={sheet('fitToContents')} />
-          <Stack.Screen name="settings-advanced" options={sheet('fitToContents')} />
-          <Stack.Screen name="settings-network-cost" options={sheet('fitToContents')} />
-          <Stack.Screen name="settings-face-id" options={sheet('fitToContents')} />
-          <Stack.Screen name="settings-permissions" options={sheet('fitToContents')} />
-          <Stack.Screen name="settings-about" options={sheet('fitToContents')} />
-          <Stack.Screen name="smart-wallet-info" options={sheet('fitToContents')} />
-          <Stack.Screen name="contact" options={sheet('fitToContents')} />
+          <Stack.Screen name="(account)/profile-edit" options={sheet('fitToContents')} />
+          <Stack.Screen name="(account)/get-started" options={sheet('fitToContents')} />
+          <Stack.Screen name="(account)/setup" options={sheet('fitToContents')} />
+          <Stack.Screen name="(account)/sign-out" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/app-data" />
+          <Stack.Screen name="(settings)/smart-wallet" />
+          <Stack.Screen name="(keys)/recovery-phrase" />
+          <Stack.Screen name="(keys)/icloud-backup" />
+          <Stack.Screen name="(settings)/disclosures" />
+          <Stack.Screen name="(settings)/help" />
+          <Stack.Screen name="(settings)/settings-theme" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-currency" options={sheet([0.8, 1])} />
+          <Stack.Screen name="(settings)/settings-language" options={sheet([0.8, 1])} />
+          <Stack.Screen name="(settings)/settings-notifications" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-balances" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-advanced" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-network-cost" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-face-id" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-permissions" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-about" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/smart-wallet-info" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/contact" options={sheet('fitToContents')} />
         </Stack>
         <ToastHost />
         {!launched && <LaunchAnimation onDone={endLaunch} />}

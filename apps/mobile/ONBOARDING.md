@@ -6,7 +6,7 @@ wallet exists is kept as short as possible. Everything after it pushes towards f
 towards finishing setup.
 
 Code: `lib/onboarding.ts` (state and copy), `app/(onboarding)/welcome.tsx`,
-`app/get-started.tsx`, `components/wallet/ActivationCard.tsx`, `app/setup.tsx`.
+`app/(account)/get-started.tsx`, `components/home/ActivationCard.tsx`, `app/(account)/setup.tsx`.
 
 ## Where users drop off (benchmarks)
 

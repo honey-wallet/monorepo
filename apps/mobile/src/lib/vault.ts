@@ -156,3 +156,22 @@ export async function readPrimaryWallet(): Promise<{
   );
   return { mnemonic, accounts };
 }
+
+/**
+ * Erases every secret this app keeps: each phrase, each imported key, and the list of
+ * accounts. Used by Sign out, so nothing sensitive stays on the phone afterwards.
+ */
+export const eraseVault = serial(async () => {
+  const remove = (key: string) => SecureStore.deleteItemAsync(key, OPTIONS);
+  const accounts = await loadAccounts();
+  const seeds = new Set<string>();
+  for (const account of accounts) {
+    if (account.source.kind === 'phrase') seeds.add(account.source.seedId);
+    else await remove(KEY.privateKey(account.id));
+  }
+  const primary = await read(KEY.primary);
+  if (primary) seeds.add(primary);
+  for (const seedId of seeds) await remove(KEY.seed(seedId));
+  await remove(KEY.primary);
+  await remove(KEY.accounts);
+});

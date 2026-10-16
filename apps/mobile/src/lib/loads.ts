@@ -20,6 +20,8 @@ export const LOADS = {
   trades: 'trades',
   nfts: 'nfts',
   notifications: 'notifications',
+  /** What's waiting for your approval across your shared wallets: Home's nudge. */
+  approvals: 'approvals',
   recipients: 'recipients',
   tx: (id: string) => `tx:${id}`,
   /** Balance history behind Portfolio's chart. */

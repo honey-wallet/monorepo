@@ -28,6 +28,25 @@ Run lint and typecheck before declaring any task done.
 - Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
 - Docs: https://docs.expo.dev/router/introduction.md
 
+## Where files go
+
+Routes live in `src/app` inside route groups, folders in brackets that organise files without
+changing URLs (`app/(trade)/perp-order.tsx` is still `/perp-order`). Put a new screen in the group
+it belongs to and register it in `app/_layout.tsx` with the group prefix
+(`name="(trade)/perp-order"`). Only `(wallet)` (the tabs) and `(onboarding)` have their own layouts.
+
+- `(wallet)`: the tab screens. `(onboarding)`: welcome, email and code.
+- `(account)`: sign in, setup, sign out, profile. `(settings)`: settings and support pages.
+- `(money)`: send, receive, buy and sell, and the token and network pickers.
+- `(trade)`: perps, predict and swap settings. `(savings)`: earn and jars.
+- `(keys)`: adding, importing, backing up and pairing wallets. `(shared)`: shared wallets and proposals.
+- `(portfolio)`: token pages and portfolio. `(activity)`: activity and notifications.
+
+Components in `src/components` are grouped by what they're for:
+- `motion/`: animation primitives. `sheets/`: Sheet, ActionFooter, Success/FailurePage, Details.
+- `charts/`: every chart. `trade/`: perps, predict and swap pieces. `home/`: Home's cards and lists.
+- `wallet/`: shared wallet UI (parts, Keypad, SearchField, TabBar…). `onboarding/`, `logo/`.
+
 ## Building with EAS
 
 Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.

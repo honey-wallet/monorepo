@@ -10,3 +10,8 @@ export function tap() {
 export function success() {
   if (getProfile().haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 }
+
+/** The error notification buzz, for a payment or order that didn't go through. */
+export function failure() {
+  if (getProfile().haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+}

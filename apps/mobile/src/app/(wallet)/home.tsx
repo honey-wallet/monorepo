@@ -14,6 +14,15 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
+import { FinishSetupCard, FundWalletCard } from '@/components/home/ActivationCard';
+import {
+  ApprovalsNudge,
+  CARD_ICON,
+  SharedWalletCard,
+  useApprovalsNudgeShown,
+} from '@/components/home/ApprovalsCard';
+import { NftGallery } from '@/components/home/NftGallery';
+import { TradesList, useHasTrades } from '@/components/home/PositionsList';
 import { Icon, type IconName } from '@/components/Icon';
 import { HoneyJar } from '@/components/logo/HoneyJar';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
@@ -33,16 +42,7 @@ import { Sticky, StickyArea } from '@/components/motion/Sticky';
 import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
-import { FinishSetupCard, FundWalletCard } from '@/components/wallet/ActivationCard';
-import {
-  ApprovalsNudge,
-  CARD_ICON,
-  SharedWalletCard,
-  useApprovalsNudgeShown,
-} from '@/components/wallet/ApprovalsCard';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
-import { NftGallery } from '@/components/wallet/NftGallery';
-import { TradesList, useHasTrades } from '@/components/wallet/PositionsList';
 import {
   BalanceAmount,
   EmptyState,
@@ -270,13 +270,16 @@ export default function HomeScreen() {
           {/* At most two cards here, the two that matter most (see `cards` above). A
               shared wallet's members, rule and what's waiting; elsewhere, a nudge if any
               of your shared wallets need you. */}
-          {!cards.includes('approvals') ? null : multisig ? (
-            <Rise index={6} style={styles.gutterMargin}>
-              <SharedWalletCard multisig={multisig} />
-            </Rise>
+          {multisig ? (
+            cards.includes('approvals') && (
+              <Rise index={6} style={styles.gutterMargin}>
+                <SharedWalletCard multisig={multisig} />
+              </Rise>
+            )
           ) : (
+            // Mounted while closed, so it opens in once what's waiting has loaded.
             <View style={styles.gutterMargin}>
-              <ApprovalsNudge />
+              <ApprovalsNudge open={cards.includes('approvals')} />
             </View>
           )}
 

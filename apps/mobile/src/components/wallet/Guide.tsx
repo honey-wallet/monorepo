@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { closeSheet, SheetScreen } from '@/components/wallet/Sheet';
+import { closeSheet, SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { makeStyles } from '@/theme';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';

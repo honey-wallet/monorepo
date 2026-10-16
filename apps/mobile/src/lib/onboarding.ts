@@ -1,7 +1,10 @@
 import { router } from 'expo-router';
+import { randomAvatarSeed } from '@/components/Avatar';
 import { setProfile } from '@/lib/profile';
 import { createStore } from '@/lib/store';
 import { showToast } from '@/lib/toast';
+import { eraseVault } from '@/lib/vault';
+import { wallets } from '@/lib/wallets';
 
 /**
  * Onboarding and activation, built around one goal: a new user's first deposit. A
@@ -140,4 +143,18 @@ export function simulateDemoDeposit() {
     demoDeposit = undefined;
     markFunded(25);
   }, 6000);
+}
+
+/**
+ * Signs out: the wallet comes off this phone (keys, profile and wallets added here),
+ * and the app goes back to Welcome. The money stays where it is, on the network, and
+ * comes back with the account or the recovery phrase.
+ */
+export async function signOut() {
+  await eraseVault();
+  onboarding.set({ method: null, funded: false, done: [], credit: 0 });
+  wallets.set({ activeId: 'main', added: [] });
+  setProfile({ name: 'Honey', photo: null, avatarSeed: randomAvatarSeed() });
+  router.dismissAll();
+  router.replace('/welcome');
 }
