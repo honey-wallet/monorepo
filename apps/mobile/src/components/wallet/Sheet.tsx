@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { useActiveMultisig } from '@/lib/multisig';
 import { goBackOr, leaveSheetTo } from '@/lib/navigation';
 import { TRADE_MODES, useSettings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
@@ -209,10 +210,12 @@ export function SheetField({
 export function WalletSettingsRow({ tradeTabs = false }: { tradeTabs?: boolean }) {
   const styles = useStyles();
   const settings = useSettings();
+  const multisig = useActiveMultisig();
   return (
     <View style={styles.walletSettings}>
       {/* On Trade's settings: add, hide or reorder the product tabs. */}
-      {tradeTabs && (
+      {/* Not on a shared wallet: it only ever has Swap. */}
+      {tradeTabs && !multisig && (
         <SheetRow
           icon="trade"
           title="Trade tabs"

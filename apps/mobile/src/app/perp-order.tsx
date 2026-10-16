@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -18,13 +18,14 @@ import {
 import { success } from '@/lib/haptics';
 import { formatPrice, formatUsd } from '@/lib/mock-wallet';
 import { liquidationPrice, perpMarket } from '@/lib/perps';
+import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { PERP_LEVERAGE_STEPS, useTradePrefs } from '@/lib/trade-prefs';
 import { makeStyles } from '@/theme';
 
 type Side = 'Long' | 'Short';
 
 /** Open a perps position: side, margin and leverage, with size and liquidation price. */
-export default function PerpOrderSheet() {
+function PerpOrderSheet() {
   const styles = useStyles();
   const params = useLocalSearchParams<{ symbol?: string; side?: string }>();
   const symbol = params.symbol ?? 'BTC';
@@ -139,3 +140,8 @@ const useStyles = makeStyles(() => ({
     flex: 1,
   },
 }));
+
+/** Shared wallets can't use this product (see `lib/trade-modes.ts`); links land on Trade. */
+export default function PerpOrderSheetRoute() {
+  return useTradeModeAllowed('Perps') ? <PerpOrderSheet /> : <Redirect href="/trade" />;
+}

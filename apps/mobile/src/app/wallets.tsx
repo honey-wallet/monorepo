@@ -10,6 +10,8 @@ import { closeSheet, SheetRow, SheetScreen, SheetSection } from '@/components/wa
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { formatUsd, shortAddress } from '@/lib/mock-wallet';
+import { hasVoted, useMultisigState, YOU } from '@/lib/multisig';
+import { leaveSheetTo } from '@/lib/navigation';
 import { type Profile, useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import {
@@ -26,6 +28,7 @@ export default function WalletsSheet() {
   const styles = useStyles();
   const c = useTheme();
   const profile = useProfile();
+  const shared = useMultisigState();
   const { added } = useWallets();
   const active = useActiveWallet();
   const { copied, copy: copyAddress } = useCopy(active.address);
@@ -44,15 +47,23 @@ export default function WalletsSheet() {
     router.push(path);
   };
 
-  const row = (w: AddedWallet) => (
-    <WalletRow
-      key={w.id}
-      wallet={w}
-      profile={profile}
-      active={w.id === active.id}
-      onPress={() => select(w)}
-    />
-  );
+  const row = (w: AddedWallet) => {
+    // Shared wallets show their live rule and how much is waiting for you.
+    const m = shared.multisigs[w.id];
+    const waiting = shared.proposals.filter(
+      (p) => p.walletId === w.id && p.status === 'pending' && !hasVoted(p, YOU),
+    ).length;
+    return (
+      <WalletRow
+        key={w.id}
+        wallet={m ? { ...w, threshold: [m.threshold, m.members.length] } : w}
+        waiting={waiting}
+        profile={profile}
+        active={w.id === active.id}
+        onPress={() => select(w)}
+      />
+    );
+  };
 
   return (
     <SheetScreen scroll>
@@ -76,12 +87,17 @@ export default function WalletsSheet() {
       </View>
 
       <PillButton
-        label="Wallet settings"
+        label={shared.multisigs[active.id] ? 'Shared wallet settings' : 'Wallet settings'}
         variant="secondary"
         onPress={() => {
           tap();
-          router.dismiss();
-          router.push('/settings');
+          // A shared wallet's settings are its own page: members and rules.
+          if (shared.multisigs[active.id]) {
+            leaveSheetTo({ pathname: '/multisig/[id]', params: { id: active.id } });
+          } else {
+            router.dismiss();
+            router.push('/settings');
+          }
         }}
         style={styles.settingsButton}
       />
@@ -91,6 +107,18 @@ export default function WalletsSheet() {
 
       <SheetSection title="Multisig wallets" />
       {wallets.filter((w) => w.kind === 'multisig').map(row)}
+      <SheetRow
+        leading={
+          <View style={styles.iconCircle}>
+            <Icon name="multisig" size={17} color={c.textSecondary} />
+          </View>
+        }
+        title="New shared wallet"
+        onPress={() => {
+          tap();
+          leaveSheetTo('/multisig-new');
+        }}
+      />
 
       <SheetSection title="Hardware wallets" />
       {hardware.map(row)}
@@ -138,11 +166,14 @@ function WalletAvatar({
 
 function WalletRow({
   wallet,
+  waiting = 0,
   profile,
   active,
   onPress,
 }: {
   wallet: AddedWallet;
+  /** Shared wallets: proposals waiting for your approval. */
+  waiting?: number;
   profile: Profile;
   active: boolean;
   onPress: () => void;
@@ -150,7 +181,9 @@ function WalletRow({
   const styles = useStyles();
   const c = useTheme();
   const kind = wallet.threshold
-    ? `${wallet.threshold[0]} of ${wallet.threshold[1]} · `
+    ? waiting
+      ? `${waiting} waiting · `
+      : `${wallet.threshold[0]} of ${wallet.threshold[1]} · `
     : wallet.watchOnly
       ? 'Watching · '
       : wallet.burner

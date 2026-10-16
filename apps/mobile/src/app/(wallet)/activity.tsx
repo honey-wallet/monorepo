@@ -3,10 +3,12 @@ import { Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
+import { ProposalRow } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { TabScreen } from '@/components/wallet/TabScreen';
 import { tap } from '@/lib/haptics';
 import { ACTIVITY, type Activity } from '@/lib/mock-wallet';
+import { useActiveMultisig, useProposals } from '@/lib/multisig';
 import { type ActivityFilter, useSectionPrefs } from '@/lib/section-prefs';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -33,6 +35,13 @@ export default function ActivityScreen() {
       !(activityHideApprovals && a.kind === 'approved'),
   );
   const months = [...new Set(shown.map((a) => a.month))];
+  // A shared wallet's proposals still collecting approvals come first.
+  const multisig = useActiveMultisig();
+  const { pending, history } = useProposals(multisig?.walletId ?? '');
+  const openProposal = (id: string) => {
+    tap();
+    router.push({ pathname: '/proposal/[id]', params: { id } });
+  };
 
   return (
     <TabScreen
@@ -46,17 +55,52 @@ export default function ActivityScreen() {
         />
       }
     >
-      {months.map((month) => (
-        <View key={month} style={styles.month}>
-          <Text style={styles.monthLabel}>{month}</Text>
-          {shown
-            .filter((a) => a.month === month)
-            .map((a) => (
-              <ActivityRow key={a.id} activity={a} />
-            ))}
+      {multisig && pending.length > 0 && (
+        <View style={styles.month}>
+          <Text style={styles.monthLabel}>Awaiting approval</Text>
+          {pending.map((p) => (
+            <ProposalRow
+              key={p.id}
+              multisig={multisig}
+              proposal={p}
+              onPress={() => openProposal(p.id)}
+            />
+          ))}
         </View>
-      ))}
-      {shown.length === 0 && (
+      )}
+      {/* A shared wallet's history is its proposals: done, rejected or cancelled. */}
+      {multisig && (
+        <View style={styles.month}>
+          <Text style={styles.monthLabel}>History</Text>
+          {history.map((p) => (
+            <ProposalRow
+              key={p.id}
+              multisig={multisig}
+              proposal={p}
+              onPress={() => openProposal(p.id)}
+            />
+          ))}
+          {history.length === 0 && pending.length === 0 && (
+            <EmptyState
+              icon="history"
+              title="No activity yet"
+              hint="Payments and changes on this shared wallet show up here."
+            />
+          )}
+        </View>
+      )}
+      {!multisig &&
+        months.map((month) => (
+          <View key={month} style={styles.month}>
+            <Text style={styles.monthLabel}>{month}</Text>
+            {shown
+              .filter((a) => a.month === month)
+              .map((a) => (
+                <ActivityRow key={a.id} activity={a} />
+              ))}
+          </View>
+        ))}
+      {!multisig && shown.length === 0 && (
         <EmptyState
           icon="history"
           title="Nothing to show"

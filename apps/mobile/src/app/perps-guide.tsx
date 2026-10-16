@@ -1,8 +1,10 @@
+import { Redirect } from 'expo-router';
 import { Guide } from '@/components/wallet/Guide';
 import { ClosePositionArt, LongShortArt, PickPerpArt } from '@/components/wallet/PerpsGuideArt';
+import { useTradeModeAllowed } from '@/lib/trade-modes';
 
 /** How Perps work, in three steps; shown the first time Perps opens. */
-export default function PerpsGuideSheet() {
+function PerpsGuideSheet() {
   return (
     <Guide
       steps={[
@@ -25,4 +27,9 @@ export default function PerpsGuideSheet() {
       ]}
     />
   );
+}
+
+/** Shared wallets can't use this product (see `lib/trade-modes.ts`); links land on Trade. */
+export default function PerpsGuideSheetRoute() {
+  return useTradeModeAllowed('Perps') ? <PerpsGuideSheet /> : <Redirect href="/trade" />;
 }

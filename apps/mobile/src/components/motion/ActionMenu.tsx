@@ -7,16 +7,19 @@ export type Action = { label: string; icon: IconName; onPress: () => void };
 
 /**
  * A standard round header button (••• by default) that opens a list of actions,
- * growing out of the button with the same motion as the sort menu.
+ * growing out of the button with the same motion as the sort menu. `bare` drops the
+ * circle behind the icon, for headers whose other buttons have none.
  */
 export function ActionMenu({
   actions,
   icon = 'more',
   size = 18,
+  bare = false,
 }: {
   actions: Action[];
   icon?: IconName;
   size?: number;
+  bare?: boolean;
 }) {
   const c = useTheme();
   return (
@@ -30,7 +33,7 @@ export function ActionMenu({
         borderRadius: HEADER_BUTTON / 2,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: c.raised,
+        backgroundColor: bare ? 'transparent' : c.raised,
       }}
       trigger={() => <Icon name={icon} size={size} color={c.text} />}
     />

@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
@@ -15,7 +15,8 @@ import {
   TypedAmount,
   trimNumber,
 } from '@/components/wallet/Keypad';
-import { TokenIcon } from '@/components/wallet/parts';
+import { LiveProposedPage } from '@/components/wallet/MultisigParts';
+import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { SearchField } from '@/components/wallet/SearchField';
 import { closeSheet, SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
 import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
@@ -31,6 +32,7 @@ import {
   RECENT_RECIPIENTS,
   shortAddress,
 } from '@/lib/mock-wallet';
+import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { makeStyles, useTheme } from '@/theme';
 
 type Page = 'pick' | 'amount' | 'review' | 'sent';
@@ -64,18 +66,25 @@ export default function SendAmountSheet() {
   }>();
   const styles = useStyles();
   const c = useTheme();
+  // A shared wallet sends from its own balances, and proposes rather than sends.
+  const signer = useSigner();
+  const sendable = signer.multisig
+    ? signer.multisig.holdings.filter((h) => h.amount > 0)
+    : SENDABLE;
   // The largest holding of the requested token, so its network is the sensible default.
   const [picked, setPicked] = useState(() => {
-    const first = SENDABLE.find((h) => h.symbol === initial) ?? SENDABLE[0];
+    const first = sendable.find((h) => h.symbol === initial) ?? sendable[0] ?? SENDABLE[0];
     return { symbol: first.symbol, chain: first.chain };
   });
+  const [proposalId, setProposalId] = useState<string | null>(null);
   const { symbol, chain } = picked;
   const [unit, setUnit] = useState<Unit>('usd');
   const [amount, setAmount] = useState('');
   const [page, setPage] = useState<Page>('amount');
   const [area, setArea] = useState(0);
 
-  const token = SENDABLE.find((h) => h.symbol === symbol && h.chain === chain) ?? SENDABLE[0];
+  const token =
+    sendable.find((h) => h.symbol === symbol && h.chain === chain) ?? sendable[0] ?? SENDABLE[0];
   const price = token.usd / token.amount;
   const value = Number(amount) || 0;
   const tokenValue = unit === 'usd' ? value / price : value;
@@ -109,12 +118,49 @@ export default function SendAmountSheet() {
     setPage('amount');
   };
 
+  const action: ProposalAction = {
+    type: 'send',
+    symbol,
+    chain,
+    amount: Number(trimNumber(tokenValue, 8)),
+    usd: usdValue,
+    to: recipient.address,
+  };
   const send = () => {
     success();
+    if (signer.multisig) {
+      const { proposal, executed } = propose(signer.walletId, action);
+      if (!executed) setProposalId(proposal.id);
+    }
     setPage('sent');
   };
 
   const finish = () => finishDemo('nothing was sent', { all: true });
+
+  // A new shared wallet has nothing to send until it's funded.
+  if (signer.multisig && sendable.length === 0) {
+    return (
+      <SheetScreen
+        title="Send"
+        size="fill"
+        footer={
+          <PillButton
+            label="Receive"
+            onPress={() => {
+              tap();
+              router.replace('/receive');
+            }}
+          />
+        }
+      >
+        <EmptyState
+          icon="send"
+          title="Nothing to send yet"
+          hint={`Fund this shared wallet first: send tokens to it on ${signer.multisig.network.name}.`}
+        />
+      </SheetScreen>
+    );
+  }
 
   return (
     // Each page keeps its own button so it slides in with that page's content.
@@ -146,7 +192,12 @@ export default function SendAmountSheet() {
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
                 >
-                  <TokenList query={query} sending onChoose={choose} />
+                  <TokenList
+                    query={query}
+                    sending
+                    holdings={signer.multisig?.holdings}
+                    onChoose={choose}
+                  />
                 </ScrollView>
               </>
             ) : page === 'amount' ? (
@@ -266,6 +317,8 @@ export default function SendAmountSheet() {
                   style={styles.cta}
                 />
               </>
+            ) : page === 'sent' && proposalId ? (
+              <LiveProposedPage proposalId={proposalId} onDone={finish} />
             ) : page === 'sent' ? (
               <SuccessPage
                 title="Sent"
@@ -291,7 +344,13 @@ export default function SendAmountSheet() {
                     value={
                       <View style={styles.inline}>
                         <Avatar name={recipient.title} size={20} seed={to} />
-                        <Text style={styles.rowValue}>{recipient.title}</Text>
+                        <View style={styles.toValue}>
+                          <Text style={styles.rowValue}>{recipient.title}</Text>
+                          {/* The address too, so it can be checked before sending. */}
+                          {recipient.subtitle ? (
+                            <Text style={styles.rowAddress}>{recipient.subtitle}</Text>
+                          ) : null}
+                        </View>
                       </View>
                     }
                   />
@@ -305,6 +364,9 @@ export default function SendAmountSheet() {
                     }
                   />
                   <StatRow label="Network cost" value="<$0.01" />
+                  {signer.rule(action) ? (
+                    <StatRow label="Shared wallet" value={signer.rule(action)} />
+                  ) : null}
                   <StatRow
                     label="Total"
                     value={<Text style={styles.total}>{formatUsd(usdValue)}</Text>}
@@ -314,7 +376,7 @@ export default function SendAmountSheet() {
                 <Text style={styles.note}>
                   Sends can't be undone. Check the address before you send.
                 </Text>
-                <PillButton label="Send" onPress={send} style={styles.cta} />
+                <PillButton label={signer.cta('Send', action)} onPress={send} style={styles.cta} />
               </>
             )}
           </View>
@@ -327,6 +389,14 @@ export default function SendAmountSheet() {
 const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
+  },
+  toValue: {
+    alignItems: 'flex-end',
+  },
+  rowAddress: {
+    marginTop: 1,
+    color: c.textSecondary,
+    fontSize: 13,
   },
   pickSearch: {
     marginBottom: 12,

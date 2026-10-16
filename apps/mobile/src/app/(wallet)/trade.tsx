@@ -30,11 +30,13 @@ import {
   Summary,
 } from '@/components/wallet/TradeForm';
 import { tap } from '@/lib/haptics';
-import { formatPrice, formatUsd, holdingAmount, priceOf } from '@/lib/mock-wallet';
+import { type Chain, formatPrice, formatUsd, holdingAmount, priceOf } from '@/lib/mock-wallet';
+import { type Multisig, useSigner } from '@/lib/multisig';
 import { goBackOr } from '@/lib/navigation';
-import { TRADE_MODE_INFO, TRADE_MODES, type TradeMode, useSettings } from '@/lib/settings';
+import { TRADE_MODE_INFO, TRADE_MODES, type TradeMode } from '@/lib/settings';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
 import { showDemoToast } from '@/lib/toast';
+import { useTradeModes } from '@/lib/trade-modes';
 import { EXPIRIES, type Expiry, useTradePrefs } from '@/lib/trade-prefs';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -50,16 +52,17 @@ const TRADE_ICONS = Object.fromEntries(
 
 export default function TradeScreen() {
   const styles = useStyles();
-  const { tradeTabs } = useSettings();
   // `?mode=Perps` opens a specific product, e.g. from a deep link.
   const params = useLocalSearchParams<{ mode?: TradeMode }>();
-  const [picked, setPicked] = useState<TradeMode>(params.mode ?? tradeTabs[0]);
+  // A shared wallet only swaps; products it can't use can't be opened, even by link.
+  const tabs = useTradeModes();
+  const [picked, setPicked] = useState<TradeMode>(params.mode ?? tabs[0]);
   // If the open tab was just hidden, fall back to the first one still shown.
-  const mode = tradeTabs.includes(picked) ? picked : tradeTabs[0];
+  const mode = tabs.includes(picked) ? picked : tabs[0];
   return (
     // Trade is a focused flow with no tab bar; Back returns to where you came from.
     <TabScreen
-      title="Trade"
+      title={tabs.length > 1 ? 'Trade' : mode}
       tabBar={false}
       leading={
         <HeaderIconButton bare icon="chevronLeft" label="Back" onPress={() => goBackOr('/home')} />
@@ -75,11 +78,14 @@ export default function TradeScreen() {
         />
       }
     >
-      {/* The products you've chosen, sharing the row equally; edit them from settings. */}
-      <View style={styles.modes}>
-        <UnderlineTabs options={tradeTabs} value={mode} onChange={setPicked} icons={TRADE_ICONS} />
-      </View>
-      <ContentSwap id={mode} index={tradeTabs.indexOf(mode)} fill={mode === 'Swap'}>
+      {/* The products you've chosen, sharing the row equally; edit them from settings.
+          With a single product there's nothing to switch between, so no tabs. */}
+      {tabs.length > 1 && (
+        <View style={styles.modes}>
+          <UnderlineTabs options={tabs} value={mode} onChange={setPicked} icons={TRADE_ICONS} />
+        </View>
+      )}
+      <ContentSwap id={mode} index={tabs.indexOf(mode)} fill={mode === 'Swap'}>
         {mode === 'Swap' && <SwapForm />}
         {mode === 'Perps' && <PerpsMarkets />}
         {mode === 'Futures' && <FuturesForm />}
@@ -96,10 +102,28 @@ export default function TradeScreen() {
 /** How long a fresh quote takes before the rate shows. */
 const QUOTE_MS = 700;
 
+/**
+ * The swap pair for a shared wallet: kept if both sides are on its network, else its
+ * largest balance into USDC (or ETH, if that's what it holds most of).
+ */
+function onNetwork(pair: ReturnType<typeof useSwap>, multisig: Multisig) {
+  const chain = multisig.network.name as Chain;
+  if (pair.sell.chain === chain && pair.buy.chain === chain) return pair;
+  const sell = multisig.holdings[0]?.symbol ?? 'ETH';
+  return {
+    ...pair,
+    sell: { symbol: sell, chain },
+    buy: { symbol: sell === 'USDC' ? 'ETH' : 'USDC', chain },
+  };
+}
+
 function SwapForm() {
   const styles = useStyles();
   const c = useTheme();
-  const pair = useSwap();
+  const stored = useSwap();
+  // A shared wallet swaps only on its own network, from its own balances.
+  const { multisig } = useSigner();
+  const pair = multisig ? onNetwork(stored, multisig) : stored;
   const sell = pair.sell.symbol;
   const buy = pair.buy.symbol;
   // The typed amount belongs to the token being sold; picking another clears it.
@@ -108,7 +132,9 @@ function SwapForm() {
   const amount = entry.key === sellKey ? entry.amount : '';
   const setAmount = (next: string | ((prev: string) => string)) =>
     setEntry({ key: sellKey, amount: typeof next === 'function' ? next(amount) : next });
-  const balance = holdingAmount(sell, pair.sell.chain);
+  const balance = multisig
+    ? (multisig.holdings.find((h) => h.symbol === sell && h.chain === pair.sell.chain)?.amount ?? 0)
+    : holdingAmount(sell, pair.sell.chain);
   const bridging = pair.sell.chain !== pair.buy.chain;
   const value = Number(amount) || 0;
   const rate = priceOf(sell) / (priceOf(buy) || 1);

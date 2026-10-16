@@ -20,6 +20,8 @@ import { IconSwap, Swap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { Entrance, Rise } from '@/components/motion/Rise';
 import { TextSwap } from '@/components/motion/TextSwap';
+import { PillButton } from '@/components/onboarding/PillButton';
+import { ApprovalsNudge, SharedWalletCard } from '@/components/wallet/ApprovalsCard';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import {
   BalanceAmount,
@@ -32,18 +34,12 @@ import {
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import {
-  BALANCE,
-  BALANCE_CHANGE,
-  BALANCE_HISTORY,
-  formatUsd,
-  handleFor,
-  shortAddress,
-  TOKENS,
-} from '@/lib/mock-wallet';
+import { BALANCE_HISTORY, formatUsd, handleFor, shortAddress, TOKENS } from '@/lib/mock-wallet';
+import { useMultisig, useNeedsMyApproval } from '@/lib/multisig';
 import { useUnreadNotifications } from '@/lib/notifications';
 import { useProfile } from '@/lib/profile';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
+import { useWalletView } from '@/lib/wallet-view';
 import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
@@ -70,18 +66,27 @@ export default function HomeScreen() {
   const unread = useUnreadNotifications();
   const wallet = useActiveWallet();
   const isMain = wallet.id === 'main';
+  const multisig = useMultisig(wallet.id);
+  // The bell also lights up while a shared wallet is waiting for your approval.
+  const needsMe = useNeedsMyApproval();
   const { copied, copy: copyAddress } = useCopy(wallet.address, 'Address copied');
 
-  const changePct = (BALANCE_CHANGE / (BALANCE - BALANCE_CHANGE)) * 100;
+  // The wallet in use: a shared wallet shows its own balances.
+  const view = useWalletView();
+  const changePct = view.usd ? (view.change / (view.usd - view.change)) * 100 : 0;
   const { hideBalance } = useSettings();
-  const changeColor = BALANCE_CHANGE < 0 ? c.error : c.success;
-  const hidden = TOKENS.filter((t) => t.hidden);
-  const visible = TOKENS.filter((t) => !t.hidden);
+  const changeColor = view.change < 0 ? c.error : c.success;
+  const hidden = view.tokens.filter((t) => t.hidden);
+  const visible = view.tokens.filter((t) => !t.hidden);
 
   const open = (href: Href) => {
     tap();
     router.push(href);
   };
+
+  // A shared wallet's balance details live on its own page.
+  const openPortfolio = () =>
+    multisig ? open({ pathname: '/multisig/[id]', params: { id: wallet.id } }) : open('/portfolio');
 
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -150,7 +155,7 @@ export default function HomeScreen() {
                 <HeaderShortcut
                   icon="bell"
                   label="Notifications"
-                  badge={unread}
+                  badge={unread || needsMe.length > 0}
                   onPress={() => router.push('/notifications')}
                 />
                 <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
@@ -173,12 +178,12 @@ export default function HomeScreen() {
                   style={styles.changeRow}
                   hitSlop={6}
                   scaleTo={0.98}
-                  onPress={() => open('/portfolio')}
+                  onPress={() => openPortfolio()}
                 >
-                  <Icon name={BALANCE_CHANGE < 0 ? 'down' : 'up'} size={9} color={changeColor} />
+                  <Icon name={view.change < 0 ? 'down' : 'up'} size={9} color={changeColor} />
                   <Text style={styles.changeText}>
                     <Text style={styles.changeAmount}>
-                      {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(BALANCE_CHANGE))} (
+                      {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(view.change))} (
                       {Math.abs(changePct).toFixed(2)}%)
                     </Text>{' '}
                     today
@@ -189,7 +194,7 @@ export default function HomeScreen() {
               <PressableScale
                 accessibilityLabel="Portfolio"
                 scaleTo={0.97}
-                onPress={() => open('/portfolio')}
+                onPress={() => openPortfolio()}
               >
                 <Sparkline data={BALANCE_HISTORY} width={116} height={60} />
               </PressableScale>
@@ -211,6 +216,18 @@ export default function HomeScreen() {
               </Rise>
             ))}
           </View>
+
+          {/* A shared wallet's members, rule and what's waiting; elsewhere, a nudge if any
+              of your shared wallets need you. */}
+          {multisig ? (
+            <Rise index={6} style={styles.gutterMargin}>
+              <SharedWalletCard multisig={multisig} />
+            </Rise>
+          ) : (
+            <View style={styles.gutterMargin}>
+              <ApprovalsNudge />
+            </View>
+          )}
 
           {/* Promoted feature */}
           <Rise index={6}>
@@ -262,6 +279,25 @@ export default function HomeScreen() {
             <View style={styles.gutter}>
               {section === 'Tokens' && (
                 <>
+                  {/* A new shared wallet starts empty: say how to fund it. */}
+                  {visible.length === 0 && (
+                    <>
+                      <EmptyState
+                        icon="receive"
+                        title="Nothing here yet"
+                        hint={
+                          multisig
+                            ? `Send tokens on ${multisig.network.name} to this wallet's address.`
+                            : 'Tokens you receive will show up here.'
+                        }
+                      />
+                      <PillButton
+                        label="Receive"
+                        variant="secondary"
+                        onPress={() => open('/receive')}
+                      />
+                    </>
+                  )}
                   {visible.map((token, i) => (
                     <Rise key={token.symbol} index={8 + i}>
                       <TokenRow token={token} onPress={() => open(tokenHref(token.symbol))} />
@@ -335,6 +371,7 @@ function CompactBalance({
 }) {
   const styles = useStyles();
   const { hideBalance } = useSettings();
+  const { usd } = useWalletView();
   const shown = useAnimatedStyle(() => {
     const p = interpolate(scrollY.value, [COMPACT_FROM, COMPACT_TO], [0, 1], Extrapolation.CLAMP);
     return { opacity: p };
@@ -351,7 +388,7 @@ function CompactBalance({
       style={[styles.compact, { paddingTop: top, height: top + COMPACT_BAR }, shown]}
     >
       <Animated.Text style={[styles.compactAmount, content]}>
-        {hideBalance ? HIDDEN_AMOUNT : formatUsd(BALANCE)}
+        {hideBalance ? HIDDEN_AMOUNT : formatUsd(usd)}
       </Animated.Text>
     </Animated.View>
   );

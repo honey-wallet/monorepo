@@ -10,11 +10,13 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { applyKey, Keypad, TypedAmount } from '@/components/wallet/Keypad';
+import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { TokenIcon } from '@/components/wallet/parts';
 import { SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
 import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import { success, tap } from '@/lib/haptics';
 import { formatBalance, formatPrice, formatUsd, MARKET, marketOf, TOKENS } from '@/lib/mock-wallet';
+import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { makeStyles, useTheme } from '@/theme';
 
 type Page = 'amount' | 'review' | 'done';
@@ -35,10 +37,13 @@ export default function BuyCashSheet() {
   const styles = useStyles();
   const c = useTheme();
 
-  // Buy anything on the market; sell only what you hold.
-  const symbols = selling
-    ? TOKENS.filter((t) => !t.hidden).map((t) => t.symbol)
-    : MARKET.map((t) => t.symbol);
+  // Buy anything on the market; sell only what you hold (a shared wallet, its own).
+  const signer = useSigner();
+  const owned = signer.multisig
+    ? signer.multisig.holdings.map((h) => ({ symbol: h.symbol, amount: h.amount }))
+    : TOKENS.filter((t) => !t.hidden);
+  const symbols = selling ? owned.map((t) => t.symbol) : MARKET.map((t) => t.symbol);
+  const [proposalId, setProposalId] = useState<string | null>(null);
   const [symbol, setSymbol] = useState(
     initial && symbols.includes(initial) ? initial : selling ? symbols[0] : 'ETH',
   );
@@ -49,7 +54,7 @@ export default function BuyCashSheet() {
   const [area, setArea] = useState(0);
 
   const price = marketOf(symbol)?.price ?? 1;
-  const held = TOKENS.find((t) => t.symbol === symbol);
+  const held = owned.find((t) => t.symbol === symbol);
   const value = Number(amount) || 0;
   const tokenValue = value / price;
   const fee = value * METHODS[method].fee;
@@ -71,8 +76,14 @@ export default function BuyCashSheet() {
     setPicking(false);
   };
 
+  // Selling from a shared wallet is proposed; buying into one needs no approval.
+  const sellAction: ProposalAction = { type: 'sell', symbol, amount: tokenValue, usd: value };
   const confirm = () => {
     success();
+    if (selling && signer.multisig) {
+      const { proposal, executed } = propose(signer.walletId, sellAction);
+      if (!executed) setProposalId(proposal.id);
+    }
     setPage('done');
   };
   const finish = () => finishDemo(selling ? 'nothing was sold' : 'nothing was bought');
@@ -91,7 +102,9 @@ export default function BuyCashSheet() {
       <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
         <ContentSwap id={page} index={PAGES.indexOf(page)}>
           <View style={{ height: area }}>
-            {page === 'done' ? (
+            {page === 'done' && proposalId ? (
+              <LiveProposedPage proposalId={proposalId} onDone={finish} />
+            ) : page === 'done' ? (
               <SuccessPage
                 title={selling ? 'Sold' : 'Bought'}
                 detail={
@@ -224,6 +237,9 @@ export default function BuyCashSheet() {
                     value={formatUsd(fee)}
                   />
                   <StatRow label="Network cost" value="<$0.01" />
+                  {selling && signer.rule(sellAction) ? (
+                    <StatRow label="Shared wallet" value={signer.rule(sellAction)} />
+                  ) : null}
                   <StatRow
                     label={selling ? 'You receive' : 'Total'}
                     value={
@@ -235,7 +251,11 @@ export default function BuyCashSheet() {
                 <Text style={styles.note}>
                   Prices move. The final amount is set when your order goes through.
                 </Text>
-                <PillButton label={`${verb} now`} onPress={confirm} style={styles.cta} />
+                <PillButton
+                  label={selling ? signer.cta('Sell now', sellAction) : 'Buy now'}
+                  onPress={confirm}
+                  style={styles.cta}
+                />
               </>
             )}
           </View>

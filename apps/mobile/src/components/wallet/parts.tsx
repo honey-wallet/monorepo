@@ -2,15 +2,19 @@ import type { Href } from 'expo-router';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import {
   Pressable,
-  ScrollView,
   type StyleProp,
+  StyleSheet,
   Text,
   type TextStyle,
   View,
   type ViewStyle,
 } from 'react-native';
 import Animated, {
+  Extrapolation,
+  interpolate,
   useAnimatedProps,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
@@ -26,11 +30,13 @@ import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { useEntrancePlaying } from '@/components/motion/Rise';
 import { TextsReveal } from '@/components/motion/TextsReveal';
+import { NETWORK_LOGOS } from '@/components/wallet/network-logos';
 import { TOKEN_LOGOS } from '@/components/wallet/token-logos';
 import { tap } from '@/lib/haptics';
-import { BALANCE, CHAINS, type Chain, chainSymbol, formatUsd, type Token } from '@/lib/mock-wallet';
+import { CHAINS, type Chain, chainSymbol, formatUsd, type Token } from '@/lib/mock-wallet';
 import { goBackOr } from '@/lib/navigation';
 import { HIDDEN_AMOUNT, toggleHideBalance, useSettings } from '@/lib/settings';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
@@ -53,7 +59,11 @@ export function TokenIcon({
 }) {
   const c = useTheme();
   const logo = (
-    <SvgXml xml={TOKEN_LOGOS[symbol] ?? TOKEN_LOGOS.GENERIC} width={size} height={size} />
+    <SvgXml
+      xml={TOKEN_LOGOS[symbol] ?? NETWORK_LOGOS[symbol] ?? TOKEN_LOGOS.GENERIC}
+      width={size}
+      height={size}
+    />
   );
   const network = chain ? chainSymbol(chain) : undefined;
   if (!network || network === symbol) return logo;
@@ -365,10 +375,11 @@ export function BalanceAmount({
   fractionStyle: StyleProp<TextStyle>;
 }) {
   const { hideBalance } = useSettings();
+  const { usd } = useWalletView();
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={hideBalance ? 'Balance hidden' : `Balance ${formatUsd(BALANCE)}`}
+      accessibilityLabel={hideBalance ? 'Balance hidden' : `Balance ${formatUsd(usd)}`}
       accessibilityHint={hideBalance ? 'Shows your balance' : 'Hides your balance'}
       scaleTo={0.97}
       onPress={() => {
@@ -378,13 +389,16 @@ export function BalanceAmount({
       style={BALANCE_AMOUNT}
     >
       <NumberPopIn
-        value={hideBalance ? HIDDEN_AMOUNT : formatUsd(BALANCE)}
+        value={hideBalance ? HIDDEN_AMOUNT : formatUsd(usd)}
         style={style}
         fractionStyle={fractionStyle}
       />
     </PressableScale>
   );
 }
+
+/** Scroll distance over which the header's hairline fades in. */
+const RULE_FADE = 8;
 
 /**
  * The frame for full-screen pushed pages: status-bar inset, `ScreenHeader`,
@@ -415,16 +429,27 @@ export function PushedScreen({
   const insets = useSafeAreaInsets();
   const styles = useStyles();
   const bottom = (footer ? 0 : insets.bottom) + SCREEN.bottom;
+  // A hairline under the header fades in once the content scrolls beneath it.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
+  const rule = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, RULE_FADE], [0, 1], Extrapolation.CLAMP),
+  }));
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <ScreenHeader title={title} fallback={fallback} right={right} />
+      <Animated.View pointerEvents="none" style={[styles.headerRule, rule]} />
       {scroll ? (
-        <ScrollView
+        <Animated.ScrollView
+          onScroll={onScroll}
+          scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[{ paddingBottom: bottom }, contentStyle]}
         >
           {children}
-        </ScrollView>
+        </Animated.ScrollView>
       ) : (
         <View style={[styles.flex, contentStyle]}>{children}</View>
       )}
@@ -510,6 +535,10 @@ const useStyles = makeStyles((c) => ({
     paddingTop: SCREEN.footerTop,
     paddingHorizontal: SCREEN.gutter,
     backgroundColor: c.canvas,
+  },
+  headerRule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: c.divider,
   },
   header: {
     height: 52,

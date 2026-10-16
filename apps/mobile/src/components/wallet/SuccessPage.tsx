@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import { SuccessCheck } from '@/components/motion/SuccessCheck';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -16,10 +17,13 @@ export function SuccessPage({
   title,
   detail,
   onDone,
+  children,
 }: {
   title: string;
   detail: string;
   onDone?: () => void;
+  /** Extra content under the detail, e.g. who still has to approve. */
+  children?: ReactNode;
 }) {
   const styles = useStyles();
   return (
@@ -31,6 +35,7 @@ export function SuccessPage({
           {title}
         </Text>
         <Text style={styles.detail}>{detail}</Text>
+        {children ? <View style={styles.extra}>{children}</View> : null}
       </View>
       <View style={styles.flex} />
       {onDone ? <PillButton label="Done" onPress={onDone} style={styles.cta} /> : null}
@@ -72,6 +77,9 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     lineHeight: 21,
     textAlign: 'center',
+  },
+  extra: {
+    marginTop: 18,
   },
   cta: {
     marginTop: SHEET.footerGap,

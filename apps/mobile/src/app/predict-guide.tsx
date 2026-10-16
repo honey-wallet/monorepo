@@ -1,8 +1,10 @@
+import { Redirect } from 'expo-router';
 import { Guide } from '@/components/wallet/Guide';
 import { GetPaidArt, PickMarketArt, PlaceTradeArt } from '@/components/wallet/PredictGuideArt';
+import { useTradeModeAllowed } from '@/lib/trade-modes';
 
 /** How Predict works, in three steps; shown the first time Predict opens. */
-export default function PredictGuideSheet() {
+function PredictGuideSheet() {
   return (
     <Guide
       steps={[
@@ -25,4 +27,9 @@ export default function PredictGuideSheet() {
       ]}
     />
   );
+}
+
+/** Shared wallets can't use this product (see `lib/trade-modes.ts`); links land on Trade. */
+export default function PredictGuideSheetRoute() {
+  return useTradeModeAllowed('Predict') ? <PredictGuideSheet /> : <Redirect href="/trade" />;
 }

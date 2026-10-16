@@ -15,6 +15,7 @@ import {
   marketOf,
   tokenName,
 } from '@/lib/mock-wallet';
+import { useSigner } from '@/lib/multisig';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, LAYOUT_MOVE } from '@/theme/motion';
@@ -30,16 +31,22 @@ const POPULAR = ['USDC', 'USDT', 'ETH', 'BTC', 'SOL'];
 export function TokenList({
   query,
   sending = false,
+  holdings,
   onChoose,
 }: {
   query: string;
   sending?: boolean;
+  /** What you hold; a shared wallet passes its own. */
+  holdings?: { symbol: string; chain: Chain; amount: number; usd: number }[];
   onChoose: (token: TokenRef) => void;
 }) {
   const styles = useStyles();
   const c = useTheme();
   const swapState = useSwap();
-  const network = sending ? null : swapState.network;
+  // A shared wallet lists its own balances, and only tokens on its network.
+  const { multisig } = useSigner();
+  const owned = holdings ?? multisig?.holdings ?? HOLDINGS;
+  const network = multisig ? (multisig.network.name as Chain) : sending ? null : swapState.network;
   const { bridgeTipDismissed } = swapState;
 
   const q = query.trim().toLowerCase();
@@ -47,14 +54,14 @@ export function TokenList({
     (!network || chain === network) &&
     (!q || symbol.toLowerCase().includes(q) || tokenName(symbol).toLowerCase().includes(q));
 
-  const yours = HOLDINGS.filter((h) => (!sending || h.amount > 0) && matches(h.symbol, h.chain));
+  const yours = owned.filter((h) => (!sending || h.amount > 0) && matches(h.symbol, h.chain));
   // You can only send what you hold, so Send skips the wider market.
   const others = sending
     ? []
     : MARKET.filter(
         (t) =>
           matches(t.symbol, t.chain) &&
-          !HOLDINGS.some((h) => h.symbol === t.symbol && h.chain === t.chain),
+          !owned.some((h) => h.symbol === t.symbol && h.chain === t.chain),
       );
   // Quick picks: for Send, the popular tokens you hold, on the network you hold most on.
   const quick = POPULAR.map((symbol) => ({

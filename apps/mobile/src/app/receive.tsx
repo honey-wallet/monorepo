@@ -8,12 +8,15 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { LabeledRule } from '@/components/wallet/parts';
 import { SheetScreen, SheetText } from '@/components/wallet/Sheet';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import { ADDRESS, shortAddress } from '@/lib/mock-wallet';
+import { shortAddress } from '@/lib/mock-wallet';
+import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Receive sheet: your address to copy or show as a QR code. */
@@ -21,18 +24,35 @@ export default function ReceiveSheet() {
   const styles = useStyles();
   const c = useTheme();
   const profile = useProfile();
-  const { copied, copy } = useCopy(ADDRESS);
+  // The wallet in use: a shared wallet receives at its own address, on its own network.
+  const wallet = useActiveWallet();
+  const multisig = useMultisig(wallet.id);
+  const isMain = wallet.id === 'main';
+  const { copied, copy } = useCopy(wallet.address);
   const [showExchange, setShowExchange] = useState(false);
 
   return (
     <SheetScreen title="Receive crypto">
-      <SheetText>Fund your wallet by transferring crypto from another wallet or account</SheetText>
+      <SheetText>
+        {multisig
+          ? `Only send tokens on ${multisig.network.name} to this shared wallet. Tokens sent on another network can't be recovered.`
+          : 'Fund your wallet by transferring crypto from another wallet or account'}
+      </SheetText>
 
       <View style={[styles.card, styles.firstCard]}>
-        <Avatar name={profile.name} size={44} uri={profile.photo} seed={profile.avatarSeed} />
+        {multisig ? (
+          <NetworkBadge network={multisig.network} size={44} />
+        ) : isMain ? (
+          <Avatar name={profile.name} size={44} uri={profile.photo} seed={profile.avatarSeed} />
+        ) : (
+          <Avatar name={wallet.label} size={44} seed={wallet.id} />
+        )}
         <View style={styles.flex}>
-          <Text style={styles.name}>{profile.name}</Text>
-          <Text style={styles.address}>{shortAddress(ADDRESS, 8, 6)}</Text>
+          <Text style={styles.name}>{wallet.label}</Text>
+          <Text style={styles.address}>
+            {multisig ? `${networkLabel(multisig)} · ` : ''}
+            {shortAddress(wallet.address, 6, 4)}
+          </Text>
         </View>
         <PressableScale
           accessibilityLabel="Copy address"

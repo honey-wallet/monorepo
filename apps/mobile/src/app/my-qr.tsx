@@ -6,13 +6,16 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { TiltCard } from '@/components/motion/TiltCard';
+import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { TokenIcon } from '@/components/wallet/parts';
 import { QRCode } from '@/components/wallet/QRCode';
 import { SheetScreen } from '@/components/wallet/Sheet';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import { ADDRESS, CHAINS, handleFor } from '@/lib/mock-wallet';
+import { CHAINS, handleFor } from '@/lib/mock-wallet';
+import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 const QR_SIZE = 240;
@@ -26,7 +29,11 @@ export default function MyQRSheet() {
   const c = useTheme();
   const profile = useProfile();
   const { from } = useLocalSearchParams<{ from?: string }>();
-  const { copied, copy } = useCopy(ADDRESS);
+  // The wallet in use; a shared wallet's code says which network it's on.
+  const wallet = useActiveWallet();
+  const multisig = useMultisig(wallet.id);
+  const isMain = wallet.id === 'main';
+  const { copied, copy } = useCopy(wallet.address);
 
   return (
     <SheetScreen
@@ -50,23 +57,42 @@ export default function MyQRSheet() {
         id="qr"
         align="center"
         first={
-          <Text style={styles.handle}>
-            {profile.name}
-            <Text style={styles.suffix}>
-              {handleFor(profile.name).slice(profile.name.trim().length)}
+          isMain ? (
+            <Text style={styles.handle}>
+              {profile.name}
+              <Text style={styles.suffix}>
+                {handleFor(profile.name).slice(profile.name.trim().length)}
+              </Text>
             </Text>
-          </Text>
+          ) : (
+            <Text style={styles.handle}>{wallet.label}</Text>
+          )
         }
       />
       {/* Press and drag to tilt the code toward your finger; it rests flat to scan. */}
       <TiltCard style={styles.qr}>
         <QRCode
-          value={`ethereum:${ADDRESS}`}
+          value={
+            multisig?.protocol === 'squads'
+              ? `solana:${wallet.address}`
+              : `ethereum:${wallet.address}`
+          }
           size={QR_SIZE}
           color={c.primary}
           center={
             <View style={styles.qrCenter}>
-              <Avatar name={profile.name} size={50} uri={profile.photo} seed={profile.avatarSeed} />
+              {multisig ? (
+                <NetworkBadge network={multisig.network} size={50} />
+              ) : isMain ? (
+                <Avatar
+                  name={profile.name}
+                  size={50}
+                  uri={profile.photo}
+                  seed={profile.avatarSeed}
+                />
+              ) : (
+                <Avatar name={wallet.label} size={50} seed={wallet.id} />
+              )}
             </View>
           }
         />
@@ -77,29 +103,37 @@ export default function MyQRSheet() {
           <Text style={styles.addressLabel}>Wallet address</Text>
           <IconSwap name={copied ? 'check' : 'copy'} size={12} color={c.textSecondary} />
         </View>
-        <Text style={styles.address}>{ADDRESS}</Text>
+        <Text style={styles.address}>{wallet.address}</Text>
       </Pressable>
 
-      <Pressable
-        onPress={() => {
-          tap();
-          router.push('/networks');
-        }}
-        style={styles.networks}
-      >
-        <Text style={styles.networksText}>Use this address to receive tokens on</Text>
-        <View style={styles.networksRow}>
-          <View style={styles.chainStack}>
-            {CHAINS.slice(0, 3).map((ch, i) => (
-              <View key={ch.name} style={i > 0 && styles.chainOverlap}>
-                <TokenIcon symbol={ch.symbol} size={16} />
-              </View>
-            ))}
-          </View>
-          <Text style={styles.networksCount}>{CHAINS.length} networks</Text>
-          <Icon name="info" size={13} color={c.textSecondary} />
+      {multisig ? (
+        <View style={styles.networks}>
+          <Text style={styles.networksText}>
+            Only on {multisig.network.name}. This is a {networkLabel(multisig)} shared wallet.
+          </Text>
         </View>
-      </Pressable>
+      ) : (
+        <Pressable
+          onPress={() => {
+            tap();
+            router.push('/networks');
+          }}
+          style={styles.networks}
+        >
+          <Text style={styles.networksText}>Use this address to receive tokens on</Text>
+          <View style={styles.networksRow}>
+            <View style={styles.chainStack}>
+              {CHAINS.slice(0, 3).map((ch, i) => (
+                <View key={ch.name} style={i > 0 && styles.chainOverlap}>
+                  <TokenIcon symbol={ch.symbol} size={16} />
+                </View>
+              ))}
+            </View>
+            <Text style={styles.networksCount}>{CHAINS.length} networks</Text>
+            <Icon name="info" size={13} color={c.textSecondary} />
+          </View>
+        </Pressable>
+      )}
     </SheetScreen>
   );
 }

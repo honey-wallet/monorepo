@@ -8,11 +8,20 @@ import { TextSwap } from '@/components/motion/TextSwap';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
+import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { TokenIcon } from '@/components/wallet/parts';
 import { SHEET, SheetHeader, SheetScreen, StatRow } from '@/components/wallet/Sheet';
 import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import { success, tap } from '@/lib/haptics';
-import { formatCompactUsd, formatUsd, shortAddress, TOKENS, VAULTS } from '@/lib/mock-wallet';
+import {
+  formatCompactUsd,
+  formatUsd,
+  priceOf,
+  shortAddress,
+  TOKENS,
+  VAULTS,
+} from '@/lib/mock-wallet';
+import { propose, useSigner } from '@/lib/multisig';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Earn sheet after Uniswap's: headline rate, vault facts, details on demand, Deposit. */
@@ -24,6 +33,8 @@ export default function EarnSheet() {
   const [depositing, setDepositing] = useState(false);
   // What was just deposited, shown on the closing page.
   const [deposited, setDeposited] = useState<string | null>(null);
+  const signer = useSigner();
+  const [proposalId, setProposalId] = useState<string | null>(null);
   const vault = VAULTS[symbol];
   if (!vault) return null;
 
@@ -34,7 +45,12 @@ export default function EarnSheet() {
         id={deposited ? 'done' : depositing ? 'deposit' : 'info'}
         index={deposited ? 2 : depositing ? 1 : 0}
       >
-        {deposited ? (
+        {deposited && proposalId ? (
+          <LiveProposedPage
+            proposalId={proposalId}
+            onDone={() => finishDemo('nothing was deposited')}
+          />
+        ) : deposited ? (
           <SuccessPage
             title="Deposited"
             detail={`${deposited} ${symbol} is now earning ${vault.apy.toFixed(2)}% APY.`}
@@ -47,6 +63,17 @@ export default function EarnSheet() {
             onBack={() => setDepositing(false)}
             onDeposit={(amount) => {
               success();
+              // From a shared wallet the deposit is proposed (or, under the limit, made).
+              if (signer.multisig) {
+                const value = Number(amount) || 0;
+                const { proposal, executed } = propose(signer.walletId, {
+                  type: 'earnDeposit',
+                  symbol,
+                  amount: value,
+                  usd: value * priceOf(symbol),
+                });
+                if (!executed) setProposalId(proposal.id);
+              }
               setDeposited(amount);
             }}
           />
@@ -158,7 +185,19 @@ function DepositPage({
 }) {
   const styles = useStyles();
   const [amount, setAmount] = useState('');
-  const balance = TOKENS.find((t) => t.symbol === symbol)?.amount ?? 0;
+  const signer = useSigner();
+  // A shared wallet deposits from its own balance.
+  const balance = signer.multisig
+    ? signer.multisig.holdings
+        .filter((h) => h.symbol === symbol)
+        .reduce((sum, h) => sum + h.amount, 0)
+    : (TOKENS.find((t) => t.symbol === symbol)?.amount ?? 0);
+  const proposes = signer.proposes({
+    type: 'earnDeposit',
+    symbol,
+    amount: Number(amount) || 0,
+    usd: (Number(amount) || 0) * priceOf(symbol),
+  });
   const value = Number(amount) || 0;
   const tooMuch = value > balance;
 
@@ -201,7 +240,9 @@ function DepositPage({
             ? 'Enter an amount'
             : tooMuch
               ? `Not enough ${symbol}`
-              : `Deposit ${amount} ${symbol}`
+              : proposes
+                ? `Propose depositing ${amount} ${symbol}`
+                : `Deposit ${amount} ${symbol}`
         }
         disabled={!value || tooMuch}
         onPress={() => onDeposit(amount)}

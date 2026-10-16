@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -8,11 +8,12 @@ import { AmountCard, Risk, type Side, SideToggle, Summary } from '@/components/w
 import { success } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import { PREDICT_MARKETS, predictMarket, yesPrice } from '@/lib/predict';
+import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
 import { makeStyles } from '@/theme';
 
 /** Buy Yes/No (or Up/Down) shares in one prediction market, or one outcome of it. */
-export default function PredictOrderSheet() {
+function PredictOrderSheet() {
   const { predictPrice: priceFormat } = useTradePrefs();
   const styles = useStyles();
   const params = useLocalSearchParams<{ id?: string; outcome?: string; side?: Side }>();
@@ -90,3 +91,8 @@ const useStyles = makeStyles((c) => ({
     textAlign: 'center',
   },
 }));
+
+/** Shared wallets can't use this product (see `lib/trade-modes.ts`); links land on Trade. */
+export default function PredictOrderSheetRoute() {
+  return useTradeModeAllowed('Predict') ? <PredictOrderSheet /> : <Redirect href="/trade" />;
+}

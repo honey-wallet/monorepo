@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Linking, Text, View } from 'react-native';
 import Animated, {
   FadeIn,
@@ -9,12 +10,15 @@ import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { SheetScreen } from '@/components/wallet/Sheet';
+import { closeSheet, SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
+import { askForNotifications, notificationsAllowed } from '@/lib/push';
+import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 const PREVIEW = [
+  { title: 'Maya wants to send 50 USDC', body: 'Family · needs your approval' },
   { title: 'You received USDC', body: 'Received 100 USDC from swayam.honey' },
   { title: 'ETH is up 5.6%', body: 'Ethereum (ETH) is up to $3,249.55' },
   { title: 'Your Honey Jar hit 50%', body: 'Halfway to your "Summer trip" goal' },
@@ -41,16 +45,28 @@ export default function NotificationsSheet() {
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
   const c = useTheme();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
+  useEffect(() => {
+    notificationsAllowed()
+      .then(setAllowed)
+      .catch(() => setAllowed(false));
+  }, []);
 
   return (
     <SheetScreen
       contentStyle={styles.content}
       footer={
         <PillButton
-          label="Enable in Settings"
-          onPress={() => {
+          label={allowed ? 'Notifications are on' : 'Turn on notifications'}
+          disabled={allowed === true}
+          onPress={async () => {
             tap();
-            Linking.openSettings();
+            // Ask in the app first; once iOS stops asking, Settings is the only way.
+            if (await askForNotifications()) {
+              setAllowed(true);
+              showToast('Notifications on');
+              closeSheet();
+            } else Linking.openSettings();
           }}
         />
       }
@@ -64,7 +80,8 @@ export default function NotificationsSheet() {
         first={<Text style={styles.title}>Turn on notifications</Text>}
         second={
           <Text style={styles.body}>
-            Stay updated on transaction statuses and major price changes for favorite tokens.
+            Approve shared-wallet payments the moment they're asked for, and stay updated on
+            transactions and big price moves.
           </Text>
         }
       />

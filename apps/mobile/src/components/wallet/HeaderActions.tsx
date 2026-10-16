@@ -3,8 +3,9 @@ import { Text, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { HEADER_BUTTON, HeaderIconButton } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
-import { BALANCE, formatUsd } from '@/lib/mock-wallet';
+import { formatUsd } from '@/lib/mock-wallet';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles } from '@/theme';
 
 /**
@@ -21,7 +22,8 @@ export function HeaderActions({
 }) {
   const styles = useStyles();
   const { hideBalance } = useSettings();
-  const balance = hideBalance ? HIDDEN_AMOUNT : formatUsd(BALANCE);
+  const { usd } = useWalletView();
+  const balance = hideBalance ? HIDDEN_AMOUNT : formatUsd(usd);
   return (
     <View style={styles.row}>
       <PressableScale

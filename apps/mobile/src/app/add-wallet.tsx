@@ -5,6 +5,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { closeSheet, SheetHeader, SheetRow, SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
+import { leaveSheetTo } from '@/lib/navigation';
 import { getProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import { addWallet, demoAddress, nextWalletLabel } from '@/lib/wallets';
@@ -45,6 +46,12 @@ export default function AddWalletSheet() {
           title: 'Create new wallet',
           hint: 'A new wallet on this device',
           onPress: create,
+        },
+        {
+          icon: 'multisig',
+          title: 'Create shared wallet',
+          hint: 'Needs more than one approval to spend',
+          onPress: () => leaveSheetTo('/multisig-new'),
         },
         {
           icon: 'flame',

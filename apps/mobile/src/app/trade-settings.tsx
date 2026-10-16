@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { Toggle } from '@/components/motion/Toggle';
 import { PillButton } from '@/components/onboarding/PillButton';
 import {
@@ -11,6 +11,7 @@ import {
 import { OptionChips } from '@/components/wallet/TradeForm';
 import { tap } from '@/lib/haptics';
 import type { TradeMode } from '@/lib/settings';
+import { useTradeModeAllowed } from '@/lib/trade-modes';
 import {
   EXPIRIES,
   type MarginMode,
@@ -31,7 +32,7 @@ const MARGIN_HINT: Record<MarginMode, string> = {
  * Settings for the current Trade product (Swap has its own sheet). Changes apply
  * at once and set what each order form starts with.
  */
-export default function TradeSettingsSheet() {
+function TradeSettingsSheet() {
   const { mode = 'Perps' } = useLocalSearchParams<{ mode?: Exclude<TradeMode, 'Swap'> }>();
   const prefs = useTradePrefs();
 
@@ -140,4 +141,9 @@ export default function TradeSettingsSheet() {
       <WalletSettingsRow tradeTabs />
     </SheetScreen>
   );
+}
+
+/** Shared wallets can't use this product (see `lib/trade-modes.ts`); links land on Trade. */
+export default function TradeSettingsSheetRoute() {
+  return useTradeModeAllowed('Perps') ? <TradeSettingsSheet /> : <Redirect href="/trade" />;
 }

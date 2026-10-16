@@ -44,12 +44,13 @@ const visible = TOKENS.filter((t) => !t.hidden);
 export const BALANCE = visible.reduce((sum, t) => sum + t.usd, 0);
 export const BALANCE_CHANGE = visible.reduce((sum, t) => sum + (t.usd * t.change) / 100, 0);
 
-export type Chain = 'Bitcoin' | 'Ethereum' | 'Solana' | 'Tron' | 'XRP Ledger';
+export type Chain = 'Bitcoin' | 'Ethereum' | 'Base' | 'Solana' | 'Tron' | 'XRP Ledger';
 
 /** The chains Honey supports, each shown with its native token's logo. */
 export const CHAINS: { name: Chain; symbol: string }[] = [
   { name: 'Bitcoin', symbol: 'BTC' },
   { name: 'Ethereum', symbol: 'ETH' },
+  { name: 'Base', symbol: 'BASE' },
   { name: 'Solana', symbol: 'SOL' },
   { name: 'Tron', symbol: 'TRX' },
   { name: 'XRP Ledger', symbol: 'XRP' },

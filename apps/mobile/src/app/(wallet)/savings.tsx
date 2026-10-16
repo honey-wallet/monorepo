@@ -21,7 +21,6 @@ import { tap } from '@/lib/haptics';
 import { type Jar, jarProgress, usdValue, useJars } from '@/lib/jars';
 import { EARN, formatAmount, formatUsd, VAULTS } from '@/lib/mock-wallet';
 import { useSectionPrefs } from '@/lib/section-prefs';
-import { showDemoToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
@@ -197,13 +196,19 @@ function JarCard({ jar }: { jar: Jar }) {
           <View style={styles.actions}>
             <PillButton
               label="Add funds"
-              onPress={() => showDemoToast('nothing was added')}
+              onPress={() => {
+                tap();
+                router.push({ pathname: '/jar-move', params: { id: jar.id, mode: 'add' } });
+              }}
               style={styles.action}
             />
             <PillButton
               label="Withdraw"
               variant="secondary"
-              onPress={() => showDemoToast('nothing was withdrawn')}
+              onPress={() => {
+                tap();
+                router.push({ pathname: '/jar-move', params: { id: jar.id, mode: 'withdraw' } });
+              }}
               style={styles.action}
             />
           </View>

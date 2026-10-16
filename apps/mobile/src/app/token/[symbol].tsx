@@ -99,13 +99,14 @@ export default function TokenScreen() {
     <PushedScreen
       title={
         <>
-          <TokenIcon symbol={symbol} size={20} />
+          <TokenIcon symbol={symbol} size={18} />
           <Text style={styles.headerSymbol}>{symbol}</Text>
         </>
       }
       right={
         <>
           <ActionMenu
+            bare
             actions={[
               {
                 label: 'Share',
@@ -405,10 +406,11 @@ const useStyles = makeStyles((c) => ({
   gutterMargin: {
     marginHorizontal: 20,
   },
+  // A quiet ticker, as in Uniswap; the full name and price below carry the page.
   headerSymbol: {
     color: c.text,
-    fontSize: 17,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '500',
   },
   name: {
     marginTop: 8,

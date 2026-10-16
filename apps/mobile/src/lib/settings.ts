@@ -36,7 +36,7 @@ export type Settings = {
   backedUp: boolean;
   /** Mask your balance (home, the balance pill and sheet) from people nearby. */
   hideBalance: boolean;
-  /** Trade tabs shown, in order. Futures and Options start hidden. */
+  /** Trade tabs shown, in order. Shared wallets only ever show Swap (see `lib/trade-modes.ts`). */
   tradeTabs: TradeMode[];
 };
 

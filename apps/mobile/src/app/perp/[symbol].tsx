@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
@@ -13,6 +13,7 @@ import { Change, EmptyState, PushedScreen } from '@/components/wallet/parts';
 import { StatRow } from '@/components/wallet/Sheet';
 import { formatCompactUsd, formatPrice, RANGE_LABEL, RANGES, type Range } from '@/lib/mock-wallet';
 import { candles, perpMarket } from '@/lib/perps';
+import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { makeStyles, useTheme } from '@/theme';
 
 const CHART_HEIGHT = 230;
@@ -23,7 +24,7 @@ const LOAD_DELAY = 600;
  * A perps market, laid out like a token page: price, candlestick chart with ranges,
  * market stats and your position, with Long and Short pinned at the bottom.
  */
-export default function PerpScreen() {
+function PerpScreen() {
   const { symbol = 'BTC' } = useLocalSearchParams<{ symbol: string }>();
   const { width } = useWindowDimensions();
   const styles = useStyles();
@@ -216,3 +217,8 @@ const useStyles = makeStyles((c) => ({
     lineHeight: 23,
   },
 }));
+
+/** Shared wallets can't use this product (see `lib/trade-modes.ts`); links land on Trade. */
+export default function PerpScreenRoute() {
+  return useTradeModeAllowed('Perps') ? <PerpScreen /> : <Redirect href="/trade" />;
+}
