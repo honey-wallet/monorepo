@@ -87,21 +87,36 @@ impl Mailbox {
         f(&mut map)
     }
 
-    /// The caller's IP: the socket's, or the first `X-Forwarded-For` hop when the server
-    /// sits behind a proxy that sets it (`TRUST_PROXY_HEADERS=true`).
+    /// Who to count a message against: the socket's IP, or behind a trusted proxy
+    /// (`TRUST_PROXY_HEADERS=true`) the right-most `X-Forwarded-For` entry, the one our
+    /// proxy appended. Entries to its left come from the client and can be forged.
     fn client(&self, headers: &HeaderMap, extensions: &Extensions) -> IpAddr {
         let forwarded = self
             .trust_proxy_headers
             .then(|| headers.get("x-forwarded-for")?.to_str().ok())
             .flatten()
-            .and_then(|value| value.split(',').next()?.trim().parse().ok());
-        forwarded
+            .and_then(|value| value.rsplit(',').next()?.trim().parse().ok());
+        let ip = forwarded
             .or_else(|| {
                 extensions
                     .get::<ConnectInfo<SocketAddr>>()
                     .map(|info| info.0.ip())
             })
-            .unwrap_or(IpAddr::from([0, 0, 0, 0]))
+            .unwrap_or(IpAddr::from([0, 0, 0, 0]));
+        client_bucket(ip)
+    }
+}
+
+/// IPv6 clients get a whole /64 (one subscriber's usual allocation), so rotating
+/// addresses inside it doesn't buy more room. IPv4 addresses count individually.
+fn client_bucket(ip: IpAddr) -> IpAddr {
+    match ip {
+        IpAddr::V4(_) => ip,
+        IpAddr::V6(v6) => {
+            let mut segments = v6.segments();
+            segments[4..].fill(0);
+            IpAddr::from(segments)
+        }
     }
 }
 

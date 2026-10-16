@@ -214,12 +214,50 @@ mod pairing {
             let token = format!("proxy-token-{i:04}-xxxxxxxx");
             let uri = format!("/api/v1/pairing/{}/commit", channel_for(&token));
             let mut request = put_json(&uri, Some(&token), r#"{"data":"eA"}"#);
+            // The proxy appends the real client IP; whatever the client put before it is ignored.
             request.headers_mut().insert(
                 "x-forwarded-for",
-                format!("203.0.113.{i}, 10.0.0.1").parse().unwrap(),
+                format!("198.51.100.7, 203.0.113.{i}").parse().unwrap(),
             );
             let response = app.clone().oneshot(request).await.unwrap();
             assert_eq!(response.status(), StatusCode::NO_CONTENT);
+        }
+    }
+
+    #[tokio::test]
+    async fn ignores_forged_forwarded_entries_and_groups_ipv6_by_64() {
+        let config = Config {
+            trust_proxy_headers: true,
+            ..Config::default()
+        };
+        for (label, forwarded) in [
+            // A client forging a fresh left-most entry each time is still one client.
+            ("forged", "192.0.2.{i}, 203.0.113.9"),
+            // Rotating addresses inside one IPv6 /64 is still one client.
+            ("ipv6", "2001:db8:1:2::{i}"),
+        ] {
+            let app = build_router(&config);
+            let mut statuses = Vec::new();
+            for i in 0..30 {
+                let token = format!("{label}-token-{i:04}-xxxxxxxxxx");
+                let uri = format!("/api/v1/pairing/{}/commit", channel_for(&token));
+                let mut request = put_json(&uri, Some(&token), r#"{"data":"eA"}"#);
+                let value = forwarded.replace("{i}", &format!("{:x}", i + 1));
+                request
+                    .headers_mut()
+                    .insert("x-forwarded-for", value.parse().unwrap());
+                statuses.push(app.clone().oneshot(request).await.unwrap().status());
+            }
+            assert!(
+                statuses[..24].iter().all(|s| *s == StatusCode::NO_CONTENT),
+                "{label}"
+            );
+            assert!(
+                statuses[24..]
+                    .iter()
+                    .all(|s| *s == StatusCode::TOO_MANY_REQUESTS),
+                "{label}"
+            );
         }
     }
 }
