@@ -150,12 +150,15 @@ function RequestRow({ proposal, multisig }: { proposal: Proposal; multisig: Mult
         badge={{ node: <NetworkBadge network={multisig.network} size={15} /> }}
       />
       <View style={styles.flex}>
-        <Text style={styles.title} numberOfLines={1}>
-          {by?.name ?? 'Someone'} · {walletName(multisig.walletId)}
-        </Text>
+        <View style={styles.head}>
+          <Text style={styles.title} numberOfLines={1}>
+            {by?.name ?? 'Someone'} · {walletName(multisig.walletId)}
+          </Text>
+          <Text style={styles.date}>{when(proposal.createdAt)}</Text>
+        </View>
         <Text style={styles.detail}>{wantsTo(info.title)}</Text>
         <View style={styles.actions}>
-          <Text style={styles.progress}>
+          <Text style={styles.progress} numberOfLines={1}>
             {proposal.approvals.length} of {multisig.threshold} approved
           </Text>
           <PressableScale
@@ -182,7 +185,6 @@ function RequestRow({ proposal, multisig }: { proposal: Proposal; multisig: Mult
           </PressableScale>
         </View>
       </View>
-      <Text style={styles.date}>{when(proposal.createdAt)}</Text>
     </PressableRow>
   );
 }
@@ -219,14 +221,16 @@ function EventRow({
         badge={{ icon: rejected ? 'close' : 'check', color: rejected ? c.error : c.success }}
       />
       <View style={styles.flex}>
-        <Text style={styles.title} numberOfLines={1}>
-          {title}
-        </Text>
+        <View style={styles.head}>
+          <Text style={styles.title} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={styles.date}>{when(event.at)}</Text>
+        </View>
         <Text style={styles.detail} numberOfLines={1}>
           {info.title}
         </Text>
       </View>
-      <Text style={styles.date}>{when(event.at)}</Text>
     </PressableRow>
   );
 }
@@ -269,7 +273,14 @@ const useStyles = makeStyles((c) => ({
     borderWidth: 2,
     borderColor: c.canvas,
   },
+  // Title and time share a line, so every row's body (and its buttons) spans the same width.
+  head: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
   title: {
+    flex: 1,
     color: c.textSecondary,
     fontSize: 16,
   },
