@@ -1,11 +1,13 @@
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { type ReactNode, useRef, useState } from 'react';
 import {
+  type LayoutChangeEvent,
   Platform,
   ScrollView,
   type StyleProp,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ViewStyle,
 } from 'react-native';
@@ -67,7 +69,8 @@ export function SheetScreen({
 }: SheetScreenProps) {
   const insets = useSafeAreaInsets();
   const styles = useStyles();
-  const fill = size === 'fill' || scroll;
+  const fill = size === 'fill' || !!scroll;
+  const clear = useStatusBarClearance(fill);
   const header = title ? <SheetHeader title={title} onBack={onBack} /> : null;
   const footerView = footer ? <View style={styles.footer}>{footer}</View> : null;
   // iOS sizes fitted sheets clear of the home indicator itself; adding the inset
@@ -81,18 +84,19 @@ export function SheetScreen({
     // pinned as a sticky header instead, and the footer ends the list.
     return (
       <ScrollView
+        onLayout={clear.onLayout}
         style={[styles.root, styles.fill]}
         stickyHeaderIndices={header || sticky ? [0] : undefined}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={[
           styles.gutter,
-          !header && !sticky && styles.top,
+          !header && !sticky && { paddingTop: SHEET.top + clear.top },
           { paddingBottom: bottom },
           contentStyle,
         ]}
       >
         {(header || sticky) && (
-          <View style={styles.stickyHeader}>
+          <View style={[styles.stickyHeader, { paddingTop: SHEET.top + clear.top }]}>
             {header}
             {sticky}
           </View>
@@ -105,12 +109,12 @@ export function SheetScreen({
 
   return (
     <View
+      onLayout={clear.onLayout}
       style={[
         styles.root,
         styles.gutter,
-        styles.top,
         fill && styles.fill,
-        { paddingBottom: bottom },
+        { paddingTop: SHEET.top + clear.top, paddingBottom: bottom },
       ]}
     >
       {header}
@@ -118,6 +122,31 @@ export function SheetScreen({
       {footerView}
     </View>
   );
+}
+
+/**
+ * Extra top padding for when iOS stretches a full-height sheet up to the top edge
+ * (pulling it up on iOS 26 can), so its header isn't hidden under the status bar
+ * and Dynamic Island. A sheet in its usual place stops about a status bar short of
+ * the top; one that's as tall as the screen has ridden up under it. Zero otherwise.
+ */
+function useStatusBarClearance(fill: boolean) {
+  const insets = useSafeAreaInsets();
+  const { height: screen } = useWindowDimensions();
+  const [top, setTop] = useState(0);
+  // The first layout comes before iOS has sized the sheet (it reports the whole
+  // screen), so only later ones are trusted.
+  const sized = useRef(false);
+  const onLayout = (e: LayoutChangeEvent) => {
+    if (!fill || Platform.OS !== 'ios') return;
+    if (!sized.current) {
+      sized.current = true;
+      return;
+    }
+    const gap = screen - e.nativeEvent.layout.height;
+    setTop(gap < insets.top / 2 ? Math.round(insets.top - gap) : 0);
+  };
+  return { onLayout, top };
 }
 
 /** Title row for bottom sheets, with an optional back chevron for nested pages. */
@@ -350,11 +379,7 @@ const useStyles = makeStyles((c) => ({
   gutter: {
     paddingHorizontal: SHEET.gutter,
   },
-  top: {
-    paddingTop: SHEET.top,
-  },
   stickyHeader: {
-    paddingTop: SHEET.top,
     backgroundColor: c.sheet,
   },
   footer: {
