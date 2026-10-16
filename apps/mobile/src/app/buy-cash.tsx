@@ -11,14 +11,14 @@ import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { applyKey, Keypad, TypedAmount } from '@/components/wallet/Keypad';
 import { TokenIcon } from '@/components/wallet/parts';
-import { closeSheet, SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
-import { tap } from '@/lib/haptics';
+import { SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
+import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
+import { success, tap } from '@/lib/haptics';
 import { formatBalance, formatPrice, formatUsd, MARKET, marketOf, TOKENS } from '@/lib/mock-wallet';
-import { showDemoToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 
-type Page = 'amount' | 'review';
-const PAGES: Page[] = ['amount', 'review'];
+type Page = 'amount' | 'review' | 'done';
+const PAGES: Page[] = ['amount', 'review', 'done'];
 type Method = 'card' | 'bank';
 
 /** Placeholder payment methods and provider fees. TODO: a real on/off-ramp provider. */
@@ -72,9 +72,10 @@ export default function BuyCashSheet() {
   };
 
   const confirm = () => {
-    showDemoToast(selling ? 'nothing was sold' : 'nothing was bought');
-    closeSheet();
+    success();
+    setPage('done');
   };
+  const finish = () => finishDemo(selling ? 'nothing was sold' : 'nothing was bought');
 
   const quick = selling
     ? [...QUICK.map((q) => ({ label: `$${q}`, value: String(q) })), maxChip(heldUsd)]
@@ -85,12 +86,22 @@ export default function BuyCashSheet() {
     <SheetScreen
       title={page === 'review' ? `Review ${verb.toLowerCase()}` : verb}
       size="fill"
-      onBack={page === 'review' ? () => go('amount') : undefined}
+      onBack={page === 'review' ? () => go('amount') : page === 'done' ? finish : undefined}
     >
       <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
         <ContentSwap id={page} index={PAGES.indexOf(page)}>
           <View style={{ height: area }}>
-            {page === 'amount' ? (
+            {page === 'done' ? (
+              <SuccessPage
+                title={selling ? 'Sold' : 'Bought'}
+                detail={
+                  selling
+                    ? `${formatBalance(tokenValue)} ${symbol} for ${formatUsd(value - fee)}`
+                    : `${formatBalance((value - fee) / price)} ${symbol} for ${formatUsd(value)}`
+                }
+                onDone={finish}
+              />
+            ) : page === 'amount' ? (
               <>
                 <View style={styles.tokenBar}>
                   <PressableScale

@@ -5,6 +5,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { MarketIcon } from '@/components/wallet/MarketIcon';
 import { EmptyState } from '@/components/wallet/parts';
 import { SheetScreen } from '@/components/wallet/Sheet';
+import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import {
   AmountCard,
   FieldLabel,
@@ -14,9 +15,9 @@ import {
   SideToggle,
   Summary,
 } from '@/components/wallet/TradeForm';
+import { success } from '@/lib/haptics';
 import { formatPrice, formatUsd } from '@/lib/mock-wallet';
 import { liquidationPrice, perpMarket } from '@/lib/perps';
-import { showDemoToast } from '@/lib/toast';
 import { PERP_LEVERAGE_STEPS, useTradePrefs } from '@/lib/trade-prefs';
 import { makeStyles } from '@/theme';
 
@@ -30,6 +31,7 @@ export default function PerpOrderSheet() {
   const market = perpMarket(symbol);
   const [side, setSide] = useState<Side>(params.side === 'Short' ? 'Short' : 'Long');
   const [amount, setAmount] = useState('');
+  const [opened, setOpened] = useState(false);
 
   const max = market?.maxLeverage ?? 1;
   const options = [
@@ -59,6 +61,26 @@ export default function PerpOrderSheet() {
   const multiple = Number(leverage.replace(/\D/g, '')) || 1;
   const liquidation = liquidationPrice(market.price, multiple, side);
 
+  if (opened) {
+    return (
+      <SheetScreen
+        title={`${symbol}-PERP`}
+        size="fill"
+        footer={
+          <PillButton
+            label="Done"
+            onPress={() => finishDemo(`opened a ${multiple}x ${symbol} ${side.toLowerCase()}`)}
+          />
+        }
+      >
+        <SuccessPage
+          title={`${side} opened`}
+          detail={`${formatUsd(value * multiple)} of ${symbol} at ${multiple}x, from ${formatUsd(value)} margin.`}
+        />
+      </SheetScreen>
+    );
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -71,7 +93,10 @@ export default function PerpOrderSheet() {
           <PillButton
             label={value ? `Open ${side.toLowerCase()}` : 'Enter an amount'}
             disabled={!value}
-            onPress={() => showDemoToast(`opened a ${multiple}x ${symbol} ${side.toLowerCase()}`)}
+            onPress={() => {
+              success();
+              setOpened(true);
+            }}
           />
         }
       >

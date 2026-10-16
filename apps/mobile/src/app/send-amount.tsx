@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
@@ -6,7 +6,6 @@ import { Icon } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { SuccessCheck } from '@/components/motion/SuccessCheck';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import {
@@ -19,6 +18,7 @@ import {
 import { TokenIcon } from '@/components/wallet/parts';
 import { SearchField } from '@/components/wallet/SearchField';
 import { closeSheet, SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
+import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import { TokenList } from '@/components/wallet/TokenList';
 import { useCopy } from '@/lib/copy';
 import { success, tap } from '@/lib/haptics';
@@ -31,7 +31,6 @@ import {
   RECENT_RECIPIENTS,
   shortAddress,
 } from '@/lib/mock-wallet';
-import { showDemoToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 
 type Page = 'pick' | 'amount' | 'review' | 'sent';
@@ -115,11 +114,7 @@ export default function SendAmountSheet() {
     setPage('sent');
   };
 
-  const finish = () => {
-    tap();
-    showDemoToast('nothing was sent');
-    router.dismissAll();
-  };
+  const finish = () => finishDemo('nothing was sent', { all: true });
 
   return (
     // Each page keeps its own button so it slides in with that page's content.
@@ -272,21 +267,11 @@ export default function SendAmountSheet() {
                 />
               </>
             ) : page === 'sent' ? (
-              // A rare, earned moment: the check draws on, then the details follow.
-              <>
-                <View style={styles.flex} />
-                <View style={styles.sent}>
-                  <SuccessCheck />
-                  <Text style={styles.sentTitle} accessibilityRole="header">
-                    Sent
-                  </Text>
-                  <Text style={styles.sentDetail}>
-                    {formatBalance(tokenValue)} {symbol} on {chain} to {recipient.title}
-                  </Text>
-                </View>
-                <View style={styles.flex} />
-                <PillButton label="Done" onPress={finish} style={styles.cta} />
-              </>
+              <SuccessPage
+                title="Sent"
+                detail={`${formatBalance(tokenValue)} ${symbol} on ${chain} to ${recipient.title}`}
+                onDone={finish}
+              />
             ) : (
               <>
                 <View style={styles.summary}>
@@ -498,22 +483,6 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 16,
     fontWeight: '600',
-  },
-  sent: {
-    alignItems: 'center',
-  },
-  sentTitle: {
-    marginTop: 16,
-    color: c.text,
-    fontSize: 22,
-    fontWeight: '600',
-  },
-  sentDetail: {
-    marginTop: 6,
-    color: c.textSecondary,
-    fontSize: 15,
-    lineHeight: 21,
-    textAlign: 'center',
   },
   note: {
     marginBottom: 6,

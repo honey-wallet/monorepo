@@ -9,10 +9,10 @@ import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
 import { TokenIcon } from '@/components/wallet/parts';
-import { closeSheet, SHEET, SheetHeader, SheetScreen, StatRow } from '@/components/wallet/Sheet';
-import { tap } from '@/lib/haptics';
+import { SHEET, SheetHeader, SheetScreen, StatRow } from '@/components/wallet/Sheet';
+import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
+import { success, tap } from '@/lib/haptics';
 import { formatCompactUsd, formatUsd, shortAddress, TOKENS, VAULTS } from '@/lib/mock-wallet';
-import { showDemoToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Earn sheet after Uniswap's: headline rate, vault facts, details on demand, Deposit. */
@@ -22,15 +22,34 @@ export default function EarnSheet() {
   const c = useTheme();
   const [more, setMore] = useState(false);
   const [depositing, setDepositing] = useState(false);
+  // What was just deposited, shown on the closing page.
+  const [deposited, setDeposited] = useState<string | null>(null);
   const vault = VAULTS[symbol];
   if (!vault) return null;
 
   return (
     // Each page ends with its own main button, so the buttons swap with the pages.
     <SheetScreen>
-      <ContentSwap id={depositing ? 'deposit' : 'info'} index={depositing ? 1 : 0}>
-        {depositing ? (
-          <DepositPage symbol={symbol} apy={vault.apy} onBack={() => setDepositing(false)} />
+      <ContentSwap
+        id={deposited ? 'done' : depositing ? 'deposit' : 'info'}
+        index={deposited ? 2 : depositing ? 1 : 0}
+      >
+        {deposited ? (
+          <SuccessPage
+            title="Deposited"
+            detail={`${deposited} ${symbol} is now earning ${vault.apy.toFixed(2)}% APY.`}
+            onDone={() => finishDemo('nothing was deposited')}
+          />
+        ) : depositing ? (
+          <DepositPage
+            symbol={symbol}
+            apy={vault.apy}
+            onBack={() => setDepositing(false)}
+            onDeposit={(amount) => {
+              success();
+              setDeposited(amount);
+            }}
+          />
         ) : (
           <View>
             <View style={styles.hero}>
@@ -126,7 +145,17 @@ export default function EarnSheet() {
 }
 
 /** Second page of the sheet: how much to put in, with the yearly estimate. */
-function DepositPage({ symbol, apy, onBack }: { symbol: string; apy: number; onBack: () => void }) {
+function DepositPage({
+  symbol,
+  apy,
+  onBack,
+  onDeposit,
+}: {
+  symbol: string;
+  apy: number;
+  onBack: () => void;
+  onDeposit: (amount: string) => void;
+}) {
   const styles = useStyles();
   const [amount, setAmount] = useState('');
   const balance = TOKENS.find((t) => t.symbol === symbol)?.amount ?? 0;
@@ -175,10 +204,7 @@ function DepositPage({ symbol, apy, onBack }: { symbol: string; apy: number; onB
               : `Deposit ${amount} ${symbol}`
         }
         disabled={!value || tooMuch}
-        onPress={() => {
-          showDemoToast('nothing was deposited');
-          closeSheet();
-        }}
+        onPress={() => onDeposit(amount)}
         style={styles.deposit}
       />
     </View>

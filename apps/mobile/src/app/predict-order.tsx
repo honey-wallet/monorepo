@@ -2,11 +2,12 @@ import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text } from 'react-native';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { closeSheet, SheetScreen } from '@/components/wallet/Sheet';
+import { SheetScreen } from '@/components/wallet/Sheet';
+import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import { AmountCard, Risk, type Side, SideToggle, Summary } from '@/components/wallet/TradeForm';
+import { success } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import { PREDICT_MARKETS, predictMarket, yesPrice } from '@/lib/predict';
-import { showDemoToast } from '@/lib/toast';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
 import { makeStyles } from '@/theme';
 
@@ -25,10 +26,31 @@ export default function PredictOrderSheet() {
     params.side && sides.includes(params.side) ? params.side : sides[0],
   );
   const [amount, setAmount] = useState('');
+  const [bought, setBought] = useState(false);
   const value = Number(amount) || 0;
   const yes = yesPrice(market, outcome?.id);
   const price = side === sides[0] ? yes : 1 - yes;
   const what = outcome ? `${outcome.label}: ${side}` : side;
+
+  if (bought) {
+    return (
+      <SheetScreen
+        size="fill"
+        title={market.question}
+        footer={
+          <PillButton
+            label="Done"
+            onPress={() => finishDemo(`bought ${what} on “${market.question}”`)}
+          />
+        }
+      >
+        <SuccessPage
+          title={`Bought ${side}`}
+          detail={`${(value / price).toFixed(2)} shares${outcome ? ` of ${outcome.label}` : ''}. Pays ${formatUsd(value / price)} if you're right.`}
+        />
+      </SheetScreen>
+    );
+  }
 
   return (
     <SheetScreen
@@ -39,8 +61,8 @@ export default function PredictOrderSheet() {
           label={value ? `Buy ${side}` : 'Enter an amount'}
           disabled={!value}
           onPress={() => {
-            showDemoToast(`bought ${what} on “${market.question}”`);
-            closeSheet();
+            success();
+            setBought(true);
           }}
         />
       }
