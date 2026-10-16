@@ -16,9 +16,12 @@ import { makeStyles } from '@/theme';
 export function HeaderActions({
   settingsLabel = 'Settings',
   onSettings = () => router.push('/settings'),
+  balance: showBalance = true,
 }: {
   settingsLabel?: string;
   onSettings?: () => void;
+  /** Off where the page's own number is the hero (Savings), so two totals don't compete. */
+  balance?: boolean;
 }) {
   const styles = useStyles();
   const { hideBalance } = useSettings();
@@ -26,20 +29,22 @@ export function HeaderActions({
   const balance = hideBalance ? HIDDEN_AMOUNT : formatUsd(usd);
   return (
     <View style={styles.row}>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={
-          hideBalance ? 'Balance hidden. Deposit more' : `Balance ${balance}. Deposit more`
-        }
-        scaleTo={0.97}
-        onPress={() => {
-          tap();
-          router.push('/balance');
-        }}
-        style={styles.balance}
-      >
-        <Text style={styles.balanceText}>{balance}</Text>
-      </PressableScale>
+      {showBalance ? (
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={
+            hideBalance ? 'Balance hidden. Deposit more' : `Balance ${balance}. Deposit more`
+          }
+          scaleTo={0.97}
+          onPress={() => {
+            tap();
+            router.push('/balance');
+          }}
+          style={styles.balance}
+        >
+          <Text style={styles.balanceText}>{balance}</Text>
+        </PressableScale>
+      ) : null}
       <HeaderIconButton icon="settings" label={settingsLabel} onPress={onSettings} />
     </View>
   );

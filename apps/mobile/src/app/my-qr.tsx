@@ -103,7 +103,10 @@ export default function MyQRSheet() {
           <Text style={styles.addressLabel}>Wallet address</Text>
           <IconSwap name={copied ? 'check' : 'copy'} size={12} color={c.textSecondary} />
         </View>
-        <Text style={styles.address}>{wallet.address}</Text>
+        {/* Two even lines (as Aave shows it) rather than a full line and a stray tail. */}
+        <Text style={styles.address}>
+          {`${wallet.address.slice(0, Math.ceil(wallet.address.length / 2))}\n${wallet.address.slice(Math.ceil(wallet.address.length / 2))}`}
+        </Text>
       </Pressable>
 
       {multisig ? (

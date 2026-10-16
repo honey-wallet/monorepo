@@ -113,7 +113,11 @@ export default function ProfileEditSheet() {
           </View>
         </Accordion>
 
-        <ScrollView keyboardShouldPersistTaps="handled" style={styles.flex}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          alwaysBounceVertical={false}
+          style={styles.flex}
+        >
           <View style={styles.banner} />
           <View style={styles.identity}>
             <PressableScale

@@ -17,8 +17,8 @@ function handleResponse(response: Notifications.NotificationResponse) {
   const id = response.notification.request.content.data?.proposalId;
   if (typeof id !== 'string') return;
   if (response.actionIdentifier === ACTION_REJECT) {
-    reject(id);
-    showToast('Proposal rejected');
+    const outcome = reject(id);
+    showToast(outcome === 'rejected' ? 'Proposal rejected' : 'You rejected it');
     return;
   }
   router.push({ pathname: '/proposal/[id]', params: { id } });
@@ -115,7 +115,7 @@ export default function RootLayout() {
           <Stack.Screen name="jar-move" options={sheet([1])} />
           {/* Shared wallets */}
           <Stack.Screen name="multisig-new" options={sheet([1])} />
-          <Stack.Screen name="proposal/[id]" options={sheet([1])} />
+          <Stack.Screen name="proposal/[id]" options={sheet('fitToContents')} />
           <Stack.Screen name="multisig-edit" options={sheet('fitToContents')} />
           {/* Settings pages (pushed) and pickers (sheets) */}
           <Stack.Screen name="profile-edit" options={sheet([1])} />

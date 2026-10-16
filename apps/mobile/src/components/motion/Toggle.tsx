@@ -2,8 +2,9 @@
 // double-tap reverses it from wherever it is; the track colour switches at once. No
 // animation on first render; under Reduce Motion the thumb jumps.
 import { useEffect, useRef } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import Animated, {
+  interpolateColor,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -41,6 +42,12 @@ export function Toggle({ value, onValueChange, accessibilityLabel }: Props) {
   }, [value, reduceMotion, x]);
 
   const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  // The track's colour follows the thumb on the same spring, so the two move as one.
+  const off = c.raised;
+  const on = c.primary;
+  const trackStyle = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(x.value, [0, TRAVEL], [off, on]),
+  }));
   const checkStyle = useAnimatedStyle(() => ({
     opacity: Math.min(Math.max(x.value / TRAVEL, 0), 1),
   }));
@@ -53,13 +60,13 @@ export function Toggle({ value, onValueChange, accessibilityLabel }: Props) {
       hitSlop={8}
       onPress={() => onValueChange(!value)}
     >
-      <View style={[styles.track, { backgroundColor: value ? c.primary : c.raised }]}>
+      <Animated.View style={[styles.track, trackStyle]}>
         <Animated.View style={[styles.thumb, thumbStyle]}>
           <Animated.View style={checkStyle}>
             <Icon name="check" size={12} color={c.accentText} />
           </Animated.View>
         </Animated.View>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }

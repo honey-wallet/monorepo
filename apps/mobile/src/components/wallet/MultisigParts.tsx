@@ -9,9 +9,11 @@ import { TokenIcon } from '@/components/wallet/parts';
 import { SuccessPage } from '@/components/wallet/SuccessPage';
 import type { EvmChain } from '@/lib/evm-chains';
 import { tap } from '@/lib/haptics';
+import { shortAddress } from '@/lib/mock-wallet';
 import {
   describe,
   hasVoted,
+  keyNoun,
   type Member,
   type MemberKind,
   type Multisig,
@@ -74,6 +76,17 @@ export const MEMBER_KIND_LABEL: Record<MemberKind, string> = {
   recovery: 'Recovery key',
   person: 'Member',
 };
+
+/**
+ * The line under a member's name: a handle for people, and for you the key this wallet
+ * gave you (its own, separate from your Honey wallet's).
+ */
+export function memberSubtitle(m: Member) {
+  if (m.handle) return m.handle;
+  if (m.kind === 'you') return `Own key · ${shortAddress(m.address)}`;
+  if (m.kind === 'person') return shortAddress(m.address);
+  return MEMBER_KIND_LABEL[m.kind];
+}
 
 /** A member's picture: a face for people (and you), a symbol for your other keys. */
 export function MemberAvatar({ member, size = 36 }: { member: Member; size?: number }) {
@@ -402,7 +415,7 @@ export function ProposedPage({
         done
           ? `${info.title}. Everyone needed has approved.`
           : vault && key
-            ? `${info.title}. Approve it on your ${key.name.toLowerCase()} to finish.`
+            ? `${info.title}. Approve it on your ${keyNoun(key)} to finish.`
             : `${info.title}. Needs ${left} more ${left === 1 ? 'approval' : 'approvals'}.`
       }
       onDone={onDone}

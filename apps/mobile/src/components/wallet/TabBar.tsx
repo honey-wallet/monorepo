@@ -16,6 +16,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { tap } from '@/lib/haptics';
+import { reselectTab } from '@/lib/tab-reselect';
 import { makeStyles, type Palette, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
@@ -72,6 +73,8 @@ export function TabBar({ state, navigation }: TabBarProps) {
   const go = (name: string) => {
     tap();
     if (current !== name) navigation.navigate(name);
+    // Already here: back to the top, like a normal iOS tab bar.
+    else reselectTab(name);
   };
 
   // Sits a little above the home indicator / gesture bar rather than hugging the edge.

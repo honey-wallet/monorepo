@@ -86,6 +86,7 @@ export function SheetScreen({
     return (
       <ScrollView
         onLayout={clear.onLayout}
+        alwaysBounceVertical={false}
         style={[styles.root, styles.fill]}
         stickyHeaderIndices={header || sticky ? [0] : undefined}
         keyboardShouldPersistTaps="handled"

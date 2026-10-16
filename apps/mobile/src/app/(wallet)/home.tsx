@@ -1,11 +1,13 @@
 import { type Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
+  interpolateColor,
   Keyframe,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -13,17 +15,21 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from '@/components/Icon';
-import { Accordion } from '@/components/motion/Accordion';
-import { AvatarGroup } from '@/components/motion/AvatarGroup';
+import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap, Swap } from '@/components/motion/IconSwap';
+import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { Entrance, Rise } from '@/components/motion/Rise';
 import { Sticky, StickyArea } from '@/components/motion/Sticky';
+import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { TextSwap } from '@/components/motion/TextSwap';
+import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { ApprovalsNudge, SharedWalletCard } from '@/components/wallet/ApprovalsCard';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
+import { NftGallery } from '@/components/wallet/NftGallery';
+import { TradesList, useHasTrades } from '@/components/wallet/PositionsList';
 import {
   BalanceAmount,
   EmptyState,
@@ -35,11 +41,12 @@ import {
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import { BALANCE_HISTORY, formatUsd, handleFor, shortAddress, TOKENS } from '@/lib/mock-wallet';
+import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib/mock-wallet';
 import { useMultisig, useNeedsMyApproval } from '@/lib/multisig';
 import { useUnreadNotifications } from '@/lib/notifications';
 import { useProfile } from '@/lib/profile';
-import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
+import { HIDDEN_AMOUNT, updateSettings, useSettings } from '@/lib/settings';
+import { useTabReselect } from '@/lib/tab-reselect';
 import { useWalletView } from '@/lib/wallet-view';
 import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
@@ -52,18 +59,28 @@ const ACTIONS: { label: string; icon: IconName; href: Href }[] = [
   { label: 'Sell', icon: 'sell', href: { pathname: '/buy', params: { mode: 'sell' } } },
 ];
 
-const SECTIONS = ['Tokens', 'NFTs', 'Positions'] as const;
+const SECTIONS = ['Tokens', 'NFTs', 'Trades'] as const;
+
+/** The best Honey Jar rate, for the promo. */
+const TOP_APY = Math.max(...EARN.map((e) => e.apy));
 
 const tokenHref = (symbol: string): Href => ({ pathname: '/token/[symbol]', params: { symbol } });
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
   const styles = useStyles();
   const c = useTheme();
   const profile = useProfile();
   const [section, setSection] = useState<(typeof SECTIONS)[number]>('Tokens');
+  const [promoOpen, setPromoOpen] = useState(false);
+  // Earning lives on Savings; Home is balance, actions and what you hold, plus open
+  // trades (the thing you check most), but only when there are some.
+  const hasTrades = useHasTrades();
+  const sections = SECTIONS.filter((s) => s !== 'Trades' || hasTrades);
+  // Switching to a shared wallet (which can't trade) hides Trades; fall back to Tokens.
+  const shownSection = sections.includes(section) ? section : 'Tokens';
   const [showHidden, setShowHidden] = useState(false);
-  const [promoPressed, setPromoPressed] = useState(false);
   const unread = useUnreadNotifications();
   const wallet = useActiveWallet();
   const isMain = wallet.id === 'main';
@@ -75,8 +92,10 @@ export default function HomeScreen() {
   // The wallet in use: a shared wallet shows its own balances.
   const view = useWalletView();
   const changePct = view.usd ? (view.change / (view.usd - view.change)) * 100 : 0;
-  const { hideBalance } = useSettings();
+  const { hideBalance, earnPromo } = useSettings();
   const changeColor = view.change < 0 ? c.error : c.success;
+  const canvas = c.canvas;
+  const divider = c.divider;
   const hidden = view.tokens.filter((t) => t.hidden);
   const visible = view.tokens.filter((t) => !t.hidden);
 
@@ -90,85 +109,55 @@ export default function HomeScreen() {
     multisig ? open({ pathname: '/multisig/[id]', params: { id: wallet.id } }) : open('/portfolio');
 
   const scrollY = useSharedValue(0);
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  // Tapping Home again while it's open scrolls back to the top.
+  useTabReselect('home', () => scrollRef.current?.scrollTo({ y: 0, animated: true }));
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
+  // Tied to the scroll 1:1 (no easing), so the swap can't lag the finger.
+  const swap = () => {
+    'worklet';
+    return interpolate(scrollY.value, [SWAP_FROM, SWAP_TO], [0, 1], Extrapolation.CLAMP);
+  };
+  const addressShown = useAnimatedStyle(() => ({
+    opacity: 1 - swap(),
+    transform: [{ translateY: swap() * -4 }],
+  }));
+  const balanceShown = useAnimatedStyle(() => ({
+    opacity: swap(),
+    transform: [{ translateY: (1 - swap()) * 4 }],
+  }));
+  const pinnedEdge = useAnimatedStyle(() => ({
+    borderBottomColor: interpolateColor(
+      interpolate(scrollY.value, [0, 12], [0, 1], Extrapolation.CLAMP),
+      [0, 1],
+      [canvas, divider],
+    ),
+  }));
 
   return (
     <Entrance id="home">
-      {/* The Tokens · NFTs · Positions row pins under the compact balance bar. */}
-      <StickyArea scrollY={scrollY} top={insets.top + COMPACT_BAR} style={styles.root}>
+      {/* The Tokens · NFTs · Trades row pins under the profile row. */}
+      <StickyArea
+        scrollY={scrollY}
+        top={insets.top + HEADER_TOP + HEADER_ROW + HEADER_BOTTOM}
+        style={styles.root}
+      >
         <Animated.ScrollView
+          ref={scrollRef}
           style={styles.root}
           onScroll={onScroll}
           scrollEventThrottle={16}
           contentContainerStyle={{
-            paddingTop: insets.top + 12,
+            paddingTop: insets.top + HEADER_TOP,
             paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 24,
           }}
         >
           <StatusBar style="auto" />
 
-          {/* Profile, wallet switcher and shortcuts (above the balance, so tooltips overlap it) */}
-          <Rise index={0} style={styles.header}>
-            <View style={[styles.row, styles.gutter]}>
-              <View style={styles.identity}>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel="Switch wallet"
-                  scaleTo={0.97}
-                  onPress={() => open('/wallets')}
-                >
-                  <Swap id={wallet.id} size={48}>
-                    {isMain ? (
-                      <Avatar
-                        name={wallet.label}
-                        size={48}
-                        uri={profile.photo}
-                        seed={profile.avatarSeed}
-                      />
-                    ) : (
-                      <Avatar name={wallet.label} size={48} seed={wallet.id} />
-                    )}
-                  </Swap>
-                </PressableScale>
-                <View style={styles.flex}>
-                  <View style={styles.nameRow}>
-                    <HandleName
-                      name={wallet.label}
-                      handle={isMain ? handleFor(profile.name) : undefined}
-                    />
-                    <PressableScale
-                      accessibilityLabel="Switch wallet"
-                      hitSlop={10}
-                      scaleTo={0.97}
-                      onPress={() => open('/wallets')}
-                    >
-                      <Icon name="chevronDown" size={13} color={c.textSecondary} />
-                    </PressableScale>
-                  </View>
-                  <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
-                    <TextSwap text={shortAddress(wallet.address)} style={styles.address} />
-                    <IconSwap name={copied ? 'check' : 'copy'} size={13} color={c.textSecondary} />
-                  </Pressable>
-                </View>
-              </View>
-              <View style={styles.shortcuts}>
-                <HeaderShortcut
-                  icon="bell"
-                  label="Notifications"
-                  badge={unread || needsMe.length > 0}
-                  onPress={() => router.push('/notifications')}
-                />
-                <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
-                <HeaderShortcut
-                  icon="settings"
-                  label="Settings"
-                  onPress={() => router.push('/settings')}
-                />
-              </View>
-            </View>
-          </Rise>
+          {/* Room for the pinned header row above the balance */}
+          <View style={{ height: HEADER_ROW }} />
 
           {/* Balance and today's change */}
           <Rise index={1}>
@@ -231,57 +220,101 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Promoted feature */}
+          {/* Promoted feature, as Uniswap's: one slim outlined line that opens into the
+              ways to earn. Swipe it away (or Hide it) and it stays gone. */}
           <Rise index={6}>
-            <PressableScale
-              onPress={() => open({ pathname: '/earn/[symbol]', params: { symbol: 'USDC' } })}
-              onPressIn={() => setPromoPressed(true)}
-              onPressOut={() => setPromoPressed(false)}
-              scaleTo={0.98}
-              style={[styles.promo, styles.gutterMargin]}
-            >
-              <Text style={styles.promoText}>
-                Earn with a <Text style={styles.promoAccent}>Honey Jar</Text>
-              </Text>
-              {/* The coins lift with a falloff while the row is held. */}
-              <AvatarGroup lifted={promoPressed}>
-                {TOKENS.slice(0, 3).map((t, i) => (
-                  <View key={t.symbol} style={[styles.coin, i > 0 && styles.coinOverlap]}>
-                    <TokenIcon symbol={t.symbol} size={26} />
+            <Accordion open={earnPromo}>
+              <SwipeDismiss onDismiss={() => updateSettings({ earnPromo: false })}>
+                {(dismiss) => (
+                  <View style={[styles.promo, styles.gutterMargin]}>
+                    <PressableScale
+                      accessibilityRole="button"
+                      accessibilityState={{ expanded: promoOpen }}
+                      scaleTo={0.98}
+                      onPress={() => {
+                        tap();
+                        setPromoOpen((v) => !v);
+                      }}
+                      style={styles.promoRow}
+                    >
+                      <Text style={styles.promoText}>
+                        Earn up to <Text style={styles.promoAccent}>{TOP_APY}% APY</Text>
+                      </Text>
+                      <View style={styles.coins}>
+                        {EARN.map((e, i) => (
+                          <View key={e.symbol} style={[styles.coin, i > 0 && styles.coinOverlap]}>
+                            <TokenIcon symbol={e.symbol} size={22} />
+                          </View>
+                        ))}
+                      </View>
+                      <AccordionChevron open={promoOpen} size={11} color={c.textSecondary} />
+                    </PressableScale>
+                    <Accordion open={promoOpen}>
+                      <View style={styles.promoList}>
+                        {[...EARN]
+                          .sort((x, y) => y.apy - x.apy)
+                          .map((e) => (
+                            <PressableRow
+                              key={e.symbol}
+                              accessibilityRole="button"
+                              onPress={() =>
+                                open({ pathname: '/earn/[symbol]', params: { symbol: e.symbol } })
+                              }
+                              style={styles.promoOption}
+                            >
+                              <TokenIcon symbol={e.symbol} size={28} />
+                              <Text style={[styles.flex, styles.promoOptionText]}>
+                                Earn with {e.symbol}
+                              </Text>
+                              <Text style={styles.promoAccent}>{e.apy.toFixed(2)}%</Text>
+                              <Icon name="chevronRight" size={12} color={c.textSecondary} />
+                            </PressableRow>
+                          ))}
+                        <PressableScale
+                          accessibilityRole="button"
+                          hitSlop={8}
+                          onPress={() => {
+                            tap();
+                            dismiss();
+                          }}
+                          style={styles.promoHide}
+                        >
+                          <Text style={styles.promoHideText}>Hide this</Text>
+                        </PressableScale>
+                      </View>
+                    </Accordion>
                   </View>
-                ))}
-              </AvatarGroup>
-              <Icon name="chevronRight" size={13} color={c.textSecondary} />
-            </PressableScale>
+                )}
+              </SwipeDismiss>
+            </Accordion>
           </Rise>
 
-          {/* Tokens / NFTs / Positions */}
+          {/* Tokens / NFTs / Trades (only with open trades) */}
           <Rise index={7} style={styles.sectionsGap}>
             <Sticky id="sections">
+              {/* The same tabs as Trade: the honey underline slides to the one picked. */}
               <View style={[styles.sections, styles.gutter]}>
-                {SECTIONS.map((name) => (
-                  <PressableScale
-                    key={name}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: section === name }}
-                    hitSlop={8}
-                    onPress={() => {
-                      tap();
-                      setSection(name);
-                    }}
-                  >
-                    <Text style={[styles.section, section === name && styles.sectionActive]}>
-                      {name}
-                    </Text>
-                  </PressableScale>
-                ))}
+                <UnderlineTabs options={sections} value={shownSection} onChange={setSection} />
               </View>
             </Sticky>
           </Rise>
 
-          <ContentSwap id={section} index={SECTIONS.indexOf(section)}>
-            <View style={styles.gutter}>
-              {section === 'Tokens' && (
+          <ContentSwap id={shownSection} index={sections.indexOf(shownSection)}>
+            {/* At least a screen's worth below the tabs, so they can always scroll up and
+                pin under the profile row, however short the list. */}
+            <View
+              style={[
+                styles.gutter,
+                {
+                  minHeight:
+                    screenHeight -
+                    (insets.top + HEADER_TOP + HEADER_ROW + HEADER_BOTTOM) -
+                    TABS_ROW -
+                    (insets.bottom + TAB_BAR_HEIGHT + 24),
+                },
+              ]}
+            >
+              {shownSection === 'Tokens' && (
                 <>
                   {/* A new shared wallet starts empty: say how to fund it. */}
                   {visible.length === 0 && (
@@ -332,73 +365,118 @@ export default function HomeScreen() {
                   )}
                 </>
               )}
-              {section === 'NFTs' && (
-                <EmptyState
-                  icon="image"
-                  title="No NFTs yet"
-                  hint="Collectibles you own will show up here."
-                />
-              )}
-              {section === 'Positions' && (
-                <EmptyState
-                  icon="layers"
-                  title="No open positions"
-                  hint="Liquidity and staking positions will show up here."
-                />
-              )}
+              {/* The demo collectibles and positions belong to your own wallets (shared wallets
+                  can't trade, so Trading never shows for them). */}
+              {shownSection === 'NFTs' &&
+                (multisig ? (
+                  <EmptyState
+                    icon="image"
+                    title="No NFTs yet"
+                    hint="Collectibles you own will show up here."
+                  />
+                ) : (
+                  <NftGallery />
+                ))}
+              {shownSection === 'Trades' && <TradesList />}
             </View>
           </ContentSwap>
         </Animated.ScrollView>
-        {/* Keeps scrolled content from running under the status bar. */}
-        <View style={[styles.statusCover, { height: insets.top }]} />
-        <CompactBalance scrollY={scrollY} top={insets.top} />
+        {/* The profile row stays put while the page scrolls: switching wallets, the bell
+            and settings are what this screen is for. It also keeps content from running
+            under the status bar; a hairline appears once something is under it. */}
+        <Animated.View style={[styles.pinned, { paddingTop: insets.top + HEADER_TOP }, pinnedEdge]}>
+          {/* Profile, wallet switcher and shortcuts (above the balance, so tooltips overlap it) */}
+          <Rise index={0}>
+            <View style={[styles.row, styles.gutter]}>
+              <View style={styles.identity}>
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel="Switch wallet"
+                  scaleTo={0.97}
+                  onPress={() => open('/wallets')}
+                >
+                  <Swap id={wallet.id} size={48}>
+                    {isMain ? (
+                      <Avatar
+                        name={wallet.label}
+                        size={48}
+                        uri={profile.photo}
+                        seed={profile.avatarSeed}
+                      />
+                    ) : (
+                      <Avatar name={wallet.label} size={48} seed={wallet.id} />
+                    )}
+                  </Swap>
+                </PressableScale>
+                <View style={styles.flex}>
+                  <View style={styles.nameRow}>
+                    <HandleName
+                      name={wallet.label}
+                      handle={isMain ? handleFor(profile.name) : undefined}
+                    />
+                    <PressableScale
+                      accessibilityLabel="Switch wallet"
+                      hitSlop={10}
+                      scaleTo={0.97}
+                      onPress={() => open('/wallets')}
+                    >
+                      <Icon name="chevronDown" size={13} color={c.textSecondary} />
+                    </PressableScale>
+                  </View>
+                  {/* The address; once the big balance has scrolled away, the balance
+                        takes its place, so the total is never out of sight. */}
+                  <View>
+                    <Animated.View style={addressShown}>
+                      <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
+                        <TextSwap text={shortAddress(wallet.address)} style={styles.address} />
+                        <IconSwap
+                          name={copied ? 'check' : 'copy'}
+                          size={13}
+                          color={c.textSecondary}
+                        />
+                      </Pressable>
+                    </Animated.View>
+                    <Animated.Text
+                      pointerEvents="none"
+                      style={[styles.address, styles.headerBalance, balanceShown]}
+                    >
+                      {hideBalance ? HIDDEN_AMOUNT : formatUsd(view.usd)}
+                    </Animated.Text>
+                  </View>
+                </View>
+              </View>
+              <View style={styles.shortcuts}>
+                <HeaderShortcut
+                  icon="bell"
+                  label="Notifications"
+                  badge={unread || needsMe.length > 0}
+                  onPress={() => router.push('/notifications')}
+                />
+                <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
+                <HeaderShortcut
+                  icon="settings"
+                  label="Settings"
+                  onPress={() => router.push('/settings')}
+                />
+              </View>
+            </View>
+          </Rise>
+        </Animated.View>
       </StickyArea>
     </Entrance>
   );
 }
 
-/** Scroll distance over which the compact balance fades in, as the big one passes under the status bar. */
-const COMPACT_FROM = 70;
-const COMPACT_TO = 110;
-
-/**
- * Once the big balance scrolls away, a slim bar with the total settles in at the top
- * (fading in and dropping the last 4px), so the number is never out of sight. It
- * follows the scroll directly, so it can't lag the finger.
- */
-function CompactBalance({
-  scrollY,
-  top,
-}: {
-  scrollY: ReturnType<typeof useSharedValue<number>>;
-  top: number;
-}) {
-  const styles = useStyles();
-  const { hideBalance } = useSettings();
-  const { usd } = useWalletView();
-  const shown = useAnimatedStyle(() => {
-    const p = interpolate(scrollY.value, [COMPACT_FROM, COMPACT_TO], [0, 1], Extrapolation.CLAMP);
-    return { opacity: p };
-  });
-  const content = useAnimatedStyle(() => {
-    const p = interpolate(scrollY.value, [COMPACT_FROM, COMPACT_TO], [0, 1], Extrapolation.CLAMP);
-    return { transform: [{ translateY: (1 - p) * -4 }] };
-  });
-  return (
-    <Animated.View
-      pointerEvents="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[styles.compact, { paddingTop: top, height: top + COMPACT_BAR }, shown]}
-    >
-      <Animated.Text style={[styles.compactAmount, content]}>
-        {hideBalance ? HIDDEN_AMOUNT : formatUsd(usd)}
-      </Animated.Text>
-    </Animated.View>
-  );
-}
-
-const COMPACT_BAR = 40;
+/** The pinned profile row: space above it (under the status bar), its height, below. */
+const HEADER_TOP = 12;
+const HEADER_ROW = 48;
+const HEADER_BOTTOM = 10;
+/** The Tokens · NFTs · Trades row's height. */
+const TABS_ROW = 52;
+/** Scroll range over which the address under the name turns into the balance, as the
+ * big balance passes under the pinned row. */
+const SWAP_FROM = 30;
+const SWAP_TO = 70;
 
 const handleIn = lazy(() =>
   new Keyframe({
@@ -478,29 +556,23 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  compact: {
+  pinned: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    zIndex: 3,
+    paddingBottom: HEADER_BOTTOM,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     backgroundColor: c.canvas,
-    borderBottomWidth: 1,
-    borderBottomColor: c.divider,
   },
-  compactAmount: {
+  headerBalance: {
+    position: 'absolute',
+    top: 2,
+    left: 0,
     color: c.text,
-    fontSize: 17,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
-  },
-  statusCover: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: c.canvas,
   },
   identity: {
     flex: 1,
@@ -538,9 +610,6 @@ const useStyles = makeStyles((c) => ({
   address: {
     color: c.textSecondary,
     fontSize: 15,
-  },
-  header: {
-    zIndex: 2,
   },
   shortcuts: {
     flexDirection: 'row',
@@ -592,50 +661,73 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     fontWeight: '500',
   },
+  // Uniswap's earn row: outlined rather than filled, one line, coins on the right.
   promo: {
-    // A solid card on the page, like every other card (no outline).
     marginTop: 12,
-    height: 56,
-    paddingHorizontal: 16,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: c.divider,
+    overflow: 'hidden',
+  },
+  promoRow: {
+    height: 50,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: c.card,
   },
   promoText: {
     flex: 1,
-    color: c.text,
-    fontSize: 15,
+    color: c.textSecondary,
+    fontSize: 16,
   },
   promoAccent: {
     color: c.accentText,
+    fontSize: 16,
     fontWeight: '500',
   },
+  coins: {
+    flexDirection: 'row',
+  },
   coin: {
-    borderRadius: 15,
+    borderRadius: 999,
     borderWidth: 2,
     borderColor: c.canvas,
   },
   coinOverlap: {
-    marginLeft: -9,
+    marginLeft: -8,
+  },
+  promoList: {
+    paddingBottom: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: c.divider,
+  },
+  promoOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+  },
+  promoOptionText: {
+    color: c.text,
+    fontSize: 16,
+  },
+  promoHide: {
+    alignSelf: 'center',
+    paddingVertical: 6,
+  },
+  promoHideText: {
+    color: c.textSecondary,
+    fontSize: 14,
   },
   // The gap above sits outside the pinned row, so the pinned copy is just the tabs.
+  // The tabs carry their own space above the label (46pt rows), so only a little more
+  // here keeps the gap above them in step with the 12pt between the cards.
   sectionsGap: {
-    marginTop: 18,
+    marginTop: 4,
   },
   sections: {
-    paddingTop: 4,
     paddingBottom: 8,
-    flexDirection: 'row',
-    gap: 20,
-  },
-  section: {
-    color: c.textSecondary,
-    fontSize: 17,
-    fontWeight: '500',
-  },
-  sectionActive: {
-    color: c.text,
   },
 }));

@@ -5,8 +5,8 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { Sticky } from '@/components/motion/Sticky';
 import {
-  MEMBER_KIND_LABEL,
   MemberAvatar,
+  memberSubtitle,
   NetworkBadge,
   networkLabel,
   ProposalRow,
@@ -147,7 +147,7 @@ export default function MultisigScreen() {
           <MemberAvatar member={m} size={36} />
           <View style={styles.flex}>
             <Text style={styles.memberName}>{memberName(multisig, m.id)}</Text>
-            <Text style={styles.memberSub}>{m.handle ?? MEMBER_KIND_LABEL[m.kind]}</Text>
+            <Text style={styles.memberSub}>{memberSubtitle(m)}</Text>
           </View>
           {m.id === YOU || multisig.members.length <= 2 ? null : (
             <PressableScale

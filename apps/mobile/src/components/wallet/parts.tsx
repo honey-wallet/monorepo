@@ -432,7 +432,8 @@ export function PushedScreen({
 }) {
   const insets = useSafeAreaInsets();
   const styles = useStyles();
-  const bottom = (footer ? 0 : insets.bottom) + SCREEN.bottom;
+  // Above a footer, its own padding already separates them; elsewhere clear the home indicator.
+  const bottom = footer ? SCREEN.footerTop : insets.bottom + SCREEN.bottom;
   // A hairline under the header fades in once the content scrolls beneath it.
   const scrollY = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => {
@@ -454,6 +455,9 @@ export function PushedScreen({
         <Animated.ScrollView
           onScroll={onScroll}
           scrollEventThrottle={16}
+          // Only scroll (and bounce) when there's more than fits; a page that fits
+          // stays put, so dragging a chart on it scrubs instead of moving the page.
+          alwaysBounceVertical={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={[{ paddingBottom: bottom }, contentStyle]}
         >

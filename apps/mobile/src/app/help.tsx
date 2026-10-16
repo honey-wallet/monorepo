@@ -66,6 +66,7 @@ export default function HelpScreen() {
       </View>
 
       <ScrollView
+        alwaysBounceVertical={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
       >

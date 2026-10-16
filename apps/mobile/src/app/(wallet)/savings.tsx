@@ -8,13 +8,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
-import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { PlusMenuMorph } from '@/components/motion/PlusMenuMorph';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { SpinningCounter } from '@/components/motion/SpinningCounter';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
+import { EarningList } from '@/components/wallet/PositionsList';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { TabScreen } from '@/components/wallet/TabScreen';
 import { tap } from '@/lib/haptics';
@@ -25,6 +24,8 @@ import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const STABLE = new Set(['USDC', 'USDT']);
+/** What a jar earns while it waits (its USDC vault's rate). */
+const JAR_APY = EARN.find((e) => e.symbol === 'USDC')?.apy ?? 0;
 
 /** A jar amount: dollars for stablecoins, else the token amount with its symbol. */
 function formatJarAmount(symbol: string, amount: number) {
@@ -39,7 +40,7 @@ export default function SavingsScreen() {
   const jars = useJars();
   const { savingsShowEarn } = useSectionPrefs();
   const saved = jars.reduce((sum, j) => sum + usdValue(j.symbol, j.saved), 0);
-  const goal = jars.reduce((sum, j) => sum + usdValue(j.symbol, j.goal), 0);
+  const _goal = jars.reduce((sum, j) => sum + usdValue(j.symbol, j.goal), 0);
 
   const newJar = () => {
     tap();
@@ -51,6 +52,7 @@ export default function SavingsScreen() {
       title="Savings"
       right={
         <HeaderActions
+          balance={false}
           settingsLabel="Savings settings"
           onSettings={() =>
             router.push({ pathname: '/section-settings', params: { section: 'savings' } })
@@ -58,61 +60,52 @@ export default function SavingsScreen() {
         />
       }
     >
-      <View style={styles.summary}>
-        <View style={styles.summaryTop}>
-          <View style={styles.flex}>
-            <Text style={styles.summaryLabel}>Total saved</Text>
-            {/* Spins in like reels when the tab opens and whenever the total changes. */}
-            <View style={styles.summaryValueRow}>
-              <SpinningCounter value={formatUsd(saved)} style={styles.summaryValue} />
+      {/* Aave-style: what you've put away and what it's growing to is the one big
+          number here, then your jars, then where the rest is earning. */}
+      <EarningList
+        large
+        saved={{ usd: saved, apy: JAR_APY }}
+        middle={
+          <>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.section}>Your jars</Text>
+              {jars.length ? (
+                // The + grows into a short menu: a new jar, or straight into earning.
+                <PlusMenuMorph
+                  label="Add"
+                  title="Add to savings"
+                  items={[
+                    {
+                      label: 'New jar',
+                      leading: <Icon name="target" size={20} color={c.accentText} />,
+                      onPress: newJar,
+                    },
+                    ...(['USDC', 'USDT'] as const).map((symbol) => ({
+                      label: `Earn with ${symbol}`,
+                      leading: <TokenIcon symbol={symbol} size={24} />,
+                      onPress: () =>
+                        router.push({ pathname: '/earn/[symbol]', params: { symbol } }),
+                    })),
+                  ]}
+                />
+              ) : null}
             </View>
-            <Text style={styles.summaryHint}>
-              {jars.length
-                ? `of ${formatUsd(goal)} across ${jars.length} ${jars.length === 1 ? 'jar' : 'jars'}`
-                : 'Start a jar to save toward a goal'}
-            </Text>
-          </View>
-          <HoneyLogo variant="mark" height={44} />
-        </View>
-        {jars.length ? <ProgressBar progress={goal ? saved / goal : 0} /> : null}
-        <PillButton label="New jar" onPress={newJar} style={styles.newJar} />
-      </View>
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.section}>Your jars</Text>
-        {jars.length ? (
-          // The + grows into a short menu: a new jar, or straight into earning.
-          <PlusMenuMorph
-            label="Add"
-            title="Add to savings"
-            items={[
-              {
-                label: 'New jar',
-                leading: <Icon name="target" size={20} color={c.accentText} />,
-                onPress: newJar,
-              },
-              ...(['USDC', 'USDT'] as const).map((symbol) => ({
-                label: `Earn with ${symbol}`,
-                leading: <TokenIcon symbol={symbol} size={24} />,
-                onPress: () => router.push({ pathname: '/earn/[symbol]', params: { symbol } }),
-              })),
-            ]}
-          />
-        ) : null}
-      </View>
-      {jars.length ? (
-        <View style={styles.jars}>
-          {jars.map((jar) => (
-            <JarCard key={jar.id} jar={jar} />
-          ))}
-        </View>
-      ) : (
-        <EmptyState
-          icon="target"
-          title="No jars yet"
-          hint="Set crypto aside for a goal and keep it out of your everyday balance."
-        />
-      )}
+            {jars.length ? (
+              <View style={styles.jars}>
+                {jars.map((jar) => (
+                  <JarCard key={jar.id} jar={jar} />
+                ))}
+              </View>
+            ) : (
+              <EmptyState
+                icon="target"
+                title="No jars yet"
+                hint="Set crypto aside for a goal and keep it out of your everyday balance."
+              />
+            )}
+          </>
+        }
+      />
 
       {savingsShowEarn && (
         <>
@@ -245,51 +238,19 @@ const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
   },
-  summary: {
-    padding: 20,
-    borderRadius: 24,
-    backgroundColor: c.accentSurface,
-  },
-  summaryTop: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  summaryLabel: {
-    color: c.accentText,
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  summaryValueRow: {
-    marginTop: 4,
-  },
-  summaryValue: {
-    color: c.text,
-    fontSize: 36,
-    fontWeight: '600',
-    letterSpacing: -0.8,
-  },
-  summaryHint: {
-    marginTop: 2,
-    color: c.textSecondary,
-    fontSize: 14,
-  },
-  newJar: {
-    marginTop: 16,
-  },
   sectionHeader: {
     // Above the jars, so the + menu opens over them.
     zIndex: 1,
-    marginTop: 28,
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  // The same quiet label as "Positions" below, so the page has one hierarchy.
   section: {
-    color: c.text,
-    fontSize: 20,
-    fontWeight: '600',
+    color: c.textSecondary,
+    fontSize: 15,
   },
   earnHeading: {
     marginTop: 28,

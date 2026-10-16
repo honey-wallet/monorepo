@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { closeSheet, SheetRow, SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
 import { type Settings, updateSettings, useSettings } from '@/lib/settings';
@@ -21,8 +22,12 @@ const OPTIONS: { value: Mode; label: string; hint: string; recommended?: boolean
 /** Auto (recommended) or custom network cost for every transaction. */
 export default function NetworkCostSheet() {
   const { networkCost } = useSettings();
+  // Closes once, even if a second option is tapped before the sheet goes.
+  const closing = useRef(false);
 
   const choose = (value: Mode) => {
+    if (closing.current) return;
+    closing.current = true;
     tap();
     updateSettings({ networkCost: value });
     setTimeout(closeSheet, 250);

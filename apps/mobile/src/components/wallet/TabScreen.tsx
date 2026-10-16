@@ -1,9 +1,11 @@
+import { usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -12,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Entrance, Rise } from '@/components/motion/Rise';
 import { StickyArea } from '@/components/motion/Sticky';
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
+import { useTabReselect } from '@/lib/tab-reselect';
 import { makeStyles } from '@/theme';
 
 /** Scroll distance over which the large title hands over to the small one. */
@@ -43,6 +46,10 @@ export function TabScreen({
   const insets = useSafeAreaInsets();
   const styles = useStyles();
   const scrollY = useSharedValue(0);
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  // Tapping this tab again while it's open scrolls back to the top.
+  const tab = usePathname().split('/').filter(Boolean).pop();
+  useTabReselect(tab, () => scrollRef.current?.scrollTo({ y: 0, animated: true }));
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
@@ -70,6 +77,7 @@ export function TabScreen({
         style={styles.root}
       >
         <Animated.ScrollView
+          ref={scrollRef}
           style={styles.root}
           onScroll={onScroll}
           scrollEventThrottle={16}

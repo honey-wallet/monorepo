@@ -359,7 +359,7 @@ const useStyles = makeStyles((c) => ({
     fontSize: 16,
   },
   allocationHeader: {
-    marginTop: 18,
+    marginTop: 14,
   },
   allocation: {
     flexDirection: 'row',

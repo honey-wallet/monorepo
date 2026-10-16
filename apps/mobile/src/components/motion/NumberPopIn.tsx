@@ -1,12 +1,15 @@
-// Motion: when a balance or price changes, each character rises 6px into place
-// (250ms, ease-out, no overshoot); the point and the cents follow one 40ms stagger
-// step behind so the whole part reads first. Numbers change occasionally, so this
-// stays short and quiet. Under Reduce Motion the new value just fades in.
+// Motion: when a balance or price changes, only the characters that changed move:
+// each new one rises 6px into place (250ms, ease-out, no overshoot) while the one it
+// replaces fades out (150ms), and the point and cents follow one 40ms step behind so
+// the whole part reads first. Characters that stayed the same don't move, and the
+// value that's there when it first shows doesn't animate, so a price that ticks every
+// few seconds stays calm. Under Reduce Motion the changed characters just crossfade.
 import type { StyleProp, TextStyle } from 'react-native';
 import { View } from 'react-native';
 import Animated, { Keyframe, useReducedMotion } from 'react-native-reanimated';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';
-import { fadeIn } from './reducedFade';
+import { fadeIn, fadeOut } from './reducedFade';
+import { useHasMounted } from './useHasMounted';
 
 /** One character rising into place, e.g. a digit of a changed balance. */
 export const popIn = (delay = 0) =>
@@ -26,17 +29,23 @@ type Props = {
 
 export function NumberPopIn({ value, style, fractionStyle }: Props) {
   const reduceMotion = useReducedMotion();
+  const mounted = useHasMounted();
   const point = value.indexOf('.');
   return (
-    <View key={value} accessible accessibilityLabel={value} style={{ flexDirection: 'row' }}>
+    <View accessible accessibilityLabel={value} style={{ flexDirection: 'row' }}>
       {[...value].map((char, i) => {
         // 0 for the whole part, 1 for the point, 2 for the digits after it.
         const stagger = point < 0 || i < point ? 0 : Math.min(i - point + 1, 2);
         return (
           <Animated.Text
-            // biome-ignore lint/suspicious/noArrayIndexKey: characters repeat; position is the identity.
-            key={i}
-            entering={reduceMotion ? fadeIn() : popIn(stagger * DURATION.stagger)}
+            // A character keeps its identity while it's the same character in the same
+            // place (counted from the right, where digits change); a change remounts it.
+            // biome-ignore lint/suspicious/noArrayIndexKey: position plus character is the identity.
+            key={`${value.length - i}:${char}`}
+            entering={
+              mounted ? (reduceMotion ? fadeIn() : popIn(stagger * DURATION.stagger)) : undefined
+            }
+            exiting={fadeOut()}
             style={[style, stagger > 0 && fractionStyle]}
           >
             {char}

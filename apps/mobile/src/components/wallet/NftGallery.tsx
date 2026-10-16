@@ -1,0 +1,476 @@
+// Home's NFTs tab. The grid's tiles rise in on a short stagger the first time the tab
+// opens this session (scale 0.96 → 1 with a fade, 30ms apart, strong ease-out), then
+// show still. Tapping a tile is the course's App Store card → detail: the art lifts
+// out of its tile and grows into place (a critically damped spring, so it can be
+// interrupted), the page fades in behind it and the details follow a beat later.
+// Closing reverses the art into its tile on a shorter ease-out while the details leave
+// almost at once (exits are quicker). Drag down anywhere off the art to dismiss: the
+// view follows the finger 1:1, shrinking a little, and springs back if let go early.
+// The art itself tilts toward a pressing finger (TiltCard); the details, traits
+// included, arrive as one block. Under Reduce Motion the detail only fades.
+import { useEffect, useRef, useState } from 'react';
+import {
+  Modal,
+  Share,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+  type View as ViewType,
+} from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
+import { Icon, type IconName } from '@/components/Icon';
+import { LikeButton } from '@/components/motion/LikeButton';
+import { PressableScale } from '@/components/motion/PressableScale';
+import { TiltCard } from '@/components/motion/TiltCard';
+import { NftArt } from '@/components/wallet/NftArt';
+import { TokenIcon } from '@/components/wallet/parts';
+import { StatRow } from '@/components/wallet/Sheet';
+import { NFTS, type Nft, nftFloorUsd, nftNative } from '@/lib/collectibles';
+import { tap } from '@/lib/haptics';
+import { chainSymbol, formatUsd } from '@/lib/mock-wallet';
+import { showToast } from '@/lib/toast';
+import { makeStyles, useTheme } from '@/theme';
+import { DURATION, EASE, SPRING } from '@/theme/motion';
+
+const COLUMNS = 3;
+const GAP = 10;
+const TILE_RADIUS = 14;
+const DETAIL_RADIUS = 24;
+/** Drag this far down (or flick) to close the detail. */
+const DISMISS_AT = 110;
+const FLICK = 900;
+
+type Rect = { x: number; y: number; w: number; h: number };
+
+/** Tiles play their entrance once per session, like the screen's own. */
+let gridPlayed = false;
+
+const formatFloor = (nft: Nft) =>
+  `${nft.floor < 0.1 ? nft.floor.toFixed(3) : nft.floor >= 10 ? nft.floor.toFixed(0) : nft.floor.toFixed(2)} ${nftNative(nft)}`;
+
+export function NftGallery() {
+  const styles = useStyles();
+  const [width, setWidth] = useState(0);
+  const [open, setOpen] = useState<{ nft: Nft; from: Rect } | null>(null);
+  const [play] = useState(() => !gridPlayed);
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    gridPlayed = true;
+  }, []);
+
+  const tile = width ? (width - GAP * (COLUMNS - 1)) / COLUMNS : 0;
+
+  return (
+    <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <View style={styles.grid}>
+        {tile
+          ? NFTS.map((nft, i) => (
+              <Tile
+                key={nft.id}
+                nft={nft}
+                size={tile}
+                index={i}
+                play={play}
+                lifted={open?.nft.id === nft.id}
+                onOpen={(from) => {
+                  tap();
+                  setOpen({ nft, from });
+                }}
+              />
+            ))
+          : null}
+      </View>
+      {open ? (
+        <NftDetail
+          nft={open.nft}
+          from={open.from}
+          liked={!!liked[open.nft.id]}
+          onLike={() => setLiked((l) => ({ ...l, [open.nft.id]: !l[open.nft.id] }))}
+          onClosed={() => setOpen(null)}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function Tile({
+  nft,
+  size,
+  index,
+  play,
+  lifted,
+  onOpen,
+}: {
+  nft: Nft;
+  size: number;
+  index: number;
+  play: boolean;
+  lifted: boolean;
+  onOpen: (from: Rect) => void;
+}) {
+  const styles = useStyles();
+  const reduceMotion = useReducedMotion();
+  const ref = useRef<ViewType>(null);
+  const shown = useSharedValue(play ? 0 : 1);
+  useEffect(() => {
+    if (!play) return;
+    shown.value = withDelay(
+      index * 30,
+      withTiming(1, { duration: DURATION.slow, easing: EASE.smoothOut }),
+    );
+  }, [play, index, shown]);
+  const still = reduceMotion;
+  const enter = useAnimatedStyle(() => ({
+    opacity: shown.value,
+    transform: [{ scale: still ? 1 : 0.96 + 0.04 * shown.value }],
+  }));
+
+  return (
+    <Animated.View ref={ref} collapsable={false} style={[{ width: size }, enter]}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={nft.name}
+        scaleTo={0.97}
+        // Measured on the outer view, which the press doesn't scale, so the art flies
+        // back to exactly where it sits.
+        onPress={() => ref.current?.measureInWindow((x, y) => onOpen({ x, y, w: size, h: size }))}
+      >
+        {/* While its detail is open the art has lifted out, so the tile shows a hole. */}
+        <View style={[styles.art, { width: size, height: size }, lifted && styles.lifted]}>
+          {lifted ? null : <NftArt nft={nft} size={size} />}
+        </View>
+        <Text style={styles.name} numberOfLines={1}>
+          {nft.name}
+        </Text>
+      </PressableScale>
+    </Animated.View>
+  );
+}
+
+function NftDetail({
+  nft,
+  from,
+  liked,
+  onLike,
+  onClosed,
+}: {
+  nft: Nft;
+  from: Rect;
+  liked: boolean;
+  onLike: () => void;
+  onClosed: () => void;
+}) {
+  const styles = useStyles();
+  const c = useTheme();
+  const reduceMotion = useReducedMotion();
+  const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
+  const progress = useSharedValue(0);
+  const details = useSharedValue(0);
+  const drag = useSharedValue(0);
+  const closing = useRef(false);
+
+  // Where the art lands, and how to get there from the tile (centre offset and scale).
+  // Smaller on short screens, so the details and actions still fit below it.
+  const side = Math.min(width - 40, height * 0.42);
+  const to = { x: (width - side) / 2, y: insets.top + 52, w: side };
+  const dx = from.x + from.w / 2 - (to.x + to.w / 2);
+  const dy = from.y + from.h / 2 - (to.y + to.w / 2);
+  const s = from.w / to.w;
+
+  useEffect(() => {
+    progress.value = reduceMotion
+      ? withTiming(1, { duration: DURATION.medium, easing: EASE.ease })
+      : withSpring(1, SPRING.ui);
+    details.value = withDelay(
+      reduceMotion ? 0 : 80,
+      withTiming(1, { duration: DURATION.slow, easing: EASE.smoothOut }),
+    );
+  }, [progress, details, reduceMotion]);
+
+  const close = () => {
+    if (closing.current) return;
+    closing.current = true;
+    const out = { duration: DURATION.medium, easing: EASE.smoothOut };
+    details.value = withTiming(0, { duration: DURATION.micro, easing: EASE.ease });
+    drag.value = withTiming(0, out);
+    progress.value = withTiming(0, out, (done) => {
+      if (done) scheduleOnRN(onClosed);
+    });
+  };
+
+  const pan = Gesture.Pan()
+    .activeOffsetY(10)
+    .failOffsetX([-24, 24])
+    .onUpdate((e) => {
+      // Follows the finger down; resists being pulled up.
+      drag.value = e.translationY > 0 ? e.translationY : e.translationY * 0.2;
+    })
+    .onEnd((e) => {
+      if (e.translationY > DISMISS_AT || e.velocityY > FLICK) scheduleOnRN(close);
+      else drag.value = withSpring(0, SPRING.release);
+    });
+
+  const still = reduceMotion;
+  const backdrop = useAnimatedStyle(() => ({
+    opacity: progress.value * interpolate(drag.value, [0, 400], [1, 0.4], Extrapolation.CLAMP),
+  }));
+  const art = useAnimatedStyle(() => {
+    const p = progress.value;
+    const shrink = interpolate(drag.value, [0, 400], [1, 0.82], Extrapolation.CLAMP);
+    if (still) return { opacity: p, transform: [{ translateY: drag.value }] };
+    const scale = (s + (1 - s) * p) * shrink;
+    return {
+      borderRadius: TILE_RADIUS / s + (DETAIL_RADIUS - TILE_RADIUS / s) * p,
+      transform: [
+        { translateX: dx * (1 - p) },
+        { translateY: dy * (1 - p) + drag.value },
+        { scale },
+      ],
+    };
+  });
+  const info = useAnimatedStyle(() => ({
+    opacity: details.value,
+    transform: [{ translateY: (still ? 0 : (1 - details.value) * 12) + drag.value * 0.9 }],
+  }));
+
+  const usd = formatUsd(nftFloorUsd(nft));
+
+  return (
+    <Modal transparent visible animationType="none" statusBarTranslucent onRequestClose={close}>
+      <GestureHandlerRootView style={StyleSheet.absoluteFill}>
+        <GestureDetector gesture={pan}>
+          <View style={StyleSheet.absoluteFill}>
+            <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, backdrop]} />
+
+            <Animated.View
+              style={[styles.detailArt, { left: to.x, top: to.y, width: to.w, height: to.w }, art]}
+            >
+              <TiltCard radius={DETAIL_RADIUS}>
+                <NftArt nft={nft} size={to.w} />
+              </TiltCard>
+            </Animated.View>
+
+            {/* A pushed page's header: back, the collection, and the heart */}
+            <Animated.View style={[styles.header, { top: insets.top }, info]}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel="Back"
+                hitSlop={12}
+                onPress={() => {
+                  tap();
+                  close();
+                }}
+                style={styles.headerButton}
+              >
+                <Icon name="chevronLeft" size={18} color={c.text} />
+              </PressableScale>
+              <Text style={styles.headerTitle} numberOfLines={1}>
+                {nft.collection}
+              </Text>
+              <View style={styles.headerButton}>
+                <LikeButton liked={liked} onToggle={onLike} size={22} />
+              </View>
+            </Animated.View>
+
+            <Animated.View style={[styles.info, { top: to.y + to.w + 16 }, info]}>
+              <Text style={styles.detailName}>{nft.name}</Text>
+
+              <View style={styles.group}>
+                <StatRow
+                  label="Floor"
+                  value={
+                    <Text style={styles.rowValue}>
+                      {formatFloor(nft)} <Text style={styles.rowMuted}>· {usd}</Text>
+                    </Text>
+                  }
+                />
+                <StatRow
+                  label="Chain"
+                  value={
+                    <View style={styles.inline}>
+                      <TokenIcon symbol={chainSymbol(nft.chain)} size={16} />
+                      <Text style={styles.rowValue}>{nft.chain}</Text>
+                    </View>
+                  }
+                />
+              </View>
+
+              <Text style={styles.groupTitle}>Traits</Text>
+              <View style={styles.group}>
+                {nft.traits.map((t) => (
+                  <StatRow
+                    key={t.type}
+                    label={t.type}
+                    value={
+                      <Text style={styles.rowValue}>
+                        {t.value} <Text style={styles.rowMuted}>· {t.rarity}%</Text>
+                      </Text>
+                    }
+                  />
+                ))}
+              </View>
+            </Animated.View>
+
+            {/* Two equal actions along the bottom, like every other page's footer */}
+            <Animated.View style={[styles.actions, { bottom: insets.bottom + 12 }, info]}>
+              <Action
+                icon="send"
+                label="Send"
+                onPress={() => showToast('Sending NFTs is coming soon')}
+              />
+              <Action
+                icon="link"
+                label="Share"
+                onPress={() => Share.share({ message: `${nft.name} · ${nft.collection}` })}
+              />
+            </Animated.View>
+          </View>
+        </GestureDetector>
+      </GestureHandlerRootView>
+    </Modal>
+  );
+}
+
+function Action({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+  const styles = useStyles();
+  const c = useTheme();
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      onPress={() => {
+        tap();
+        onPress();
+      }}
+      style={styles.action}
+    >
+      <Icon name={icon} size={15} color={c.accentText} />
+      <Text style={styles.actionLabel}>{label}</Text>
+    </PressableScale>
+  );
+}
+
+const useStyles = makeStyles((c) => ({
+  flex: {
+    flex: 1,
+  },
+  grid: {
+    paddingTop: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GAP,
+  },
+  art: {
+    borderRadius: TILE_RADIUS,
+    overflow: 'hidden',
+    backgroundColor: c.card,
+  },
+  lifted: {
+    backgroundColor: c.card,
+  },
+  name: {
+    marginTop: 6,
+    marginBottom: 8,
+    color: c.textSecondary,
+    fontSize: 13,
+  },
+  backdrop: {
+    backgroundColor: c.canvas,
+  },
+  detailArt: {
+    position: 'absolute',
+    overflow: 'hidden',
+  },
+  info: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+  },
+  detailName: {
+    marginBottom: 12,
+    color: c.text,
+    fontSize: 22,
+    fontWeight: '600',
+  },
+  actions: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  header: {
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  group: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: c.card,
+  },
+  groupTitle: {
+    marginTop: 14,
+    marginBottom: 8,
+    marginLeft: 2,
+    color: c.textSecondary,
+    fontSize: 14,
+  },
+  inline: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  rowValue: {
+    color: c.text,
+    fontSize: 16,
+  },
+  rowMuted: {
+    color: c.textSecondary,
+  },
+  action: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: c.accentSurface,
+  },
+  actionLabel: {
+    color: c.accentText,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+}));

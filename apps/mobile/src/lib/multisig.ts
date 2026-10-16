@@ -100,25 +100,28 @@ export const YOU = 'you';
 
 export const PURPOSES: Record<
   MultisigPurpose,
-  { title: string; why: string; icon: IconName; members: string }
+  { title: string; why: string; icon: IconName; members: string; signers: string }
 > = {
   vault: {
     title: 'Vault for me',
     why: 'Your savings on more than one key. Lose your phone and nothing is lost.',
     icon: 'shield',
     members: 'Keys',
+    signers: 'Keys',
   },
   family: {
     title: 'Shared with family',
     why: 'Money you share. Big spends need a second yes.',
     icon: 'multisig',
     members: 'Members',
+    signers: 'Members',
   },
   team: {
     title: 'Team treasury',
     why: 'A team or club. Every payment is approved and on record.',
     icon: 'layers',
     members: 'Members',
+    signers: 'Signers',
   },
 };
 
@@ -143,11 +146,17 @@ export const recommendedThreshold = (members: number) =>
 const now = Date.now();
 const minutesAgo = (m: number) => now - m * 60_000;
 
-const you = (name = 'This iPhone'): Member => ({
+/**
+ * Your key in one shared wallet. Each shared wallet gets its own key, never your Honey
+ * wallet's, so the two are never linked on-chain and losing one doesn't touch the
+ * other. (In a real build it's a separate account derived from your recovery phrase,
+ * one per shared wallet, so it's backed up with it.)
+ */
+const you = (name = 'You', address = demoAddress()): Member => ({
   id: YOU,
   name,
   kind: 'you',
-  address: '0x7a3F9c21b4E8d0a5C6f1E2B39d4a8C7e5F01aB3c',
+  address,
 });
 const person = (id: string, name: string, address: string): Member => ({
   id,
@@ -171,9 +180,9 @@ const store = createStore<State>({
       protocol: 'safe',
       network: { name: 'Base', chainId: 8453, native: 'ETH' },
       members: [
-        you('You'),
-        person('maya', 'Maya', '0x41CDe2b7A9f03c5D8e1B6a4F2c9d7E0b3a5Cee3'),
-        person('dad', 'Dad', '0xBf32a8C1e5D9f0b7A62d4E3c8b1f0a9e92a4312'),
+        you('You', '0x2D41b7c9E03f5a8D1e6B4c2F9a7d0E3b5C8f9a0c'),
+        person('maya', 'Maya', '0x41CDe2b7A9f03c5D8e1B76a4F2c9d7E0b3a5Cee3'),
+        person('dad', 'Dad', '0xBf32a8C1e5D9f0b7A62d74E3c8b1f0a9e92a4312'),
       ],
       threshold: 2,
       dailyLimit: null,
@@ -189,11 +198,11 @@ const store = createStore<State>({
       protocol: 'safe',
       network: { name: 'Ethereum', chainId: 1, native: 'ETH' },
       members: [
-        you('You'),
-        person('arjun', 'Arjun', '0x8a91F0c3B7a2D8e4f6A1b5C9d3E7f2a8B6c4100'),
-        person('lena', 'Lena', '0x3c7e91F0c3B7a2D8e4f6A1b5C9d3E7f2a8B6c42'),
-        person('kai', 'Kai', '0x5d2e91F0c3B7a2D8e4f6A1b5C9d3E7f2a8B6c43'),
-        person('sam', 'Sam', '0x9f1e91F0c3B7a2D8e4f6A1b5C9d3E7f2a8B6c44'),
+        you('You', '0x6B8e3f1A9c7D2b5E0a4F8c6d1B3e9A7f2C5d81e4'),
+        person('arjun', 'Arjun', '0x8a91F0c3B7a2D8e4f6A17b5C9d3E7f2a8B6c4100'),
+        person('lena', 'Lena', '0x3c7e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c42'),
+        person('kai', 'Kai', '0x5d2e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c43'),
+        person('sam', 'Sam', '0x9f1e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c44'),
       ],
       threshold: 3,
       dailyLimit: 250,
@@ -215,7 +224,7 @@ const store = createStore<State>({
         chain: 'Base',
         amount: 50,
         usd: 50,
-        to: '0x2E8f1a7B3c9D0e5F6a2b8C4d1E7f3A9b05e41Cd',
+        to: '0x2E8f1a7B3c9D0e5F6a2b78C4d1E7f3A9b05e41Cd',
       },
       createdBy: 'maya',
       createdAt: minutesAgo(25),
@@ -249,7 +258,7 @@ const store = createStore<State>({
       nonce: 42,
       action: {
         type: 'addMember',
-        member: person('priya', 'Priya', '0x7b4e91F0c3B7a2D8e4f6A1b5C9d3E7f2a8B6c45'),
+        member: person('priya', 'Priya', '0x7b4e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c45'),
       },
       createdBy: 'lena',
       createdAt: minutesAgo(30),
@@ -360,6 +369,14 @@ export const useMultisigEvents = () => store.use().events;
 
 export const memberOf = (m: Multisig, id: string) => m.members.find((x) => x.id === id);
 
+/** One of your own keys as it reads after "your": "other device", "hardware wallet". */
+export function keyNoun(member: Member) {
+  if (member.kind === 'device') return 'other device';
+  if (member.kind === 'hardware') return 'hardware wallet';
+  if (member.kind === 'recovery') return 'recovery key';
+  return member.name.toLowerCase();
+}
+
 /**
  * Who did something, in a sentence: "You", a person's name, or "Your hardware
  * wallet" for one of your own keys (a vault's members are all you).
@@ -368,7 +385,7 @@ export function actorName(m: Multisig | undefined, id: string) {
   if (id === YOU) return 'You';
   const member = m && memberOf(m, id);
   if (!member) return 'Someone';
-  return member.kind === 'person' ? member.name : `Your ${member.name.toLowerCase()}`;
+  return member.kind === 'person' ? member.name : `Your ${keyNoun(member)}`;
 }
 
 /** How a member is named in the app: "You" for you, else their name. */
@@ -715,12 +732,18 @@ export function createMultisig(input: {
 }) {
   const protocol = protocolFor(input.network);
   const address = protocol === 'squads' ? demoSolanaAddress() : demoAddress();
+  // A fresh key of yours, just for this wallet, on its network.
+  const members = input.members.map((m) =>
+    m.kind === 'you'
+      ? { ...m, address: protocol === 'squads' ? demoSolanaAddress() : demoAddress() }
+      : m,
+  );
   const walletId = addWallet({
     kind: 'multisig',
     label: input.name,
     address,
     usd: 0,
-    threshold: [input.threshold, input.members.length],
+    threshold: [input.threshold, members.length],
   });
   store.set((s) => ({
     ...s,
@@ -731,7 +754,7 @@ export function createMultisig(input: {
         purpose: input.purpose,
         protocol,
         network: input.network,
-        members: input.members,
+        members,
         threshold: input.threshold,
         dailyLimit: null,
         spentToday: 0,
@@ -787,3 +810,54 @@ export function useSigner() {
 export const newMemberId = () => nextId('m');
 
 export { you as yourKey };
+
+/** Block explorers by chain id, for an executed proposal's transaction. */
+const EXPLORERS: Record<number, { name: string; url: string }> = {
+  1: { name: 'Etherscan', url: 'https://etherscan.io' },
+  10: { name: 'Optimism Explorer', url: 'https://optimistic.etherscan.io' },
+  137: { name: 'Polygonscan', url: 'https://polygonscan.com' },
+  8453: { name: 'Basescan', url: 'https://basescan.org' },
+  42161: { name: 'Arbiscan', url: 'https://arbiscan.io' },
+};
+
+const BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+/**
+ * A proposal's ids and cost: the multisig's id for it (Safe tx hash, or the Squads
+ * proposal account), the transaction it executed in, where to look that up, and what
+ * it cost. Demo data, derived from the proposal so it stays the same each time.
+ */
+export function receipt(multisig: Multisig, proposal: Proposal) {
+  let seed = 0;
+  for (const ch of proposal.id) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+  // A small LCG; its high bits are the random ones (the low bits repeat every few steps).
+  const next = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed;
+  };
+  const { chainId } = multisig.network;
+  if (chainId === null) {
+    // Squads: the proposal's account address, then the transaction's signature.
+    const proposalHash = Array.from({ length: 44 }, () => BASE58[(next() >>> 16) % 58]).join('');
+    const hash = Array.from({ length: 88 }, () => BASE58[(next() >>> 16) % 58]).join('');
+    return {
+      hash,
+      proposalHash,
+      explorer: { name: 'Solscan', url: `https://solscan.io/tx/${hash}` },
+      fee: '$0.001',
+    };
+  }
+  // Safe: the Safe transaction hash (from proposing), then the on-chain transaction.
+  const hex = () => `0x${Array.from({ length: 64 }, () => (next() >>> 28).toString(16)).join('')}`;
+  const proposalHash = hex();
+  const hash = hex();
+  const known = EXPLORERS[chainId];
+  return {
+    hash,
+    proposalHash,
+    explorer: known
+      ? { name: known.name, url: `${known.url}/tx/${hash}` }
+      : { name: 'Blockscan', url: `https://blockscan.com/tx/${hash}` },
+    fee: chainId === 1 ? '$1.84' : '$0.02',
+  };
+}

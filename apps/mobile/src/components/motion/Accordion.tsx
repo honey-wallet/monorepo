@@ -42,6 +42,9 @@ export function Accordion({ open, children }: { open: boolean; children: ReactNo
     <Animated.View
       style={[{ overflow: 'hidden' }, panelStyle]}
       pointerEvents={open ? 'auto' : 'none'}
+      // Closed content is hidden from VoiceOver and TalkBack too, not just from touch.
+      accessibilityElementsHidden={!open}
+      importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
     >
       <View
         style={{ position: 'absolute', left: 0, right: 0 }}

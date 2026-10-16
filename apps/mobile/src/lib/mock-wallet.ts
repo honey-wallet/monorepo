@@ -162,7 +162,7 @@ export function otherWallets(name: string): Wallet[] {
       id: 'savings',
       kind: 'wallet',
       label: 'Savings',
-      address: '0xacdF4b19e27c5D83a6B0f2C1d9E8a7b6c5D4E93',
+      address: '0xacdF4b19e27c5D83a6B07f2C1d9E8a7b6c5D4E93',
       usd: 17.85,
     },
     {
@@ -628,7 +628,7 @@ export const ACTIVITY_DETAILS: Record<string, ActivityDetail> = {
 type Recipient = { id: string; label?: string; address: string };
 
 export const RECENT_RECIPIENTS: Recipient[] = [
-  { id: 'r1', label: 'Savings', address: '0xacdF4b19e27c5D83a6B0f2C1d9E8a7b6c5D4E93' },
+  { id: 'r1', label: 'Savings', address: '0xacdF4b19e27c5D83a6B07f2C1d9E8a7b6c5D4E93' },
   { id: 'r2', label: 'Trading', address: '0xBf3273aD8c1e9F04b7A62d5E3c8b1f0a9e924312' },
   { id: 'r3', address: '0xC834e1a9D2b7f05c3E6a8B1d9F4c2e7A0b5D6408' },
   { id: 'r4', address: '0xDA27b3e8C1f9a4D6e0B2c7F5a8E3d1B9c6A47e47' },

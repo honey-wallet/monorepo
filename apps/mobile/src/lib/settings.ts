@@ -38,6 +38,8 @@ export type Settings = {
   hideBalance: boolean;
   /** Trade tabs shown, in order. Shared wallets only ever show Swap (see `lib/trade-modes.ts`). */
   tradeTabs: TradeMode[];
+  /** Home's "Earn with a Honey Jar" card, until it's swiped or closed away. */
+  earnPromo: boolean;
 };
 
 export const settings = createStore<Settings>({
@@ -55,6 +57,7 @@ export const settings = createStore<Settings>({
   backedUp: true,
   hideBalance: false,
   tradeTabs: [...TRADE_MODES],
+  earnPromo: true,
 });
 
 export const useSettings = settings.use;

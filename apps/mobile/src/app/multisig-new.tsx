@@ -294,6 +294,7 @@ export default function NewMultisigSheet() {
               <>
                 <ScrollView
                   style={styles.flex}
+                  alwaysBounceVertical={false}
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
                 >
@@ -308,10 +309,12 @@ export default function NewMultisigSheet() {
                           {m.kind === 'you' ? `${m.name} (${profile.name})` : m.name}
                         </Text>
                         <Text style={styles.memberSub}>
-                          {m.handle ??
-                            (m.kind === 'person'
-                              ? shortAddress(m.address)
-                              : MEMBER_KIND_LABEL[m.kind])}
+                          {m.kind === 'you'
+                            ? 'A new key on this device, just for this wallet'
+                            : (m.handle ??
+                              (m.kind === 'person'
+                                ? shortAddress(m.address)
+                                : MEMBER_KIND_LABEL[m.kind]))}
                         </Text>
                       </View>
                       {m.kind === 'you' ? null : (
@@ -453,8 +456,9 @@ export default function NewMultisigSheet() {
                 <StatRow label="Setup cost" value={setupCost(network)} />
                 <View style={styles.flex} />
                 <Text style={styles.note}>
-                  Honey sets up the {protocolName(protocolFor(network))} wallet for you. Changing
-                  members or the rule later needs approvals too.
+                  Honey sets up the {protocolName(protocolFor(network))} wallet with a new key of
+                  yours, separate from your Honey wallet. Changing members or the rule later needs
+                  approvals too.
                 </Text>
                 <PillButton label="Create shared wallet" onPress={create} style={styles.cta} />
               </>
@@ -556,6 +560,7 @@ function NetworkPage({
       />
       <ScrollView
         style={styles.flex}
+        alwaysBounceVertical={false}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

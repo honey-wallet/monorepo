@@ -1,5 +1,5 @@
 // Motion: favouriting a token is occasional, so it earns a small moment of delight,
-// kept quiet: the heart fills (150ms), dips to 0.9 and settles back to 1 (250ms,
+// kept quiet: the heart fills (150ms), dips to 0.94 and settles back to 1 (250ms,
 // ease-out, no overshoot), and eight particles drift 16px out and fade (400ms).
 // Unliking only reverses the fill. Under Reduce Motion only the fill crossfades.
 import { useEffect } from 'react';
@@ -37,7 +37,7 @@ export function LikeButton({ liked, onToggle, size = 24 }: Props) {
     tap();
     if (!liked && !reduceMotion) {
       scale.value = withSequence(
-        withTiming(0.9, { duration: DURATION.micro, easing: EASE.press }),
+        withTiming(0.94, { duration: DURATION.micro, easing: EASE.press }),
         withTiming(1, { duration: DURATION.medium - DURATION.micro, easing: EASE.smoothOut }),
       );
       burst.value = 0;
@@ -55,7 +55,6 @@ export function LikeButton({ liked, onToggle, size = 24 }: Props) {
       accessibilityLabel={liked ? 'Remove from favourites' : 'Add to favourites'}
       accessibilityState={{ selected: liked }}
       hitSlop={10}
-      scaleTo={1}
       onPress={press}
     >
       <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>

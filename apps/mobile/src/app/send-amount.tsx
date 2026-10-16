@@ -189,6 +189,7 @@ export default function SendAmountSheet() {
                 />
                 <ScrollView
                   style={styles.flex}
+                  alwaysBounceVertical={false}
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
                 >

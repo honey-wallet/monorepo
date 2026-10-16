@@ -6,10 +6,12 @@ import { MemberAvatar, networkLabel, ProposalRow } from '@/components/wallet/Mul
 import { tap } from '@/lib/haptics';
 import {
   hasVoted,
+  type Member,
   type Multisig,
   useMultisigState,
   useNeedsMyApproval,
   useProposals,
+  walletName,
   YOU,
 } from '@/lib/multisig';
 import { makeStyles, useTheme } from '@/theme';
@@ -90,20 +92,40 @@ export function ApprovalsNudge() {
   if (!waiting.length) return null;
   const wallets = new Set(waiting.map((p) => p.walletId)).size;
   const first = waiting[0];
+  const where = wallets > 1 ? `In ${wallets} shared wallets` : `In ${walletName(first.walletId)}`;
+  // The faces of who's asking (up to two), rather than a generic people icon.
+  const askers: Member[] = [];
+  for (const p of waiting) {
+    const m = multisigs[p.walletId]?.members.find((x) => x.id === p.createdBy);
+    if (m && m.id !== YOU && !askers.some((a) => a.id === m.id)) askers.push(m);
+    if (askers.length === 2) break;
+  }
   return (
     <PressableScale onPress={() => openProposal(first.id)} scaleTo={0.98} style={styles.nudge}>
-      <View style={styles.nudgeIcon}>
-        <Icon name="multisig" size={16} color={c.accentText} />
+      {askers.length ? (
+        <View style={styles.faces2}>
+          {askers.map((m, i) => (
+            <View key={m.id} style={[styles.face2, i === 1 && styles.face2Back]}>
+              <MemberAvatar member={m} size={askers.length === 1 ? 38 : 30} />
+            </View>
+          ))}
+        </View>
+      ) : (
+        <View style={styles.nudgeIcon}>
+          <Icon name="multisig" size={18} color={c.accentText} />
+        </View>
+      )}
+      <View style={styles.flex}>
+        <Text style={styles.title} numberOfLines={1}>
+          {waiting.length} {waiting.length === 1 ? 'approval' : 'approvals'} waiting
+        </Text>
+        <Text style={styles.sub} numberOfLines={1}>
+          {where}
+        </Text>
       </View>
-      <Text style={[styles.flex, styles.nudgeText]}>
-        {waiting.length} {waiting.length === 1 ? 'approval' : 'approvals'} waiting
-        {wallets > 1
-          ? ` in ${wallets} shared wallets`
-          : multisigs[first.walletId]
-            ? ` in a shared wallet`
-            : ''}
-      </Text>
-      <Icon name="chevronRight" size={13} color={c.textSecondary} />
+      <View style={styles.pill}>
+        <Text style={styles.pillLabel}>Review</Text>
+      </View>
     </PressableScale>
   );
 }
@@ -160,27 +182,52 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     fontWeight: '500',
   },
+  // Like the card above: a plain row with a small Review pill, as on Notifications.
   nudge: {
     marginTop: 12,
-    height: 52,
-    paddingHorizontal: 14,
-    borderRadius: 16,
+    padding: 14,
+    borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: c.accentSurface,
-  },
-  nudgeIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 12,
     backgroundColor: c.card,
   },
-  nudgeText: {
-    color: c.text,
-    fontSize: 15,
+  faces2: {
+    width: 44,
+    height: 38,
+  },
+  face2: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    zIndex: 1,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: c.card,
+  },
+  face2Back: {
+    left: 14,
+    top: 8,
+    zIndex: 0,
+  },
+  nudgeIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.accentSurface,
+  },
+  pill: {
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    justifyContent: 'center',
+    backgroundColor: c.accentSurface,
+  },
+  pillLabel: {
+    color: c.accentText,
+    fontSize: 14,
     fontWeight: '500',
   },
 }));
