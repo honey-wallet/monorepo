@@ -44,7 +44,7 @@ pub fn build_router(config: &Config) -> Router {
 
     Router::new()
         .merge(routes::health::router())
-        .nest("/api/v1", routes::v1::router())
+        .nest("/api/v1", routes::v1::router(config))
         .fallback(error::not_found)
         // Layers run bottom-to-top on the way in.
         .layer(TimeoutLayer::with_status_code(

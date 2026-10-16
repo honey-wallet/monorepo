@@ -27,7 +27,9 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!(addr = %listener.local_addr()?, "server listening");
 
-    axum::serve(listener, build_router(&config))
+    // Connect info gives handlers the client's IP (the pairing mailbox limits per IP).
+    let app = build_router(&config).into_make_service_with_connect_info::<std::net::SocketAddr>();
+    axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
         .context("server error")?;

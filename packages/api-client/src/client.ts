@@ -1,4 +1,11 @@
-import type { ApiErrorBody, Health, PairMessage, PairSlot, VersionInfo } from './types';
+import type {
+  ApiErrorBody,
+  Health,
+  PairChannel,
+  PairMessage,
+  PairSlot,
+  VersionInfo,
+} from './types';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -44,24 +51,29 @@ export function createApiClient({ baseUrl, fetch: fetchImpl = fetch }: ApiClient
     return (await (await send(path, init)).json()) as T;
   }
 
-  const pairPath = (channel: string, slot: PairSlot) =>
+  // The token goes in a header, never the URL, so it stays out of access logs.
+  const pairPath = ({ channel }: PairChannel, slot: PairSlot) =>
     `/api/v1/pairing/${encodeURIComponent(channel)}/${slot}`;
+  const pairHeaders = ({ token }: PairChannel) => ({ 'X-Pair-Token': token });
 
   return {
     health: (init?: RequestInit) => request<Health>('/health', init),
     version: (init?: RequestInit) => request<VersionInfo>('/api/v1/version', init),
     /** Leaves a pairing message for the other device. */
-    pairSend: async (channel: string, slot: PairSlot, message: PairMessage) => {
-      await send(pairPath(channel, slot), {
+    pairSend: async (pair: PairChannel, slot: PairSlot, message: PairMessage) => {
+      await send(pairPath(pair, slot), {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...pairHeaders(pair) },
         body: JSON.stringify(message),
       });
     },
     /** Takes the waiting pairing message, or null if it hasn't arrived yet. */
-    pairReceive: async (channel: string, slot: PairSlot, init?: RequestInit) => {
+    pairReceive: async (pair: PairChannel, slot: PairSlot, init?: RequestInit) => {
       try {
-        return await request<PairMessage>(pairPath(channel, slot), init);
+        return await request<PairMessage>(pairPath(pair, slot), {
+          ...init,
+          headers: { ...pairHeaders(pair), ...init?.headers },
+        });
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) return null;
         throw error;

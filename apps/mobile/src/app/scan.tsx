@@ -12,6 +12,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { SCREEN } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
+import { holdScannedOffer } from '@/lib/pair-offer';
 import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -35,7 +36,9 @@ export default function ScanScreen() {
     handled.current = true;
     tap();
     if (parsePairUri(data)) {
-      router.replace({ pathname: '/pair-extension', params: { uri: data } });
+      // Passed in memory, not as a route param, so only this scanner can start pairing.
+      holdScannedOffer(data);
+      router.replace('/pair-extension');
       return;
     }
     showToast('Address scanned');

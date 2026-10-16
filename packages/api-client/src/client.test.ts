@@ -35,13 +35,23 @@ describe('createApiClient', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: 'abc' }), { status: 200 }));
     const api = createApiClient({ baseUrl: 'http://api.test', fetch });
 
-    await api.pairSend('chan', 'hello', { data: 'abc' });
+    const pair = { channel: 'chan', token: 'secret' };
+
+    await api.pairSend(pair, 'commit', { data: 'abc' });
     expect(fetch).toHaveBeenCalledWith(
-      'http://api.test/api/v1/pairing/chan/hello',
-      expect.objectContaining({ method: 'PUT', body: '{"data":"abc"}' }),
+      'http://api.test/api/v1/pairing/chan/commit',
+      expect.objectContaining({
+        method: 'PUT',
+        body: '{"data":"abc"}',
+        headers: expect.objectContaining({ 'X-Pair-Token': 'secret' }),
+      }),
     );
-    await expect(api.pairReceive('chan', 'hello')).resolves.toBeNull();
-    await expect(api.pairReceive('chan', 'hello')).resolves.toEqual({ data: 'abc' });
+    await expect(api.pairReceive(pair, 'commit')).resolves.toBeNull();
+    await expect(api.pairReceive(pair, 'commit')).resolves.toEqual({ data: 'abc' });
+    expect(fetch).toHaveBeenLastCalledWith(
+      'http://api.test/api/v1/pairing/chan/commit',
+      expect.objectContaining({ headers: expect.objectContaining({ 'X-Pair-Token': 'secret' }) }),
+    );
   });
 
   it('falls back when the error body is JSON in another shape', async () => {

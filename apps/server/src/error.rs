@@ -16,6 +16,10 @@ pub enum AppError {
     BadRequest(String),
     #[error("{0}")]
     Conflict(String),
+    #[error("not allowed")]
+    Forbidden,
+    #[error("too many requests, try again shortly")]
+    TooManyRequests,
     /// Temporarily out of room (e.g. the pairing mailbox is full); retry later.
     #[error("server busy, try again shortly")]
     Busy,
@@ -46,6 +50,8 @@ impl IntoResponse for AppError {
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found"),
             Self::BadRequest(_) => (StatusCode::BAD_REQUEST, "bad_request"),
             Self::Conflict(_) => (StatusCode::CONFLICT, "conflict"),
+            Self::Forbidden => (StatusCode::FORBIDDEN, "forbidden"),
+            Self::TooManyRequests => (StatusCode::TOO_MANY_REQUESTS, "too_many_requests"),
             Self::Busy => (StatusCode::SERVICE_UNAVAILABLE, "busy"),
             Self::Unsupported(_) => (StatusCode::UNPROCESSABLE_ENTITY, "unsupported"),
             Self::NotImplemented(_) => (StatusCode::NOT_IMPLEMENTED, "not_implemented"),

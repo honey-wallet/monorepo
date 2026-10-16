@@ -1,8 +1,9 @@
-import type { PairSlot } from '@honey-wallet/api-client';
+import type { PairChannel, PairSlot } from '@honey-wallet/api-client';
 import {
   createPairOffer,
-  decodeKey,
+  encodeNonce,
   openPayload,
+  openReveal,
   type PairOffer,
   type PairPayload,
   type PairSession,
@@ -15,12 +16,17 @@ import { random } from './vault';
 const TIMEOUT_MS = 5 * 60 * 1000;
 const POLL_MS = 1000;
 
+const mailbox = (offer: PairOffer): PairChannel => ({
+  channel: offer.channel,
+  token: offer.token,
+});
+
 /** Polls the mailbox until the phone's message arrives. */
-async function waitFor(channel: string, slot: PairSlot, signal: AbortSignal): Promise<string> {
+async function waitFor(pair: PairChannel, slot: PairSlot, signal: AbortSignal): Promise<string> {
   const deadline = Date.now() + TIMEOUT_MS;
   while (Date.now() < deadline) {
     signal.throwIfAborted();
-    const message = await api.pairReceive(channel, slot, { signal });
+    const message = await api.pairReceive(pair, slot, { signal });
     if (message) return message.data;
     await new Promise((resolve) => setTimeout(resolve, POLL_MS));
   }
@@ -29,10 +35,23 @@ async function waitFor(channel: string, slot: PairSlot, signal: AbortSignal): Pr
 
 export const startPairing = (): PairOffer => createPairOffer(random);
 
-/** Waits for the phone to scan the code; returns the shared key and the code to compare. */
+/**
+ * Runs the handshake (see packages/keyring/src/pairing.ts): wait for the phone's
+ * commitment, send our nonce, then check its reveal against the commitment. Returns
+ * the shared key and the code to compare.
+ */
 export async function waitForPhone(offer: PairOffer, signal: AbortSignal): Promise<PairSession> {
-  const phoneKey = decodeKey(await waitFor(offer.channel, 'hello', signal));
-  return pairSession(offer.secretKey, phoneKey, offer.channel, offer.publicKey, phoneKey);
+  const pair = mailbox(offer);
+  const commitment = await waitFor(pair, 'commit', signal);
+  await api.pairSend(pair, 'nonce', { data: encodeNonce(offer.nonce) });
+  const phone = openReveal(await waitFor(pair, 'reveal', signal), commitment);
+  return pairSession(offer.secretKey, phone.publicKey, {
+    channel: offer.channel,
+    extensionKey: offer.publicKey,
+    phoneKey: phone.publicKey,
+    extensionNonce: offer.nonce,
+    phoneNonce: phone.nonce,
+  });
 }
 
 /** After the user confirmed the codes match: waits for the wallet and opens it. */
@@ -41,5 +60,5 @@ export async function receiveWallet(
   session: PairSession,
   signal: AbortSignal,
 ): Promise<PairPayload> {
-  return openPayload(session.key, await waitFor(offer.channel, 'payload', signal));
+  return openPayload(session.key, await waitFor(mailbox(offer), 'payload', signal));
 }

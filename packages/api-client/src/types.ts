@@ -10,8 +10,14 @@ export interface VersionInfo {
   version: string;
 }
 
-/** Pairing mailbox (apps/server/src/routes/pairing.rs). */
-export type PairSlot = 'hello' | 'payload';
+/** Pairing mailbox (apps/server/src/routes/pairing.rs), slots in protocol order. */
+export type PairSlot = 'commit' | 'nonce' | 'reveal' | 'payload';
+
+/** A pairing's mailbox: the channel is sha256(token) in hex; the token proves access. */
+export interface PairChannel {
+  channel: string;
+  token: string;
+}
 
 export interface PairMessage {
   /** Base64url: a public key for `hello`, ciphertext for `payload`. */

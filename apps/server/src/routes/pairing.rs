@@ -1,118 +1,186 @@
 //! Mailbox for pairing a new device (the browser extension) with the phone.
 //!
-//! The two devices agree on a key with X25519 and compare a six-digit code on both
-//! screens; everything that passes through here is either a public key (`hello`) or
-//! ciphertext only they can open (`payload`). The server never sees a secret, in line
-//! with the custody model in `lib.rs`.
+//! The protocol lives in `packages/keyring/src/pairing.ts`. What passes through here is
+//! public keys, nonces, a hash commitment and ciphertext only the two devices can open;
+//! the server never sees a secret it could use, in line with the custody model in
+//! `lib.rs`.
 //!
-//! Each channel holds at most one message per slot, readable once, for five minutes.
-//! Nothing is written to disk.
+//! Access: the extension's QR code carries a random token, and the channel is
+//! `sha256(token)` in hex. Every request must present the token in `X-Pair-Token`, so
+//! knowing a channel id (from logs, say) isn't enough to read or write it, and the
+//! token itself never appears in a URL.
+//!
+//! Each slot is write-once for the life of the channel (five minutes), even after it
+//! has been read, so nobody can slip in a second message. Messages are read once and
+//! kept in memory only. Each client IP may hold a limited number of live messages, so
+//! one sender can't fill the mailbox for everyone.
 
 use std::{
     collections::HashMap,
+    net::{IpAddr, SocketAddr},
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
 
 use axum::{
     Json, Router,
-    extract::{Path, State},
-    http::StatusCode,
+    extract::{ConnectInfo, Path, State},
+    http::{Extensions, HeaderMap, StatusCode},
     routing::put,
 };
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 use crate::error::AppError;
 
 const TTL: Duration = Duration::from_secs(5 * 60);
 /// Base64url of the largest message the clients send, with room to spare.
 const MAX_DATA_LEN: usize = 16 * 1024;
-/// Caps memory use if someone floods the mailbox.
+/// A backstop for the whole mailbox.
 const MAX_MESSAGES: usize = 10_000;
+/// Live messages one client IP may hold. A pairing writes four, so this allows a few
+/// retries while keeping any one sender to a sliver of `MAX_MESSAGES`.
+const MAX_PER_CLIENT: usize = 24;
+
+pub const TOKEN_HEADER: &str = "x-pair-token";
 
 /// Request and response body, mirrored as `PairMessage` in `packages/api-client/src/types.ts`.
 #[derive(Serialize, Deserialize)]
 pub struct PairMessage {
-    /// Base64url: a public key for `hello`, ciphertext for `payload`.
+    /// Base64url: a commitment, nonce, public key or ciphertext, depending on the slot.
     pub data: String,
 }
 
+/// In protocol order. The phone writes `commit`, `reveal` and `payload`; the
+/// extension writes `nonce`.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum Slot {
-    /// The phone's public key, sent after it scans the extension's QR code.
-    Hello,
-    /// The encrypted wallet, sent once the codes match.
+    Commit,
+    Nonce,
+    Reveal,
     Payload,
 }
 
-/// (channel, slot) → (when it arrived, data).
-type Messages = HashMap<(String, Slot), (Instant, String)>;
+struct Entry {
+    at: Instant,
+    client: IpAddr,
+    /// `None` once read: the slot stays taken until the channel expires.
+    data: Option<String>,
+}
 
-#[derive(Clone, Default)]
-struct Mailbox(Arc<Mutex<Messages>>);
+type Entries = HashMap<(String, Slot), Entry>;
+
+#[derive(Clone)]
+struct Mailbox {
+    entries: Arc<Mutex<Entries>>,
+    trust_proxy_headers: bool,
+}
 
 impl Mailbox {
-    fn with<T>(&self, f: impl FnOnce(&mut Messages) -> T) -> T {
+    fn with<T>(&self, f: impl FnOnce(&mut Entries) -> T) -> T {
         let mut map = self
-            .0
+            .entries
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner());
-        map.retain(|_, (at, _)| at.elapsed() < TTL);
+        map.retain(|_, entry| entry.at.elapsed() < TTL);
         f(&mut map)
+    }
+
+    /// The caller's IP: the socket's, or the first `X-Forwarded-For` hop when the server
+    /// sits behind a proxy that sets it (`TRUST_PROXY_HEADERS=true`).
+    fn client(&self, headers: &HeaderMap, extensions: &Extensions) -> IpAddr {
+        let forwarded = self
+            .trust_proxy_headers
+            .then(|| headers.get("x-forwarded-for")?.to_str().ok())
+            .flatten()
+            .and_then(|value| value.split(',').next()?.trim().parse().ok());
+        forwarded
+            .or_else(|| {
+                extensions
+                    .get::<ConnectInfo<SocketAddr>>()
+                    .map(|info| info.0.ip())
+            })
+            .unwrap_or(IpAddr::from([0, 0, 0, 0]))
     }
 }
 
-pub fn router() -> Router {
+pub fn router(trust_proxy_headers: bool) -> Router {
     Router::new()
         .route("/pairing/{channel}/{slot}", put(send).get(receive))
-        .with_state(Mailbox::default())
+        .with_state(Mailbox {
+            entries: Arc::default(),
+            trust_proxy_headers,
+        })
 }
 
-/// Channel ids are 16+ random bytes from the extension, base64url-encoded.
-fn check_channel(channel: &str) -> Result<(), AppError> {
-    let ok = (16..=64).contains(&channel.len())
-        && channel
-            .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_');
-    if ok {
+/// The channel must be 64 hex characters and equal `sha256(token)`.
+fn authorize(channel: &str, headers: &HeaderMap) -> Result<(), AppError> {
+    if channel.len() != 64 || !channel.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return Err(AppError::BadRequest("invalid pairing channel".into()));
+    }
+    let token = headers
+        .get(TOKEN_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .filter(|t| (16..=128).contains(&t.len()))
+        .ok_or(AppError::Forbidden)?;
+    let digest = Sha256::digest(token.as_bytes());
+    let expected: String = digest.iter().map(|b| format!("{b:02x}")).collect();
+    if expected.eq_ignore_ascii_case(channel) {
         Ok(())
     } else {
-        Err(AppError::BadRequest("invalid pairing channel".into()))
+        Err(AppError::Forbidden)
     }
 }
 
 async fn send(
     State(mailbox): State<Mailbox>,
     Path((channel, slot)): Path<(String, Slot)>,
+    headers: HeaderMap,
+    extensions: Extensions,
     Json(message): Json<PairMessage>,
 ) -> Result<StatusCode, AppError> {
-    check_channel(&channel)?;
+    authorize(&channel, &headers)?;
     if message.data.is_empty() || message.data.len() > MAX_DATA_LEN {
         return Err(AppError::BadRequest("message too large".into()));
     }
+    let client = mailbox.client(&headers, &extensions);
     mailbox.with(|map| {
-        if map.len() >= MAX_MESSAGES {
-            return Err(AppError::Busy);
-        }
-        // First writer wins: a second phone can't replace the one being paired.
-        let key = (channel, slot);
+        let key = (channel.to_ascii_lowercase(), slot);
+        // Write-once, even after it's been read.
         if map.contains_key(&key) {
             return Err(AppError::Conflict("already sent".into()));
         }
-        map.insert(key, (Instant::now(), message.data));
+        if map.values().filter(|e| e.client == client).count() >= MAX_PER_CLIENT {
+            return Err(AppError::TooManyRequests);
+        }
+        if map.len() >= MAX_MESSAGES {
+            return Err(AppError::Busy);
+        }
+        map.insert(
+            key,
+            Entry {
+                at: Instant::now(),
+                client,
+                data: Some(message.data),
+            },
+        );
         Ok(StatusCode::NO_CONTENT)
     })
 }
 
-/// Hands the message over once and forgets it. 404 until it arrives (clients poll).
+/// Hands the message over once. 404 until it arrives (clients poll), and after.
 async fn receive(
     State(mailbox): State<Mailbox>,
     Path((channel, slot)): Path<(String, Slot)>,
+    headers: HeaderMap,
 ) -> Result<Json<PairMessage>, AppError> {
-    check_channel(&channel)?;
+    authorize(&channel, &headers)?;
     mailbox
-        .with(|map| map.remove(&(channel, slot)))
-        .map(|(_, data)| Json(PairMessage { data }))
+        .with(|map| {
+            map.get_mut(&(channel.to_ascii_lowercase(), slot))
+                .and_then(|entry| entry.data.take())
+        })
+        .map(|data| Json(PairMessage { data }))
         .ok_or(AppError::NotFound)
 }

@@ -2,34 +2,68 @@ import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
 import { x25519 } from '@noble/curves/ed25519.js';
 import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
-import { utf8ToBytes } from '@noble/hashes/utils.js';
+import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
 import { base64urlnopad } from '@scure/base';
 import { isValidMnemonic, normalizeMnemonic } from './index';
 
 /**
- * Pairing the browser extension with the phone by scanning a QR code.
+ * Pairing the browser extension with the phone by scanning a QR code (version 2).
  *
- *   1. The extension makes a one-time X25519 key and a random channel id, and shows
- *      both as a QR code (`honey-pair:1?c=…&k=…`).
- *   2. The phone scans it, makes its own one-time key and leaves its public key in
- *      the server's mailbox (`hello`). Both sides now derive the same secret.
- *   3. Both screens show a six-digit code derived from that secret and both public
- *      keys. The user checks they match and confirms on both; a mismatch means
- *      someone swapped a key in between, and pairing stops.
- *   4. The phone encrypts the wallet with the shared key and leaves it in the mailbox
- *      (`payload`). Only the extension can open it.
+ * The QR code is the one channel nobody else can tamper with: the user points their
+ * own camera at their own screen. It carries the extension's one-time X25519 key and a
+ * random token. Everything else goes through the server's mailbox, which anyone might
+ * be watching, so the protocol assumes they are:
  *
- * The server only ever holds public keys and ciphertext, for five minutes.
+ *   1. Phone → `commit`: sha256 of its one-time public key and a random nonce. It's
+ *      bound to them before it sees anything from the extension.
+ *   2. Extension → `nonce`: its own random nonce, sent only after the commitment.
+ *   3. Phone → `reveal`: the public key and nonce it committed to. The extension
+ *      checks them against the commitment.
+ *   4. Both derive the shared key and a six-digit code from the X25519 secret, both
+ *      keys and both nonces. The user checks the two screens match and confirms on both.
+ *   5. Phone → `payload`: the wallet, encrypted for the extension alone.
+ *
+ * Someone in the middle can't make the codes match: they'd have to commit to a key
+ * before seeing the extension's nonce, and the code changes completely with it, so they
+ * get one blind guess in a million. Without the extension's secret key they also can't
+ * read the payload. The mailbox channel is sha256(token), and every request must show
+ * the token, so knowing a channel id isn't enough to write to it.
  */
 
-const SCHEME = 'honey-pair:1';
+const SCHEME = 'honey-pair:2';
+const NONCE_BYTES = 16;
 
-/** Shown on the extension; holds the secret half of its one-time key. */
+const b64 = base64urlnopad;
+const concat = (...parts: Uint8Array[]) => {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let at = 0;
+  for (const p of parts) {
+    out.set(p, at);
+    at += p.length;
+  }
+  return out;
+};
+
+/** The mailbox channel for a token: sha256 of its text, in hex (the server checks this). */
+export const channelFor = (token: string) => bytesToHex(sha256(utf8ToBytes(token)));
+
+/** The extension's side. The nonce stays secret until the phone has committed. */
 export type PairOffer = {
+  token: string;
   channel: string;
   secretKey: Uint8Array;
   publicKey: Uint8Array;
+  nonce: Uint8Array;
   uri: string;
+};
+
+/** The phone's side. */
+export type PairAnswer = {
+  secretKey: Uint8Array;
+  publicKey: Uint8Array;
+  nonce: Uint8Array;
+  /** Base64url, sent as `commit`. */
+  commitment: string;
 };
 
 /** What the wallet sends across: the phrase, and how the user named its accounts. */
@@ -46,70 +80,111 @@ export type PairSession = {
   code: string;
 };
 
-const b64 = base64urlnopad;
-
 /** Starts a pairing on the extension. `random` must be cryptographically secure. */
 export function createPairOffer(random: (bytes: number) => Uint8Array): PairOffer {
   const secretKey = random(32);
   const publicKey = x25519.getPublicKey(secretKey);
-  const channel = b64.encode(random(16));
+  const token = bytesToHex(random(16));
   return {
-    channel,
+    token,
+    channel: channelFor(token),
     secretKey,
     publicKey,
-    uri: `${SCHEME}?c=${channel}&k=${b64.encode(publicKey)}`,
+    nonce: random(NONCE_BYTES),
+    uri: `${SCHEME}?t=${token}&k=${b64.encode(publicKey)}`,
   };
 }
 
-/** Reads a scanned QR code. Null if it isn't a Honey pairing code. */
-export function parsePairUri(uri: string): { channel: string; publicKey: Uint8Array } | null {
+/** Reads a scanned QR code. Null if it isn't a (current) Honey pairing code. */
+export function parsePairUri(
+  uri: string,
+): { token: string; channel: string; publicKey: Uint8Array } | null {
   if (!uri.startsWith(`${SCHEME}?`)) return null;
   const params = new URLSearchParams(uri.slice(SCHEME.length + 1));
-  const channel = params.get('c');
+  const token = params.get('t');
   const key = params.get('k');
-  if (!channel || !/^[A-Za-z0-9_-]{16,64}$/.test(channel) || !key) return null;
+  if (!token || !/^[0-9a-f]{32}$/.test(token) || !key) return null;
   try {
     const publicKey = b64.decode(key);
-    return publicKey.length === 32 ? { channel, publicKey } : null;
+    return publicKey.length === 32 ? { token, channel: channelFor(token), publicKey } : null;
   } catch {
     return null;
   }
 }
 
-/** The phone's side: its one-time key, to send as `hello`. */
-export function createPairAnswer(random: (bytes: number) => Uint8Array) {
+const commitTo = (publicKey: Uint8Array, nonce: Uint8Array) =>
+  sha256(concat(utf8ToBytes('honey-pair-v2 commit'), publicKey, nonce));
+
+/** The phone's one-time key and nonce, and its commitment to them. */
+export function createPairAnswer(random: (bytes: number) => Uint8Array): PairAnswer {
   const secretKey = random(32);
-  return { secretKey, publicKey: x25519.getPublicKey(secretKey) };
+  const publicKey = x25519.getPublicKey(secretKey);
+  const nonce = random(NONCE_BYTES);
+  return { secretKey, publicKey, nonce, commitment: b64.encode(commitTo(publicKey, nonce)) };
+}
+
+export const encodeNonce = (nonce: Uint8Array) => b64.encode(nonce);
+
+export function decodeNonce(data: string): Uint8Array {
+  const nonce = b64.decode(data);
+  if (nonce.length !== NONCE_BYTES) throw new Error('Bad pairing nonce');
+  return nonce;
+}
+
+/** The phone's `reveal` message: its public key and nonce. */
+export const encodeReveal = (answer: PairAnswer) =>
+  b64.encode(concat(answer.publicKey, answer.nonce));
+
+/** Opens the phone's `reveal`; throws unless it matches what the phone committed to. */
+export function openReveal(
+  data: string,
+  commitment: string,
+): { publicKey: Uint8Array; nonce: Uint8Array } {
+  const bytes = b64.decode(data);
+  if (bytes.length !== 32 + NONCE_BYTES) throw new Error('Bad pairing reveal');
+  const publicKey = bytes.slice(0, 32);
+  const nonce = bytes.slice(32);
+  const expected = b64.decode(commitment);
+  const actual = commitTo(publicKey, nonce);
+  let diff = expected.length ^ actual.length;
+  for (let i = 0; i < actual.length; i++) diff |= (expected[i] ?? 0) ^ (actual[i] as number);
+  if (diff !== 0) throw new Error('The phone’s key doesn’t match what it committed to');
+  return { publicKey, nonce };
 }
 
 /**
- * The shared key and code. Both sides pass the same channel and the two public keys
- * in the same order (the extension's first), so they get the same result.
+ * The shared key and code. Each side passes its own secret key and the other's public
+ * key; the transcript is the same on both, so they get the same result.
  */
 export function pairSession(
   mySecretKey: Uint8Array,
   theirPublicKey: Uint8Array,
-  channel: string,
-  extensionPublicKey: Uint8Array,
-  phonePublicKey: Uint8Array,
+  transcript: {
+    channel: string;
+    extensionKey: Uint8Array;
+    phoneKey: Uint8Array;
+    extensionNonce: Uint8Array;
+    phoneNonce: Uint8Array;
+  },
 ): PairSession {
   // Throws on low-order keys (an all-zero shared secret).
   const shared = x25519.getSharedSecret(mySecretKey, theirPublicKey);
-  const salt = b64.decode(channel);
-  const transcript = new Uint8Array([...extensionPublicKey, ...phonePublicKey]);
+  const bound = concat(
+    transcript.extensionKey,
+    transcript.phoneKey,
+    transcript.extensionNonce,
+    transcript.phoneNonce,
+  );
   const derive = (label: string, length: number) =>
-    hkdf(sha256, shared, salt, new Uint8Array([...utf8ToBytes(label), ...transcript]), length);
-  const n = new DataView(derive('honey-pair-v1 code', 4).buffer).getUint32(0);
+    hkdf(sha256, shared, hexToBytes(transcript.channel), concat(utf8ToBytes(label), bound), length);
+  const n = new DataView(derive('honey-pair-v2 code', 4).buffer).getUint32(0);
   return {
-    key: derive('honey-pair-v1 key', 32),
+    key: derive('honey-pair-v2 key', 32),
     code: String(n % 1_000_000).padStart(6, '0'),
   };
 }
 
-export const encodeKey = (key: Uint8Array) => b64.encode(key);
-export const decodeKey = (data: string) => b64.decode(data);
-
-const AAD = utf8ToBytes('honey-pair-v1 payload');
+const AAD = utf8ToBytes('honey-pair-v2 payload');
 
 export function sealPayload(
   key: Uint8Array,
@@ -118,7 +193,7 @@ export function sealPayload(
 ): string {
   const nonce = random(24);
   const sealed = xchacha20poly1305(key, nonce, AAD).encrypt(utf8ToBytes(JSON.stringify(payload)));
-  return b64.encode(new Uint8Array([...nonce, ...sealed]));
+  return b64.encode(concat(nonce, sealed));
 }
 
 /** Throws if the data was made with another key or changed on the way. */

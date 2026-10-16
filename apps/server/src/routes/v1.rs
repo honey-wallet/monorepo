@@ -8,7 +8,7 @@ pub struct VersionInfo {
     version: &'static str,
 }
 
-pub fn router() -> Router {
+pub fn router(config: &crate::Config) -> Router {
     Router::new()
         .route("/version", get(version))
         .merge(super::chains::router())
@@ -16,7 +16,7 @@ pub fn router() -> Router {
         .merge(super::session_signatures::router())
         .merge(super::relay::router())
         .merge(super::monitoring::router())
-        .merge(super::pairing::router())
+        .merge(super::pairing::router(config.trust_proxy_headers))
 }
 
 async fn version() -> Json<VersionInfo> {

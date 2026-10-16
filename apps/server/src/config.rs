@@ -14,6 +14,8 @@ pub struct Config {
     pub port: u16,
     pub cors_allowed_origins: Vec<HeaderValue>,
     pub request_timeout_secs: u64,
+    /// Trust `X-Forwarded-For` for the client IP (only behind a proxy that sets it).
+    pub trust_proxy_headers: bool,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -32,6 +34,7 @@ impl Default for Config {
                 .map(|o| HeaderValue::from_static(o))
                 .collect(),
             request_timeout_secs: 30,
+            trust_proxy_headers: false,
         }
     }
 }
@@ -51,6 +54,8 @@ impl Config {
             },
             request_timeout_secs: parse_var("REQUEST_TIMEOUT_SECS")?
                 .unwrap_or(defaults.request_timeout_secs),
+            trust_proxy_headers: parse_var("TRUST_PROXY_HEADERS")?
+                .unwrap_or(defaults.trust_proxy_headers),
         })
     }
 
