@@ -260,4 +260,38 @@ mod pairing {
             );
         }
     }
+
+    #[tokio::test]
+    async fn reads_the_last_forwarded_header_line_and_rejects_missing_ones() {
+        let config = Config {
+            trust_proxy_headers: true,
+            ..Config::default()
+        };
+        let app = build_router(&config);
+        let mut statuses = Vec::new();
+        for i in 0..30 {
+            let token = format!("lines-token-{i:04}-xxxxxxxxxx");
+            let uri = format!("/api/v1/pairing/{}/commit", channel_for(&token));
+            let mut request = put_json(&uri, Some(&token), r#"{"data":"eA"}"#);
+            // The client's own header line comes first; the proxy appends another.
+            let headers = request.headers_mut();
+            headers.append("x-forwarded-for", format!("192.0.2.{i}").parse().unwrap());
+            headers.append("x-forwarded-for", "203.0.113.9".parse().unwrap());
+            statuses.push(app.clone().oneshot(request).await.unwrap().status());
+        }
+        assert!(statuses[..24].iter().all(|s| *s == StatusCode::NO_CONTENT));
+        assert!(
+            statuses[24..]
+                .iter()
+                .all(|s| *s == StatusCode::TOO_MANY_REQUESTS)
+        );
+
+        let token = "no-header-token-xxxxxxxxxx";
+        let uri = format!("/api/v1/pairing/{}/commit", channel_for(token));
+        let response = app
+            .oneshot(put_json(&uri, Some(token), r#"{"data":"eA"}"#))
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    }
 }

@@ -88,35 +88,39 @@ impl Mailbox {
     }
 
     /// Who to count a message against: the socket's IP, or behind a trusted proxy
-    /// (`TRUST_PROXY_HEADERS=true`) the right-most `X-Forwarded-For` entry, the one our
-    /// proxy appended. Entries to its left come from the client and can be forged.
-    fn client(&self, headers: &HeaderMap, extensions: &Extensions) -> IpAddr {
-        let forwarded = self
-            .trust_proxy_headers
-            .then(|| headers.get("x-forwarded-for")?.to_str().ok())
-            .flatten()
-            .and_then(|value| value.rsplit(',').next()?.trim().parse().ok());
-        let ip = forwarded
-            .or_else(|| {
-                extensions
-                    .get::<ConnectInfo<SocketAddr>>()
-                    .map(|info| info.0.ip())
-            })
-            .unwrap_or(IpAddr::from([0, 0, 0, 0]));
-        client_bucket(ip)
+    /// (`TRUST_PROXY_HEADERS=true`) the last `X-Forwarded-For` entry across every such
+    /// header line, the one our proxy appended. Anything before it came from the client
+    /// and can be forged, so a missing or unreadable last entry is rejected rather than
+    /// falling back to the proxy's own address (which every client would share).
+    fn client(&self, headers: &HeaderMap, extensions: &Extensions) -> Result<IpAddr, AppError> {
+        let ip = if self.trust_proxy_headers {
+            headers
+                .get_all("x-forwarded-for")
+                .iter()
+                .next_back()
+                .and_then(|value| value.to_str().ok())
+                .and_then(|value| value.rsplit(',').next()?.trim().parse().ok())
+                .ok_or_else(|| AppError::BadRequest("missing client address".into()))?
+        } else {
+            extensions
+                .get::<ConnectInfo<SocketAddr>>()
+                .map_or(IpAddr::from([0, 0, 0, 0]), |info| info.0.ip())
+        };
+        Ok(client_bucket(ip))
     }
 }
 
 /// IPv6 clients get a whole /64 (one subscriber's usual allocation), so rotating
-/// addresses inside it doesn't buy more room. IPv4 addresses count individually.
+/// addresses inside it doesn't buy more room. IPv4 addresses, including IPv4 clients
+/// that a dual-stack socket reports as `::ffff:a.b.c.d`, count individually.
 fn client_bucket(ip: IpAddr) -> IpAddr {
-    match ip {
-        IpAddr::V4(_) => ip,
+    match ip.to_canonical() {
         IpAddr::V6(v6) => {
             let mut segments = v6.segments();
             segments[4..].fill(0);
             IpAddr::from(segments)
         }
+        v4 => v4,
     }
 }
 
@@ -159,7 +163,7 @@ async fn send(
     if message.data.is_empty() || message.data.len() > MAX_DATA_LEN {
         return Err(AppError::BadRequest("message too large".into()));
     }
-    let client = mailbox.client(&headers, &extensions);
+    let client = mailbox.client(&headers, &extensions)?;
     mailbox.with(|map| {
         let key = (channel.to_ascii_lowercase(), slot);
         // Write-once, even after it's been read.
@@ -198,4 +202,28 @@ async fn receive(
         })
         .map(|data| Json(PairMessage { data }))
         .ok_or(AppError::NotFound)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::net::IpAddr;
+
+    use super::client_bucket;
+
+    #[test]
+    fn keeps_ipv4_clients_apart_even_when_mapped_to_ipv6() {
+        let a: IpAddr = "::ffff:198.51.100.1".parse().unwrap();
+        let b: IpAddr = "::ffff:198.51.100.2".parse().unwrap();
+        assert_ne!(client_bucket(a), client_bucket(b));
+        assert_eq!(client_bucket(a), "198.51.100.1".parse::<IpAddr>().unwrap());
+    }
+
+    #[test]
+    fn groups_ipv6_clients_by_64() {
+        let a: IpAddr = "2001:db8:1:2::1".parse().unwrap();
+        let b: IpAddr = "2001:db8:1:2:ffff::9".parse().unwrap();
+        let c: IpAddr = "2001:db8:1:3::1".parse().unwrap();
+        assert_eq!(client_bucket(a), client_bucket(b));
+        assert_ne!(client_bucket(a), client_bucket(c));
+    }
 }
