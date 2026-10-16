@@ -196,6 +196,13 @@ export function candles(market: PerpMarket, range: Range, count = 36): Candle[] 
 }
 
 /** Perps intro banner state; resets when the app restarts. */
+/** Hearted perps markets, shown as a Saved filter; in memory, so it resets on restart. */
+const savedPerps = createStore<string[]>([]);
+export const useSavedPerps = savedPerps.use;
+export function toggleSavedPerp(symbol: string) {
+  savedPerps.set((s) => (s.includes(symbol) ? s.filter((x) => x !== symbol) : [...s, symbol]));
+}
+
 const perpsUi = createStore({ introDismissed: false });
 export const usePerpsUi = perpsUi.use;
 export function dismissPerpsIntro() {
@@ -242,3 +249,61 @@ export const PERP_SORTS: {
     compare: (a, b) => b.maxLeverage - a.maxLeverage,
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Positions
+
+export type PerpSide = 'Long' | 'Short';
+
+export type PerpPosition = {
+  id: string;
+  symbol: string;
+  side: PerpSide;
+  leverage: number;
+  /** Margin put up, in USD. */
+  margin: number;
+  /** Price when it was opened. */
+  entry: number;
+};
+
+/**
+ * Open positions; in memory, so they reset when the app restarts. Starts with one
+ * demo position so the position card has something to show.
+ */
+const positions = createStore<PerpPosition[]>([
+  {
+    id: 'demo-eth',
+    symbol: 'ETH',
+    side: 'Long',
+    leverage: 5,
+    margin: 100,
+    entry: (perpMarket('ETH')?.price ?? 2400) * 0.972,
+  },
+]);
+export const usePerpPositions = positions.use;
+
+export function openPosition(position: Omit<PerpPosition, 'id'>) {
+  const id = `${position.symbol}-${Date.now()}`;
+  positions.set((list) => [{ ...position, id }, ...list]);
+  return id;
+}
+
+export function closePosition(id: string) {
+  positions.set((list) => list.filter((p) => p.id !== id));
+}
+
+/** A position's size, profit or loss, and liquidation price at the market's price now. */
+export function positionStats(position: PerpPosition) {
+  const price = perpMarket(position.symbol)?.price ?? position.entry;
+  const size = position.margin * position.leverage;
+  const move = ((price - position.entry) / position.entry) * (position.side === 'Long' ? 1 : -1);
+  const pnl = size * move;
+  return {
+    price,
+    size,
+    pnl,
+    /** Return on margin, in percent. */
+    roe: (pnl / position.margin) * 100,
+    liquidation: liquidationPrice(position.entry, position.leverage, position.side),
+  };
+}

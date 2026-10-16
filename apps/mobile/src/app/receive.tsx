@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
@@ -9,13 +9,15 @@ import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
-import { LabeledRule } from '@/components/wallet/parts';
+import { LabeledRule, TokenIcon } from '@/components/wallet/parts';
 import { SheetScreen, SheetText } from '@/components/wallet/Sheet';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
+import { simulateDemoDeposit } from '@/lib/onboarding';
 import { useProfile } from '@/lib/profile';
+import { type ReceiveAddress, receiveAddresses } from '@/lib/receive';
 import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -27,53 +29,70 @@ export default function ReceiveSheet() {
   // The wallet in use: a shared wallet receives at its own address, on its own network.
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
+  // DEMO: an empty wallet "receives" its first deposit a few seconds after this opens.
+  useEffect(() => {
+    if (wallet.id === 'main') simulateDemoDeposit();
+  }, [wallet.id]);
   const isMain = wallet.id === 'main';
   const { copied, copy } = useCopy(wallet.address);
   const [showExchange, setShowExchange] = useState(false);
+  // Wallets with keys here have an address per chain; list them all, labelled.
+  const list = receiveAddresses(wallet);
+  const perChain = !multisig && list.length > 1;
 
   return (
     <SheetScreen title="Receive crypto">
       <SheetText>
         {multisig
           ? `Only send tokens on ${multisig.network.name} to this shared wallet. Tokens sent on another network can't be recovered.`
-          : 'Fund your wallet by transferring crypto from another wallet or account'}
+          : perChain
+            ? 'Each network has its own address. Use the one that matches the network you send on.'
+            : 'Fund your wallet by transferring crypto from another wallet or account'}
       </SheetText>
 
-      <View style={[styles.card, styles.firstCard]}>
-        {multisig ? (
-          <NetworkBadge network={multisig.network} size={44} />
-        ) : isMain ? (
-          <Avatar name={profile.name} size={44} uri={profile.photo} seed={profile.avatarSeed} />
-        ) : (
-          <Avatar name={wallet.label} size={44} seed={wallet.id} />
-        )}
-        <View style={styles.flex}>
-          <Text style={styles.name}>{wallet.label}</Text>
-          <Text style={styles.address}>
-            {multisig ? `${networkLabel(multisig)} · ` : ''}
-            {shortAddress(wallet.address, 6, 4)}
-          </Text>
+      {perChain ? (
+        <View style={[styles.list, styles.firstCard]}>
+          {list.map((entry) => (
+            <AddressRow key={entry.family} entry={entry} />
+          ))}
         </View>
-        <PressableScale
-          accessibilityLabel="Copy address"
-          scaleTo={0.97}
-          onPress={copy}
-          style={styles.round}
-        >
-          <IconSwap name={copied ? 'check' : 'copy'} size={15} color={c.text} />
-        </PressableScale>
-        <PressableScale
-          accessibilityLabel="Show QR code"
-          scaleTo={0.97}
-          onPress={() => {
-            tap();
-            router.push('/my-qr');
-          }}
-          style={styles.round}
-        >
-          <Icon name="qr" size={15} color={c.text} />
-        </PressableScale>
-      </View>
+      ) : (
+        <View style={[styles.card, styles.firstCard]}>
+          {multisig ? (
+            <NetworkBadge network={multisig.network} size={44} />
+          ) : isMain ? (
+            <Avatar name={profile.name} size={44} uri={profile.photo} seed={profile.avatarSeed} />
+          ) : (
+            <Avatar name={wallet.label} size={44} seed={wallet.id} />
+          )}
+          <View style={styles.flex}>
+            <Text style={styles.name}>{wallet.label}</Text>
+            <Text style={styles.address}>
+              {multisig ? `${networkLabel(multisig)} · ` : ''}
+              {shortAddress(wallet.address, 6, 4)}
+            </Text>
+          </View>
+          <PressableScale
+            accessibilityLabel="Copy address"
+            scaleTo={0.97}
+            onPress={copy}
+            style={styles.round}
+          >
+            <IconSwap name={copied ? 'check' : 'copy'} size={15} color={c.text} />
+          </PressableScale>
+          <PressableScale
+            accessibilityLabel="Show QR code"
+            scaleTo={0.97}
+            onPress={() => {
+              tap();
+              router.push('/my-qr');
+            }}
+            style={styles.round}
+          >
+            <Icon name="qr" size={15} color={c.text} />
+          </PressableScale>
+        </View>
+      )}
 
       <LabeledRule label="From an account" />
       <PressableRow
@@ -93,7 +112,9 @@ export default function ReceiveSheet() {
       <Accordion open={showExchange}>
         <View style={styles.steps}>
           {[
-            'Copy your Honey address.',
+            perChain
+              ? 'Copy the address above for the network you’ll withdraw on.'
+              : 'Copy your Honey address.',
             'In your exchange, choose Withdraw and paste it as the destination.',
             'Pick the matching network, then confirm. Funds usually arrive in minutes.',
           ].map((step, i) => (
@@ -102,18 +123,67 @@ export default function ReceiveSheet() {
               <Text style={[styles.stepText, styles.flex]}>{step}</Text>
             </View>
           ))}
-          <PillButton
-            label={copied ? 'Copied' : 'Copy address'}
-            variant="secondary"
-            onPress={copy}
-          />
+          {perChain ? null : (
+            <PillButton
+              label={copied ? 'Copied' : 'Copy address'}
+              variant="secondary"
+              onPress={copy}
+            />
+          )}
         </View>
       </Accordion>
     </SheetScreen>
   );
 }
 
+/** One chain's address: logo, name, short address, copy and QR. */
+function AddressRow({ entry }: { entry: ReceiveAddress }) {
+  const styles = useStyles();
+  const c = useTheme();
+  const { copied, copy } = useCopy(entry.address);
+  return (
+    <View style={styles.row}>
+      <TokenIcon symbol={entry.symbol} size={36} />
+      <View style={styles.flex}>
+        <Text style={styles.name}>{entry.title}</Text>
+        <Text style={styles.address}>{shortAddress(entry.address, 6, 4)}</Text>
+      </View>
+      <PressableScale
+        accessibilityLabel={`Copy ${entry.title} address`}
+        scaleTo={0.97}
+        onPress={copy}
+        style={styles.round}
+      >
+        <IconSwap name={copied ? 'check' : 'copy'} size={15} color={c.text} />
+      </PressableScale>
+      <PressableScale
+        accessibilityLabel={`Show ${entry.title} QR code`}
+        scaleTo={0.97}
+        onPress={() => {
+          tap();
+          router.push({ pathname: '/my-qr', params: { chain: entry.family } });
+        }}
+        style={styles.round}
+      >
+        <Icon name="qr" size={15} color={c.text} />
+      </PressableScale>
+    </View>
+  );
+}
+
 const useStyles = makeStyles((c) => ({
+  list: {
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: c.card,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+  },
   flex: {
     flex: 1,
   },
@@ -123,9 +193,8 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: c.divider,
+    borderRadius: 20,
+    backgroundColor: c.card,
   },
   firstCard: {
     marginTop: 8,
@@ -176,7 +245,7 @@ const useStyles = makeStyles((c) => ({
   exchange: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,

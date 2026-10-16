@@ -6,11 +6,18 @@ import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { fadeIn, fadeOut } from '@/components/motion/reducedFade';
+import {
+  SkeletonBar,
+  SkeletonList,
+  SkeletonReveal,
+  useFirstLoad,
+} from '@/components/motion/Skeleton';
 import { Sticky } from '@/components/motion/Sticky';
 import { useHasMounted } from '@/components/motion/useHasMounted';
 import { MemberAvatar, NetworkBadge } from '@/components/wallet/MultisigParts';
 import { EmptyState, PushedScreen, TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import {
   describe,
   type Multisig,
@@ -53,6 +60,7 @@ export default function NotificationsScreen() {
   const waiting = useNeedsMyApproval();
   const events = useMultisigEvents();
   const { multisigs, proposals } = useMultisigState();
+  const loading = useFirstLoad(LOADS.notifications);
 
   const today = events.filter((e) => Date.now() - e.at < DAY);
   const earlier = events.filter((e) => Date.now() - e.at >= DAY);
@@ -75,44 +83,60 @@ export default function NotificationsScreen() {
 
   return (
     <PushedScreen title="Notifications" contentStyle={styles.content}>
-      {waiting.length > 0 && (
-        <Animated.View layout={LAYOUT_MOVE} exiting={fadeOut()} style={styles.group}>
-          <Sticky id="waiting">
-            <Text style={styles.section}>Needs your approval</Text>
-          </Sticky>
-          {waiting.map((p) => {
-            const m = multisigs[p.walletId];
-            return m ? (
-              <Animated.View key={p.id} {...motion}>
-                <RequestRow proposal={p} multisig={m} />
-              </Animated.View>
-            ) : null;
-          })}
-        </Animated.View>
-      )}
-      {today.length > 0 && (
-        <Animated.View layout={LAYOUT_MOVE} style={styles.group}>
-          <Sticky id="today">
-            <Text style={styles.section}>Today</Text>
-          </Sticky>
-          {feed(today)}
-        </Animated.View>
-      )}
-      {earlier.length > 0 && (
-        <Animated.View layout={LAYOUT_MOVE} style={styles.group}>
-          <Sticky id="earlier">
-            <Text style={styles.section}>Earlier</Text>
-          </Sticky>
-          {feed(earlier)}
-        </Animated.View>
-      )}
-      {waiting.length === 0 && events.length === 0 && (
-        <EmptyState
-          icon="bell"
-          title="You're all caught up"
-          hint="Approvals for shared wallets, incoming payments and security alerts show up here."
-        />
-      )}
+      <SkeletonReveal
+        loading={loading}
+        skeleton={
+          <View style={styles.group}>
+            <View style={styles.sectionSkeleton}>
+              <SkeletonBar width={90} height={12} />
+            </View>
+            <SkeletonList count={5} icon={42} trailing={false} style={styles.rowSkeleton} />
+          </View>
+        }
+      >
+        {waiting.length > 0 && (
+          <Animated.View layout={LAYOUT_MOVE} exiting={fadeOut()} style={styles.group}>
+            <Sticky id="waiting">
+              <Text style={styles.section}>Needs your approval</Text>
+            </Sticky>
+            {waiting.map((p) => {
+              const m = multisigs[p.walletId];
+              return m ? (
+                <Animated.View key={p.id} {...motion}>
+                  <RequestRow proposal={p} multisig={m} />
+                </Animated.View>
+              ) : null;
+            })}
+          </Animated.View>
+        )}
+        {today.length > 0 && (
+          <Animated.View layout={LAYOUT_MOVE} style={styles.group}>
+            <Sticky id="today">
+              <Text style={styles.section}>Today</Text>
+            </Sticky>
+            {feed(today)}
+          </Animated.View>
+        )}
+        {earlier.length > 0 && (
+          <Animated.View layout={LAYOUT_MOVE} style={styles.group}>
+            <Sticky id="earlier">
+              <Text style={styles.section}>Earlier</Text>
+            </Sticky>
+            {feed(earlier)}
+          </Animated.View>
+        )}
+        {waiting.length === 0 && events.length === 0 && (
+          <EmptyState
+            icon="bell"
+            title="You're all caught up"
+            hint="Approvals for shared wallets, incoming payments and security alerts show up here."
+            action={{
+              label: 'Notification settings',
+              onPress: () => router.push('/settings-notifications'),
+            }}
+          />
+        )}
+      </SkeletonReveal>
     </PushedScreen>
   );
 }
@@ -250,7 +274,15 @@ const useStyles = makeStyles((c) => ({
   section: {
     paddingVertical: 6,
     color: c.textSecondary,
-    fontSize: 16,
+    fontSize: 15,
+  },
+  // The label's line box (15pt + padding), so rows don't shift when it arrives.
+  sectionSkeleton: {
+    height: 30,
+    justifyContent: 'center',
+  },
+  rowSkeleton: {
+    gap: 14,
   },
   row: {
     flexDirection: 'row',

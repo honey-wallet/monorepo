@@ -1,8 +1,9 @@
+import { parsePairUri } from '@honey-wallet/keyring';
 import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useRef } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
@@ -25,11 +26,18 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const handled = useRef(false);
 
-  /** A code from the camera or a photo: go straight to sending to that address. */
+  /**
+   * A code from the camera or a photo: a browser's pairing code opens pairing;
+   * anything else is an address, so go straight to sending to it.
+   */
   const onCode = (data: string) => {
     if (handled.current) return;
     handled.current = true;
     tap();
+    if (parsePairUri(data)) {
+      router.replace({ pathname: '/pair-extension', params: { uri: data } });
+      return;
+    }
     showToast('Address scanned');
     // Payment links look like "ethereum:0xabc…@1?value=…"; keep just the address.
     const to = data.replace(/^[a-z]+:/i, '').split(/[?@]/)[0] || data;
@@ -80,12 +88,18 @@ export default function ScanScreen() {
           {(['tl', 'tr', 'bl', 'br'] as const).map((corner) => (
             <View key={corner} style={[styles.corner, styles[corner]]} />
           ))}
-          {!permission?.granted && (
+          {/* Nothing until the permission is known, so "Allow camera" doesn't flash up
+              for someone who already allowed it. Once iOS stops asking, only Settings can. */}
+          {permission && !permission.granted && (
             <View style={styles.permission}>
-              <Text style={styles.permissionText}>Honey needs your camera to scan codes.</Text>
+              <Text style={styles.permissionText}>
+                {permission.canAskAgain
+                  ? 'Honey needs your camera to scan codes.'
+                  : 'Camera access is off. Turn it on in Settings to scan codes.'}
+              </Text>
               <PillButton
-                label="Allow camera"
-                onPress={requestPermission}
+                label={permission.canAskAgain ? 'Allow camera' : 'Open Settings'}
+                onPress={permission.canAskAgain ? requestPermission : () => Linking.openSettings()}
                 style={styles.permissionButton}
               />
             </View>

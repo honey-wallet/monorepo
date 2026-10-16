@@ -1,5 +1,5 @@
 import { useActiveMultisig } from '@/lib/multisig';
-import { type TradeMode, useSettings } from '@/lib/settings';
+import { AVAILABLE_TRADE_MODES, type TradeMode, useSettings } from '@/lib/settings';
 
 /**
  * What a shared wallet can trade: just Swap. Perps, Predict, Futures and Options
@@ -12,11 +12,15 @@ export const SHARED_WALLET_MODES: readonly TradeMode[] = ['Swap'];
 export function useTradeModes(): TradeMode[] {
   const multisig = useActiveMultisig();
   const { tradeTabs } = useSettings();
-  return multisig ? [...SHARED_WALLET_MODES] : tradeTabs;
+  if (multisig) return [...SHARED_WALLET_MODES];
+  // Products switched off for now never show, even if chosen before.
+  const shown = tradeTabs.filter((m) => AVAILABLE_TRADE_MODES.includes(m));
+  return shown.length ? shown : ['Swap'];
 }
 
 /** Whether the wallet in use can open a product (shared wallets can only swap). */
 export function useTradeModeAllowed(mode: TradeMode) {
   const multisig = useActiveMultisig();
+  if (!AVAILABLE_TRADE_MODES.includes(mode)) return false;
   return !multisig || SHARED_WALLET_MODES.includes(mode);
 }

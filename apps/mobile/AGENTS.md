@@ -38,3 +38,16 @@ Docs: https://docs.expo.dev/eas/index.md
 - If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
 - Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
 - Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+
+## Design language (keep every screen on it)
+
+- **Surfaces:** the page is `c.canvas`; containers are filled `c.card` with `borderRadius: 20` and no border. Borders are only for unselected choice chips.
+- **Section labels:** 15pt, regular, `c.textSecondary`, above the block they name. No bold black section headings (the token Description title is the one deliberate exception).
+- **Buttons:** primary is honey (`c.primary`); secondary is grey (`c.raised` with `c.text`). Honey tint (`c.primaryTint`/`c.accentSurface`) means a disabled primary, so never use it for a secondary button.
+- **Icon wells:** round (`borderRadius` = half the size) on `c.accentSurface` with an `c.accentText` icon.
+- **Header icons:** bare grey icons (`HeaderShortcut`), no circles; sheets never get a close-only back chevron (swipe down closes).
+- **Money flows** end on `SuccessPage` (`compact` inside pop-ups); detail sheets use the `Details` pieces.
+- **Two cards at most:** between Home's actions and its tabs, show only the two highest-priority cards (approvals → add money / finish setup → Earn promo); the rest wait their turn. Never a black CTA: the main action is always honey.
+- **Selected chips:** an outline on the page colour, never a honey tint (that reads as disabled).
+- **Loading:** `useFirstLoad(LOADS.x)` (keys in `src/lib/loads.ts`; same data = same key) with `SkeletonReveal` and the `Skeleton*` pieces. Skeleton only what's genuinely fetched; anything already in memory (a proposal opened from a list, labels, our own copy) renders straight away. Bars use `c.skeleton` (never `c.raised`, which vanishes on cards), are pills by default, and match the real layout so nothing jumps.
+- **Empty:** every list gets an `EmptyState` (`compact` inside cards) with an `action` when there's a next step; an unfunded wallet (`useWalletView().empty`) never shows demo money.

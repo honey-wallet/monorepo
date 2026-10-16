@@ -7,6 +7,9 @@ const light = {
   canvas: '#FFFFFF', // Milk
   card: '#F5F5F5', // Cloud
   raised: '#EBEBEB', // Inset / hover
+  // Loading placeholders: translucent ink, so a bar reads the same on the page, a card
+  // or a sheet (a solid grey vanishes on the grey cards).
+  skeleton: 'rgba(36, 35, 41, 0.09)',
   // Sheets are white like the page; cards inside them are grey.
   sheet: '#FFFFFF',
   divider: '#E6E6E6',
@@ -51,6 +54,7 @@ const dark: Palette = {
   canvas: '#131313', // Ink
   card: '#1B1B1B', // Charcoal
   raised: '#262626', // Raised / hover
+  skeleton: 'rgba(246, 243, 235, 0.09)',
   sheet: '#1B1B1B',
   divider: '#2C2C2C',
   primary: '#F3C969', // Honey

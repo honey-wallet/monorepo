@@ -97,6 +97,7 @@ const ICONS = {
   predict: { ios: 'chart.bar.xaxis', android: 'insights', web: 'insights' },
   layers: { ios: 'square.stack.3d.up.fill', android: 'layers', web: 'layers' },
   text: { ios: 'text.alignleft', android: 'notes', web: 'notes' },
+  share: { ios: 'square.and.arrow.up', android: 'share', web: 'share' },
   verified: { ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' },
 } satisfies Record<string, SymbolViewProps['name']>;
 

@@ -60,7 +60,12 @@ export default function NetworkPickerSheet() {
       {others.length > 0 && <SheetSection title="Other networks" />}
       {others.map(row)}
       {shown.length === 0 && (
-        <EmptyState icon="search" title="No networks found" hint="Try another name." />
+        <EmptyState
+          icon="search"
+          title="No networks found"
+          hint="Try another name."
+          action={{ label: 'Clear search', onPress: () => setQuery('') }}
+        />
       )}
     </SheetScreen>
   );

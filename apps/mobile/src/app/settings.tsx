@@ -6,6 +6,7 @@ import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { Accordion } from '@/components/motion/Accordion';
 import { PressableRow } from '@/components/motion/PressableRow';
+import { SkeletonBar } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { Toggle } from '@/components/motion/Toggle';
 import { LabeledDivider, PushedScreen } from '@/components/wallet/parts';
@@ -30,7 +31,8 @@ export default function SettingsScreen() {
   const profile = useProfile();
   const settings = useSettings();
   const [showWallets, setShowWallets] = useState(false);
-  const [server, setServer] = useState('Checking…');
+  // Null while the server is being checked; a bar stands in for the status.
+  const [server, setServer] = useState<string | null>(null);
   const wallets = otherWallets(profile.name);
 
   useEffect(() => {
@@ -62,14 +64,17 @@ export default function SettingsScreen() {
         <Icon name="chevronRight" size={15} color={c.textSecondary} />
       </PressableRow>
 
-      <View style={styles.gutter}>
-        <LabeledDivider
-          label={`${wallets.length} other wallets`}
-          open={showWallets}
-          onPress={() => setShowWallets((v) => !v)}
-        />
-      </View>
-      <Accordion open={showWallets}>
+      {/* With only the one wallet there's nothing to switch to, so no divider. */}
+      {wallets.length > 0 && (
+        <View style={styles.gutter}>
+          <LabeledDivider
+            label={wallets.length === 1 ? '1 other wallet' : `${wallets.length} other wallets`}
+            open={showWallets}
+            onPress={() => setShowWallets((v) => !v)}
+          />
+        </View>
+      )}
+      <Accordion open={showWallets && wallets.length > 0}>
         {wallets.map((w) => (
           <PressableRow
             key={w.id}
@@ -181,7 +186,13 @@ export default function SettingsScreen() {
         <SheetRow
           icon="server"
           title="Server"
-          accessory={<TextSwap text={server} style={styles.value} />}
+          accessory={
+            server === null ? (
+              <SkeletonBar width={120} height={14} />
+            ) : (
+              <TextSwap text={server} style={styles.value} />
+            )
+          }
         />
         <Text style={styles.credit} onPress={() => Linking.openURL(AVATAR_CREDIT_URL)}>
           Avatars: “Dylan” by Natalia Spivak, CC BY 4.0, generated with DiceBear.

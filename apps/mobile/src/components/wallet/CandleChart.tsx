@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, G, Line, Pattern, Rect } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
+import { ChartEmpty } from '@/components/wallet/PriceChart';
 import { tap } from '@/lib/haptics';
 import type { Candle } from '@/lib/perps';
 import { useTheme } from '@/theme';
@@ -31,7 +32,12 @@ type Props = {
   onScrub?: (index: number | null) => void;
 };
 
-export function CandleChart({ data, width, height, onScrub }: Props) {
+export function CandleChart(props: Props) {
+  if (props.data.length === 0) return <ChartEmpty height={props.height} />;
+  return <Candles {...props} />;
+}
+
+function Candles({ data, width, height, onScrub }: Props) {
   const c = useTheme();
   const reduceMotion = useReducedMotion();
   const slot = width / data.length;

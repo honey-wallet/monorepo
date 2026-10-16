@@ -13,8 +13,8 @@ import {
 } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
 import {
+  AVAILABLE_TRADE_MODES,
   TRADE_MODE_INFO,
-  TRADE_MODES,
   type TradeMode,
   updateSettings,
   useSettings,
@@ -27,8 +27,9 @@ const ROW_HEIGHT = 64;
 /** Choose which products show on the Trade tab, and in what order. Changes apply live. */
 export default function TradeTabsSheet() {
   const styles = useStyles();
-  const { tradeTabs } = useSettings();
-  const hidden = TRADE_MODES.filter((m) => !tradeTabs.includes(m));
+  // Products switched off for now (Futures, Options) aren't offered here.
+  const tradeTabs = useSettings().tradeTabs.filter((m) => AVAILABLE_TRADE_MODES.includes(m));
+  const hidden = AVAILABLE_TRADE_MODES.filter((m) => !tradeTabs.includes(m));
 
   const set = (next: TradeMode[]) => {
     tap();

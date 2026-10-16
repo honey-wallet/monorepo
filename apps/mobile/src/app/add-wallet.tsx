@@ -4,11 +4,13 @@ import { View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { closeSheet, SheetHeader, SheetRow, SheetScreen } from '@/components/wallet/Sheet';
+import { CLOUD } from '@/lib/cloud-backup';
 import { tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 import { getProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
-import { addWallet, demoAddress, nextWalletLabel } from '@/lib/wallets';
+import { createAccount } from '@/lib/vault';
+import { addVaultWallet, nextWalletLabel } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 type Page = 'main' | 'import' | 'hardware';
@@ -26,15 +28,16 @@ export default function AddWalletSheet() {
   const go = (next: Page) => () => setPage(next);
   const open = (href: Href) => () => router.push(href);
 
-  const create = () => {
-    addWallet({
-      kind: 'wallet',
-      label: nextWalletLabel(getProfile().name),
-      address: demoAddress(),
-      usd: 0,
-    });
-    showToast('New wallet created');
-    closeSheet();
+  // The next account under the device's recovery phrase, so one backup covers it.
+  const create = async () => {
+    try {
+      addVaultWallet(await createAccount(nextWalletLabel(getProfile().name)));
+      showToast('New wallet created');
+      closeSheet();
+    } catch (error) {
+      console.warn('Couldn’t create wallet', error);
+      showToast('Couldn’t create a wallet. Try again');
+    }
   };
 
   const pages: Record<Page, { title: string; options: Option[] }> = {
@@ -93,6 +96,12 @@ export default function AddWalletSheet() {
           title: 'Private key',
           hint: 'A single wallet',
           onPress: open({ pathname: '/import-wallet', params: { kind: 'key' } }),
+        },
+        {
+          icon: 'cloud',
+          title: 'Backup file',
+          hint: `A Honey backup saved to ${CLOUD}`,
+          onPress: open('/restore-backup'),
         },
       ],
     },

@@ -2,10 +2,18 @@ import { priceOf } from '@/lib/mock-wallet';
 import { createStore } from '@/lib/store';
 
 /** A Honey Jar: crypto set aside for a goal. In memory for now. */
-export type Jar = { id: string; name: string; symbol: string; goal: number; saved: number };
+export type Jar = {
+  id: string;
+  name: string;
+  symbol: string;
+  goal: number;
+  saved: number;
+  /** Part of the demo portfolio, so a brand-new wallet doesn't show it. */
+  demo?: boolean;
+};
 
 export const jars = createStore<Jar[]>([
-  { id: 'trip', name: 'Japan trip', symbol: 'USDC', goal: 1500, saved: 420 },
+  { id: 'trip', name: 'Japan trip', symbol: 'USDC', goal: 1500, saved: 420, demo: true },
 ]);
 
 export const useJars = jars.use;

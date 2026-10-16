@@ -1,20 +1,29 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  type SharedValue,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { Icon } from '@/components/Icon';
 import { Accordion } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
+import { Swap } from '@/components/motion/IconSwap';
 import { ModalDialog } from '@/components/motion/ModalDialog';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { ReasoningStream } from '@/components/motion/ReasoningStream';
 import { RESIZE } from '@/components/motion/resize';
-import { StreamingText } from '@/components/motion/StreamingText';
-import { SuccessBurst } from '@/components/motion/SuccessBurst';
-import { ThinkingStates } from '@/components/motion/ThinkingStates';
+import { LOAD_DELAY, SkeletonBar } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { LabeledDivider, TokenIcon } from '@/components/wallet/parts';
+import { SuccessPage } from '@/components/wallet/SuccessPage';
 import { success, tap } from '@/lib/haptics';
 import type { Chain } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
@@ -57,6 +66,8 @@ export function SwapReview({
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('review');
   const [more, setMore] = useState(false);
+  // The network cost is re-estimated each time the review opens.
+  const [estimating, setEstimating] = useState(true);
   // From a shared wallet the swap (and any token approval, batched in) is proposed.
   const signer = useSigner();
   const [proposalId, setProposalId] = useState<string | null>(null);
@@ -81,31 +92,20 @@ export function SwapReview({
 
   // Every opening starts from the review, details folded.
   useEffect(() => {
-    if (visible) {
-      setStep('review');
-      setMore(false);
-    }
+    if (!visible) return;
+    setStep('review');
+    setMore(false);
+    setEstimating(true);
+    const timer = setTimeout(() => setEstimating(false), LOAD_DELAY);
+    return () => clearTimeout(timer);
   }, [visible]);
 
   const states = [
-    'Preparing swap',
-    'Signing',
+    `Finding the best price via ${route}`,
+    'Signing with Face ID',
     ...(bridging ? [`Bridging to ${get.chain}`] : []),
     `Confirming on ${pay.chain}`,
   ];
-  const transcript = [
-    'Quoting 6 routes',
-    `Best price via ${route}`,
-    bridging ? 'Bridging with Across' : 'Single hop, no bridge needed',
-    'Simulating transaction',
-    'Checking token approvals',
-    'No issues found',
-    `Network cost ${networkCost}`,
-  ];
-  const summary = `Swapped ${pay.amount} ${pay.symbol} for ${get.amount} ${get.symbol}. ${
-    bridging ? 'It lands in about a minute.' : "It's in your wallet now."
-  }`;
-
   return (
     <ModalDialog
       visible={visible}
@@ -137,7 +137,7 @@ export function SwapReview({
                 <Row label="Price impact" value="<0.01%" />
               </Accordion>
               <Row label="Fee" value="Free" />
-              <Row label="Network cost" value={networkCost} />
+              <Row label="Network cost" value={networkCost} loading={estimating} />
               {signer.rule(action) ? (
                 <Row label="Shared wallet" value={signer.rule(action) ?? ''} />
               ) : null}
@@ -168,24 +168,15 @@ export function SwapReview({
           )}
 
           {step === 'pending' && (
-            <View style={styles.pending}>
-              <ThinkingStates
-                states={states}
-                style={styles.status}
-                onDone={() => {
-                  success();
-                  setStep('done');
-                }}
-              />
-              <View style={styles.transcript}>
-                <ReasoningStream
-                  lines={transcript}
-                  background={c.card}
-                  visibleLines={4}
-                  textStyle={styles.transcriptText}
-                />
-              </View>
-            </View>
+            <SwapProgress
+              pay={pay}
+              get={get}
+              steps={states}
+              onDone={() => {
+                success();
+                setStep('done');
+              }}
+            />
           )}
 
           {step === 'proposed' && proposalId && (
@@ -203,25 +194,169 @@ export function SwapReview({
           )}
 
           {step === 'done' && (
-            <View style={styles.done}>
-              <SuccessBurst size={64} />
-              <Text style={styles.doneTitle} accessibilityRole="header">
-                Swap complete
-              </Text>
-              <StreamingText text={summary} style={styles.summary} />
-              <PillButton
-                label="Done"
-                onPress={() => {
-                  tap();
-                  onDone();
-                }}
-                style={styles.cta}
-              />
-            </View>
+            <SuccessPage
+              compact
+              title="Swapped"
+              amount={{
+                symbol: get.symbol,
+                chain: get.chain,
+                text: `${get.amount} ${get.symbol}`,
+                usd: get.usd,
+              }}
+              detail={bridging ? `Lands on ${get.chain} in about a minute` : undefined}
+              rows={[
+                { label: 'Paid', value: `${pay.amount} ${pay.symbol}` },
+                { label: 'Route', value: route },
+                { label: 'Network cost', value: networkCost },
+              ]}
+              onDone={() => {
+                tap();
+                onDone();
+              }}
+            />
           )}
         </ContentSwap>
       </Animated.View>
     </ModalDialog>
+  );
+}
+
+/** How long each step shows before the next (scripted until swaps really execute). */
+const STEP_MS = 1300;
+
+/**
+ * The swap going through: the two tokens with honey dots flowing from one to the
+ * other, what's being swapped, then the steps as a checklist. The running step spins
+ * (constant motion, so linear), a finished one pops a green tick in its place, and
+ * ones still to come wait as grey rings. Under Reduce Motion the dots and the spinner
+ * hold still.
+ */
+function SwapProgress({
+  pay,
+  get,
+  steps,
+  onDone,
+}: {
+  pay: SwapLeg;
+  get: SwapLeg;
+  steps: string[];
+  onDone: () => void;
+}) {
+  const styles = useStyles();
+  const c = useTheme();
+  const [current, setCurrent] = useState(0);
+  const done = useRef(onDone);
+  done.current = onDone;
+  useEffect(() => {
+    if (current >= steps.length) {
+      done.current();
+      return;
+    }
+    const next = setTimeout(() => setCurrent((i) => i + 1), STEP_MS);
+    return () => clearTimeout(next);
+  }, [current, steps.length]);
+
+  return (
+    <View style={styles.progress}>
+      <View style={styles.pair}>
+        <TokenIcon symbol={pay.symbol} chain={pay.chain} size={44} ring={c.sheet} />
+        <FlowDots />
+        <TokenIcon symbol={get.symbol} chain={get.chain} size={44} ring={c.sheet} />
+      </View>
+      <Text style={styles.progressTitle} accessibilityRole="header">
+        Swapping
+      </Text>
+      <Text style={styles.progressDetail}>
+        {pay.amount} {pay.symbol} for {get.amount} {get.symbol}
+      </Text>
+      <View style={styles.steps}>
+        {steps.map((label, i) => {
+          const state = i < current ? 'done' : i === current ? 'active' : 'waiting';
+          return (
+            <View key={label} style={styles.stepRow}>
+              <Swap id={state} size={20}>
+                {state === 'done' ? (
+                  <View style={styles.stepDone}>
+                    <Icon name="check" size={11} color="#FFFFFF" />
+                  </View>
+                ) : state === 'active' ? (
+                  <Spinner />
+                ) : (
+                  <View style={styles.stepWaiting} />
+                )}
+              </Swap>
+              <Text
+                style={[
+                  styles.stepLabel,
+                  state === 'active' && styles.stepActive,
+                  state === 'waiting' && styles.stepLater,
+                ]}
+              >
+                {label}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+/** Three honey dots lighting up in turn, left to right: value moving across. */
+function FlowDots() {
+  const styles = useStyles();
+  const reduceMotion = useReducedMotion();
+  const t = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    t.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.linear }), -1);
+    return () => cancelAnimation(t);
+  }, [reduceMotion, t]);
+  return (
+    <View style={styles.dots}>
+      {[0, 1, 2].map((i) => (
+        <FlowDot key={i} index={i} t={t} still={reduceMotion} />
+      ))}
+    </View>
+  );
+}
+
+function FlowDot({ index, t, still }: { index: number; t: SharedValue<number>; still: boolean }) {
+  const styles = useStyles();
+  const style = useAnimatedStyle(() => {
+    if (still) return { opacity: 0.6 };
+    // Each dot peaks a third of the cycle after the one before it.
+    const phase = (t.value - index / 3 + 1) % 1;
+    const glow = Math.max(0, 1 - Math.abs(phase - 0.5) * 3);
+    return { opacity: 0.25 + 0.75 * glow, transform: [{ scale: 0.8 + 0.3 * glow }] };
+  });
+  return <Animated.View style={[styles.dot, style]} />;
+}
+
+/** A honey arc turning in a faint ring: the step that's running. */
+function Spinner() {
+  const c = useTheme();
+  const reduceMotion = useReducedMotion();
+  const turn = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    turn.value = withRepeat(withTiming(1, { duration: 800, easing: Easing.linear }), -1);
+    return () => cancelAnimation(turn);
+  }, [reduceMotion, turn]);
+  const style = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.value * 360}deg` }] }));
+  return (
+    <Animated.View style={style}>
+      <Svg width={20} height={20} viewBox="0 0 20 20">
+        <Circle cx={10} cy={10} r={8} stroke={c.divider} strokeWidth={2.2} fill="none" />
+        <Path
+          d="M10 2a8 8 0 0 1 8 8"
+          stroke={c.primary}
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          fill="none"
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 
@@ -242,17 +377,95 @@ function Leg({ leg }: { leg: SwapLeg }) {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, loading }: { label: string; value: string; loading?: boolean }) {
   const styles = useStyles();
   return (
     <View style={styles.row}>
       <Text style={styles.rowLabel}>{label}</Text>
-      <Text style={styles.rowValue}>{value}</Text>
+      {loading ? (
+        <View accessible accessibilityLabel="Estimating">
+          <SkeletonBar width={72} height={14} />
+        </View>
+      ) : (
+        <Text style={styles.rowValue}>{value}</Text>
+      )}
     </View>
   );
 }
 
 const useStyles = makeStyles((c) => ({
+  progress: {
+    paddingTop: 8,
+    alignItems: 'center',
+  },
+  pair: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: c.primary,
+  },
+  progressTitle: {
+    marginTop: 16,
+    color: c.text,
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  progressDetail: {
+    marginTop: 4,
+    color: c.textSecondary,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+  },
+  steps: {
+    alignSelf: 'stretch',
+    marginTop: 22,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: c.card,
+  },
+  stepRow: {
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  stepDone: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.success,
+  },
+  stepWaiting: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: c.divider,
+  },
+  stepLabel: {
+    flex: 1,
+    color: c.textSecondary,
+    fontSize: 15,
+  },
+  stepActive: {
+    color: c.text,
+    fontWeight: '500',
+  },
+  stepLater: {
+    color: c.placeholder,
+  },
   flex: {
     flex: 1,
   },
@@ -344,41 +557,5 @@ const useStyles = makeStyles((c) => ({
   },
   cta: {
     marginTop: 20,
-  },
-  pending: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  status: {
-    color: c.text,
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  transcript: {
-    marginTop: 16,
-    alignSelf: 'stretch',
-    paddingHorizontal: 14,
-    paddingVertical: 4,
-    borderRadius: 16,
-    backgroundColor: c.card,
-  },
-  transcriptText: {
-    color: c.textSecondary,
-    fontSize: 13,
-  },
-  done: {
-    paddingTop: 8,
-    alignItems: 'center',
-  },
-  doneTitle: {
-    marginTop: 16,
-    color: c.text,
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  summary: {
-    color: c.textSecondary,
-    fontSize: 15,
-    lineHeight: 21,
   },
 }));

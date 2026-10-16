@@ -6,12 +6,16 @@ import Svg, { Path } from 'react-native-svg';
 import type { IconName } from '@/components/Icon';
 import { MenuDropdown } from '@/components/motion/MenuDropdown';
 import { PressableRow } from '@/components/motion/PressableRow';
+import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { Chip } from '@/components/wallet/Chip';
 import { IntroBanner } from '@/components/wallet/IntroBanner';
 import { MarketIcon } from '@/components/wallet/MarketIcon';
-import { Change, Sparkline } from '@/components/wallet/parts';
+import { PerpPositionCard } from '@/components/wallet/PerpPositionCard';
+import { Change, EmptyState, Sparkline } from '@/components/wallet/parts';
 import { openGuide, useGuideOnFirstVisit } from '@/lib/guides';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { formatCompactUsd, formatPrice, series } from '@/lib/mock-wallet';
 import {
   dismissPerpsIntro,
@@ -20,12 +24,14 @@ import {
   PERP_SORTS,
   type PerpMarket,
   type PerpSort,
+  usePerpPositions,
   usePerpsUi,
+  useSavedPerps,
 } from '@/lib/perps';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, LAYOUT_MOVE } from '@/theme/motion';
 
-type Category = (typeof PERP_CATEGORIES)[number];
+type Category = (typeof PERP_CATEGORIES)[number] | 'Saved';
 
 const SORT_ICON: Record<PerpSort, IconName> = {
   volume: 'chart',
@@ -39,16 +45,35 @@ const SORT_ICON: Record<PerpSort, IconName> = {
  * Perps on the Trade tab, after Uniswap's: category filters, a one-time intro, and
  * every market by volume. Tapping a market opens its page, where Long/Short live.
  */
-export function PerpsMarkets() {
+export function PerpsMarkets({
+  query = '',
+  onClearQuery,
+}: {
+  query?: string;
+  /** Empties the search field, offered when a search finds nothing. */
+  onClearQuery?: () => void;
+}) {
   const styles = useStyles();
+  const loading = useFirstLoad(LOADS.perpsMarkets);
   const { introDismissed } = usePerpsUi();
-  const [category, setCategory] = useState<Category>('All');
+  const [picked, setCategory] = useState<Category>('All');
+  // Saved appears as a filter once you've hearted a market; emptied, it falls back to All.
+  const saved = useSavedPerps();
+  const category = picked === 'Saved' && !saved.length ? 'All' : picked;
+  const filters: Category[] = saved.length
+    ? ['All', 'Saved', ...PERP_CATEGORIES.slice(1)]
+    : PERP_CATEGORIES;
   const [sort, setSort] = useState<PerpSort>('volume');
   const order = PERP_SORTS.find((o) => o.value === sort) ?? PERP_SORTS[0];
-  const markets = PERP_MARKETS.filter((m) => category === 'All' || m.category === category).sort(
-    order.compare,
-  );
+  const q = query.trim().toLowerCase();
+  const markets = PERP_MARKETS.filter(
+    (m) =>
+      (category === 'All' ||
+        (category === 'Saved' ? saved.includes(m.symbol) : m.category === category)) &&
+      (!q || m.symbol.toLowerCase().includes(q) || m.name.toLowerCase().includes(q)),
+  ).sort(order.compare);
   useGuideOnFirstVisit('perps');
+  const positions = usePerpPositions();
 
   return (
     <View>
@@ -58,7 +83,7 @@ export function PerpsMarkets() {
         style={styles.chipScroll}
         contentContainerStyle={styles.chips}
       >
-        {PERP_CATEGORIES.map((option) => (
+        {filters.map((option) => (
           <Chip
             key={option}
             label={option}
@@ -69,7 +94,8 @@ export function PerpsMarkets() {
         ))}
       </ScrollView>
 
-      {!introDismissed && (
+      {/* The intro is for newcomers: once you hold a position it has done its job. */}
+      {!introDismissed && positions.length === 0 && (
         <IntroBanner
           graphic={<LongShortGraphic />}
           title="Go long or short"
@@ -80,9 +106,40 @@ export function PerpsMarkets() {
         />
       )}
 
+      {/* Your open positions first, as FOMO leads with them */}
+      {positions.length ? (
+        <Animated.View layout={LAYOUT_MOVE} style={styles.section}>
+          <Text style={styles.heading}>Your positions</Text>
+          <View style={styles.positions}>
+            {positions.map((p) => (
+              <PerpPositionCard key={p.id} position={p} compact />
+            ))}
+          </View>
+        </Animated.View>
+      ) : null}
+
+      {/* A few big markets as cards, after Polymarket's Featured row */}
+      {category === 'All' && !q ? (
+        <Animated.View layout={LAYOUT_MOVE} style={styles.section}>
+          <Text style={styles.heading}>Featured</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipScroll}
+            contentContainerStyle={styles.featured}
+          >
+            {FEATURED.map((symbol) => {
+              if (loading) return <FeaturedSkeleton key={symbol} />;
+              const market = PERP_MARKETS.find((m) => m.symbol === symbol);
+              return market ? <FeaturedCard key={symbol} market={market} /> : null;
+            })}
+          </ScrollView>
+        </Animated.View>
+      ) : null}
+
       <Animated.View layout={LAYOUT_MOVE} style={styles.listHeader}>
         <Text style={styles.heading}>
-          {markets.length} {markets.length === 1 ? 'market' : 'markets'}
+          {loading ? 'Markets' : `${markets.length} ${markets.length === 1 ? 'market' : 'markets'}`}
         </Text>
         <MenuDropdown
           options={PERP_SORTS.map(({ value, label }) => ({
@@ -97,18 +154,83 @@ export function PerpsMarkets() {
       </Animated.View>
 
       <Animated.View layout={LAYOUT_MOVE}>
-        {markets.map((market) => (
-          <Animated.View
-            key={market.symbol}
-            entering={FadeIn.duration(DURATION.fast)}
-            exiting={FadeOut.duration(DURATION.quick)}
-            layout={LAYOUT_MOVE}
-          >
-            <MarketRow market={market} />
-          </Animated.View>
-        ))}
+        <SkeletonReveal
+          loading={loading}
+          skeleton={[0, 1, 2, 3, 4, 5].map((i) => <MarketRowSkeleton key={i} />)}
+        >
+          {markets.map((market) => (
+            <Animated.View
+              key={market.symbol}
+              entering={FadeIn.duration(DURATION.fast)}
+              exiting={FadeOut.duration(DURATION.quick)}
+              layout={LAYOUT_MOVE}
+            >
+              <MarketRow market={market} />
+            </Animated.View>
+          ))}
+          {markets.length === 0 &&
+            (q ? (
+              <EmptyState
+                icon="search"
+                title="No markets match"
+                hint="Try another name or ticker."
+                action={onClearQuery && { label: 'Clear search', onPress: onClearQuery }}
+              />
+            ) : (
+              <EmptyState
+                icon="trade"
+                title={`No ${category.toLowerCase()} markets`}
+                hint="Nothing is listed here yet."
+                action={{ label: 'Show all markets', onPress: () => setCategory('All') }}
+              />
+            ))}
+        </SkeletonReveal>
       </Animated.View>
     </View>
+  );
+}
+
+/** The markets shown as Featured cards. */
+const FEATURED = ['BTC', 'SPX', 'NVDA', 'GOLD'];
+
+/** A market as a card: name, a day's trend, price and the leverage on offer. */
+function FeaturedCard({ market }: { market: PerpMarket }) {
+  const styles = useStyles();
+  const trend = useMemo(
+    () => series(`perp-${market.symbol}`, '1D', market.price, market.change),
+    [market],
+  );
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`${market.name}, ${formatPrice(market.price)}`}
+      scaleTo={0.98}
+      onPress={() => {
+        tap();
+        router.push({ pathname: '/perp/[symbol]', params: { symbol: market.symbol } });
+      }}
+      style={styles.feature}
+    >
+      <View style={styles.featureHead}>
+        <MarketIcon market={market} size={32} />
+        <View style={styles.flex}>
+          <Text style={styles.symbol}>{market.symbol}</Text>
+          <Text style={styles.featureName} numberOfLines={1}>
+            {market.name}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.featureChart}>
+        <Sparkline data={trend} width={FEATURE_WIDTH - 28} height={44} />
+      </View>
+      <View style={styles.featureFoot}>
+        <View style={styles.flex}>
+          <Text style={styles.featurePrice}>{formatPrice(market.price)}</Text>
+          <Change value={market.change} size={13} />
+        </View>
+        <Text style={styles.badge}>{market.maxLeverage}x</Text>
+      </View>
+    </PressableScale>
   );
 }
 
@@ -146,6 +268,48 @@ function MarketRow({ market }: { market: PerpMarket }) {
   );
 }
 
+/** A Featured card's footprint while prices load. */
+function FeaturedSkeleton() {
+  const styles = useStyles();
+  return (
+    <View style={styles.feature}>
+      <View style={styles.featureHead}>
+        <SkeletonBar width={32} height={32} radius={16} />
+        <View style={styles.skeletonLines}>
+          <SkeletonBar width={40} height={15} />
+          <SkeletonBar width="70%" height={11} />
+        </View>
+      </View>
+      <View style={styles.featureChart}>
+        <SkeletonBar width="100%" height={44} radius={10} />
+      </View>
+      <View style={styles.skeletonLines}>
+        <SkeletonBar width={84} height={16} />
+        <SkeletonBar width={48} height={11} />
+      </View>
+    </View>
+  );
+}
+
+/** A market row's footprint (icon, name, sparkline, price) while prices load. */
+function MarketRowSkeleton() {
+  const styles = useStyles();
+  return (
+    <View style={[styles.row, styles.skeletonRow]}>
+      <SkeletonBar width={44} height={44} radius={22} />
+      <View style={styles.skeletonLines}>
+        <SkeletonBar width={64} height={15} />
+        <SkeletonBar width={84} height={12} />
+      </View>
+      <SkeletonBar width={56} height={20} />
+      <View style={styles.skeletonEnd}>
+        <SkeletonBar width={68} height={14} />
+        <SkeletonBar width={44} height={12} />
+      </View>
+    </View>
+  );
+}
+
 /** A rising green line crossing a falling red one: long or short. */
 function LongShortGraphic() {
   const c = useTheme();
@@ -171,7 +335,50 @@ function LongShortGraphic() {
   );
 }
 
+const FEATURE_WIDTH = 176;
+
 const useStyles = makeStyles((c) => ({
+  section: {
+    marginTop: 18,
+  },
+  positions: {
+    marginTop: 8,
+    gap: 8,
+  },
+  featured: {
+    gap: 10,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+  },
+  feature: {
+    width: FEATURE_WIDTH,
+    padding: 14,
+    borderRadius: 20,
+    backgroundColor: c.card,
+  },
+  featureHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  featureName: {
+    color: c.textSecondary,
+    fontSize: 13,
+  },
+  featureChart: {
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  featureFoot: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  featurePrice: {
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
   listHeader: {
     marginTop: 16,
     marginBottom: 4,
@@ -201,6 +408,19 @@ const useStyles = makeStyles((c) => ({
     // Bleed past the tab screen's gutter so the press highlight runs edge to edge.
     marginHorizontal: -18,
     paddingHorizontal: 18,
+  },
+  // Placeholders aren't pressable, so they stay inside the gutter.
+  skeletonRow: {
+    marginHorizontal: 0,
+    paddingHorizontal: 0,
+  },
+  skeletonLines: {
+    flex: 1,
+    gap: 7,
+  },
+  skeletonEnd: {
+    alignItems: 'flex-end',
+    gap: 8,
   },
   titleRow: {
     flexDirection: 'row',

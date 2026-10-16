@@ -4,14 +4,17 @@ import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetRow, SheetScreen, SheetSection } from '@/components/wallet/Sheet';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { formatUsd, shortAddress } from '@/lib/mock-wallet';
 import { hasVoted, useMultisigState, YOU } from '@/lib/multisig';
 import { leaveSheetTo } from '@/lib/navigation';
+import { useOnboarding } from '@/lib/onboarding';
 import { type Profile, useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import {
@@ -34,6 +37,8 @@ export default function WalletsSheet() {
   const { copied, copy: copyAddress } = useCopy(active.address);
   const wallets = allWallets(profile.name, added);
   const hardware = wallets.filter((w) => w.kind === 'hardware');
+  // Wallets are on the device; their balances come from the network.
+  const loading = useFirstLoad(LOADS.walletTotals);
 
   const select = (wallet: AddedWallet) => {
     tap();
@@ -60,6 +65,7 @@ export default function WalletsSheet() {
         waiting={waiting}
         profile={profile}
         active={w.id === active.id}
+        loading={loading}
         onPress={() => select(w)}
       />
     );
@@ -169,6 +175,7 @@ function WalletRow({
   waiting = 0,
   profile,
   active,
+  loading,
   onPress,
 }: {
   wallet: AddedWallet;
@@ -176,10 +183,15 @@ function WalletRow({
   waiting?: number;
   profile: Profile;
   active: boolean;
+  /** Balance still on its way: a bar stands in for it. */
+  loading: boolean;
   onPress: () => void;
 }) {
   const styles = useStyles();
   const c = useTheme();
+  // The main wallet is empty until its first deposit, as on Home.
+  const { funded } = useOnboarding();
+  const usd = wallet.id === 'main' && !funded ? 0 : wallet.usd;
   const kind = wallet.threshold
     ? waiting
       ? `${waiting} waiting · `
@@ -213,14 +225,17 @@ function WalletRow({
       }
       title={wallet.label}
       subtitle={`${kind}${shortAddress(wallet.address, 8, 6)}`}
-      value={formatUsd(wallet.usd)}
+      value={loading ? undefined : formatUsd(usd)}
       accessory={
-        <View style={styles.checkSlot}>
-          {active && (
-            <View style={styles.check}>
-              <IconSwap name="check" size={11} color={c.onPrimary} />
-            </View>
-          )}
+        <View style={styles.accessory}>
+          {loading && <SkeletonBar width={64} height={14} />}
+          <View style={styles.checkSlot}>
+            {active && (
+              <View style={styles.check}>
+                <IconSwap name="check" size={11} color={c.onPrimary} />
+              </View>
+            )}
+          </View>
         </View>
       }
     />
@@ -283,6 +298,11 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.raised,
+  },
+  accessory: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
   checkSlot: {
     width: 20,

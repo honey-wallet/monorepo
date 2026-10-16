@@ -13,14 +13,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Icon } from '@/components/Icon';
-import { IconSwap } from '@/components/motion/IconSwap';
+import { LikeButton } from '@/components/motion/LikeButton';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { Chip } from '@/components/wallet/Chip';
 import { IntroBanner } from '@/components/wallet/IntroBanner';
-import { TokenIcon } from '@/components/wallet/parts';
+import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import type { Side } from '@/components/wallet/TradeForm';
 import { openGuide, useGuideOnFirstVisit } from '@/lib/guides';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { formatCompactUsd } from '@/lib/mock-wallet';
 import {
   dismissPredictIntro,
@@ -51,10 +53,32 @@ function order(market: PredictMarket, side: Side, outcome?: string) {
  * Prediction markets, after Polymarket in Uniswap: category chips, a featured card,
  * then one card per market. Filtering moves cards with the shared layout transition.
  */
-export function PredictFeed() {
+export function PredictFeed({
+  query = '',
+  onClearQuery,
+}: {
+  query?: string;
+  /** Empties the search field, offered when a search finds nothing. */
+  onClearQuery?: () => void;
+}) {
   const styles = useStyles();
-  const [category, setCategory] = useState<(typeof PREDICT_CATEGORIES)[number]>('All');
-  const markets = PREDICT_MARKETS.filter((m) => category === 'All' || m.category === category);
+  const loading = useFirstLoad(LOADS.predictFeed);
+  const [picked, setCategory] = useState<(typeof PREDICT_CATEGORIES)[number] | 'Saved'>('All');
+  // Saved appears as a filter once you've hearted a market; emptied, it falls back to All.
+  const saved = useSavedMarkets();
+  const category = picked === 'Saved' && !saved.length ? 'All' : picked;
+  const filters = saved.length
+    ? (['All', 'Saved', ...PREDICT_CATEGORIES.slice(1)] as const)
+    : PREDICT_CATEGORIES;
+  const q = query.trim().toLowerCase();
+  const markets = PREDICT_MARKETS.filter(
+    (m) =>
+      (category === 'All' ||
+        (category === 'Saved' ? saved.includes(m.id) : m.category === category)) &&
+      (!q ||
+        m.question.toLowerCase().includes(q) ||
+        (m.kind === 'multi' && m.outcomes.some((o) => o.label.toLowerCase().includes(q)))),
+  );
   useGuideOnFirstVisit('predict');
   const { introDismissed } = usePredictUi();
 
@@ -66,7 +90,7 @@ export function PredictFeed() {
         style={styles.chipScroll}
         contentContainerStyle={styles.chips}
       >
-        {PREDICT_CATEGORIES.map((name) => (
+        {filters.map((name) => (
           <Chip
             key={name}
             label={name}
@@ -90,17 +114,66 @@ export function PredictFeed() {
 
       {/* Same gap below the chips (or the banner) as between cards' groups. */}
       <View style={styles.feed}>
-        {markets.map((market) => (
-          <Animated.View
-            key={market.id}
-            entering={FadeIn.duration(DURATION.fast)}
-            exiting={FadeOut.duration(DURATION.quick)}
-            layout={LAYOUT_MOVE}
-          >
-            <MarketCard market={market} />
-          </Animated.View>
-        ))}
+        <SkeletonReveal
+          loading={loading}
+          skeleton={[0, 1, 2].map((i) => <MarketCardSkeleton key={i} />)}
+        >
+          {markets.map((market) => (
+            <Animated.View
+              key={market.id}
+              entering={FadeIn.duration(DURATION.fast)}
+              exiting={FadeOut.duration(DURATION.quick)}
+              layout={LAYOUT_MOVE}
+            >
+              <MarketCard market={market} />
+            </Animated.View>
+          ))}
+          {markets.length === 0 &&
+            (q ? (
+              <EmptyState
+                icon="search"
+                title="No markets match"
+                hint="Try another word, or look in another category."
+                action={onClearQuery && { label: 'Clear search', onPress: onClearQuery }}
+              />
+            ) : (
+              <EmptyState
+                icon="predict"
+                title={`No ${category.toLowerCase()} markets`}
+                hint="Nothing is open here right now. Check back soon."
+                action={{ label: 'Show all markets', onPress: () => setCategory('All') }}
+              />
+            ))}
+        </SkeletonReveal>
       </View>
+    </View>
+  );
+}
+
+/** A binary market card's footprint (head, Yes/No buttons, footer) while odds load. */
+function MarketCardSkeleton() {
+  const styles = useStyles();
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHead}>
+        <SkeletonBar width={40} height={40} radius={10} />
+        <View style={styles.skeletonLines}>
+          <SkeletonBar width="90%" height={15} />
+          <SkeletonBar width="55%" height={15} />
+        </View>
+        <View style={styles.gauge}>
+          <SkeletonBar width={62} height={44} radius={12} />
+        </View>
+      </View>
+      <View style={styles.bigButtons}>
+        <View style={styles.flex}>
+          <SkeletonBar width="100%" height={46} radius={14} />
+        </View>
+        <View style={styles.flex}>
+          <SkeletonBar width="100%" height={46} radius={14} />
+        </View>
+      </View>
+      <SkeletonBar width={120} height={13} />
     </View>
   );
 }
@@ -138,8 +211,18 @@ function MarketCard({ market }: { market: PredictMarket }) {
   const { predictPrice } = useTradePrefs();
   const price = (p: number) => formatShare(p, predictPrice);
   const styles = useStyles();
+  // The card opens the market's page; its Yes/No buttons go straight to the order.
   return (
-    <View style={styles.card}>
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={market.question}
+      scaleTo={0.99}
+      onPress={() => {
+        tap();
+        router.push({ pathname: '/predict/[id]', params: { id: market.id } });
+      }}
+      style={styles.card}
+    >
       <View style={styles.cardHead}>
         <MarketIcon market={market} />
         <Text style={styles.question} numberOfLines={2}>
@@ -185,18 +268,18 @@ function MarketCard({ market }: { market: PredictMarket }) {
         ))}
 
       <Footer market={market} />
-    </View>
+    </PressableScale>
   );
 }
 
 /** Coin logo for crypto markets; otherwise the market's icon on a honey-tinted square. */
-function MarketIcon({ market }: { market: PredictMarket }) {
+export function MarketIcon({ market, size = 40 }: { market: PredictMarket; size?: number }) {
   const styles = useStyles();
   const c = useTheme();
-  if (market.symbol) return <TokenIcon symbol={market.symbol} size={40} />;
+  if (market.symbol) return <TokenIcon symbol={market.symbol} size={size} />;
   return (
-    <View style={styles.iconSquare}>
-      <Icon name={market.icon ?? 'predict'} size={20} color={c.accentText} />
+    <View style={[styles.iconSquare, { width: size, height: size, borderRadius: size / 4 }]}>
+      <Icon name={market.icon ?? 'predict'} size={size / 2} color={c.accentText} />
     </View>
   );
 }
@@ -279,10 +362,9 @@ export function Gauge({ value, label, track }: { value: number; label: string; t
   );
 }
 
-/** Volume, end date (or a pulsing LIVE dot) and the save toggle. */
+/** Volume, end date (or a pulsing LIVE dot) and the heart. */
 function Footer({ market }: { market: PredictMarket }) {
   const styles = useStyles();
-  const c = useTheme();
   const saved = useSavedMarkets().includes(market.id);
   return (
     <View style={styles.footer}>
@@ -292,23 +374,7 @@ function Footer({ market }: { market: PredictMarket }) {
         {market.kind === 'updown' ? '' : ` · Ends ${market.ends}`}
       </Text>
       <View style={styles.flex} />
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={saved ? 'Remove from saved' : 'Save market'}
-        accessibilityState={{ selected: saved }}
-        hitSlop={10}
-        scaleTo={0.97}
-        onPress={() => {
-          tap();
-          toggleSaved(market.id);
-        }}
-      >
-        <IconSwap
-          name={saved ? 'bookmarkFill' : 'bookmark'}
-          size={18}
-          color={saved ? c.accentText : c.textSecondary}
-        />
-      </PressableScale>
+      <LikeButton liked={saved} onToggle={() => toggleSaved(market.id)} size={18} />
     </View>
   );
 }
@@ -353,6 +419,10 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
     borderRadius: 20,
     backgroundColor: c.card,
+  },
+  skeletonLines: {
+    flex: 1,
+    gap: 8,
   },
   cardHead: {
     flexDirection: 'row',

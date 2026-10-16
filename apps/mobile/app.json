@@ -58,7 +58,14 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Honey uses Face ID to show your recovery phrase and approve payments."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

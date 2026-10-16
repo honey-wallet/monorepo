@@ -4,6 +4,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, SkeletonGroup } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { TokenIcon } from '@/components/wallet/parts';
 import { SuccessPage } from '@/components/wallet/SuccessPage';
@@ -207,6 +208,26 @@ export function ProposalRow({
   );
 }
 
+/** `count` rows the shape of `ProposalRow`, while proposals load from the chain. */
+export function ProposalRowSkeleton({ count = 2 }: { count?: number }) {
+  const styles = useStyles();
+  return (
+    <SkeletonGroup>
+      {Array.from({ length: count }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+        <View key={i} style={styles.row}>
+          <SkeletonBar width={36} height={36} radius={18} />
+          <View style={[styles.rowText, styles.rowSkeletonText]}>
+            <SkeletonBar width="50%" height={14} />
+            <SkeletonBar width="70%" height={12} />
+          </View>
+          <SkeletonBar width={24} height={12} />
+        </View>
+      ))}
+    </SkeletonGroup>
+  );
+}
+
 /**
  * "2 of 3": how many approvals a shared wallet needs, with − and +, plus a line on
  * what the choice means. A majority is marked as recommended.
@@ -367,6 +388,12 @@ const useStyles = makeStyles((c) => ({
   },
   rowText: {
     flex: 1,
+  },
+  // Title and subtitle's line boxes (16pt + 14pt), so rows don't jump on reveal.
+  rowSkeletonText: {
+    height: 39,
+    justifyContent: 'center',
+    gap: 9,
   },
   rowTitle: {
     color: c.text,

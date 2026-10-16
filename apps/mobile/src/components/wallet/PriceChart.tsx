@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -16,7 +16,7 @@ import Animated, {
 import Svg, { Circle, Defs, LinearGradient, Path, Pattern, Rect, Stop } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 import { tap } from '@/lib/haptics';
-import { useTheme } from '@/theme';
+import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -42,7 +42,55 @@ type Props = {
  * Price chart after Uniswap: the line draws itself in, the end dot pulses, and
  * dragging a finger along it scrubs through the values.
  */
-export function PriceChart({ data, width, height, onScrub }: Props) {
+export function PriceChart(props: Props) {
+  // A line needs two points; a new token or an empty range has fewer.
+  if (props.data.length < 2) return <ChartEmpty height={props.height} />;
+  return <PriceLine {...props} />;
+}
+
+/**
+ * A chart's footprint when there's no history to draw: a quiet baseline and one line
+ * saying so, at the chart's height so the page doesn't move.
+ */
+export function ChartEmpty({
+  height,
+  text = 'No price history yet',
+}: {
+  height: number;
+  text?: string;
+}) {
+  const styles = useEmptyStyles();
+  return (
+    <View style={[styles.empty, { height }]} accessibilityLabel={text}>
+      <View style={styles.baseline} />
+      <Text style={styles.emptyText}>{text}</Text>
+    </View>
+  );
+}
+
+const useEmptyStyles = makeStyles((c) => ({
+  empty: {
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  baseline: {
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: c.raised,
+  },
+  emptyText: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '50%',
+    marginTop: 10,
+    textAlign: 'center',
+    color: c.textSecondary,
+    fontSize: 14,
+  },
+}));
+
+function PriceLine({ data, width, height, onScrub }: Props) {
   const c = useTheme();
   const reduceMotion = useReducedMotion();
   const color = data[data.length - 1] < data[0] ? c.error : c.success;

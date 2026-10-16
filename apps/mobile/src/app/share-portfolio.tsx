@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
 import { Text, View } from 'react-native';
@@ -6,11 +6,18 @@ import { captureRef } from 'react-native-view-shot';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
+import {
+  SkeletonBar,
+  SkeletonChart,
+  SkeletonReveal,
+  useFirstLoad,
+} from '@/components/motion/Skeleton';
 import { Toggle } from '@/components/motion/Toggle';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { Sparkline } from '@/components/wallet/parts';
+import { EmptyState, Sparkline } from '@/components/wallet/parts';
 import { SheetRow, SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import {
   BALANCE,
   BALANCE_CHANGE,
@@ -22,6 +29,7 @@ import {
 } from '@/lib/mock-wallet';
 import { useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
 const CARD_WIDTH = 320;
@@ -39,6 +47,9 @@ export default function SharePortfolioSheet() {
   const [showAmounts, setShowAmounts] = useState(false);
   const [sharing, setSharing] = useState(false);
   const card = useRef<View>(null);
+  // The card is drawn from the balance history behind Portfolio's chart.
+  const view = useWalletView();
+  const loading = useFirstLoad(LOADS.history(view.wallet.id));
 
   const todayPct = (BALANCE_CHANGE / (BALANCE - BALANCE_CHANGE)) * 100;
   const data = series('portfolio', range, BALANCE, range === '1D' ? todayPct : undefined);
@@ -68,40 +79,83 @@ export default function SharePortfolioSheet() {
     }
   };
 
+  // A wallet with nothing in it has no performance to share.
+  if (view.empty) {
+    return (
+      <SheetScreen title="Share portfolio">
+        <EmptyState
+          icon="chart"
+          title="Nothing to share yet"
+          hint="Once you've added money, you can share how your portfolio is doing."
+          action={{
+            label: 'Add money',
+            onPress: () => router.replace({ pathname: '/buy-cash', params: { symbol: 'USDC' } }),
+          }}
+        />
+      </SheetScreen>
+    );
+  }
+
   return (
     <SheetScreen
       title="Share portfolio"
       footer={
-        <PillButton label={sharing ? 'Preparing…' : 'Share'} disabled={sharing} onPress={share} />
+        <PillButton
+          label={sharing ? 'Preparing…' : 'Share'}
+          disabled={sharing || loading}
+          onPress={share}
+        />
       }
     >
-      {/* The card captured into the image; collapsable keeps it a real native view. */}
-      <View ref={card} collapsable={false} style={styles.card}>
-        <View style={styles.cardHead}>
-          <Avatar name={profile.name} size={28} uri={profile.photo} seed={profile.avatarSeed} />
-          <Text style={styles.cardName} numberOfLines={1}>
-            {profile.name}
-          </Text>
-          <HoneyLogo variant="mark" height={22} />
+      <SkeletonReveal
+        loading={loading}
+        skeleton={
+          <View style={styles.card}>
+            <View style={styles.cardHead}>
+              <SkeletonBar width={28} height={28} radius={14} />
+              <SkeletonBar width={110} height={14} />
+            </View>
+            <View style={styles.skeletonFigures}>
+              <SkeletonBar width={70} height={12} />
+              <SkeletonBar width={150} height={36} radius={10} />
+            </View>
+            <View style={styles.chart}>
+              <SkeletonChart height={70} />
+            </View>
+            <View style={styles.skeletonFootnote}>
+              <SkeletonBar width={100} height={10} />
+            </View>
+          </View>
+        }
+      >
+        {/* The card captured into the image; collapsable keeps it a real native view. */}
+        <View ref={card} collapsable={false} style={styles.card}>
+          <View style={styles.cardHead}>
+            <Avatar name={profile.name} size={28} uri={profile.photo} seed={profile.avatarSeed} />
+            <Text style={styles.cardName} numberOfLines={1}>
+              {profile.name}
+            </Text>
+            <HoneyLogo variant="mark" height={22} />
+          </View>
+          <Text style={styles.period}>{period}</Text>
+          <View style={styles.pctRow}>
+            <Icon name={down ? 'down' : 'up'} size={16} color={down ? c.error : c.success} />
+            <Text style={[styles.pct, { color: down ? c.error : c.success }]}>
+              {Math.abs(pct).toFixed(2)}%
+            </Text>
+          </View>
+          {showAmounts && (
+            <Text style={styles.amounts}>
+              {down ? '−' : '+'}
+              {formatUsd(Math.abs(delta))} · {formatUsd(BALANCE)} total
+            </Text>
+          )}
+          <View style={styles.chart}>
+            <Sparkline data={data} width={CARD_WIDTH - 40} height={70} />
+          </View>
+          <Text style={styles.footnote}>Tracked with Honey</Text>
         </View>
-        <Text style={styles.period}>{period}</Text>
-        <View style={styles.pctRow}>
-          <Icon name={down ? 'down' : 'up'} size={16} color={down ? c.error : c.success} />
-          <Text style={[styles.pct, { color: down ? c.error : c.success }]}>
-            {Math.abs(pct).toFixed(2)}%
-          </Text>
-        </View>
-        {showAmounts && (
-          <Text style={styles.amounts}>
-            {down ? '−' : '+'}
-            {formatUsd(Math.abs(delta))} · {formatUsd(BALANCE)} total
-          </Text>
-        )}
-        <View style={styles.chart}>
-          <Sparkline data={data} width={CARD_WIDTH - 40} height={70} />
-        </View>
-        <Text style={styles.footnote}>Tracked with Honey</Text>
-      </View>
+      </SkeletonReveal>
 
       <SheetRow
         title="Show amounts"
@@ -128,9 +182,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 12,
     padding: 20,
     borderRadius: 24,
-    borderWidth: 1,
-    borderColor: c.divider,
-    backgroundColor: c.canvas,
+    backgroundColor: c.card,
   },
   cardHead: {
     flexDirection: 'row',
@@ -171,5 +223,16 @@ const useStyles = makeStyles((c) => ({
     marginTop: 14,
     color: c.textSecondary,
     fontSize: 12,
+  },
+  // Period line plus the 40pt percentage, so the card keeps its height on reveal.
+  skeletonFigures: {
+    marginTop: 18,
+    height: 70,
+    gap: 10,
+  },
+  skeletonFootnote: {
+    marginTop: 14,
+    height: 15,
+    justifyContent: 'center',
   },
 }));

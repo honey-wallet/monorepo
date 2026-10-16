@@ -1,71 +1,150 @@
-import { Platform, Text, View } from 'react-native';
+import { MIN_PASSWORD_LENGTH } from '@honey-wallet/keyring';
+import { useEffect, useState } from 'react';
+import { Text, TextInput, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { IconSwap } from '@/components/motion/IconSwap';
-import { PressableScale } from '@/components/motion/PressableScale';
 import { TextSwap } from '@/components/motion/TextSwap';
+import { PillButton } from '@/components/onboarding/PillButton';
 import { PushedScreen } from '@/components/wallet/parts';
+import { CLOUD, saveBackupFile } from '@/lib/cloud-backup';
 import { tap } from '@/lib/haptics';
+import { completeStep } from '@/lib/onboarding';
 import { updateSettings, useSettings } from '@/lib/settings';
 import { showToast } from '@/lib/toast';
+import { readPrimaryMnemonic } from '@/lib/vault';
 import { makeStyles, useTheme } from '@/theme';
-
-const SERVICE = Platform.OS === 'android' ? 'Google Drive' : 'iCloud';
-const ACCOUNT = Platform.OS === 'android' ? 'Google account' : 'iCloud account';
+import { DURATION } from '@/theme/motion';
 
 /**
- * Cloud backup of the recovery phrase. The backup is encrypted on the device before it
- * leaves; Honey's server never sees it.
+ * Cloud backup of the recovery phrase: encrypted on this device with a password the
+ * user picks, then saved to iCloud Drive / Google Drive from the share sheet. Restoring
+ * needs the file and the password; Honey never sees either.
  */
 export default function CloudBackupScreen() {
   const styles = useStyles();
   const c = useTheme();
   const { backedUp } = useSettings();
+  const [hasPhrase, setHasPhrase] = useState<boolean | null>(null);
+  const [editing, setEditing] = useState(!backedUp);
+  const showForm = editing || hasPhrase === false;
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  const remove = () => {
+  useEffect(() => {
+    readPrimaryMnemonic()
+      .then((phrase) => setHasPhrase(!!phrase))
+      .catch(() => setHasPhrase(false));
+  }, []);
+
+  // Demo wallets have no phrase on the device, so there's nothing to back up yet.
+  const status = hasPhrase === false ? 'No phrase yet' : backedUp ? 'Backed up' : 'Not backed up';
+  const ok = hasPhrase !== false && backedUp;
+  const tooShort = password.length < MIN_PASSWORD_LENGTH;
+  const mismatch = confirm.length > 0 && confirm !== password;
+  const ready = hasPhrase && !tooShort && confirm === password && !busy;
+
+  const backUp = async () => {
     tap();
-    updateSettings({ backedUp: false });
-    showToast(`${SERVICE} backup deleted`);
+    setBusy(true);
+    try {
+      await saveBackupFile(password);
+      updateSettings({ backedUp: true });
+      completeStep('backup');
+      setEditing(false);
+      setPassword('');
+      setConfirm('');
+      showToast('Backup saved');
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Couldn’t make the backup');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const backUp = () => {
-    tap();
-    updateSettings({ backedUp: true });
-    showToast(`Backed up to ${SERVICE}`);
-  };
+  const hint =
+    hasPhrase === false
+      ? 'Create or import a wallet first.'
+      : mismatch
+        ? 'The passwords don’t match.'
+        : `At least ${MIN_PASSWORD_LENGTH} characters. You’ll need it to restore, and Honey can’t reset it.`;
 
   return (
     <PushedScreen
-      title={`${SERVICE} backup`}
+      title={`${CLOUD} backup`}
       fallback="/settings"
-      scroll={false}
       contentStyle={styles.content}
       footer={
-        <PressableScale
-          accessibilityRole="button"
-          onPress={backedUp ? remove : backUp}
-          scaleTo={0.98}
-          style={[styles.button, { backgroundColor: backedUp ? `${c.error}22` : c.primary }]}
-        >
-          <TextSwap
-            text={backedUp ? 'Delete backup' : 'Back up now'}
-            style={[styles.buttonLabel, { color: backedUp ? c.error : c.onPrimary }]}
+        showForm ? (
+          <PillButton
+            label={busy ? 'Encrypting…' : 'Back up now'}
+            disabled={!ready}
+            onPress={backUp}
+            style={styles.flex}
           />
-        </PressableScale>
+        ) : (
+          <PillButton
+            label="Back up again"
+            variant="secondary"
+            onPress={() => {
+              tap();
+              setEditing(true);
+            }}
+            style={styles.flex}
+          />
+        )
       }
     >
       <Text style={styles.body}>
-        By having your recovery phrase backed up to {SERVICE}, you can recover your wallet just by
-        being logged into your {ACCOUNT} on any device. It's encrypted on this device first, so only
-        you can read it.
+        Your recovery phrase is locked with a password on this device, then saved to {CLOUD}. To
+        restore on a new phone, pick the backup file and enter the password.
       </Text>
       <View style={styles.row}>
         <Text style={styles.label}>Recovery phrase</Text>
-        <TextSwap text={backedUp ? 'Backed up' : 'Not backed up'} style={styles.status} />
-        <IconSwap
-          name={backedUp ? 'check' : 'warning'}
-          size={18}
-          color={backedUp ? c.success : c.error}
-        />
+        <TextSwap text={status} style={styles.status} />
+        <IconSwap name={ok ? 'check' : 'warning'} size={18} color={ok ? c.success : c.error} />
       </View>
+
+      {showForm ? (
+        <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.form}>
+          <Text style={styles.section}>Backup password</Text>
+          <View style={styles.card}>
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              placeholderTextColor={c.placeholder}
+              secureTextEntry
+              textContentType="newPassword"
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!busy}
+              style={styles.input}
+            />
+            <View style={styles.divider} />
+            <TextInput
+              value={confirm}
+              onChangeText={setConfirm}
+              placeholder="Confirm password"
+              placeholderTextColor={c.placeholder}
+              secureTextEntry
+              textContentType="newPassword"
+              autoComplete="new-password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!busy}
+              returnKeyType="done"
+              onSubmitEditing={() => ready && backUp()}
+              style={styles.input}
+            />
+          </View>
+          <TextSwap
+            text={hint}
+            style={[styles.hint, (mismatch || hasPhrase === false) && { color: c.error }]}
+          />
+        </Animated.View>
+      ) : null}
     </PushedScreen>
   );
 }
@@ -74,6 +153,9 @@ const useStyles = makeStyles((c) => ({
   content: {
     paddingHorizontal: 20,
     paddingTop: 8,
+  },
+  flex: {
+    flex: 1,
   },
   body: {
     color: c.textSecondary,
@@ -96,15 +178,32 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 16,
   },
-  button: {
-    flex: 1,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
+  form: {
+    marginTop: 28,
   },
-  buttonLabel: {
-    fontSize: 19,
-    fontWeight: '600',
+  section: {
+    marginBottom: 10,
+    color: c.textSecondary,
+    fontSize: 15,
+  },
+  card: {
+    borderRadius: 20,
+    backgroundColor: c.card,
+    paddingHorizontal: 16,
+  },
+  input: {
+    height: 52,
+    color: c.text,
+    fontSize: 17,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: c.canvas,
+  },
+  hint: {
+    marginTop: 10,
+    color: c.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
   },
 }));

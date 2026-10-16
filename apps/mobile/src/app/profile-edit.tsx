@@ -1,6 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
 import { Avatar, randomAvatarSeed } from '@/components/Avatar';
 import { Icon, type IconName } from '@/components/Icon';
 import { Accordion } from '@/components/motion/Accordion';
@@ -66,13 +66,7 @@ export default function ProfileEditSheet() {
       >
         {/* Standard header, plus a ••• button on the right for photo options. */}
         <View>
-          <SheetHeader
-            title="Edit profile"
-            onBack={() => {
-              tap();
-              closeSheet();
-            }}
-          />
+          <SheetHeader title="Edit profile" />
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel="More options"
@@ -106,11 +100,9 @@ export default function ProfileEditSheet() {
           </View>
         </Accordion>
 
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          alwaysBounceVertical={false}
-          style={styles.flex}
-        >
+        {/* A plain view, not a ScrollView: iOS lays a nested ScrollView out against the
+            whole sheet, which slid the avatar up under the title. */}
+        <View style={styles.flex}>
           <View style={styles.identity}>
             <PressableScale
               accessibilityRole="button"
@@ -144,7 +136,7 @@ export default function ProfileEditSheet() {
               />
             </Field>
           </View>
-        </ScrollView>
+        </View>
       </SheetScreen>
     </KeyboardAvoidingView>
   );
@@ -230,7 +222,7 @@ const useStyles = makeStyles((c) => ({
   fields: {
     marginTop: 28,
     paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: c.card,
   },
   field: {

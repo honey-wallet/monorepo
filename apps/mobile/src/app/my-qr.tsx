@@ -1,3 +1,4 @@
+import type { ChainFamily } from '@honey-wallet/keyring';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
@@ -15,10 +16,13 @@ import { tap } from '@/lib/haptics';
 import { CHAINS, handleFor } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
+import { receiveAddresses } from '@/lib/receive';
 import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 const QR_SIZE = 240;
+
+const EVM_CHAINS = CHAINS.filter((ch) => ch.name === 'Ethereum' || ch.name === 'Base');
 
 /**
  * Your receive QR code, after Uniswap's: handle, dotted code, full address. Opened
@@ -28,12 +32,16 @@ export default function MyQRSheet() {
   const styles = useStyles();
   const c = useTheme();
   const profile = useProfile();
-  const { from } = useLocalSearchParams<{ from?: string }>();
+  const { from, chain } = useLocalSearchParams<{ from?: string; chain?: ChainFamily }>();
   // The wallet in use; a shared wallet's code says which network it's on.
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
   const isMain = wallet.id === 'main';
-  const { copied, copy } = useCopy(wallet.address);
+  // One chain's address (from Receive's list); otherwise the EVM one.
+  const list = receiveAddresses(wallet);
+  const entry = list.find((e) => e.family === chain) ?? list[0];
+  const address = entry?.address ?? wallet.address;
+  const { copied, copy } = useCopy(address);
 
   return (
     <SheetScreen
@@ -75,7 +83,7 @@ export default function MyQRSheet() {
           value={
             multisig?.protocol === 'squads'
               ? `solana:${wallet.address}`
-              : `ethereum:${wallet.address}`
+              : (entry?.uri ?? `ethereum:${wallet.address}`)
           }
           size={QR_SIZE}
           color={c.primary}
@@ -105,7 +113,7 @@ export default function MyQRSheet() {
         </View>
         {/* Two even lines (as Aave shows it) rather than a full line and a stray tail. */}
         <Text style={styles.address}>
-          {`${wallet.address.slice(0, Math.ceil(wallet.address.length / 2))}\n${wallet.address.slice(Math.ceil(wallet.address.length / 2))}`}
+          {`${address.slice(0, Math.ceil(address.length / 2))}\n${address.slice(Math.ceil(address.length / 2))}`}
         </Text>
       </Pressable>
 
@@ -115,27 +123,27 @@ export default function MyQRSheet() {
             Only on {multisig.network.name}. This is a {networkLabel(multisig)} shared wallet.
           </Text>
         </View>
+      ) : entry && entry.family !== 'evm' ? (
+        <View style={styles.networks}>
+          <Text style={styles.networksText}>
+            Only send {entry.name} tokens here. Other networks have their own address.
+          </Text>
+        </View>
       ) : (
-        <Pressable
-          onPress={() => {
-            tap();
-            router.push('/networks');
-          }}
-          style={styles.networks}
-        >
+        // The EVM address works on every EVM network, but not on Bitcoin, Solana and the rest.
+        <View style={styles.networks}>
           <Text style={styles.networksText}>Use this address to receive tokens on</Text>
           <View style={styles.networksRow}>
             <View style={styles.chainStack}>
-              {CHAINS.slice(0, 3).map((ch, i) => (
+              {EVM_CHAINS.map((ch, i) => (
                 <View key={ch.name} style={i > 0 && styles.chainOverlap}>
                   <TokenIcon symbol={ch.symbol} size={16} />
                 </View>
               ))}
             </View>
-            <Text style={styles.networksCount}>{CHAINS.length} networks</Text>
-            <Icon name="info" size={13} color={c.textSecondary} />
+            <Text style={styles.networksCount}>Ethereum, Base and other EVM networks</Text>
           </View>
-        </Pressable>
+        </View>
       )}
     </SheetScreen>
   );
@@ -167,9 +175,8 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 6,
     padding: 14,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: c.divider,
+    borderRadius: 20,
+    backgroundColor: c.card,
   },
   addressLabelRow: {
     flexDirection: 'row',

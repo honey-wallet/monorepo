@@ -10,6 +10,14 @@ export interface VersionInfo {
   version: string;
 }
 
+/** Pairing mailbox (apps/server/src/routes/pairing.rs). */
+export type PairSlot = 'hello' | 'payload';
+
+export interface PairMessage {
+  /** Base64url: a public key for `hello`, ciphertext for `payload`. */
+  data: string;
+}
+
 export interface ApiErrorBody {
   error: {
     code: string;

@@ -1,10 +1,11 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState } from 'react';
 import type { View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import { Toggle } from '@/components/motion/Toggle';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { EmptyState } from '@/components/wallet/parts';
 import { SheetRow, SheetScreen } from '@/components/wallet/Sheet';
 import { TokenShareCard } from '@/components/wallet/TokenShareCard';
 import { tap } from '@/lib/haptics';
@@ -32,7 +33,18 @@ export default function ShareTokenSheet() {
   const [showHolding, setShowHolding] = useState(false);
   const [sharing, setSharing] = useState(false);
   const card = useRef<View>(null);
-  if (!market) return null;
+  if (!market) {
+    return (
+      <SheetScreen>
+        <EmptyState
+          icon="warning"
+          title="Nothing to share"
+          hint={`Honey doesn't have prices for ${symbol} yet.`}
+          action={{ label: 'Close', onPress: () => router.back() }}
+        />
+      </SheetScreen>
+    );
+  }
 
   const data = series(symbol, range, market.price, range === '1D' ? market.change : undefined);
   const change = ((market.price - data[0]) / data[0]) * 100;

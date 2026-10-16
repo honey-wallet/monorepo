@@ -188,8 +188,6 @@ const useStyles = makeStyles((c) => ({
     paddingHorizontal: 12,
     paddingVertical: 11,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: c.divider,
     backgroundColor: c.card,
   },
   appIcon: {

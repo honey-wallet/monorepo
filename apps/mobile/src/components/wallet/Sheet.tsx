@@ -15,9 +15,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonRow } from '@/components/motion/Skeleton';
 import { useActiveMultisig } from '@/lib/multisig';
 import { goBackOr, leaveSheetTo } from '@/lib/navigation';
-import { TRADE_MODES, useSettings } from '@/lib/settings';
+import { AVAILABLE_TRADE_MODES, useSettings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
 
 /**
@@ -39,6 +40,8 @@ type SheetScreenProps = {
   /** Shown in the standard header. Omit when pages draw their own (e.g. nested pages). */
   title?: string;
   onBack?: () => void;
+  /** A bare icon button at the header's right, e.g. Share. */
+  right?: ReactNode;
   /**
    * `fit` (default) sizes to the content, for `fitToContents` sheets. `fill` takes the
    * sheet's full height and pins the footer to the bottom, for fixed-detent sheets.
@@ -61,6 +64,7 @@ type SheetScreenProps = {
 export function SheetScreen({
   title,
   onBack,
+  right,
   size = 'fit',
   scroll,
   sticky,
@@ -72,7 +76,7 @@ export function SheetScreen({
   const styles = useStyles();
   const fill = size === 'fill' || !!scroll;
   const clear = useStatusBarClearance(fill);
-  const header = title ? <SheetHeader title={title} onBack={onBack} /> : null;
+  const header = title ? <SheetHeader title={title} onBack={onBack} right={right} /> : null;
   const footerView = footer ? <View style={styles.footer}>{footer}</View> : null;
   // iOS sizes fitted sheets clear of the home indicator itself; adding the inset
   // again left a tall gap under the buttons.
@@ -152,7 +156,15 @@ function useStatusBarClearance(fill: boolean) {
 }
 
 /** Title row for bottom sheets, with an optional back chevron for nested pages. */
-export function SheetHeader({ title, onBack }: { title: string; onBack?: () => void }) {
+export function SheetHeader({
+  title,
+  onBack,
+  right,
+}: {
+  title: string;
+  onBack?: () => void;
+  right?: ReactNode;
+}) {
   const styles = useStyles();
   const c = useTheme();
   return (
@@ -173,7 +185,7 @@ export function SheetHeader({ title, onBack }: { title: string; onBack?: () => v
       <Text style={styles.title} accessibilityRole="header">
         {title}
       </Text>
-      <View style={styles.side} />
+      <View style={[styles.side, styles.sideRight]}>{right}</View>
     </View>
   );
 }
@@ -221,7 +233,7 @@ export function WalletSettingsRow({ tradeTabs = false }: { tradeTabs?: boolean }
           icon="trade"
           title="Trade tabs"
           subtitle="Add, hide or reorder products"
-          value={`${settings.tradeTabs.length} of ${TRADE_MODES.length}`}
+          value={`${settings.tradeTabs.filter((m) => AVAILABLE_TRADE_MODES.includes(m)).length} of ${AVAILABLE_TRADE_MODES.length}`}
           accessory="chevron"
           onPress={() => router.replace('/trade-tabs')}
         />
@@ -331,6 +343,35 @@ export function SheetRow({
   );
 }
 
+/**
+ * `count` stand-ins for `SheetRow`s with a `leading` icon of size `icon`, spaced like the
+ * real rows so the list doesn't shift when it arrives.
+ */
+export function SheetRowSkeletons({
+  count = 4,
+  icon = 40,
+  trailing = true,
+}: {
+  count?: number;
+  icon?: number;
+  trailing?: boolean;
+}) {
+  const styles = useStyles();
+  return (
+    <View>
+      {Array.from({ length: count }, (_, i) => (
+        <SkeletonRow
+          // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+          key={i}
+          icon={icon}
+          trailing={trailing}
+          style={styles.skeletonRow}
+        />
+      ))}
+    </View>
+  );
+}
+
 /** "Label ........ value" rows used on detail screens and sheets. */
 export function StatRow({
   label,
@@ -398,6 +439,9 @@ const useStyles = makeStyles((c) => ({
   side: {
     width: 32,
   },
+  sideRight: {
+    alignItems: 'flex-end',
+  },
   title: {
     flex: 1,
     textAlign: 'center',
@@ -417,6 +461,11 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     lineHeight: 21,
     textAlign: 'center',
+  },
+  skeletonRow: {
+    minHeight: 56,
+    gap: 14,
+    paddingVertical: 8,
   },
   row: {
     minHeight: 56,

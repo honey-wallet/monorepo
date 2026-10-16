@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import {
@@ -18,11 +19,12 @@ import {
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { SearchField } from '@/components/wallet/SearchField';
-import { closeSheet, SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
+import { SHEET, SheetScreen, StatRow } from '@/components/wallet/Sheet';
 import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import { TokenList } from '@/components/wallet/TokenList';
 import { useCopy } from '@/lib/copy';
 import { success, tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import {
   type Chain,
   chainSymbol,
@@ -33,6 +35,7 @@ import {
   shortAddress,
 } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
 type Page = 'pick' | 'amount' | 'review' | 'sent';
@@ -68,9 +71,14 @@ export default function SendAmountSheet() {
   const c = useTheme();
   // A shared wallet sends from its own balances, and proposes rather than sends.
   const signer = useSigner();
+  // A new wallet holds nothing until its first deposit.
+  const { empty } = useWalletView();
   const sendable = signer.multisig
     ? signer.multisig.holdings.filter((h) => h.amount > 0)
-    : SENDABLE;
+    : empty
+      ? []
+      : SENDABLE;
+  const loading = useFirstLoad(LOADS.balances(signer.walletId));
   // The largest holding of the requested token, so its network is the sensible default.
   const [picked, setPicked] = useState(() => {
     const first = sendable.find((h) => h.symbol === initial) ?? sendable[0] ?? SENDABLE[0];
@@ -137,8 +145,8 @@ export default function SendAmountSheet() {
 
   const finish = () => finishDemo('nothing was sent', { all: true });
 
-  // A new shared wallet has nothing to send until it's funded.
-  if (signer.multisig && sendable.length === 0) {
+  // A new wallet has nothing to send until it's funded.
+  if (sendable.length === 0) {
     return (
       <SheetScreen
         title="Send"
@@ -156,7 +164,16 @@ export default function SendAmountSheet() {
         <EmptyState
           icon="send"
           title="Nothing to send yet"
-          hint={`Fund this shared wallet first: send tokens to it on ${signer.multisig.network.name}.`}
+          hint={
+            signer.multisig
+              ? `Fund this shared wallet first: send tokens to it on ${signer.multisig.network.name}.`
+              : 'Add money or receive tokens first, then come back to send them.'
+          }
+          action={
+            signer.multisig
+              ? undefined
+              : { label: 'Add money', onPress: () => router.replace('/buy-cash') }
+          }
         />
       </SheetScreen>
     );
@@ -167,14 +184,7 @@ export default function SendAmountSheet() {
     <SheetScreen
       title={page === 'review' ? 'Review send' : page === 'pick' ? 'Choose token' : 'Send'}
       size="fill"
-      onBack={() => {
-        if (page === 'review' || page === 'pick') go('amount');
-        else if (page === 'sent') finish();
-        else {
-          tap();
-          closeSheet();
-        }
-      }}
+      onBack={page === 'review' || page === 'pick' ? () => go('amount') : undefined}
     >
       <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
         <ContentSwap id={page} index={PAGES.indexOf(page)}>
@@ -267,10 +277,14 @@ export default function SendAmountSheet() {
                       );
                     }}
                   >
-                    <TextSwap
-                      text={`Balance: ${formatBalance(token.amount)} ${symbol}`}
-                      style={styles.balance}
-                    />
+                    {loading ? (
+                      <SkeletonBar width={120} height={12} />
+                    ) : (
+                      <TextSwap
+                        text={`Balance: ${formatBalance(token.amount)} ${symbol}`}
+                        style={styles.balance}
+                      />
+                    )}
                   </PressableScale>
                 </View>
 
@@ -418,9 +432,8 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: c.divider,
+    borderRadius: 20,
+    backgroundColor: c.card,
   },
   toLabel: {
     color: c.textSecondary,
@@ -469,8 +482,7 @@ const useStyles = makeStyles((c) => ({
     paddingLeft: 8,
     paddingRight: 12,
     borderRadius: 23,
-    borderWidth: 1,
-    borderColor: c.divider,
+    backgroundColor: c.card,
   },
   pillLabel: {
     color: c.text,

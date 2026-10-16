@@ -6,31 +6,34 @@
 // lags), the number becoming the value at that month or year with a light tick on each
 // step; let go and the dot eases back to today (ease-in-out, it's moving on screen).
 // The past draws itself on the first view this session (stroke-dashoffset, 600ms,
-// strong ease-out: a rare moment), the projection fades in after it, and the dot steps
-// a little way ahead and back once, to show it can be dragged. Under Reduce
-// Motion it's drawn from the start and the dot jumps back.
-import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+// strong ease-out: a rare moment), and the projection fades in after it. On the page
+// hero, each time you come back the figure counts up from what it was when you last
+// looked (900ms, ease-out: money arriving) and a green "+$5.75 since you last looked"
+// rises in under it. Under Reduce Motion the chart is drawn from the start and the
+// figure shows its value at once.
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
+  Keyframe,
   useAnimatedProps,
   useAnimatedReaction,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
-  withDelay,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
+import { Icon } from '@/components/Icon';
+import { SkeletonBar, SkeletonChart } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { tap } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION, EASE } from '@/theme/motion';
+import { DISTANCE, DURATION, EASE, lazy } from '@/theme/motion';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -48,6 +51,63 @@ const STEPS = 40;
 
 let drawn = false;
 
+/** The figure when you last left the page; null on the first look this session. */
+let lastLooked: number | null = null;
+/** With nothing saved yet, the demo pretends you last looked this many days ago. */
+const DEMO_DAYS_AWAY = 7;
+const COUNT_MS = 900;
+const sinceIn = lazy(() =>
+  new Keyframe({
+    0: { opacity: 0, transform: [{ translateY: DISTANCE.small }] },
+    100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
+  })
+    .duration(DURATION.slow)
+    .delay(300),
+);
+
+/**
+ * Tracks what you've earned since you last opened the page: on focus the shown value
+ * counts up from then to now; on leaving, now becomes "last looked". Without `count`
+ * the value just follows `now`.
+ */
+function useSinceLastLooked(now: number, rate: number, count: boolean) {
+  const [display, setDisplay] = useState(now);
+  const [gained, setGained] = useState(0);
+  const counting = useRef(false);
+  const latest = useRef(now);
+  latest.current = now;
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!count) return;
+      const target = latest.current;
+      const from = lastLooked ?? target * (1 + rate) ** (-DEMO_DAYS_AWAY / 365);
+      setGained(target - from);
+      counting.current = true;
+      const start = Date.now();
+      let frame = requestAnimationFrame(function step() {
+        const t = Math.min(1, (Date.now() - start) / COUNT_MS);
+        const eased = 1 - (1 - t) ** 3;
+        setDisplay(from + (latest.current - from) * eased);
+        if (t < 1) frame = requestAnimationFrame(step);
+        else counting.current = false;
+      });
+      return () => {
+        cancelAnimationFrame(frame);
+        counting.current = false;
+        lastLooked = latest.current;
+      };
+    }, [count, rate]),
+  );
+
+  // Between visits the figure just follows the interest landing each second.
+  useEffect(() => {
+    if (!counting.current) setDisplay(now);
+  }, [now]);
+
+  return { display: count ? display : now, gained: count ? gained : 0 };
+}
+
 const monthLabel = (monthsAgo: number) =>
   new Date(new Date().getFullYear(), new Date().getMonth() - monthsAgo, 1).toLocaleString('en-US', {
     month: 'short',
@@ -59,6 +119,7 @@ export function EarnHero({
   apy,
   startedMonthsAgo,
   large,
+  loading,
 }: {
   /** Today's value, interest included. */
   now: number;
@@ -66,6 +127,8 @@ export function EarnHero({
   startedMonthsAgo: number;
   /** The page's hero (Savings): centred, with the screen's one big number, as Aave does. */
   large?: boolean;
+  /** Positions are still loading: bars stand in for the figures, a flat line for the curve. */
+  loading?: boolean;
 }) {
   const styles = useStyles();
   const c = useTheme();
@@ -83,12 +146,14 @@ export function EarnHero({
   const H = large ? LARGE_HEIGHT : HEIGHT;
   const bleed = large ? GUTTER : 0;
   const rate = apy / 100;
-  const past = startedMonthsAgo / 12;
+  // A deposit made this month still gets a sliver of past, so the curve has a start.
+  const past = Math.max(startedMonthsAgo, 0.5) / 12;
   const today = width * PAST_SHARE;
   // The curve's shape is the same at any balance, so it's drawn from the growth ratio:
   // value(t) = now × (1 + rate)^t, t in years from today.
-  const lo = (1 + rate) ** -past;
-  const hi = (1 + rate) ** AHEAD;
+  // A 0% rate is flat (lo = hi): span 0–2 instead so the line sits mid-chart, not NaN.
+  const lo = rate > 0 ? (1 + rate) ** -past : 0;
+  const hi = rate > 0 ? (1 + rate) ** AHEAD : 2;
 
   const { pastLine, pastArea, futureLine, pastLength } = useMemo(() => {
     if (!width) return { pastLine: '', pastArea: '', futureLine: '', pastLength: 0 };
@@ -120,21 +185,17 @@ export function EarnHero({
   }, [width, today, past, rate, lo, hi, H]);
 
   useEffect(() => {
-    if (!width) return;
+    // The curve draws itself once there's data to draw, not under the skeleton.
+    if (!width || loading) return;
     x.value = today;
     if (draw.value < 1) {
       draw.value = withTiming(1, { duration: 600, easing: EASE.smoothOut });
       drawn = true;
-      // Once, to explain it can be dragged: the dot steps a little way ahead and back.
-      if (!reduceMotion) {
-        const move = { duration: DURATION.verySlow, easing: EASE.inOut };
-        x.value = withDelay(
-          700,
-          withSequence(withTiming(today + (width - today) * 0.16, move), withTiming(today, move)),
-        );
-      }
     }
-  }, [width, today, x, draw, reduceMotion]);
+  }, [width, today, x, draw, loading]);
+
+  // What it's grown by since you last looked, counted up each time the page is opened.
+  const { display, gained } = useSinceLastLooked(now, rate, !!large && !reduceMotion);
 
   // Where the finger is, in whole months back or whole years ahead.
   useAnimatedReaction(
@@ -197,40 +258,68 @@ export function EarnHero({
 
   const valueAt = (v: number) => now * (1 + rate) ** (v < 0 ? v / 12 : v);
   const start = now * lo;
-  const shown = valueAt(at);
-  const label =
-    at === 0
+  const shown = at === 0 ? display : valueAt(at);
+  // Nothing saved or earning yet: no growth to talk about, just the way to start.
+  const none = now <= 0;
+  const label = none
+    ? 'Your savings'
+    : at === 0
       ? `Growing ${apy.toFixed(1)}% a year`
       : at < 0
         ? monthLabel(-at)
         : `In ${at} ${at === 1 ? 'year' : 'years'}`;
-  const sub =
-    at > 0
+  const sub = none
+    ? 'Add money to start earning'
+    : at > 0
       ? `+${formatUsd(shown - now)} in interest`
       : `+${formatUsd(shown - start)} since ${monthLabel(startedMonthsAgo)}`;
 
   return (
     <View style={styles.hero}>
-      <View style={large && styles.centered}>
-        <Text style={styles.label}>{label}</Text>
-        {large ? (
-          // Aave's figure: the dollars big, the cents a size down.
-          <Text style={[styles.value, styles.valueLarge]}>
-            {formatUsd(shown).split('.')[0]}
-            <Text style={styles.centsLarge}>.{formatUsd(shown).split('.')[1]}</Text>
-          </Text>
-        ) : (
-          <Text style={styles.value}>{formatUsd(shown)}</Text>
-        )}
-        <Text style={styles.gain}>{sub}</Text>
-      </View>
+      {loading ? (
+        // The label, figure and gain lines' boxes, so nothing moves when they arrive.
+        <View style={[styles.skeletonText, large && styles.centered]}>
+          <View style={styles.skeletonLine}>
+            <SkeletonBar width={120} height={11} />
+          </View>
+          <View style={large ? styles.skeletonValueLarge : styles.skeletonValue}>
+            <SkeletonBar width={large ? 200 : 110} height={large ? 40 : 18} radius={8} />
+          </View>
+          <View style={styles.skeletonLine}>
+            <SkeletonBar width={150} height={11} />
+          </View>
+        </View>
+      ) : (
+        <View style={large && styles.centered}>
+          <Text style={styles.label}>{label}</Text>
+          {large ? (
+            // Aave's figure: the dollars big, the cents a size down.
+            <Text style={[styles.value, styles.valueLarge]}>
+              {formatUsd(shown).split('.')[0]}
+              <Text style={styles.centsLarge}>.{formatUsd(shown).split('.')[1]}</Text>
+            </Text>
+          ) : (
+            <Text style={styles.value}>{formatUsd(shown)}</Text>
+          )}
+          {large && at === 0 && gained >= 0.01 ? (
+            <Animated.View entering={sinceIn()} style={styles.since}>
+              <Icon name="arrowUp" size={11} color={c.success} />
+              <Text style={styles.sinceText}>{formatUsd(gained)} since you last looked</Text>
+            </Animated.View>
+          ) : (
+            <Text style={[styles.gain, none && styles.gainNone]}>{sub}</Text>
+          )}
+        </View>
+      )}
 
       <GestureDetector gesture={scrub}>
         <View
           style={[styles.chart, { height: H, marginHorizontal: -bleed }]}
           onLayout={(e) => setWidth(e.nativeEvent.layout.width)}
         >
-          {width ? (
+          {loading ? (
+            <SkeletonChart height={H} inset={bleed + 4} />
+          ) : width ? (
             <>
               <Svg width={width} height={H}>
                 <Defs>
@@ -268,7 +357,7 @@ export function EarnHero({
 
       {/* Started, today and where it could be, each under its point on the curve (the
           page hero shows just the labels; its number above already says the value). */}
-      <View style={styles.axis}>
+      <View style={[styles.axis, loading && styles.axisLoading]}>
         <View>
           <Text style={styles.axisLabel}>{monthLabel(startedMonthsAgo)}</Text>
           {large ? null : <Text style={styles.axisValue}>{formatUsd(start)}</Text>}
@@ -323,6 +412,23 @@ const useStyles = makeStyles((c) => ({
     fontSize: 14,
     fontVariant: ['tabular-nums'],
   },
+  // A soft green pill: good news, set apart from the plain gain line it replaces.
+  since: {
+    marginTop: 6,
+    height: 26,
+    paddingHorizontal: 10,
+    borderRadius: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: `${c.success}1F`,
+  },
+  sinceText: {
+    color: c.success,
+    fontSize: 14,
+    fontWeight: '500',
+    fontVariant: ['tabular-nums'],
+  },
   chart: {
     marginTop: 10,
   },
@@ -349,6 +455,29 @@ const useStyles = makeStyles((c) => ({
     marginTop: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  // The dates and values depend on the positions; they fade in with them.
+  axisLoading: {
+    opacity: 0,
+  },
+  gainNone: {
+    color: c.textSecondary,
+  },
+  skeletonText: {
+    gap: 2,
+  },
+  skeletonLine: {
+    height: 17,
+    justifyContent: 'center',
+  },
+  // 20pt and 48pt figures' line boxes, with their margins.
+  skeletonValue: {
+    height: 26,
+    justifyContent: 'center',
+  },
+  skeletonValueLarge: {
+    height: 62,
+    justifyContent: 'center',
   },
   axisToday: {
     position: 'absolute',

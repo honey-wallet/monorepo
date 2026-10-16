@@ -1,18 +1,20 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
+import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
-import { TokenIcon } from '@/components/wallet/parts';
+import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { SHEET, SheetHeader, SheetScreen, StatRow } from '@/components/wallet/Sheet';
 import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import { success, tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import {
   formatCompactUsd,
   formatUsd,
@@ -22,6 +24,7 @@ import {
   VAULTS,
 } from '@/lib/mock-wallet';
 import { propose, useSigner } from '@/lib/multisig';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Earn sheet after Uniswap's: headline rate, vault facts, details on demand, Deposit. */
@@ -36,7 +39,22 @@ export default function EarnSheet() {
   const signer = useSigner();
   const [proposalId, setProposalId] = useState<string | null>(null);
   const vault = VAULTS[symbol];
-  if (!vault) return null;
+  // The vault's live numbers: rate, deposits, liquidity, what it's exposed to.
+  const loading = useFirstLoad(LOADS.earn(symbol));
+  // The rate is the same one Savings and Search show, so it shares their load.
+  const rateLoading = useFirstLoad(LOADS.earnRates);
+  if (!vault) {
+    return (
+      <SheetScreen>
+        <EmptyState
+          icon="sparkles"
+          title={`No vault for ${symbol}`}
+          hint="Honey doesn't offer earning on this token yet."
+          action={{ label: 'Close', onPress: () => router.back() }}
+        />
+      </SheetScreen>
+    );
+  }
 
   return (
     // Each page ends with its own main button, so the buttons swap with the pages.
@@ -95,25 +113,33 @@ export default function EarnSheet() {
             <View style={styles.grid}>
               <View style={[styles.cell, styles.cellRight, styles.cellBottom]}>
                 <Text style={styles.cellLabel}>Current APY</Text>
-                <Text style={[styles.cellValue, styles.accent]}>{vault.apy.toFixed(2)}%</Text>
+                <CellValue loading={rateLoading}>
+                  <Text style={[styles.cellValue, styles.accent]}>{vault.apy.toFixed(2)}%</Text>
+                </CellValue>
               </View>
               <View style={[styles.cell, styles.cellBottom]}>
                 <Text style={styles.cellLabel}>Exposure</Text>
-                <View style={styles.exposure}>
-                  {vault.exposure.map((s, i) => (
-                    <View key={s} style={[styles.exposureCoin, i > 0 && styles.overlap]}>
-                      <TokenIcon symbol={s} size={24} />
-                    </View>
-                  ))}
-                </View>
+                <CellValue loading={loading}>
+                  <View style={styles.exposure}>
+                    {vault.exposure.map((s, i) => (
+                      <View key={s} style={[styles.exposureCoin, i > 0 && styles.overlap]}>
+                        <TokenIcon symbol={s} size={24} />
+                      </View>
+                    ))}
+                  </View>
+                </CellValue>
               </View>
               <View style={[styles.cell, styles.cellRight]}>
                 <Text style={styles.cellLabel}>Total deposits</Text>
-                <Text style={styles.cellValue}>{formatCompactUsd(vault.deposits)}</Text>
+                <CellValue loading={loading}>
+                  <Text style={styles.cellValue}>{formatCompactUsd(vault.deposits)}</Text>
+                </CellValue>
               </View>
               <View style={styles.cell}>
                 <Text style={styles.cellLabel}>Liquidity</Text>
-                <Text style={styles.cellValue}>{formatCompactUsd(vault.liquidity)}</Text>
+                <CellValue loading={loading}>
+                  <Text style={styles.cellValue}>{formatCompactUsd(vault.liquidity)}</Text>
+                </CellValue>
               </View>
             </View>
 
@@ -172,6 +198,23 @@ export default function EarnSheet() {
   );
 }
 
+/** A tile's value, or a bar in its place (same 30pt line) until the vault loads. */
+function CellValue({ loading, children }: { loading: boolean; children: ReactNode }) {
+  const styles = useStyles();
+  return (
+    <SkeletonReveal
+      loading={loading}
+      skeleton={
+        <View style={styles.cellSkeleton}>
+          <SkeletonBar width={76} height={20} />
+        </View>
+      }
+    >
+      {children}
+    </SkeletonReveal>
+  );
+}
+
 /** Second page of the sheet: how much to put in, with the yearly estimate. */
 function DepositPage({
   symbol,
@@ -187,12 +230,15 @@ function DepositPage({
   const styles = useStyles();
   const [amount, setAmount] = useState('');
   const signer = useSigner();
-  // A shared wallet deposits from its own balance.
+  const { empty } = useWalletView();
+  // A shared wallet deposits from its own balance; a new wallet has nothing yet.
   const balance = signer.multisig
     ? signer.multisig.holdings
         .filter((h) => h.symbol === symbol)
         .reduce((sum, h) => sum + h.amount, 0)
-    : (TOKENS.find((t) => t.symbol === symbol)?.amount ?? 0);
+    : empty
+      ? 0
+      : (TOKENS.find((t) => t.symbol === symbol)?.amount ?? 0);
   const proposes = signer.proposes({
     type: 'earnDeposit',
     symbol,
@@ -274,9 +320,8 @@ const useStyles = makeStyles((c) => ({
     marginTop: 22,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: c.divider,
+    borderRadius: 20,
+    backgroundColor: c.card,
   },
   cell: {
     width: '50%',
@@ -284,13 +329,14 @@ const useStyles = makeStyles((c) => ({
     paddingVertical: 16,
     gap: 6,
   },
+  // The sheet's colour between cells, so the grey card reads as four tiles.
   cellRight: {
-    borderRightWidth: 1,
-    borderColor: c.divider,
+    borderRightWidth: 2,
+    borderColor: c.sheet,
   },
   cellBottom: {
-    borderBottomWidth: 1,
-    borderColor: c.divider,
+    borderBottomWidth: 2,
+    borderColor: c.sheet,
   },
   cellLabel: {
     color: c.textSecondary,
@@ -300,6 +346,10 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 24,
     fontWeight: '500',
+  },
+  cellSkeleton: {
+    height: 30,
+    justifyContent: 'center',
   },
   accent: {
     color: c.accentText,

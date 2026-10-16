@@ -4,15 +4,16 @@ import { Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { LearnMore } from '@/components/motion/LearnMore';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { BalanceAmount } from '@/components/wallet/parts';
 import { SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
-import { BALANCE, BALANCE_CHANGE, formatUsd } from '@/lib/mock-wallet';
+import { LOADS } from '@/lib/loads';
+import { formatUsd } from '@/lib/mock-wallet';
 import { leaveSheetTo } from '@/lib/navigation';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
-
-const CHANGE_PCT = (BALANCE_CHANGE / (BALANCE - BALANCE_CHANGE)) * 100;
 
 /** Ways to add money, drawn as home's honey action tiles. */
 const DEPOSITS: { icon: IconName; label: string; hint: string; href: Href }[] = [
@@ -27,7 +28,11 @@ const DEPOSITS: { icon: IconName; label: string; hint: string; href: Href }[] = 
 export default function BalanceSheet() {
   const styles = useStyles();
   const c = useTheme();
-  const down = BALANCE_CHANGE < 0;
+  // The wallet in use, as on Home: a shared wallet's own balance, a new one's $0.
+  const view = useWalletView();
+  const loading = useFirstLoad(LOADS.balances(view.wallet.id));
+  const down = view.change < 0;
+  const changePct = view.usd ? (view.change / (view.usd - view.change)) * 100 : 0;
   const { hideBalance } = useSettings();
   const [linkPressed, setLinkPressed] = useState(false);
 
@@ -39,14 +44,29 @@ export default function BalanceSheet() {
   return (
     <SheetScreen>
       <Text style={styles.label}>Total balance</Text>
-      <BalanceAmount style={styles.balance} fractionStyle={styles.cents} />
-      <View style={styles.change}>
-        <Icon name={down ? 'down' : 'up'} size={9} color={down ? c.error : c.success} />
-        <Text style={styles.changeText}>
-          {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(BALANCE_CHANGE))} (
-          {Math.abs(CHANGE_PCT).toFixed(2)}%) today
-        </Text>
-      </View>
+      <SkeletonReveal
+        loading={loading}
+        skeleton={
+          <View style={styles.skeleton}>
+            <SkeletonBar width={190} height={34} radius={10} />
+            <SkeletonBar width={150} height={14} />
+          </View>
+        }
+      >
+        <BalanceAmount style={styles.balance} fractionStyle={styles.cents} />
+        {/* A brand-new wallet has no day to compare with yet: it says how to start. */}
+        {view.empty ? (
+          <Text style={[styles.changeText, styles.change]}>Add money to get started.</Text>
+        ) : (
+          <View style={styles.change}>
+            <Icon name={down ? 'down' : 'up'} size={9} color={down ? c.error : c.success} />
+            <Text style={styles.changeText}>
+              {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(view.change))} (
+              {Math.abs(changePct).toFixed(2)}%) today
+            </Text>
+          </View>
+        )}
+      </SkeletonReveal>
 
       <View style={styles.tiles}>
         {DEPOSITS.map((d) => (
@@ -105,6 +125,13 @@ const useStyles = makeStyles((c) => ({
   },
   cents: {
     color: c.textSecondary,
+  },
+  // The balance and today's change, as bars of the same height.
+  skeleton: {
+    height: 71,
+    paddingTop: 4,
+    justifyContent: 'center',
+    gap: 10,
   },
   change: {
     marginTop: 4,

@@ -8,7 +8,8 @@ import { useTheme } from '@/theme';
 const EMAIL = /^\S+@\S+\.\S+$/;
 
 export default function EmailScreen() {
-  const params = useLocalSearchParams<{ mode?: string }>();
+  // `intent` is create or restore, from the Get started sheet; it rides along to verify.
+  const params = useLocalSearchParams<{ mode?: string; intent?: string }>();
   const [mode, setMode] = useState<'email' | 'phone'>(params.mode === 'phone' ? 'phone' : 'email');
   const [value, setValue] = useState('');
   const stepStyles = useStepStyles();
@@ -37,7 +38,12 @@ export default function EmailScreen() {
           <PillButton
             label="Continue"
             disabled={!valid}
-            onPress={() => router.push({ pathname: '/verify', params: { to: value.trim() } })}
+            onPress={() =>
+              router.push({
+                pathname: '/verify',
+                params: { to: value.trim(), intent: params.intent },
+              })
+            }
             style={stepStyles.footerButton}
           />
         </View>
@@ -59,7 +65,8 @@ export default function EmailScreen() {
         autoCorrect={false}
         returnKeyType={isEmail ? 'next' : undefined}
         onSubmitEditing={() =>
-          valid && router.push({ pathname: '/verify', params: { to: value.trim() } })
+          valid &&
+          router.push({ pathname: '/verify', params: { to: value.trim(), intent: params.intent } })
         }
         style={stepStyles.input}
       />

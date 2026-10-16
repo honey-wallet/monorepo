@@ -339,7 +339,7 @@ const SWING: Record<Range, number> = {
 };
 
 /** Small seeded PRNG so a chart looks the same every time it's drawn. */
-function prng(seed: string) {
+export function prng(seed: string) {
   let h = 2166136261;
   for (const ch of seed) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
   return () => {

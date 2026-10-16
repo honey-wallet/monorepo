@@ -42,18 +42,22 @@ export function PercentChips({
   style?: StyleProp<ViewStyle>;
 }) {
   const styles = useStyles();
+  // With nothing to take a share of, the chips stay put but can't be pressed.
+  const empty = !(balance > 0);
   return (
     <View style={[styles.chips, style]}>
       {SHARES.filter(([label]) => !only || only.includes(label)).map(([label, share]) => (
         <PressableScale
           key={label}
           accessibilityRole="button"
+          accessibilityState={{ disabled: empty }}
+          disabled={empty}
           scaleTo={PRESS_SCALE}
           onPress={() => {
             tap();
             onPick(trimNumber(balance * share, decimals));
           }}
-          style={styles.chip}
+          style={[styles.chip, empty && styles.chipOff]}
         >
           <Text style={styles.chipLabel}>{label}</Text>
         </PressableScale>
@@ -160,6 +164,9 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'center',
     borderRadius: 18,
     backgroundColor: c.raised,
+  },
+  chipOff: {
+    opacity: 0.4,
   },
   chipLabel: {
     color: c.text,

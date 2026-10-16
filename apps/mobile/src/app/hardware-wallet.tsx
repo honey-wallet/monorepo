@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
-import { SkeletonBar } from '@/components/motion/Skeleton';
+import { SkeletonList } from '@/components/motion/Skeleton';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { EmptyState } from '@/components/wallet/parts';
@@ -160,15 +160,7 @@ export default function HardwareWalletSheet() {
               <Spinner />
               <Text style={styles.searchingLabel}>Looking for nearby devices…</Text>
             </View>
-            {[0, 1].map((i) => (
-              <View key={i} style={styles.skeletonRow}>
-                <SkeletonBar width={40} height={40} radius={12} />
-                <View style={styles.skeletonText}>
-                  <SkeletonBar width="55%" />
-                  <SkeletonBar width="35%" height={12} />
-                </View>
-              </View>
-            ))}
+            <SkeletonList count={2} iconRadius={12} trailing={false} />
             <PillButton label="Cancel" variant="secondary" onPress={cancel} style={styles.cta} />
           </View>
         )}
@@ -177,7 +169,7 @@ export default function HardwareWalletSheet() {
           <View>
             <EmptyState
               icon="hardware"
-              title="No Ledger found"
+              title={`No ${name} found`}
               hint="Check that your device is unlocked, nearby and has Bluetooth on."
             />
             <PillButton label="Try again" onPress={search} />
@@ -284,15 +276,5 @@ const useStyles = makeStyles((c) => ({
   searchingLabel: {
     color: c.textSecondary,
     fontSize: 15,
-  },
-  skeletonRow: {
-    marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  skeletonText: {
-    flex: 1,
-    gap: 8,
   },
 }));

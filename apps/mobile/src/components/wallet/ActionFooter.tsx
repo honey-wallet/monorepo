@@ -11,7 +11,7 @@ const BUTTON_HEIGHT = 54;
 export const ACTION_FOOTER_HEIGHT = SCREEN.footerTop + BUTTON_HEIGHT + SCREEN.footerBottom;
 
 /**
- * `primary` honey (Buy), `secondary` honey tint (Sell), `up` green tint (Long),
+ * `primary` honey (Buy), `secondary` grey (Sell; honey tint reads as disabled), `up` green tint (Long),
  * `down` red tint (Short).
  */
 export type FooterTone = 'primary' | 'secondary' | 'up' | 'down';
@@ -39,7 +39,7 @@ export function ActionFooter({
   const c = useTheme();
   const tones: Record<FooterTone, { background: string; color: string }> = {
     primary: { background: c.primary, color: c.onPrimary },
-    secondary: { background: c.accentSurface, color: c.accentText },
+    secondary: { background: c.raised, color: c.text },
     up: { background: `${c.success}26`, color: c.success },
     down: { background: `${c.error}26`, color: c.error },
   };

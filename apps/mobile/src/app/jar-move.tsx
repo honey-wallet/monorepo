@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { ContentSwap } from '@/components/motion/ContentSwap';
@@ -6,13 +6,14 @@ import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
-import { TokenIcon } from '@/components/wallet/parts';
+import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { SHEET, SheetScreen } from '@/components/wallet/Sheet';
 import { finishDemo, SuccessPage } from '@/components/wallet/SuccessPage';
 import { success } from '@/lib/haptics';
 import { jars, usdValue, useJars } from '@/lib/jars';
-import { formatUsd, TOKENS } from '@/lib/mock-wallet';
+import { formatUsd } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles } from '@/theme';
 
 /**
@@ -30,14 +31,21 @@ export default function JarMoveSheet() {
   const [amount, setAmount] = useState('');
   const [done, setDone] = useState(false);
   const [proposalId, setProposalId] = useState<string | null>(null);
-  if (!jar) return null;
+  const view = useWalletView();
+  if (!jar) {
+    return (
+      <SheetScreen size="fill">
+        <EmptyState icon="search" title="Jar not found" hint="It may have been deleted." />
+      </SheetScreen>
+    );
+  }
 
   const adding = mode === 'add';
   const wallet = signer.multisig
     ? signer.multisig.holdings
         .filter((h) => h.symbol === jar.symbol)
         .reduce((sum, h) => sum + h.amount, 0)
-    : (TOKENS.find((t) => t.symbol === jar.symbol)?.amount ?? 0);
+    : (view.tokens.find((t) => t.symbol === jar.symbol)?.amount ?? 0);
   // Adding draws on the wallet; withdrawing, on what's in the jar.
   const available = adding ? wallet : jar.saved;
   const value = Number(amount) || 0;
@@ -82,6 +90,30 @@ export default function JarMoveSheet() {
             }}
             detail={`${adding ? 'To' : 'From'} ${jar.name}`}
             onDone={finish}
+          />
+        ) : available <= 0 ? (
+          // Nothing to move: adding needs the token first; an empty jar has nothing to take.
+          <EmptyState
+            icon={adding ? 'wallet' : 'target'}
+            title={adding ? `No ${jar.symbol} in your wallet` : 'This jar is empty'}
+            hint={
+              adding
+                ? signer.multisig
+                  ? `Send ${jar.symbol} to this shared wallet first.`
+                  : `Buy or receive ${jar.symbol}, then add it to ${jar.name}.`
+                : `Add ${jar.symbol} to ${jar.name} to start saving.`
+            }
+            action={
+              !adding
+                ? { label: `Add to ${jar.name}`, onPress: () => router.setParams({ mode: 'add' }) }
+                : signer.multisig
+                  ? { label: 'Receive', onPress: () => router.replace('/receive') }
+                  : {
+                      label: `Buy ${jar.symbol}`,
+                      onPress: () =>
+                        router.replace({ pathname: '/buy-cash', params: { symbol: jar.symbol } }),
+                    }
+            }
           />
         ) : (
           <View style={styles.flex}>

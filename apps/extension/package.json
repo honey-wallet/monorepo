@@ -1,0 +1,32 @@
+{
+  "name": "@honey-wallet/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Honey for Chrome: the wallet in a browser extension, paired with the phone by QR code.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "clean": "rm -rf dist node_modules/.tmp"
+  },
+  "dependencies": {
+    "@honey-wallet/api-client": "workspace:*",
+    "@honey-wallet/keyring": "workspace:*",
+    "qrcode-generator": "^2.0.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.3.4",
+    "@types/node": "^24.13.3",
+    "@types/react": "~19.2.2",
+    "@types/react-dom": "~19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "typescript": "catalog:",
+    "vite": "^8.3.0",
+    "vitest": "catalog:"
+  }
+}

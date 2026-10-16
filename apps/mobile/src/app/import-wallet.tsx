@@ -7,10 +7,12 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { closeSheet, SheetScreen } from '@/components/wallet/Sheet';
+import { SheetScreen } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
+import { finishOnboarding } from '@/lib/onboarding';
 import { showToast } from '@/lib/toast';
-import { addWallet, demoAddress } from '@/lib/wallets';
+import { importMnemonic, importPrivateKey, isValidMnemonic } from '@/lib/vault';
+import { addVaultWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Splits a typed or pasted phrase into lowercase words. */
@@ -28,9 +30,13 @@ const keyOf = (text: string) => text.trim().replace(/^0x/i, '');
 export default function ImportWalletSheet() {
   const styles = useStyles();
   const c = useTheme();
-  const { kind } = useLocalSearchParams<{ kind?: 'phrase' | 'key' }>();
+  const { kind, onboarding } = useLocalSearchParams<{
+    kind?: 'phrase' | 'key';
+    onboarding?: string;
+  }>();
   const isKey = kind === 'key';
   const [phrase, setPhrase] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const words = wordsOf(phrase);
   const target = words.length > 12 ? 24 : 12;
@@ -39,6 +45,8 @@ export default function ImportWalletSheet() {
   const complete = isKey
     ? key.length === 64 && !invalid
     : (words.length === 12 || words.length === 24) && !invalid;
+  // Every word is real but the last one doesn't match: a typo or the wrong order.
+  const badChecksum = !isKey && complete && !isValidMnemonic(phrase);
   const copy = isKey
     ? {
         title: 'Enter your private key',
@@ -59,7 +67,9 @@ export default function ImportWalletSheet() {
         cta: complete ? 'Continue' : `Enter ${target} words`,
         hint: invalid
           ? 'Words should only contain letters.'
-          : 'Enter the words in order, separated by spaces.',
+          : badChecksum
+            ? 'These words don’t make a valid phrase. Check the spelling and order.'
+            : 'Enter the words in order, separated by spaces.',
         warning: 'Never share your recovery phrase. Anyone with it can take your funds.',
       };
 
@@ -70,10 +80,24 @@ export default function ImportWalletSheet() {
     else showToast('Clipboard is empty');
   };
 
-  const submit = () => {
+  const submit = async () => {
     tap();
-    // TODO: derive the address from the phrase or key on-device; demo address for now.
-    addWallet({ kind: 'wallet', label: 'Imported wallet', address: demoAddress(), usd: 0 });
+    setBusy(true);
+    try {
+      const account = isKey
+        ? await importPrivateKey(key, 'Imported wallet')
+        : await importMnemonic(phrase, 'Imported wallet');
+      addVaultWallet(account);
+    } catch (error) {
+      setBusy(false);
+      showToast(error instanceof Error ? error.message : 'Couldn’t import this wallet');
+      return;
+    }
+    // From onboarding, the imported wallet is the wallet: open it, money and all.
+    if (onboarding) {
+      finishOnboarding('import');
+      return;
+    }
     showToast('Wallet imported');
     router.dismissAll();
   };
@@ -81,14 +105,7 @@ export default function ImportWalletSheet() {
   return (
     // The button stays inline under the field rather than pinned as a footer, so
     // it sits above the keyboard while typing.
-    <SheetScreen
-      title={isKey ? 'Import private key' : 'Import recovery phrase'}
-      size="fill"
-      onBack={() => {
-        tap();
-        closeSheet();
-      }}
-    >
+    <SheetScreen title={isKey ? 'Import private key' : 'Import recovery phrase'} size="fill">
       <TextsReveal
         id={`import-${isKey ? 'key' : 'phrase'}`}
         align="center"
@@ -96,7 +113,7 @@ export default function ImportWalletSheet() {
         second={<Text style={styles.subtitle}>{copy.subtitle}</Text>}
       />
 
-      <View style={[styles.field, invalid && styles.fieldError]}>
+      <View style={[styles.field, (invalid || badChecksum) && styles.fieldError]}>
         <TextInput
           value={phrase}
           onChangeText={setPhrase}
@@ -123,9 +140,17 @@ export default function ImportWalletSheet() {
           </PressableScale>
         </View>
       </View>
-      <TextSwap text={copy.hint} style={[styles.hint, invalid && styles.hintError]} />
+      <TextSwap
+        text={copy.hint}
+        style={[styles.hint, (invalid || badChecksum) && styles.hintError]}
+      />
 
-      <PillButton label={copy.cta} disabled={!complete} onPress={submit} style={styles.cta} />
+      <PillButton
+        label={busy ? 'Importing…' : copy.cta}
+        disabled={!complete || badChecksum || busy}
+        onPress={submit}
+        style={styles.cta}
+      />
       <View style={styles.warning}>
         <Icon name="warning" size={14} color={c.accentText} />
         <Text style={styles.warningText}>{copy.warning}</Text>
@@ -152,8 +177,6 @@ const useStyles = makeStyles((c) => ({
     marginTop: 22,
     padding: 14,
     borderRadius: 18,
-    borderWidth: 1,
-    borderColor: c.divider,
     backgroundColor: c.raised,
   },
   fieldError: {

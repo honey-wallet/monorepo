@@ -42,7 +42,7 @@ import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 /**
- * The token's full-colour coin logo; unknown tokens get a generic coin. With
+ * The token's full-colour coin logo; unknown tokens get their initial in a grey well. With
  * `chain`, a small network badge sits bottom-right, as in Uniswap, unless the token
  * is that network's own coin (ETH on Ethereum needs no badge).
  */
@@ -59,15 +59,31 @@ export function TokenIcon({
   ring?: string;
 }) {
   const c = useTheme();
-  const logo = (
-    <SvgXml
-      xml={TOKEN_LOGOS[symbol] ?? NETWORK_LOGOS[symbol] ?? TOKEN_LOGOS.GENERIC}
-      width={size}
-      height={size}
-    />
+  const xml = TOKEN_LOGOS[symbol] ?? NETWORK_LOGOS[symbol];
+  // A token without a logo gets its initial in a grey well, so rows still tell apart.
+  const logo = xml ? (
+    <SvgXml xml={xml} width={size} height={size} />
+  ) : (
+    <View
+      accessible={false}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: c.raised,
+      }}
+    >
+      <Text style={{ color: c.textSecondary, fontSize: size * 0.42, fontWeight: '600' }}>
+        {symbol.charAt(0).toUpperCase() || '?'}
+      </Text>
+    </View>
   );
+  // Any token given a network wears its badge, its own chain's coin included (ETH on
+  // Ethereum), so every row and chip says where the token is.
   const network = chain ? chainSymbol(chain) : undefined;
-  if (!network || network === symbol) return logo;
+  if (!network) return logo;
   const badge = Math.round(size * 0.42);
   return (
     <View style={{ width: size, height: size }}>
@@ -476,12 +492,28 @@ export function PushedScreen({
   );
 }
 
-/** Centred icon, title and hint for screens with nothing to show yet. */
-export function EmptyState({ icon, title, hint }: { icon: IconName; title: string; hint: string }) {
+/**
+ * Centred icon, title and hint for a screen or section with nothing to show yet. Give it
+ * an `action` when there's an obvious next step (Receive, Add money, Clear filters).
+ * `compact` trims the padding for use inside a card or under a section label.
+ */
+export function EmptyState({
+  icon,
+  title,
+  hint,
+  action,
+  compact,
+}: {
+  icon: IconName;
+  title: string;
+  hint: string;
+  action?: { label: string; onPress: () => void };
+  compact?: boolean;
+}) {
   const styles = useStyles();
   const c = useTheme();
   return (
-    <View style={styles.empty}>
+    <View style={[styles.empty, compact && styles.emptyCompact]}>
       <View style={styles.emptyIcon}>
         <Icon name={icon} size={26} color={c.accentText} />
       </View>
@@ -491,6 +523,19 @@ export function EmptyState({ icon, title, hint }: { icon: IconName; title: strin
         first={<Text style={styles.emptyTitle}>{title}</Text>}
         second={<Text style={styles.emptyHint}>{hint}</Text>}
       />
+      {action && (
+        <PressableScale
+          accessibilityRole="button"
+          onPress={() => {
+            tap();
+            action.onPress();
+          }}
+          scaleTo={0.97}
+          style={styles.emptyAction}
+        >
+          <Text style={styles.emptyActionLabel}>{action.label}</Text>
+        </PressableScale>
+      )}
     </View>
   );
 }
@@ -593,6 +638,10 @@ const useStyles = makeStyles((c) => ({
     paddingVertical: 40,
     paddingHorizontal: 32,
   },
+  emptyCompact: {
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
   emptyIcon: {
     width: 56,
     height: 56,
@@ -613,5 +662,19 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     lineHeight: 20,
     textAlign: 'center',
+  },
+  emptyAction: {
+    marginTop: 18,
+    height: 40,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.raised,
+  },
+  emptyActionLabel: {
+    color: c.text,
+    fontSize: 15,
+    fontWeight: '600',
   },
 }));

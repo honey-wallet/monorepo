@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { HEADER_BUTTON, HeaderIconButton } from '@/components/wallet/parts';
+import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
+import { HEADER_BUTTON } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
@@ -10,7 +11,8 @@ import { makeStyles } from '@/theme';
 
 /**
  * Top-right of the Trade, Savings and Search tabs: your balance in dollars (opens
- * the balance sheet, where you can deposit more) and a settings gear. The gear opens the app's Settings unless the tab
+ * the balance sheet, where you can deposit more) and a bare settings gear, matching
+ * Home's header icons. The gear opens the app's Settings unless the tab
  * passes its own (Trade opens the current product's settings).
  */
 export function HeaderActions({
@@ -45,7 +47,7 @@ export function HeaderActions({
           <Text style={styles.balanceText}>{balance}</Text>
         </PressableScale>
       ) : null}
-      <HeaderIconButton icon="settings" label={settingsLabel} onPress={onSettings} />
+      <HeaderShortcut icon="settings" label={settingsLabel} onPress={onSettings} />
     </View>
   );
 }
@@ -54,7 +56,7 @@ const useStyles = makeStyles((c) => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 16,
   },
   balance: {
     height: HEADER_BUTTON,

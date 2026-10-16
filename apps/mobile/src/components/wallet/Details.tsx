@@ -93,12 +93,12 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 8,
     marginLeft: 2,
     color: c.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
   },
   group: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: c.card,
   },
   pill: {

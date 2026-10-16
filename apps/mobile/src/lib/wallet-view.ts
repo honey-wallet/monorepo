@@ -1,14 +1,20 @@
 import { BALANCE, BALANCE_CHANGE, TOKENS, type Token, tokenName } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
+import { useOnboarding } from '@/lib/onboarding';
 import { useActiveWallet } from '@/lib/wallets';
 
 /**
  * What the wallet in use holds, for every screen that shows a balance: a shared
- * wallet shows its own balances; other wallets show the demo portfolio.
+ * wallet shows its own balances; a brand-new wallet is empty until its first deposit;
+ * other wallets show the demo portfolio.
  */
 export function useWalletView() {
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
+  const { funded } = useOnboarding();
+  if (!multisig && wallet.id === 'main' && !funded) {
+    return { wallet, multisig, usd: 0, change: 0, tokens: [] as Token[], empty: true };
+  }
   if (!multisig) {
     return { wallet, multisig, usd: BALANCE, change: BALANCE_CHANGE, tokens: TOKENS };
   }

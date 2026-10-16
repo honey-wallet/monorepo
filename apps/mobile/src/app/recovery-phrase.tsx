@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { usePreventScreenCapture } from 'expo-screen-capture';
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   FadeIn,
@@ -13,31 +15,23 @@ import { Checkbox } from '@/components/motion/Checkbox';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar } from '@/components/motion/Skeleton';
-import { TextSwap } from '@/components/motion/TextSwap';
+import { TextsReveal } from '@/components/motion/TextsReveal';
+import { PhraseQuiz } from '@/components/onboarding/PhraseQuiz';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { PushedScreen, SCREEN } from '@/components/wallet/parts';
+import { confirmOwner } from '@/lib/auth';
 import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
+import { finishOnboarding } from '@/lib/onboarding';
+import { getProfile } from '@/lib/profile';
+import { showToast } from '@/lib/toast';
+import { draftMnemonic, readPrimaryMnemonic, startWithMnemonic } from '@/lib/vault';
+import { addVaultWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 import { DISTANCE, DURATION, EASE, lazy } from '@/theme/motion';
 
-// DEMO DATA: a placeholder phrase for UI review only. It isn't tied to any real wallet;
-// the real phrase will be read from the device's secure storage and never leaves it.
-const WORDS = [
-  'orbit',
-  'velvet',
-  'harbor',
-  'pencil',
-  'lunar',
-  'copper',
-  'galaxy',
-  'breeze',
-  'timber',
-  'salmon',
-  'quiz',
-  'meadow',
-];
-const HALF = WORDS.length / 2;
+/** Phrases are 12 words here (24-word imports are shown from Settings too). */
+const PLACEHOLDER = Array<string>(12).fill('');
 
 // Words rise in one after another, 40ms apart. Revealing the phrase is a rare,
 // first-time moment, so each word may take the longer 400ms on a strong ease-out.
@@ -71,22 +65,61 @@ const panelOut = lazy(() =>
 
 /** Shows the recovery phrase, but only after a "view this in private" warning. */
 export default function RecoveryPhraseScreen() {
+  // From onboarding ("Create with a recovery phrase"), writing it down creates the wallet.
+  const { onboarding } = useLocalSearchParams<{ onboarding?: string }>();
   const insets = useSafeAreaInsets();
   const styles = useStyles();
   const c = useTheme();
   const [warning, setWarning] = useState(true);
   const [revealed, setRevealed] = useState(false);
   const [writtenDown, setWrittenDown] = useState(false);
+  const [creating, setCreating] = useState(false);
+  // Onboarding only: after "written down", pick three of the words before creating.
+  const [checking, setChecking] = useState(false);
+  const [checked, setChecked] = useState(false);
+  // From onboarding, a brand-new phrase that's only saved once it's written down.
+  // From Settings, the device's phrase, read from secure storage (null if none yet).
+  const [phrase, setPhrase] = useState<string | null | undefined>(() =>
+    onboarding ? draftMnemonic() : undefined,
+  );
+  useEffect(() => {
+    if (onboarding) return;
+    readPrimaryMnemonic()
+      .then(setPhrase)
+      .catch(() => setPhrase(null));
+  }, [onboarding]);
+  const words = phrase ? phrase.split(' ') : PLACEHOLDER;
+  const half = words.length / 2;
+  const missing = phrase === null;
 
-  const view = () => {
+  const create = async () => {
+    if (!phrase) return;
     tap();
+    setCreating(true);
+    try {
+      addVaultWallet(await startWithMnemonic(phrase, getProfile().name));
+      finishOnboarding('phrase');
+    } catch (error) {
+      console.warn('Couldn’t save the recovery phrase', error);
+      setCreating(false);
+      showToast('Couldn’t create your wallet. Try again');
+    }
+  };
+
+  // No screenshots or recordings while the phrase can be on screen.
+  usePreventScreenCapture();
+
+  // A saved phrase needs Face ID (or the passcode) first; a brand-new one doesn't.
+  const view = async () => {
+    tap();
+    if (!onboarding && !missing && !(await confirmOwner('Show your recovery phrase'))) return;
     setWarning(false);
-    setRevealed(true);
+    setRevealed(!missing);
   };
 
   const close = () => {
     tap();
-    goBackOr('/settings');
+    goBackOr(onboarding ? '/welcome' : '/settings');
   };
 
   const toggleHidden = () => {
@@ -96,27 +129,73 @@ export default function RecoveryPhraseScreen() {
   };
 
   const reduceMotion = useReducedMotion();
+  // Two columns read top to bottom (1–6, then 7–12), the way it's written on paper.
   const column = (start: number) => (
     <View style={styles.column}>
-      {WORDS.slice(start, start + HALF).map((word, i) => (
-        <View key={word} style={styles.wordSlot}>
-          {revealed ? (
-            <Animated.View entering={rise(start + i, reduceMotion)} style={styles.word}>
-              <Text style={styles.index}>{start + i + 1}</Text>
-              <Text style={styles.wordText}>{word}</Text>
-            </Animated.View>
+      {words.slice(start, start + half).map((word, i) => (
+        // Words can repeat within a phrase, so they're keyed by position.
+        // biome-ignore lint/suspicious/noArrayIndexKey: a phrase's order never changes
+        <View key={start + i} style={styles.tile}>
+          <Text style={styles.index}>{start + i + 1}</Text>
+          {revealed && word ? (
+            <Animated.Text entering={rise(start + i, reduceMotion)} style={styles.wordText}>
+              {word}
+            </Animated.Text>
           ) : (
-            <SkeletonBar width="100%" height={12} radius={6} />
+            <View style={styles.flex}>
+              <SkeletonBar width="70%" height={10} radius={5} />
+            </View>
           )}
         </View>
       ))}
     </View>
   );
 
+  const hero = checking
+    ? {
+        title: 'Check your phrase',
+        body: 'Tap the right word for each number, using the copy you wrote down.',
+      }
+    : missing
+      ? {
+          title: 'No recovery phrase yet',
+          body: 'This device doesn’t have one. Create or import a wallet to get one.',
+        }
+      : onboarding
+        ? {
+            title: 'Write down your recovery phrase',
+            body: 'These 12 words are the key to your wallet. Write them on paper, in order, and keep it somewhere safe.',
+          }
+        : {
+            title: 'Your recovery phrase',
+            body: 'Anyone with these words can take your funds. Never share them or type them into a website.',
+          };
+
   return (
     <PushedScreen
-      title="Recovery phrase"
-      fallback="/settings"
+      title={onboarding ? (checking ? '2 of 2' : '1 of 2') : 'Recovery phrase'}
+      fallback={onboarding ? '/welcome' : '/settings'}
+      footer={
+        onboarding && checking ? (
+          <PillButton
+            label={creating ? 'Creating…' : 'Create wallet'}
+            disabled={!checked || creating}
+            onPress={create}
+            style={styles.flexButton}
+          />
+        ) : onboarding && revealed ? (
+          <PillButton
+            label="Continue"
+            disabled={!writtenDown}
+            style={styles.flexButton}
+            onPress={() => {
+              tap();
+              setRevealed(false);
+              setChecking(true);
+            }}
+          />
+        ) : undefined
+      }
       scroll={false}
       contentStyle={styles.content}
       // The privacy warning covers the whole screen, header included, until dismissed.
@@ -156,39 +235,87 @@ export default function RecoveryPhraseScreen() {
         ) : null
       }
     >
-      <View style={styles.card} accessibilityLabel={revealed ? WORDS.join(' ') : 'Hidden'}>
-        {column(0)}
-        {column(HALF)}
+      <View style={styles.hero}>
+        <TextsReveal
+          id={hero.title}
+          first={<Text style={styles.title}>{hero.title}</Text>}
+          second={<Text style={styles.body}>{hero.body}</Text>}
+        />
       </View>
 
-      <View style={styles.tip}>
-        <Icon name="book" size={18} color={c.textSecondary} />
-        <Text style={styles.tipText}>
-          We suggest writing this on a piece of paper and storing it somewhere safe.
-        </Text>
-      </View>
+      {checking ? (
+        <>
+          <PhraseQuiz words={words} onPass={() => setChecked(true)} />
+          <PressableScale
+            accessibilityRole="button"
+            onPress={() => {
+              tap();
+              setChecking(false);
+              setChecked(false);
+              setRevealed(true);
+            }}
+            scaleTo={0.97}
+            style={styles.textButton}
+          >
+            <Text style={styles.textButtonLabel}>See the phrase again</Text>
+          </PressableScale>
+        </>
+      ) : missing ? null : (
+        <>
+          <View>
+            <View
+              style={styles.grid}
+              accessibilityLabel={revealed ? words.join(' ') : 'Recovery phrase, hidden'}
+            >
+              {column(0)}
+              {column(half)}
+            </View>
+            {/* Hidden: one clear way to show it again, over the blank tiles. */}
+            {!revealed && !warning ? (
+              <Animated.View
+                entering={FadeIn.duration(DURATION.fast)}
+                style={styles.revealWrap}
+                pointerEvents="box-none"
+              >
+                <PressableScale
+                  accessibilityRole="button"
+                  onPress={toggleHidden}
+                  scaleTo={0.97}
+                  style={styles.reveal}
+                >
+                  <Icon name="eye" size={18} color={c.text} />
+                  <Text style={styles.revealLabel}>Show phrase</Text>
+                </PressableScale>
+              </Animated.View>
+            ) : null}
+          </View>
 
-      {revealed ? (
-        <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.confirm}>
-          <Checkbox
-            label="I've written it down somewhere safe"
-            checked={writtenDown}
-            onChange={setWrittenDown}
-          />
-        </Animated.View>
-      ) : null}
-
-      {!warning ? (
-        <PressableScale
-          accessibilityRole="button"
-          onPress={toggleHidden}
-          scaleTo={0.97}
-          style={styles.hide}
-        >
-          <IconSwap name={revealed ? 'eyeSlash' : 'eye'} size={18} color={c.text} />
-          <TextSwap text={revealed ? 'Hide' : 'Show'} style={styles.hideLabel} />
-        </PressableScale>
-      ) : null}
+          {revealed ? (
+            <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.below}>
+              {onboarding ? (
+                <Checkbox
+                  label="I’ve written it down somewhere safe"
+                  checked={writtenDown}
+                  onChange={setWrittenDown}
+                />
+              ) : (
+                <View />
+              )}
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel="Hide phrase"
+                onPress={toggleHidden}
+                scaleTo={0.97}
+                hitSlop={10}
+                style={styles.hideButton}
+              >
+                <IconSwap name="eyeSlash" size={16} color={c.textSecondary} />
+                <Text style={styles.hideLabel}>Hide</Text>
+              </PressableScale>
+            </Animated.View>
+          ) : null}
+        </>
+      )}
     </PushedScreen>
   );
 }
@@ -196,72 +323,108 @@ export default function RecoveryPhraseScreen() {
 const useStyles = makeStyles((c) => ({
   content: {
     paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 4,
   },
-  card: {
-    // A solid card on the page, like every other card (no outline).
+  flex: {
+    flex: 1,
+  },
+  hero: {
+    marginBottom: 24,
+  },
+  title: {
+    color: c.text,
+    fontSize: 26,
+    fontWeight: '600',
+    letterSpacing: -0.4,
+  },
+  body: {
+    marginTop: 8,
+    color: c.textSecondary,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  grid: {
     flexDirection: 'row',
-    gap: 28,
-    paddingVertical: 26,
-    paddingHorizontal: 28,
-    borderRadius: 24,
-    backgroundColor: c.card,
+    gap: 10,
   },
   column: {
     flex: 1,
-  },
-  confirm: {
-    marginTop: 20,
-  },
-  wordSlot: {
-    height: 32,
-    justifyContent: 'center',
-  },
-  word: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
     gap: 10,
+  },
+  tile: {
+    height: 50,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: c.card,
   },
   index: {
     width: 20,
     color: c.textSecondary,
-    fontSize: 15,
+    fontSize: 14,
     fontVariant: ['tabular-nums'],
   },
   wordText: {
+    flex: 1,
     color: c.text,
     fontSize: 17,
     fontWeight: '500',
   },
-  tip: {
-    marginTop: 14,
-    flexDirection: 'row',
+  revealWrap: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     alignItems: 'center',
-    gap: 14,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: c.raised,
+    justifyContent: 'center',
   },
-  tipText: {
-    flex: 1,
-    color: c.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  hide: {
-    marginTop: 18,
-    alignSelf: 'center',
+  reveal: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    height: 40,
-    paddingHorizontal: 18,
-    borderRadius: 20,
-    backgroundColor: c.raised,
+    height: 44,
+    paddingHorizontal: 20,
+    borderRadius: 22,
+    backgroundColor: c.canvas,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
   },
-  hideLabel: {
+  revealLabel: {
     color: c.text,
     fontSize: 16,
+    fontWeight: '600',
+  },
+  below: {
+    marginTop: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  hideButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  hideLabel: {
+    color: c.textSecondary,
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  textButton: {
+    marginTop: 24,
+    alignSelf: 'center',
+    paddingVertical: 8,
+  },
+  textButtonLabel: {
+    color: c.accentText,
+    fontSize: 15,
     fontWeight: '600',
   },
   scrim: {
@@ -290,7 +453,7 @@ const useStyles = makeStyles((c) => ({
   warnTile: {
     width: 52,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },

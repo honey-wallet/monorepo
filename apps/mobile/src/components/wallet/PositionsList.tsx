@@ -29,16 +29,24 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
+import {
+  SkeletonBar,
+  SkeletonList,
+  SkeletonReveal,
+  useFirstLoad,
+} from '@/components/motion/Skeleton';
 import { SpinningCounter } from '@/components/motion/SpinningCounter';
 import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { TextMorph } from '@/components/motion/TextMorph';
 import { EarnHero } from '@/components/wallet/EarnHero';
-import { TokenIcon } from '@/components/wallet/parts';
+import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { POSITIONS, type Position, TRADES, type TradePosition } from '@/lib/collectibles';
 import { success, tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { EARN, formatUsd, TOKENS } from '@/lib/mock-wallet';
 import { showToast } from '@/lib/toast';
 import { useTradeModes } from '@/lib/trade-modes';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
@@ -47,6 +55,9 @@ const TICK = 2500;
 /** Demo only: interest at real rates is far too slow to see move. */
 const DEMO_SPEED = 400;
 const perSecond = (p: Position) => (p.usd * p.apy) / 100 / (365 * 24 * 3600);
+
+/** Stable, so the interest timer below isn't restarted on every render. */
+const NO_POSITIONS: Position[] = [];
 
 /** Home's Earning tab: growth over time, one suggestion, then the positions. */
 export function EarningList({
@@ -65,8 +76,12 @@ export function EarningList({
   const c = useTheme();
   const [tip, setTip] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
+  const loading = useFirstLoad(LOADS.positions);
+  // A wallet that's never had money in it isn't earning anything yet.
+  const { empty } = useWalletView();
+  const positions = empty ? NO_POSITIONS : POSITIONS;
   const [earned, setEarned] = useState(() =>
-    Object.fromEntries(POSITIONS.map((p) => [p.id, p.earned])),
+    Object.fromEntries(positions.map((p) => [p.id, p.earned])),
   );
 
   // Interest every second.
@@ -74,18 +89,18 @@ export function EarningList({
     const id = setInterval(() => {
       setEarned((e) => {
         const next = { ...e };
-        for (const p of POSITIONS) next[p.id] = (next[p.id] ?? 0) + perSecond(p) * DEMO_SPEED;
+        for (const p of positions) next[p.id] = (next[p.id] ?? 0) + perSecond(p) * DEMO_SPEED;
         return next;
       });
     }, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [positions]);
 
   const inJars = saved?.usd ?? 0;
-  const principal = POSITIONS.reduce((s, p) => s + p.usd, 0) + inJars;
-  const rewards = Object.values(earned).reduce((s, v) => s + v, 0);
+  const principal = positions.reduce((s, p) => s + p.usd, 0) + inJars;
+  const rewards = positions.length === 0 ? 0 : Object.values(earned).reduce((s, v) => s + v, 0);
   const apy =
-    (POSITIONS.reduce((s, p) => s + p.usd * p.apy, 0) + inJars * (saved?.apy ?? 0)) /
+    (positions.reduce((s, p) => s + p.usd * p.apy, 0) + inJars * (saved?.apy ?? 0)) /
     (principal || 1);
 
   return (
@@ -95,10 +110,11 @@ export function EarningList({
         apy={apy}
         startedMonthsAgo={STARTED_MONTHS_AGO}
         large={large}
+        loading={loading}
       />
 
       {/* One suggestion at a time: the token sitting idle that could be earning. */}
-      {IDLE_USDC > 0 && !large ? (
+      {IDLE_USDC > 0 && !large && !empty ? (
         <Accordion open={tip}>
           <SwipeDismiss onDismiss={() => setTip(false)}>
             {(dismiss) => (
@@ -138,19 +154,37 @@ export function EarningList({
       {middle}
 
       {large ? <Text style={styles.listTitle}>Positions</Text> : null}
-      {POSITIONS.map((p) => (
-        <Row
-          key={p.id}
-          position={p}
-          earned={earned[p.id] ?? 0}
-          onClaimed={() => setEarned((e) => ({ ...e, [p.id]: 0 }))}
-          open={openId === p.id}
-          onToggle={() => {
-            tap();
-            setOpenId((id) => (id === p.id ? null : p.id));
-          }}
-        />
-      ))}
+      <SkeletonReveal
+        loading={loading}
+        skeleton={<SkeletonList count={Math.max(positions.length, 2)} />}
+      >
+        {positions.map((p) => (
+          <Row
+            key={p.id}
+            position={p}
+            earned={earned[p.id] ?? 0}
+            onClaimed={() => setEarned((e) => ({ ...e, [p.id]: 0 }))}
+            open={openId === p.id}
+            onToggle={() => {
+              tap();
+              setOpenId((id) => (id === p.id ? null : p.id));
+            }}
+          />
+        ))}
+        {positions.length === 0 && large ? (
+          <EmptyState
+            compact
+            icon="sparkles"
+            title="Nothing earning yet"
+            hint="Put idle tokens to work. No lockup, withdraw anytime."
+            action={{
+              label: 'Start earning',
+              onPress: () =>
+                router.push({ pathname: '/earn/[symbol]', params: { symbol: 'USDC' } }),
+            }}
+          />
+        ) : null}
+      </SkeletonReveal>
     </View>
   );
 }
@@ -186,8 +220,20 @@ export function TradesList() {
   const value = trades.reduce((s, t) => s + t.usd + (pnl[t.id] ?? 0), 0);
   const total = trades.reduce((s, t) => s + (pnl[t.id] ?? 0), 0);
   const color = total >= 0 ? c.success : c.error;
+  const loading = useFirstLoad(LOADS.trades);
+  if (!loading && trades.length === 0) {
+    return (
+      <EmptyState
+        compact
+        icon="trade"
+        title="No open trades"
+        hint="Perps and predictions you open show up here."
+        action={{ label: 'Explore markets', onPress: () => router.navigate('/trade') }}
+      />
+    );
+  }
   return (
-    <View>
+    <SkeletonReveal loading={loading} skeleton={<TradesSkeleton count={trades.length || 2} />}>
       {/* Two figures side by side, as Aave's stat card: what's in, and how it's doing. */}
       <View style={styles.summaryCard}>
         <View style={styles.flex}>
@@ -211,6 +257,27 @@ export function TradesList() {
       {trades.map((t) => (
         <TradeRow key={t.id} trade={t} pnl={pnl[t.id] ?? 0} />
       ))}
+    </SkeletonReveal>
+  );
+}
+
+/** The summary card and trade rows while positions load. */
+function TradesSkeleton({ count }: { count: number }) {
+  const styles = useStyles();
+  return (
+    <View>
+      <View style={styles.summaryCard}>
+        <View style={[styles.flex, styles.skeletonFigure]}>
+          <SkeletonBar width={84} height={12} />
+          <SkeletonBar width={96} height={20} />
+        </View>
+        <View style={styles.summaryDivider} />
+        <View style={[styles.flex, styles.summaryEnd, styles.skeletonFigure]}>
+          <SkeletonBar width={72} height={12} />
+          <SkeletonBar width={80} height={20} />
+        </View>
+      </View>
+      <SkeletonList count={count} />
     </View>
   );
 }
@@ -500,7 +567,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: c.card,
@@ -513,6 +580,10 @@ const useStyles = makeStyles((c) => ({
   },
   summaryEnd: {
     alignItems: 'flex-end',
+  },
+  skeletonFigure: {
+    gap: 6,
+    paddingVertical: 2,
   },
   summaryLabel: {
     color: c.textSecondary,
@@ -535,7 +606,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 14,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

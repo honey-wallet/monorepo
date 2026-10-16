@@ -22,12 +22,24 @@ import { IconSwap, Swap } from '@/components/motion/IconSwap';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { Entrance, Rise } from '@/components/motion/Rise';
+import {
+  SkeletonBar,
+  SkeletonChart,
+  SkeletonList,
+  SkeletonReveal,
+  useFirstLoad,
+} from '@/components/motion/Skeleton';
 import { Sticky, StickyArea } from '@/components/motion/Sticky';
 import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
-import { PillButton } from '@/components/onboarding/PillButton';
-import { ApprovalsNudge, CARD_ICON, SharedWalletCard } from '@/components/wallet/ApprovalsCard';
+import { FinishSetupCard, FundWalletCard } from '@/components/wallet/ActivationCard';
+import {
+  ApprovalsNudge,
+  CARD_ICON,
+  SharedWalletCard,
+  useApprovalsNudgeShown,
+} from '@/components/wallet/ApprovalsCard';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import { NftGallery } from '@/components/wallet/NftGallery';
 import { TradesList, useHasTrades } from '@/components/wallet/PositionsList';
@@ -42,9 +54,11 @@ import {
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib/mock-wallet';
 import { useMultisig, useNeedsMyApproval } from '@/lib/multisig';
 import { useUnreadNotifications } from '@/lib/notifications';
+import { setupComplete, useOnboarding } from '@/lib/onboarding';
 import { useProfile } from '@/lib/profile';
 import { HIDDEN_AMOUNT, updateSettings, useSettings } from '@/lib/settings';
 import { useTabReselect } from '@/lib/tab-reselect';
@@ -78,22 +92,45 @@ export default function HomeScreen() {
   // Earning lives on Savings; Home is balance, actions and what you hold, plus open
   // trades (the thing you check most), but only when there are some.
   const hasTrades = useHasTrades();
-  const sections = SECTIONS.filter((s) => s !== 'Trades' || hasTrades);
-  // Switching to a shared wallet (which can't trade) hides Trades; fall back to Tokens.
-  const shownSection = sections.includes(section) ? section : 'Tokens';
   const [showHidden, setShowHidden] = useState(false);
   const unread = useUnreadNotifications();
   const wallet = useActiveWallet();
   const isMain = wallet.id === 'main';
   const multisig = useMultisig(wallet.id);
+  // Each wallet's balances arrive once; switching back to one shows them straight away.
+  const loading = useFirstLoad(LOADS.balances(wallet.id));
   // The bell also lights up while a shared wallet is waiting for your approval.
   const needsMe = useNeedsMyApproval();
   const { copied, copy: copyAddress } = useCopy(wallet.address, 'Address copied');
 
   // The wallet in use: a shared wallet shows its own balances.
   const view = useWalletView();
+  // A new wallet that hasn't had its first deposit yet.
+  const empty = !!view.empty;
+  // A new wallet has no trades yet, whatever the demo data says.
+  const sections = SECTIONS.filter((s) => s !== 'Trades' || (hasTrades && !empty));
+  // Switching to a shared wallet (which can't trade) hides Trades; fall back to Tokens.
+  const shownSection = sections.includes(section) ? section : 'Tokens';
+  // The promo lists Honey Jar rates, which come with Savings' Earn rates.
+  const ratesLoading = useFirstLoad(LOADS.earnRates);
+  const onboarding = useOnboarding();
+  const nudgeShown = useApprovalsNudgeShown();
   const changePct = view.usd ? (view.change / (view.usd - view.change)) * 100 : 0;
   const { hideBalance, earnPromo } = useSettings();
+  // Between the actions and the tabs, Home shows at most two cards, by priority:
+  // what needs you (approvals), then getting set up (add money / finish setup), then
+  // the Earn promo. Anything past two waits until one above it is done or dismissed.
+  // Activation and the promo wait for balances: until then it's unknown whether the
+  // wallet is empty, and the wrong card would show and then swap.
+  const cards = (
+    [
+      (multisig || nudgeShown) && 'approvals',
+      !loading && (empty || (isMain && !setupComplete(onboarding))) && 'activation',
+      earnPromo && !loading && !ratesLoading && !empty && 'earn',
+    ] as const
+  )
+    .filter((card): card is 'approvals' | 'activation' | 'earn' => !!card)
+    .slice(0, 2);
   const changeColor = view.change < 0 ? c.error : c.success;
   const canvas = c.canvas;
   const divider = c.divider;
@@ -162,38 +199,59 @@ export default function HomeScreen() {
 
           {/* Balance and today's change */}
           <Rise index={1}>
-            <View style={[styles.row, styles.gutter, styles.balanceRow]}>
-              <View style={styles.flex}>
-                {/* Tap the balance to hide or show it. */}
-                <BalanceAmount style={styles.balance} fractionStyle={styles.cents} />
-                <PressableScale
-                  style={styles.changeRow}
-                  hitSlop={6}
-                  scaleTo={0.98}
-                  onPress={() => openPortfolio()}
-                >
-                  <Icon name={view.change < 0 ? 'down' : 'up'} size={9} color={changeColor} />
-                  <Text style={styles.changeText}>
-                    <Text style={styles.changeAmount}>
-                      {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(view.change))} (
-                      {Math.abs(changePct).toFixed(2)}%)
-                    </Text>{' '}
-                    today
-                  </Text>
-                  <Icon name="chevronRight" size={11} color={c.textSecondary} />
-                </PressableScale>
+            <SkeletonReveal
+              loading={loading}
+              skeleton={
+                <View style={[styles.row, styles.gutter, styles.balanceRow]}>
+                  <View style={[styles.flex, styles.balanceSkeleton]}>
+                    <SkeletonBar width={190} height={34} radius={10} />
+                    <SkeletonBar width={150} height={14} />
+                  </View>
+                  <View style={styles.sparkSkeleton}>
+                    <SkeletonChart height={60} inset={4} />
+                  </View>
+                </View>
+              }
+            >
+              <View style={[styles.row, styles.gutter, styles.balanceRow]}>
+                <View style={styles.flex}>
+                  {/* Tap the balance to hide or show it. */}
+                  <BalanceAmount style={styles.balance} fractionStyle={styles.cents} />
+                  {/* A brand-new wallet has no day to compare with yet. */}
+                  {empty ? null : (
+                    <PressableScale
+                      style={styles.changeRow}
+                      hitSlop={6}
+                      scaleTo={0.98}
+                      onPress={() => openPortfolio()}
+                    >
+                      <Icon name={view.change < 0 ? 'down' : 'up'} size={9} color={changeColor} />
+                      <Text style={styles.changeText}>
+                        <Text style={styles.changeAmount}>
+                          {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(view.change))} (
+                          {Math.abs(changePct).toFixed(2)}%)
+                        </Text>{' '}
+                        today
+                      </Text>
+                      <Icon name="chevronRight" size={11} color={c.textSecondary} />
+                    </PressableScale>
+                  )}
+                </View>
+                {empty ? null : (
+                  <PressableScale
+                    accessibilityLabel="Portfolio"
+                    scaleTo={0.97}
+                    onPress={() => openPortfolio()}
+                  >
+                    <Sparkline data={BALANCE_HISTORY} width={116} height={60} />
+                  </PressableScale>
+                )}
               </View>
-              <PressableScale
-                accessibilityLabel="Portfolio"
-                scaleTo={0.97}
-                onPress={() => openPortfolio()}
-              >
-                <Sparkline data={BALANCE_HISTORY} width={116} height={60} />
-              </PressableScale>
-            </View>
+            </SkeletonReveal>
           </Rise>
 
-          {/* Send / Receive / Buy / Sell, rising one after another */}
+          {/* Send / Receive / Buy / Sell, rising one after another. An empty wallet keeps
+              them too, so the layout is familiar from day one. */}
           <View style={[styles.actions, styles.gutter]}>
             {ACTIONS.map((action, i) => (
               <Rise key={action.label} index={2 + i} style={styles.flex}>
@@ -209,9 +267,10 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          {/* A shared wallet's members, rule and what's waiting; elsewhere, a nudge if any
+          {/* At most two cards here, the two that matter most (see `cards` above). A
+              shared wallet's members, rule and what's waiting; elsewhere, a nudge if any
               of your shared wallets need you. */}
-          {multisig ? (
+          {!cards.includes('approvals') ? null : multisig ? (
             <Rise index={6} style={styles.gutterMargin}>
               <SharedWalletCard multisig={multisig} />
             </Rise>
@@ -221,10 +280,19 @@ export default function HomeScreen() {
             </View>
           )}
 
+          {/* Activation: an empty wallet is all about the first deposit; once there's
+              money, finishing setup earns a fee credit. Gone when both are done. */}
+          {/* Picked once balances load, so it opens in rather than shoving the tabs down. */}
+          <Accordion open={cards.includes('activation')}>
+            <Rise index={6} style={styles.card}>
+              {empty ? <FundWalletCard /> : <FinishSetupCard />}
+            </Rise>
+          </Accordion>
+
           {/* Promoted feature, as Uniswap's: one slim outlined line that opens into the
               ways to earn. Swipe it away (or Hide it) and it stays gone. */}
           <Rise index={6}>
-            <Accordion open={earnPromo}>
+            <Accordion open={cards.includes('earn')}>
               <SwipeDismiss onDismiss={() => updateSettings({ earnPromo: false })}>
                 {(dismiss) => (
                   <View style={[styles.promo, styles.gutterMargin]}>
@@ -317,25 +385,33 @@ export default function HomeScreen() {
               ]}
             >
               {shownSection === 'Tokens' && (
-                <>
+                <SkeletonReveal loading={loading} skeleton={<SkeletonList count={5} />}>
                   {/* A new shared wallet starts empty: say how to fund it. */}
-                  {visible.length === 0 && (
-                    <>
-                      <EmptyState
-                        icon="receive"
-                        title="Nothing here yet"
-                        hint={
-                          multisig
+                  {/* A new wallet: the Add money card above is how tokens get here. */}
+                  {visible.length === 0 && empty && (
+                    <EmptyState
+                      icon="receive"
+                      title="No tokens yet"
+                      hint="Tokens you buy or receive will show up here."
+                    />
+                  )}
+                  {visible.length === 0 && !empty && (
+                    <EmptyState
+                      icon="receive"
+                      title={hidden.length > 0 ? 'Every token is hidden' : 'Nothing here yet'}
+                      hint={
+                        hidden.length > 0
+                          ? 'Open Hidden tokens below to see them.'
+                          : multisig
                             ? `Send tokens on ${multisig.network.name} to this wallet's address.`
                             : 'Tokens you receive will show up here.'
-                        }
-                      />
-                      <PillButton
-                        label="Receive"
-                        variant="secondary"
-                        onPress={() => open('/receive')}
-                      />
-                    </>
+                      }
+                      action={
+                        hidden.length > 0
+                          ? undefined
+                          : { label: 'Receive', onPress: () => router.push('/receive') }
+                      }
+                    />
                   )}
                   {visible.map((token, i) => (
                     <Rise key={token.symbol} index={8 + i}>
@@ -365,12 +441,12 @@ export default function HomeScreen() {
                       </View>
                     </Rise>
                   )}
-                </>
+                </SkeletonReveal>
               )}
               {/* The demo collectibles and positions belong to your own wallets (shared wallets
                   can't trade, so Trading never shows for them). */}
               {shownSection === 'NFTs' &&
-                (multisig ? (
+                (multisig || empty ? (
                   <EmptyState
                     icon="image"
                     title="No NFTs yet"
@@ -442,7 +518,7 @@ export default function HomeScreen() {
                       pointerEvents="none"
                       style={[styles.address, styles.headerBalance, balanceShown]}
                     >
-                      {hideBalance ? HIDDEN_AMOUNT : formatUsd(view.usd)}
+                      {loading ? '' : hideBalance ? HIDDEN_AMOUNT : formatUsd(view.usd)}
                     </Animated.Text>
                   </View>
                 </View>
@@ -548,6 +624,10 @@ const useStyles = makeStyles((c) => ({
   bleed: {
     marginHorizontal: -18,
   },
+  card: {
+    marginTop: 12,
+    marginHorizontal: 18,
+  },
   gutterMargin: {
     marginHorizontal: 18,
   },
@@ -631,6 +711,17 @@ const useStyles = makeStyles((c) => ({
   cents: {
     color: c.textSecondary,
   },
+  // The same footprint as the balance and today's change, so nothing jumps on reveal.
+  balanceSkeleton: {
+    height: 67,
+    justifyContent: 'center',
+    gap: 10,
+  },
+  sparkSkeleton: {
+    width: 116,
+    height: 60,
+    justifyContent: 'center',
+  },
   changeRow: {
     marginTop: 4,
     flexDirection: 'row',
@@ -667,7 +758,7 @@ const useStyles = makeStyles((c) => ({
   // approvals one above it.
   promo: {
     marginTop: 12,
-    borderRadius: 18,
+    borderRadius: 20,
     backgroundColor: c.card,
     overflow: 'hidden',
   },

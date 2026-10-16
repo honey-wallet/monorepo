@@ -4,9 +4,11 @@ import { Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
+import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { HeaderIconButton, PushedScreen } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { shortAddress } from '@/lib/mock-wallet';
 import { useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
@@ -22,6 +24,8 @@ export default function SmartWalletScreen() {
   const wallets = allWallets(profile.name, added);
   // Demo state: every wallet but the main one starts as a smart wallet.
   const [inactive, setInactive] = useState<Set<string>>(() => new Set(['main']));
+  // Whether a wallet is smart is read from its account on chain.
+  const loading = useFirstLoad(LOADS.smartWallets);
 
   const toggle = (id: string, label: string) => {
     tap();
@@ -39,6 +43,7 @@ export default function SmartWalletScreen() {
       fallback="/settings"
       right={
         <HeaderIconButton
+          bare
           icon="help"
           label="What are smart wallets?"
           onPress={() => router.push('/smart-wallet-info')}
@@ -52,7 +57,8 @@ export default function SmartWalletScreen() {
             key={w.id}
             accessibilityRole="switch"
             accessibilityState={{ checked: active }}
-            accessibilityLabel={`${w.label}, smart wallet ${active ? 'active' : 'inactive'}`}
+            accessibilityLabel={`${w.label}, smart wallet ${loading ? 'loading' : active ? 'active' : 'inactive'}`}
+            disabled={loading}
             onPress={() => toggle(w.id, w.label)}
             style={styles.row}
           >
@@ -68,10 +74,14 @@ export default function SmartWalletScreen() {
               </Text>
               <Text style={styles.address}>{shortAddress(w.address)}</Text>
             </View>
-            <TextSwap
-              text={active ? 'Active' : 'Inactive'}
-              style={[styles.status, active && styles.statusActive]}
-            />
+            {loading ? (
+              <SkeletonBar width={56} height={14} />
+            ) : (
+              <TextSwap
+                text={active ? 'Active' : 'Inactive'}
+                style={[styles.status, active && styles.statusActive]}
+              />
+            )}
             <Icon name="chevronRight" size={15} color={c.textSecondary} />
           </PressableRow>
         );

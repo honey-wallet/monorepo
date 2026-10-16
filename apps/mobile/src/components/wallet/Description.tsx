@@ -14,6 +14,7 @@ import Animated, {
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { Icon } from '@/components/Icon';
 import { AccordionChevron } from '@/components/motion/Accordion';
+import { SkeletonBar, SkeletonReveal } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
@@ -22,18 +23,23 @@ import { DURATION, EASE } from '@/theme/motion';
 const LINE = 24;
 const FADE = { duration: DURATION.fast, easing: EASE.ease } as const;
 
-/** A titled block of text that clamps to `lines` and opens with Read more. */
+/**
+ * A titled block of text that clamps to `lines` and opens with Read more. While
+ * `loading`, the title stays and the body is bars on the same line grid.
+ */
 export function Description({
   title = 'Description',
   text,
   lines = 3,
   background,
+  loading = false,
 }: {
   title?: string;
   text: string;
   lines?: number;
   /** The surface behind it, which the last line fades into (the page by default). */
   background?: string;
+  loading?: boolean;
 }) {
   const styles = useStyles();
   const c = useTheme();
@@ -66,44 +72,58 @@ export function Description({
           {title}
         </Text>
       </View>
-      <Animated.View style={[styles.body, body]}>
-        {/* Laid out free of the clip (absolute), so iOS wraps every line and the
+      <SkeletonReveal
+        loading={loading}
+        skeleton={
+          <View>
+            {Array.from({ length: lines }, (_, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+              <View key={i} style={styles.skeletonLine}>
+                <SkeletonBar width={i === lines - 1 ? '60%' : '100%'} height={12} />
+              </View>
+            ))}
+          </View>
+        }
+      >
+        <Animated.View style={[styles.body, body]}>
+          {/* Laid out free of the clip (absolute), so iOS wraps every line and the
             measure is the full height; the block clips it while closed. */}
-        <View
-          style={styles.measure}
-          onLayout={(e) => setFull(Math.ceil(e.nativeEvent.layout.height))}
-        >
-          <Text style={styles.text}>{text}</Text>
-        </View>
+          <View
+            style={styles.measure}
+            onLayout={(e) => setFull(Math.ceil(e.nativeEvent.layout.height))}
+          >
+            <Text style={styles.text}>{text}</Text>
+          </View>
+          {long ? (
+            <Animated.View pointerEvents="none" style={[styles.veil, veil]}>
+              <Svg width="100%" height="100%">
+                <Defs>
+                  <LinearGradient id="descFade" x1="0" y1="0" x2="0" y2="1">
+                    <Stop offset="0" stopColor={fadeTo} stopOpacity={0} />
+                    <Stop offset="1" stopColor={fadeTo} stopOpacity={1} />
+                  </LinearGradient>
+                </Defs>
+                <Rect width="100%" height="100%" fill="url(#descFade)" />
+              </Svg>
+            </Animated.View>
+          ) : null}
+        </Animated.View>
         {long ? (
-          <Animated.View pointerEvents="none" style={[styles.veil, veil]}>
-            <Svg width="100%" height="100%">
-              <Defs>
-                <LinearGradient id="descFade" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0" stopColor={fadeTo} stopOpacity={0} />
-                  <Stop offset="1" stopColor={fadeTo} stopOpacity={1} />
-                </LinearGradient>
-              </Defs>
-              <Rect width="100%" height="100%" fill="url(#descFade)" />
-            </Svg>
-          </Animated.View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ expanded: open }}
+            hitSlop={8}
+            onPress={() => {
+              tap();
+              setOpen((o) => !o);
+            }}
+            style={styles.more}
+          >
+            <TextSwap text={open ? 'Read less' : 'Read more'} style={styles.moreLabel} />
+            <AccordionChevron open={open} size={13} color={c.text} />
+          </Pressable>
         ) : null}
-      </Animated.View>
-      {long ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          hitSlop={8}
-          onPress={() => {
-            tap();
-            setOpen((o) => !o);
-          }}
-          style={styles.more}
-        >
-          <TextSwap text={open ? 'Read less' : 'Read more'} style={styles.moreLabel} />
-          <AccordionChevron open={open} size={13} color={c.text} />
-        </Pressable>
-      ) : null}
+      </SkeletonReveal>
     </View>
   );
 }
@@ -122,6 +142,10 @@ const useStyles = makeStyles((c) => ({
   },
   body: {
     overflow: 'hidden',
+  },
+  skeletonLine: {
+    height: LINE,
+    justifyContent: 'center',
   },
   measure: {
     position: 'absolute',

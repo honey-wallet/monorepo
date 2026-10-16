@@ -3,6 +3,7 @@ import { Linking, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { Sticky } from '@/components/motion/Sticky';
 import {
   MemberAvatar,
@@ -10,11 +11,13 @@ import {
   NetworkBadge,
   networkLabel,
   ProposalRow,
+  ProposalRowSkeleton,
 } from '@/components/wallet/MultisigParts';
 import { EmptyState, PushedScreen, TokenIcon } from '@/components/wallet/parts';
 import { SheetRow } from '@/components/wallet/Sheet';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { formatAmount, formatUsd, shortAddress } from '@/lib/mock-wallet';
 import { memberName, PURPOSES, propose, useMultisig, useProposals, YOU } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
@@ -39,6 +42,10 @@ export default function MultisigScreen() {
   const multisig = useMultisig(id);
   const { pending, history } = useProposals(id);
   const { copied, copy } = useCopy(wallet?.address ?? '', 'Address copied');
+  // Balances are read from the chain.
+  const loading = useFirstLoad(LOADS.balances(id));
+  // So are its proposals, the same fetch as Activity's.
+  const proposalsLoading = useFirstLoad(LOADS.activity(id));
 
   if (!wallet || !multisig) {
     return (
@@ -47,6 +54,7 @@ export default function MultisigScreen() {
           icon="multisig"
           title="Not found"
           hint="This shared wallet isn't on this device."
+          action={{ label: 'See wallets', onPress: () => router.replace('/wallets') }}
         />
       </PushedScreen>
     );
@@ -104,26 +112,53 @@ export default function MultisigScreen() {
       </View>
 
       {/* Balance */}
-      <Text style={styles.total}>{formatUsd(total)}</Text>
-      {multisig.holdings.map((h) => (
-        <View key={`${h.symbol}-${h.chain}`} style={styles.holding}>
-          <TokenIcon symbol={h.symbol} size={30} />
-          <Text style={[styles.flex, styles.holdingName]}>{h.symbol}</Text>
-          <Text style={styles.holdingAmount}>{formatAmount(h.amount)}</Text>
-          <Text style={styles.holdingUsd}>{formatUsd(h.usd)}</Text>
-        </View>
-      ))}
-      {multisig.holdings.length === 0 ? (
-        <Text style={styles.hint}>
-          Nothing here yet. Send funds to the address above on {multisig.network.name}.
-        </Text>
-      ) : null}
+      <SkeletonReveal
+        loading={loading}
+        skeleton={
+          <View>
+            <View style={styles.totalSkeleton}>
+              <SkeletonBar width={150} height={30} radius={8} />
+            </View>
+            {[0, 1].map((i) => (
+              <View key={i} style={styles.holding}>
+                <SkeletonBar width={30} height={30} radius={15} />
+                <View style={styles.flex}>
+                  <SkeletonBar width={52} height={14} />
+                </View>
+                <SkeletonBar width={48} height={13} />
+                <SkeletonBar width={64} height={14} />
+              </View>
+            ))}
+          </View>
+        }
+      >
+        <Text style={styles.total}>{formatUsd(total)}</Text>
+        {multisig.holdings.map((h) => (
+          <View key={`${h.symbol}-${h.chain}`} style={styles.holding}>
+            <TokenIcon symbol={h.symbol} size={30} />
+            <Text style={[styles.flex, styles.holdingName]}>{h.symbol}</Text>
+            <Text style={styles.holdingAmount}>{formatAmount(h.amount)}</Text>
+            <Text style={styles.holdingUsd}>{formatUsd(h.usd)}</Text>
+          </View>
+        ))}
+        {multisig.holdings.length === 0 ? (
+          <EmptyState
+            compact
+            icon="receive"
+            title="Nothing here yet"
+            hint={`Send funds to this wallet's address on ${multisig.network.name}.`}
+            action={{ label: 'Copy address', onPress: copy }}
+          />
+        ) : null}
+      </SkeletonReveal>
 
       {/* Waiting for approval */}
       <Sticky id="waiting" style={styles.sectionGap}>
         <Text style={styles.section}>Waiting for approval</Text>
       </Sticky>
-      {pending.length ? (
+      {proposalsLoading ? (
+        <ProposalRowSkeleton count={1} />
+      ) : pending.length ? (
         pending.map((p) => (
           <ProposalRow
             key={p.id}
@@ -183,21 +218,25 @@ export default function MultisigScreen() {
       />
 
       {/* History */}
-      {history.length ? (
-        <>
-          <Sticky id="history" style={styles.sectionGap}>
-            <Text style={styles.section}>History</Text>
-          </Sticky>
-          {history.map((p) => (
-            <ProposalRow
-              key={p.id}
-              multisig={multisig}
-              proposal={p}
-              onPress={() => openProposal(p.id)}
-            />
-          ))}
-        </>
-      ) : null}
+      <Sticky id="history" style={styles.sectionGap}>
+        <Text style={styles.section}>History</Text>
+      </Sticky>
+      {proposalsLoading ? (
+        <ProposalRowSkeleton count={2} />
+      ) : history.length ? (
+        history.map((p) => (
+          <ProposalRow
+            key={p.id}
+            multisig={multisig}
+            proposal={p}
+            onPress={() => openProposal(p.id)}
+          />
+        ))
+      ) : (
+        <Text style={styles.hint}>
+          No transactions yet. Approved and rejected proposals land here.
+        </Text>
+      )}
 
       <PressableScale onPress={viewOnline} scaleTo={0.98} style={styles.external}>
         <Text style={styles.externalText}>
@@ -257,6 +296,13 @@ const useStyles = makeStyles((c) => ({
     fontSize: 34,
     fontWeight: '500',
     letterSpacing: -0.6,
+  },
+  // The total's line box (34pt), with the same margins.
+  totalSkeleton: {
+    marginTop: 22,
+    marginBottom: 6,
+    height: 41,
+    justifyContent: 'center',
   },
   holding: {
     flexDirection: 'row',

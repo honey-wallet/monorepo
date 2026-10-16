@@ -77,10 +77,9 @@ const useStyles = makeStyles((c) => ({
     minHeight: 130,
     padding: 14,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: c.divider,
     color: c.text,
     fontSize: 16,
     lineHeight: 22,
+    backgroundColor: c.card,
   },
 }));

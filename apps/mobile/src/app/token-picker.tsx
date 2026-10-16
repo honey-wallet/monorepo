@@ -56,6 +56,7 @@ export default function TokenPickerSheet() {
 
   return (
     <SheetScreen scroll sticky={search}>
+      {/* TokenList skeletons itself while balances load. */}
       <TokenList query={query} onChoose={choose} />
     </SheetScreen>
   );

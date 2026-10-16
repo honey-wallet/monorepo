@@ -12,6 +12,13 @@ export type ThemePreference = 'auto' | 'light' | 'dark';
 export const TRADE_MODES = ['Swap', 'Perps', 'Predict', 'Futures', 'Options'] as const;
 export type TradeMode = (typeof TRADE_MODES)[number];
 
+/**
+ * The products that can be shown for now. Futures and Options are switched off until
+ * they're built out; add them back here to bring them back (their screens stay in place).
+ */
+export const AVAILABLE_TRADE_MODES: readonly TradeMode[] = ['Swap', 'Perps', 'Predict'];
+// export const AVAILABLE_TRADE_MODES: readonly TradeMode[] = TRADE_MODES;
+
 /** Each Trade product's symbol and one-line description (Trade's tabs and the tabs editor). */
 export const TRADE_MODE_INFO: Record<TradeMode, { icon: IconName; hint: string }> = {
   Swap: { icon: 'trade', hint: 'Trade or bridge, any network' },
@@ -56,7 +63,7 @@ export const settings = createStore<Settings>({
   analytics: true,
   backedUp: true,
   hideBalance: false,
-  tradeTabs: [...TRADE_MODES],
+  tradeTabs: [...AVAILABLE_TRADE_MODES],
   earnPromo: true,
 });
 

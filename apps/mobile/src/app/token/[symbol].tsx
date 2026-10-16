@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Linking, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,12 @@ import { PopoverMenu } from '@/components/motion/PopoverMenu';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { RESIZE } from '@/components/motion/resize';
 import { SegmentedTabs } from '@/components/motion/SegmentedTabs';
-import { SkeletonBar, SkeletonReveal } from '@/components/motion/Skeleton';
+import {
+  SkeletonBar,
+  SkeletonChart,
+  SkeletonReveal,
+  useFirstLoad,
+} from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { ACTION_FOOTER_HEIGHT, ActionFooter } from '@/components/wallet/ActionFooter';
 import { Description } from '@/components/wallet/Description';
@@ -21,6 +26,7 @@ import { Change, EmptyState, PushedScreen, TokenIcon } from '@/components/wallet
 import { StatRow } from '@/components/wallet/Sheet';
 import { toggleFavorite, useFavorites } from '@/lib/favorites';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import {
   CHAINS,
   chainSymbol,
@@ -33,16 +39,14 @@ import {
   type Range,
   series,
   TOKEN_INFO,
-  TOKENS,
   VAULTS,
 } from '@/lib/mock-wallet';
 import { showToast } from '@/lib/toast';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 import { LAYOUT_MOVE } from '@/theme/motion';
 
 const CHART_HEIGHT = 230;
-/** Simulated network delay, so the skeleton reveal is visible until real data exists. */
-const LOAD_DELAY = 600;
 
 export default function TokenScreen() {
   const { symbol = 'ETH' } = useLocalSearchParams<{ symbol: string }>();
@@ -54,19 +58,16 @@ export default function TokenScreen() {
 
   const market = MARKET.find((t) => t.symbol === symbol);
   const info = TOKEN_INFO[symbol];
-  const held = TOKENS.find((t) => t.symbol === symbol);
+  // What the wallet in use holds: none for a new wallet, its own for a shared one.
+  const view = useWalletView();
+  const held = view.tokens.find((t) => t.symbol === symbol && t.amount > 0);
   const vault = VAULTS[symbol];
 
   const [range, setRange] = useState<Range>('1D');
   const [scrub, setScrub] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const loading = useFirstLoad(LOADS.token(symbol));
   const [showBreakdown, setShowBreakdown] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), LOAD_DELAY);
-    return () => clearTimeout(timer);
-  }, []);
 
   if (!market) {
     return (
@@ -189,14 +190,7 @@ export default function TokenScreen() {
         </View>
       </View>
 
-      <SkeletonReveal
-        loading={loading}
-        skeleton={
-          <View style={[styles.chartSkeleton, { height: CHART_HEIGHT }]}>
-            <SkeletonBar width="100%" height={2} />
-          </View>
-        }
-      >
+      <SkeletonReveal loading={loading} skeleton={<SkeletonChart height={CHART_HEIGHT} />}>
         <PriceChart data={data} width={width} height={CHART_HEIGHT} onScrub={setScrub} />
       </SkeletonReveal>
       <View style={styles.ranges}>
@@ -213,8 +207,9 @@ export default function TokenScreen() {
               {held.amount} {symbol}
             </Text>
           </Text>
-          {/* One chain would only repeat the balance above. */}
-          {info.holdings.length > 1 && (
+          {/* One chain would only repeat the balance above. A shared wallet lives on one
+              network, and these per-chain figures are your own wallet's. */}
+          {info.holdings.length > 1 && !view.multisig && (
             <>
               <Pressable
                 accessibilityRole="button"
@@ -270,26 +265,34 @@ export default function TokenScreen() {
       )}
 
       {/* Performance */}
-      {held && info && (
+      {held && info && !view.multisig && (
         <Animated.View layout={RESIZE} style={[styles.section, styles.gutter]}>
           <Text style={styles.heading}>Performance (all time)</Text>
-          <StatRow label="Average cost" value={formatPrice(info.performance.averageCost)} />
-          <StatRow
-            label="Unrealized return"
-            value={<Signed value={info.performance.unrealized} />}
-          />
-          <StatRow label="Realized return" value={<Signed value={info.performance.realized} />} />
-          <StatRow
-            label="Total return"
-            value={<Signed value={info.performance.unrealized + info.performance.realized} />}
-          />
+          {/* The labels are ours; only the values wait, so the rows keep their height. */}
+          <SkeletonReveal
+            loading={loading}
+            skeleton={PERFORMANCE_LABELS.map((label) => (
+              <StatRow key={label} label={label} value={<SkeletonBar width={72} />} />
+            ))}
+          >
+            <StatRow label="Average cost" value={formatPrice(info.performance.averageCost)} />
+            <StatRow
+              label="Unrealized return"
+              value={<Signed value={info.performance.unrealized} />}
+            />
+            <StatRow label="Realized return" value={<Signed value={info.performance.realized} />} />
+            <StatRow
+              label="Total return"
+              value={<Signed value={info.performance.unrealized + info.performance.realized} />}
+            />
+          </SkeletonReveal>
         </Animated.View>
       )}
 
       {/* About */}
       {info && (
         <Animated.View layout={LAYOUT_MOVE} style={[styles.section, styles.gutter]}>
-          <Description title={`About ${market.name}`} text={info.about} />
+          <Description title={`About ${market.name}`} text={info.about} loading={loading} />
         </Animated.View>
       )}
 
@@ -299,13 +302,14 @@ export default function TokenScreen() {
           <Text style={styles.heading}>Stats</Text>
           <SkeletonReveal
             loading={loading}
-            skeleton={
-              <View style={styles.statSkeleton}>
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <SkeletonBar key={i} width="100%" height={18} />
-                ))}
-              </View>
-            }
+            skeleton={STAT_LABELS.map(({ icon, label }) => (
+              <StatRow
+                key={label}
+                icon={<Icon name={icon} size={15} color={c.textSecondary} />}
+                label={label}
+                value={<SkeletonBar width={72} />}
+              />
+            ))}
           >
             <Stat icon="pie" label="Market cap" value={formatCompactUsd(market.marketCap)} />
             <Stat
@@ -352,6 +356,18 @@ function Signed({ value }: { value: number }) {
     </View>
   );
 }
+
+const PERFORMANCE_LABELS = ['Average cost', 'Unrealized return', 'Realized return', 'Total return'];
+
+/** The Stats rows' icons and labels, for the skeleton (keep in step with the rows above). */
+const STAT_LABELS: { icon: IconName; label: string }[] = [
+  { icon: 'pie', label: 'Market cap' },
+  { icon: 'layers', label: 'Fully diluted valuation' },
+  { icon: 'chart', label: '24h volume' },
+  { icon: 'trendUp', label: '52W high' },
+  { icon: 'trendDown', label: '52W low' },
+  { icon: 'globe', label: 'Network' },
+];
 
 function Stat({ icon, label, value }: { icon: IconName; label: string; value: string }) {
   const c = useTheme();
@@ -419,10 +435,6 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 15,
   },
-  chartSkeleton: {
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-  },
   ranges: {
     marginTop: 8,
     paddingHorizontal: 12,
@@ -436,9 +448,8 @@ const useStyles = makeStyles((c) => ({
   },
   heading: {
     marginBottom: 10,
-    color: c.text,
-    fontSize: 18,
-    fontWeight: '500',
+    color: c.textSecondary,
+    fontSize: 15,
   },
   balance: {
     marginTop: 4,
@@ -515,10 +526,6 @@ const useStyles = makeStyles((c) => ({
   statValue: {
     color: c.text,
     fontSize: 16,
-  },
-  statSkeleton: {
-    gap: 16,
-    paddingVertical: 8,
   },
   links: {
     flexDirection: 'row',

@@ -1,23 +1,32 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Keyboard, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { Icon, type IconName } from '@/components/Icon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Icon } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { useErrorShake } from '@/components/motion/ErrorShake';
 import { MatrixLoader } from '@/components/motion/MatrixLoader';
 import { PanelReveal } from '@/components/motion/PanelReveal';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { ShimmerText } from '@/components/motion/ShimmerText';
+import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { Sticky } from '@/components/motion/Sticky';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
-import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
+import {
+  applyKey,
+  Keypad,
+  PercentChips,
+  TypedAmount,
+  trimNumber,
+} from '@/components/wallet/Keypad';
 import { PerpsMarkets } from '@/components/wallet/PerpsMarkets';
 import { PredictFeed } from '@/components/wallet/PredictFeed';
-import { HeaderIconButton, TokenIcon } from '@/components/wallet/parts';
+import { EmptyState, HeaderIconButton, TokenIcon } from '@/components/wallet/parts';
+import { SearchField } from '@/components/wallet/SearchField';
 import { SwapReview } from '@/components/wallet/SwapReview';
 import { TabScreen } from '@/components/wallet/TabScreen';
 import {
@@ -31,44 +40,73 @@ import {
   Summary,
 } from '@/components/wallet/TradeForm';
 import { tap } from '@/lib/haptics';
-import { type Chain, formatPrice, formatUsd, holdingAmount, priceOf } from '@/lib/mock-wallet';
+import { LOADS } from '@/lib/loads';
+import {
+  type Chain,
+  formatBalance,
+  formatPrice,
+  formatUsd,
+  holdingAmount,
+  priceOf,
+} from '@/lib/mock-wallet';
 import { type Multisig, useSigner } from '@/lib/multisig';
 import { goBackOr } from '@/lib/navigation';
-import { TRADE_MODE_INFO, TRADE_MODES, type TradeMode } from '@/lib/settings';
+import type { TradeMode } from '@/lib/settings';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
 import { showDemoToast } from '@/lib/toast';
 import { useTradeModes } from '@/lib/trade-modes';
 import { EXPIRIES, type Expiry, useTradePrefs } from '@/lib/trade-prefs';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
 /**
  * Trading, kept simple: Swap (which also bridges across networks), Perps and
- * Predict by default; the + button adds Futures and Options or reorders the tabs. Each product is one short form;
- * nothing executes yet, so final actions confirm with a demo toast.
+ * Predict. Futures and Options are switched off for now (see AVAILABLE_TRADE_MODES).
+ * Each product is one short form; nothing executes yet, so final actions confirm with
+ * a demo toast.
  */
-
-const TRADE_ICONS = Object.fromEntries(
-  TRADE_MODES.map((m) => [m, TRADE_MODE_INFO[m].icon]),
-) as Record<TradeMode, IconName>;
-
 export default function TradeScreen() {
   const styles = useStyles();
   // `?mode=Perps` opens a specific product, e.g. from a deep link.
   const params = useLocalSearchParams<{ mode?: TradeMode }>();
   // A shared wallet only swaps; products it can't use can't be opened, even by link.
   const tabs = useTradeModes();
-  const [picked, setPicked] = useState<TradeMode>(params.mode ?? tabs[0]);
+  const [picked, setPicked] = useState<TradeMode>(
+    params.mode && tabs.includes(params.mode) ? params.mode : tabs[0],
+  );
+  // A link that names a product switches to it, even with Trade already open (only
+  // when the link changes, so tapping another tab isn't undone).
+  const shown = useRef(tabs);
+  shown.current = tabs;
+  useEffect(() => {
+    if (params.mode && shown.current.includes(params.mode)) setPicked(params.mode);
+  }, [params.mode]);
   // If the open tab was just hidden, fall back to the first one still shown.
   const mode = tabs.includes(picked) ? picked : tabs[0];
+  const [query, setQuery] = useState('');
   return (
-    // Trade is a focused flow with no tab bar; Back returns to where you came from.
-    <TabScreen
-      title={tabs.length > 1 ? 'Trade' : mode}
-      tabBar={false}
-      leading={
+    // Trade is a focused flow with no tab bar; Back returns to where you came from. Its
+    // top bar matches Search's: a search field, then the balance and settings.
+    <TabScreen tabBar={false}>
+      <View style={styles.top}>
         <HeaderIconButton bare icon="chevronLeft" label="Back" onPress={() => goBackOr('/home')} />
-      }
-      right={
+        <View style={styles.flex}>
+          <SearchField
+            value={mode === 'Swap' ? '' : query}
+            onChangeText={setQuery}
+            placeholder={mode === 'Swap' ? 'Search tokens' : 'Search markets'}
+            // On Swap, searching means picking the token to buy.
+            onFocus={
+              mode === 'Swap'
+                ? () => {
+                    Keyboard.dismiss();
+                    tap();
+                    router.push({ pathname: '/token-picker', params: { side: 'buy' } });
+                  }
+                : undefined
+            }
+          />
+        </View>
         <HeaderActions
           settingsLabel={`${mode} settings`}
           onSettings={() =>
@@ -77,23 +115,22 @@ export default function TradeScreen() {
               : router.push({ pathname: '/trade-settings', params: { mode } })
           }
         />
-      }
-    >
+      </View>
       {/* The products you've chosen, sharing the row equally; edit them from settings.
           With a single product there's nothing to switch between, so no tabs. */}
       {tabs.length > 1 && (
         <Sticky id="trade-tabs">
           <View style={styles.modes}>
-            <UnderlineTabs options={tabs} value={mode} onChange={setPicked} icons={TRADE_ICONS} />
+            <UnderlineTabs options={tabs} value={mode} onChange={setPicked} />
           </View>
         </Sticky>
       )}
       <ContentSwap id={mode} index={tabs.indexOf(mode)} fill={mode === 'Swap'}>
         {mode === 'Swap' && <SwapForm />}
-        {mode === 'Perps' && <PerpsMarkets />}
+        {mode === 'Perps' && <PerpsMarkets query={query} onClearQuery={() => setQuery('')} />}
         {mode === 'Futures' && <FuturesForm />}
         {mode === 'Options' && <OptionsForm />}
-        {mode === 'Predict' && <PredictFeed />}
+        {mode === 'Predict' && <PredictFeed query={query} onClearQuery={() => setQuery('')} />}
       </ContentSwap>
     </TabScreen>
   );
@@ -125,7 +162,11 @@ function SwapForm() {
   const c = useTheme();
   const stored = useSwap();
   // A shared wallet swaps only on its own network, from its own balances.
-  const { multisig } = useSigner();
+  const { multisig, walletId } = useSigner();
+  // A new wallet holds nothing until its first deposit.
+  const { empty } = useWalletView();
+  const balancesLoading = useFirstLoad(LOADS.balances(walletId));
+  const pricesLoading = useFirstLoad(LOADS.market);
   const pair = multisig ? onNetwork(stored, multisig) : stored;
   const sell = pair.sell.symbol;
   const buy = pair.buy.symbol;
@@ -137,16 +178,65 @@ function SwapForm() {
     setEntry({ key: sellKey, amount: typeof next === 'function' ? next(amount) : next });
   const balance = multisig
     ? (multisig.holdings.find((h) => h.symbol === sell && h.chain === pair.sell.chain)?.amount ?? 0)
-    : holdingAmount(sell, pair.sell.chain);
+    : empty
+      ? 0
+      : holdingAmount(sell, pair.sell.chain);
+  // Nothing at all to swap from (a new wallet, or an unfunded shared one).
+  const nothing = multisig ? !multisig.holdings.some((h) => h.amount > 0) : empty;
   const bridging = pair.sell.chain !== pair.buy.chain;
-  const value = Number(amount) || 0;
+  // You type either side: what you sell (in the token or in dollars), or exactly what
+  // you want to get, and the other side is worked out. Below, `value` is always the
+  // sell amount in the token and `out` the buy amount.
+  const [side, setSide] = useState<'sell' | 'buy'>('sell');
+  const [unit, setUnit] = useState<'token' | 'usd'>('token');
+  const price = priceOf(sell) || 1;
+  const typed = Number(amount) || 0;
   const rate = priceOf(sell) / (priceOf(buy) || 1);
-  const out = value * rate;
-  const usd = value * priceOf(sell);
+  const value = side === 'buy' ? typed / rate : unit === 'usd' ? typed / price : typed;
+  const out = side === 'buy' ? typed : value * rate;
+  const usd = value * price;
+  const sellTyped = unit === 'usd' ? trimNumber(usd, 2) : trimNumber(value, 8);
+  const flipUnit = () => {
+    tap();
+    // Converts whichever side was typed into the sell amount in the other unit.
+    if (typed) setAmount(unit === 'usd' ? trimNumber(value, 8) : trimNumber(usd, 2));
+    setSide('sell');
+    setUnit(unit === 'usd' ? 'token' : 'usd');
+  };
+  /** Makes one side the one you type into, carrying over what it showed. */
+  const edit = (next: 'sell' | 'buy') => {
+    if (next === side) return;
+    tap();
+    if (typed) setAmount(next === 'buy' ? trimNumber(out, 8) : sellTyped);
+    setSide(next);
+  };
+  /** Sets the sell amount (percent chips, the balance), switching back to typing it. */
+  const setSellAmount = (next: string) => {
+    setSide('sell');
+    setAmount(next);
+  };
   const tooMuch = value > balance;
   const route = bridging ? 'Across + Uniswap' : 'Uniswap';
   const networkCost = bridging ? '$1.20' : '$0.42';
   const [reviewing, setReviewing] = useState(false);
+  // The form lives in the tab's scroll view, so nothing squeezes it: when the cards,
+  // the quote details and the keypad don't fit above the home indicator, the keys
+  // shrink by the overflow (to a floor), and grow back into any spare room.
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const root = useRef<View>(null);
+  const [keyHeight, setKeyHeight] = useState<number>(KEY_MAX);
+  const [spare, setSpare] = useState(0);
+  const fit = () =>
+    root.current?.measureInWindow((_x, y, _w, h) => {
+      const over = y + h - (windowHeight - insets.bottom - SCREEN_BOTTOM);
+      if (over > 0.5) setKeyHeight((k) => Math.max(KEY_MIN, k - Math.ceil(over / 4)));
+    });
+  useEffect(() => {
+    if (spare > 1 && keyHeight < KEY_MAX) {
+      setKeyHeight((k) => Math.min(KEY_MAX, k + Math.floor(spare / 4)));
+    }
+  }, [spare, keyHeight]);
 
   // Each new amount gets a fresh quote: "Finding best route" for a moment, then the
   // rate. The details panel opens with the first quote and stays while re-quoting.
@@ -177,25 +267,102 @@ function SwapForm() {
 
   const flip = () => {
     tap();
+    setSide('sell');
     updateSwap({ sell: pair.buy, buy: pair.sell });
   };
 
+  if (nothing) {
+    return (
+      <EmptyState
+        icon="trade"
+        title="Nothing to swap yet"
+        hint={
+          multisig
+            ? `Send tokens on ${multisig.network.name} to this shared wallet, then swap them here.`
+            : 'Add money or receive tokens first, then swap them here.'
+        }
+        action={
+          multisig
+            ? { label: 'Receive', onPress: () => router.push('/receive') }
+            : { label: 'Add money', onPress: () => router.push('/buy-cash') }
+        }
+      />
+    );
+  }
+
   return (
-    <View style={styles.flex}>
+    <View ref={root} style={styles.flex} onLayout={fit}>
       <View>
-        <View style={styles.card}>
+        <View style={[styles.card, side === 'buy' && styles.cardIdle]}>
           <Text style={styles.cardLabel}>Sell</Text>
           <Animated.View style={[styles.cardRow, shakeStyle]}>
-            <View style={styles.flex}>
-              <TypedAmount value={amount} size={40} align="left" />
-            </View>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel="Type the amount to sell"
+              accessibilityState={{ selected: side === 'sell' }}
+              scaleTo={1}
+              onPress={() => edit('sell')}
+              style={styles.flex}
+            >
+              {side === 'sell' ? (
+                <TypedAmount
+                  value={amount}
+                  prefix={unit === 'usd' ? '$' : ''}
+                  size={40}
+                  align="left"
+                />
+              ) : (
+                <TextSwap
+                  text={value ? `${unit === 'usd' ? '$' : ''}${sellTyped}` : '0'}
+                  style={[styles.amountOut, !value && styles.placeholder]}
+                />
+              )}
+            </PressableScale>
             <TokenPill side="sell" token={pair.sell} />
           </Animated.View>
           <View style={styles.cardRow}>
-            <TextSwap text={formatUsd(usd)} style={styles.meta} />
-            <Text style={[styles.meta, tooMuch && styles.error]}>
-              {balance} {sell}
-            </Text>
+            {/* The other unit; tapping it switches what you type in (dollars or token). */}
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={unit === 'usd' ? `Type in ${sell}` : 'Type in dollars'}
+              hitSlop={10}
+              onPress={flipUnit}
+              style={styles.convert}
+            >
+              <Icon name="expand" size={12} color={c.textSecondary} />
+              <TextSwap
+                text={unit === 'usd' ? `${formatBalance(value)} ${sell}` : formatUsd(usd)}
+                style={styles.meta}
+              />
+            </PressableScale>
+            {/* Tapping the balance sells all of it, like Max. */}
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={`Balance ${balance} ${sell}`}
+              accessibilityHint="Enters your whole balance"
+              hitSlop={10}
+              onPress={() => {
+                tap();
+                setSellAmount(
+                  unit === 'usd' ? trimNumber(balance * price, 2) : trimNumber(balance, 8),
+                );
+              }}
+            >
+              {balancesLoading ? (
+                <SkeletonBar width={80} height={12} />
+              ) : (
+                <TextSwap
+                  text={
+                    !balance
+                      ? `No ${sell}`
+                      : unit === 'usd'
+                        ? formatUsd(balance * price)
+                        : `${balance} ${sell}`
+                  }
+                  style={[styles.meta, tooMuch && styles.error]}
+                />
+              )}
+            </PressableScale>
           </View>
         </View>
 
@@ -209,19 +376,37 @@ function SwapForm() {
           <Icon name="swapVertical" size={18} color={c.text} />
         </PressableScale>
 
-        <View style={[styles.card, styles.stacked]}>
+        <View style={[styles.card, styles.stacked, side === 'sell' && styles.cardIdle]}>
           <Text style={styles.cardLabel}>Buy</Text>
           <View style={styles.cardRow}>
-            <TextSwap
-              text={out ? Number(out.toPrecision(6)).toString() : '0'}
-              style={[styles.amountOut, !out && styles.placeholder]}
-            />
+            {/* Tap to type exactly how much you want; Sell works out what it costs. */}
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={`Type the amount of ${buy} to get`}
+              accessibilityState={{ selected: side === 'buy' }}
+              scaleTo={1}
+              onPress={() => edit('buy')}
+              style={styles.flex}
+            >
+              {side === 'buy' ? (
+                <TypedAmount value={amount} size={40} align="left" />
+              ) : (
+                <TextSwap
+                  text={out ? Number(out.toPrecision(6)).toString() : '0'}
+                  style={[styles.amountOut, !out && styles.placeholder]}
+                />
+              )}
+            </PressableScale>
             <TokenPill side="buy" token={pair.buy} />
           </View>
           {quoting ? (
             <View style={styles.quoting}>
               <MatrixLoader dot={3} />
               <ShimmerText text="Finding best route" style={styles.meta} />
+            </View>
+          ) : pricesLoading ? (
+            <View style={styles.metaLine}>
+              <SkeletonBar width={140} height={12} />
             </View>
           ) : (
             <Text style={styles.meta}>
@@ -239,25 +424,55 @@ function SwapForm() {
         <DetailRow label="Price impact" value="<0.01%" />
       </PanelReveal>
 
-      {/* As in Uniswap: cards at the top, keypad and button at the bottom, open space between. */}
-      <View style={styles.flex} />
-      <PercentChips balance={balance} onPick={setAmount} style={styles.percents} />
-
-      <Keypad keyHeight={60} onKey={(key) => setAmount((v) => applyKey(v, key, 8))} />
-
-      <PillButton
-        label={!value ? 'Enter an amount' : tooMuch ? `Not enough ${sell}` : 'Review swap'}
-        disabled={!value || tooMuch}
-        onPress={() => {
-          tap();
-          setReviewing(true);
-        }}
-        style={styles.swapCta}
+      {/* As in Uniswap: cards at the top, keypad and button at the bottom, open space
+          between. When the quote details open there's less room, so the keys shrink to
+          fit (down to a floor) rather than pushing the button off the bottom. */}
+      <View style={styles.flex} onLayout={(e) => setSpare(e.nativeEvent.layout.height)} />
+      <PercentChips
+        balance={unit === 'usd' ? balance * price : balance}
+        decimals={unit === 'usd' ? 2 : 8}
+        onPick={setSellAmount}
+        style={styles.percents}
       />
+      <Keypad
+        keyHeight={keyHeight}
+        onKey={(key) =>
+          setAmount((v) => applyKey(v, key, side === 'sell' && unit === 'usd' ? 2 : 8))
+        }
+      />
+
+      {/* None of the token being sold: the next step is getting some, not typing. */}
+      {!balance && !balancesLoading ? (
+        <PillButton
+          label={multisig ? `Receive ${sell}` : `Buy ${sell}`}
+          onPress={() => {
+            tap();
+            router.push(
+              multisig ? '/receive' : { pathname: '/buy-cash', params: { symbol: sell } },
+            );
+          }}
+          style={styles.swapCta}
+        />
+      ) : (
+        <PillButton
+          label={!value ? 'Enter an amount' : tooMuch ? `Not enough ${sell}` : 'Review swap'}
+          disabled={!value || tooMuch}
+          onPress={() => {
+            tap();
+            setReviewing(true);
+          }}
+          style={styles.swapCta}
+        />
+      )}
 
       <SwapReview
         visible={reviewing}
-        pay={{ amount, symbol: sell, chain: pair.sell.chain, usd: formatUsd(usd) }}
+        pay={{
+          amount: trimNumber(value, 8),
+          symbol: sell,
+          chain: pair.sell.chain,
+          usd: formatUsd(usd),
+        }}
         get={{
           amount: Number(out.toPrecision(6)).toString(),
           symbol: buy,
@@ -327,6 +542,7 @@ function FuturesForm() {
   const [amount, setAmount] = useState('');
   const value = Number(amount) || 0;
   const contractPrice = priceOf('ETH') * BASIS[expiry];
+  const loading = useFirstLoad(LOADS.market);
   return (
     <>
       <MarketPill symbol="ETH" label="ETH Futures" price={priceOf('ETH')} />
@@ -335,6 +551,7 @@ function FuturesForm() {
       <OptionChips options={EXPIRIES} value={expiry} onChange={setExpiry} />
       <AmountCard label="Amount" unit="USDC" value={amount} onChange={setAmount} />
       <Summary
+        loading={loading}
         rows={[
           ['Contract price', formatPrice(contractPrice)],
           ['Contracts', value ? (value / contractPrice).toFixed(4) : '—'],
@@ -363,6 +580,7 @@ function OptionsForm() {
   const [amount, setAmount] = useState('');
   const value = Number(amount) || 0;
   const spot = priceOf('ETH');
+  const loading = useFirstLoad(LOADS.market);
   const strikeValue = Number(strike.replace(/[$,]/g, ''));
   // Rough placeholder premium until an options venue supplies quotes.
   const premium = Math.max(
@@ -379,6 +597,7 @@ function OptionsForm() {
       <OptionChips options={STRIKES} value={strike} onChange={setStrike} />
       <AmountCard label="Contracts" unit="ETH" value={amount} onChange={setAmount} />
       <Summary
+        loading={loading}
         rows={[
           ['Premium', formatUsd(premium * (value || 1))],
           [
@@ -400,10 +619,20 @@ function OptionsForm() {
 
 /** Space between the keypad and what's above and below it. */
 const KEYPAD_GAP = 8;
+const KEY_MAX = 60;
+const KEY_MIN = 42;
+/** Matches the tab screen's padding under its content (no tab bar on Trade). */
+const SCREEN_BOTTOM = 8;
 
 const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
+  },
+  top: {
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   modes: {
     marginBottom: 20,
@@ -416,6 +645,12 @@ const useStyles = makeStyles((c) => ({
   },
   stacked: {
     marginTop: 4,
+  },
+  // The side you're not typing into: outlined rather than filled, as in Uniswap.
+  cardIdle: {
+    borderWidth: 1,
+    borderColor: c.card,
+    backgroundColor: 'transparent',
   },
   cardLabel: {
     color: c.textSecondary,
@@ -458,9 +693,19 @@ const useStyles = makeStyles((c) => ({
     fontSize: 14,
     fontWeight: '500',
   },
+  convert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
   meta: {
     color: c.textSecondary,
     fontSize: 14,
+  },
+  // A placeholder bar on a 14pt text line, so the card keeps its height.
+  metaLine: {
+    height: 18,
+    justifyContent: 'center',
   },
   error: {
     color: c.error,

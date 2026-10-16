@@ -10,15 +10,19 @@ import Animated, {
 import { Icon } from '@/components/Icon';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
 import { EarningList } from '@/components/wallet/PositionsList';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { TabScreen } from '@/components/wallet/TabScreen';
+import { POSITIONS } from '@/lib/collectibles';
 import { tap } from '@/lib/haptics';
 import { type Jar, jarProgress, usdValue, useJars } from '@/lib/jars';
+import { LOADS } from '@/lib/loads';
 import { EARN, formatAmount, formatUsd, VAULTS } from '@/lib/mock-wallet';
 import { useSectionPrefs } from '@/lib/section-prefs';
+import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
@@ -36,10 +40,15 @@ function formatJarAmount(symbol: string, amount: number) {
 export default function SavingsScreen() {
   const styles = useStyles();
   const c = useTheme();
-  const jars = useJars();
+  // A brand-new wallet hasn't saved anything yet: only the jars it made itself.
+  const { empty } = useWalletView();
+  const jars = useJars().filter((j) => !(empty && j.demo));
   const { savingsShowEarn } = useSectionPrefs();
   const saved = jars.reduce((sum, j) => sum + usdValue(j.symbol, j.saved), 0);
   const _goal = jars.reduce((sum, j) => sum + usdValue(j.symbol, j.goal), 0);
+  const ratesLoading = useFirstLoad(LOADS.earnRates);
+  // What's in each jar is read with the rest of your savings positions.
+  const jarsLoading = useFirstLoad(LOADS.positions);
 
   const newJar = () => {
     tap();
@@ -67,13 +76,41 @@ export default function SavingsScreen() {
           <>
             <Text style={[styles.section, styles.sectionHeader]}>Your jars</Text>
             {jars.length ? (
-              <View style={styles.jars}>
-                {jars.map((jar) => (
-                  <JarCard key={jar.id} jar={jar} />
-                ))}
-              </View>
+              <SkeletonReveal
+                loading={jarsLoading}
+                skeleton={
+                  <View style={styles.jars}>
+                    {jars.map((jar) => (
+                      <View key={jar.id} style={styles.card}>
+                        <View style={styles.jarTop}>
+                          <SkeletonBar width={40} height={40} radius={20} />
+                          <View style={styles.skeletonLines}>
+                            <SkeletonBar width="50%" height={15} />
+                            <SkeletonBar width="65%" height={12} />
+                          </View>
+                          <SkeletonBar width={34} height={15} />
+                        </View>
+                        <View style={styles.track} />
+                        {VAULTS[jar.symbol] ? (
+                          <View style={styles.jarEarnSkeleton}>
+                            <SkeletonBar width="55%" height={12} />
+                          </View>
+                        ) : null}
+                      </View>
+                    ))}
+                  </View>
+                }
+              >
+                <View style={styles.jars}>
+                  {jars.map((jar) => (
+                    <JarCard key={jar.id} jar={jar} />
+                  ))}
+                </View>
+              </SkeletonReveal>
             ) : (
+              // Create new jar sits right under this, so no second button here.
               <EmptyState
+                compact
                 icon="target"
                 title="No jars yet"
                 hint="Set crypto aside for a goal and keep it out of your everyday balance."
@@ -96,30 +133,51 @@ export default function SavingsScreen() {
 
       {savingsShowEarn && (
         <>
-          <Text style={[styles.section, styles.earnHeading]}>Start earning</Text>
-          <View style={styles.jars}>
-            {EARN.map(({ symbol, apy }) => (
-              <PressableScale
-                key={symbol}
-                accessibilityRole="button"
-                accessibilityLabel={`Earn ${apy.toFixed(2)}% APY with ${symbol}`}
-                scaleTo={0.98}
-                onPress={() => {
-                  tap();
-                  router.push({ pathname: '/earn/[symbol]', params: { symbol } });
-                }}
-                style={[styles.card, styles.earnCard]}
-              >
-                <TokenIcon symbol={symbol} size={40} />
-                <View style={styles.flex}>
-                  <Text style={styles.cardTitle}>Earn with {symbol}</Text>
-                  <Text style={styles.cardHint}>No lockup, withdraw anytime</Text>
-                </View>
-                <Text style={styles.apy}>{apy.toFixed(2)}% APY</Text>
-                <Icon name="chevronRight" size={13} color={c.textSecondary} />
-              </PressableScale>
-            ))}
-          </View>
+          <Text style={[styles.section, styles.earnHeading]}>
+            {/* Already earning (a position or a jar): it's more, not a first step. */}
+            {(!empty && POSITIONS.length) || saved > 0 ? 'Earn more' : 'Start earning'}
+          </Text>
+          <SkeletonReveal
+            loading={ratesLoading}
+            skeleton={
+              <View style={styles.jars}>
+                {EARN.map(({ symbol }) => (
+                  <View key={symbol} style={[styles.card, styles.earnCard]}>
+                    <SkeletonBar width={40} height={40} radius={20} />
+                    <View style={styles.skeletonLines}>
+                      <SkeletonBar width="55%" height={15} />
+                      <SkeletonBar width="75%" height={12} />
+                    </View>
+                    <SkeletonBar width={72} height={15} />
+                  </View>
+                ))}
+              </View>
+            }
+          >
+            <View style={styles.jars}>
+              {EARN.map(({ symbol, apy }) => (
+                <PressableScale
+                  key={symbol}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Earn ${apy.toFixed(2)}% APY with ${symbol}`}
+                  scaleTo={0.98}
+                  onPress={() => {
+                    tap();
+                    router.push({ pathname: '/earn/[symbol]', params: { symbol } });
+                  }}
+                  style={[styles.card, styles.earnCard]}
+                >
+                  <TokenIcon symbol={symbol} size={40} />
+                  <View style={styles.flex}>
+                    <Text style={styles.cardTitle}>Earn with {symbol}</Text>
+                    <Text style={styles.cardHint}>No lockup, withdraw anytime</Text>
+                  </View>
+                  <Text style={styles.apy}>{apy.toFixed(2)}% APY</Text>
+                  <Icon name="chevronRight" size={13} color={c.textSecondary} />
+                </PressableScale>
+              ))}
+            </View>
+          </SkeletonReveal>
         </>
       )}
     </TabScreen>
@@ -251,6 +309,10 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
   },
+  skeletonLines: {
+    flex: 1,
+    gap: 8,
+  },
   jarTop: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -275,6 +337,12 @@ const useStyles = makeStyles((c) => ({
     color: c.accentText,
     fontSize: 15,
     fontWeight: '600',
+  },
+  // jarEarn's 14pt line box, with its margin.
+  jarEarnSkeleton: {
+    marginTop: 10,
+    height: 17,
+    justifyContent: 'center',
   },
   jarEarn: {
     marginTop: 10,

@@ -79,6 +79,7 @@ export default function RootLayout() {
           <Stack.Screen name="notifications" />
           <Stack.Screen name="token/[symbol]" />
           <Stack.Screen name="perp/[symbol]" />
+          <Stack.Screen name="predict/[id]" />
           <Stack.Screen name="portfolio" />
           <Stack.Screen name="multisig/[id]" />
           <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
@@ -111,6 +112,8 @@ export default function RootLayout() {
           <Stack.Screen name="add-wallet" options={sheet('fitToContents')} />
           <Stack.Screen name="burner-wallet" options={sheet('fitToContents')} />
           <Stack.Screen name="import-wallet" options={sheet([1])} />
+          <Stack.Screen name="pair-extension" options={sheet([1])} />
+          <Stack.Screen name="restore-backup" options={sheet('fitToContents')} />
           <Stack.Screen name="watch-wallet" options={sheet([1])} />
           <Stack.Screen name="hardware-wallet" options={sheet('fitToContents')} />
           <Stack.Screen name="jar-new" options={sheet([1])} />
@@ -121,6 +124,8 @@ export default function RootLayout() {
           <Stack.Screen name="multisig-edit" options={sheet('fitToContents')} />
           {/* Settings pages (pushed) and pickers (sheets) */}
           <Stack.Screen name="profile-edit" options={sheet([1])} />
+          <Stack.Screen name="get-started" options={sheet('fitToContents')} />
+          <Stack.Screen name="setup" options={sheet('fitToContents')} />
           <Stack.Screen name="app-data" />
           <Stack.Screen name="smart-wallet" />
           <Stack.Screen name="recovery-phrase" />

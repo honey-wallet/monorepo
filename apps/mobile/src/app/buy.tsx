@@ -92,10 +92,11 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 14,
   },
+  // Round icon wells, like Add wallet's rows.
   icon: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,

@@ -1,17 +1,18 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { popIn } from '@/components/motion/NumberPopIn';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { StepScreen } from '@/components/onboarding/StepScreen';
+import { finishOnboarding } from '@/lib/onboarding';
 import { makeStyles } from '@/theme';
 
 const LENGTH = 6;
 const RESEND_SECONDS = 30;
 
 export default function VerifyScreen() {
-  const { to } = useLocalSearchParams<{ to?: string }>();
+  const { to, intent } = useLocalSearchParams<{ to?: string; intent?: string }>();
   const [code, setCode] = useState('');
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const input = useRef<TextInput>(null);
@@ -33,7 +34,13 @@ export default function VerifyScreen() {
         <PillButton
           label="Continue"
           disabled={!complete}
-          onPress={() => router.push('/password')}
+          onPress={() =>
+            // Straight into the wallet: password, name and photo are out of the flow
+            // for now (fewer steps before the wallet exists; the name comes from the
+            // email, the photo from Finish setting up).
+            // router.push('/password')
+            finishOnboarding('email', { restored: intent === 'restore', email: to })
+          }
         />
       }
     >

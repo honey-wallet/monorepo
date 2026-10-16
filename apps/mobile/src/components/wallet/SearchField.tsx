@@ -36,6 +36,8 @@ type Props = {
   /** Something at the right end, e.g. the token picker's network filter. */
   trailing?: ReactNode;
   autoFocus?: boolean;
+  /** Called when the field is tapped, e.g. to open a picker instead of typing. */
+  onFocus?: () => void;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -49,6 +51,7 @@ export function SearchField({
   placeholder,
   trailing,
   autoFocus,
+  onFocus,
   style,
 }: Props) {
   const styles = useStyles();
@@ -81,6 +84,7 @@ export function SearchField({
           placeholderTextColor={c.placeholder}
           selectionColor={c.primary}
           autoFocus={autoFocus}
+          onFocus={onFocus}
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="search"

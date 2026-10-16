@@ -30,6 +30,7 @@ const PILL_TABS: { name: string; icon: IconName; label: string }[] = [
 ];
 
 const PAD = 4;
+const BORDER = 1;
 const GAP = 3;
 const SLIDE = { duration: DURATION.fast, easing: EASE.inOut };
 const FADE = { duration: DURATION.quick, easing: EASE.ease };
@@ -108,7 +109,10 @@ export function TabBar({ state, navigation }: TabBarProps) {
         <View
           style={styles.tabs}
           onLayout={(e) => {
-            const inner = e.nativeEvent.layout.width - PAD * 2 - GAP * (PILL_TABS.length - 1);
+            // The layout width includes the 1pt border on each side; the tabs (and the
+            // pill, absolutely placed inside the border) only get what's within it.
+            const inner =
+              e.nativeEvent.layout.width - BORDER * 2 - PAD * 2 - GAP * (PILL_TABS.length - 1);
             setTabWidth(inner / PILL_TABS.length);
           }}
         >
@@ -193,7 +197,7 @@ const useStyles = makeStyles((c) => ({
     gap: GAP,
     padding: PAD,
     borderRadius: 29,
-    borderWidth: 1,
+    borderWidth: BORDER,
     borderColor: c.navEdge,
     backgroundColor: c.navBar,
     ...lifted(c),

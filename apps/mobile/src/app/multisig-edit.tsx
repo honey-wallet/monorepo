@@ -11,7 +11,9 @@ import {
   ProposedPage,
   ThresholdStepper,
 } from '@/components/wallet/MultisigParts';
+import { EmptyState } from '@/components/wallet/parts';
 import { closeSheet, SHEET, SheetScreen, SheetText } from '@/components/wallet/Sheet';
+import { useHandleLookup } from '@/lib/handles';
 import { tap } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import {
@@ -51,8 +53,20 @@ export default function MultisigEditSheet() {
   const [entry, setEntry] = useState('');
   const [proposalId, setProposalId] = useState<string | null>(null);
   const proposal = useProposal(proposalId ?? '');
+  const resolving = useHandleLookup(entry);
 
-  if (!multisig) return null;
+  if (!multisig) {
+    return (
+      <SheetScreen>
+        <EmptyState
+          icon="multisig"
+          title="Shared wallet not found"
+          hint="It may have been removed from this device."
+          action={{ label: 'Close', onPress: closeSheet }}
+        />
+      </SheetScreen>
+    );
+  }
 
   const vault = multisig.purpose === 'vault';
   const submit = (action: ProposalAction) => {
@@ -64,7 +78,7 @@ export default function MultisigEditSheet() {
     } else setProposalId(p.id);
   };
 
-  const entryValid = isHoneyHandle(entry) || isEvmAddress(entry);
+  const entryValid = (isHoneyHandle(entry) || isEvmAddress(entry)) && !resolving;
   const addPerson = () => {
     const v = entry.trim();
     const handle = isHoneyHandle(v) ? v.toLowerCase() : undefined;
@@ -114,7 +128,13 @@ export default function MultisigEditSheet() {
           />
         ) : vault ? undefined : (
           <PillButton
-            label={entryValid ? 'Propose adding' : 'Enter a handle or address'}
+            label={
+              entryValid
+                ? 'Propose adding'
+                : resolving
+                  ? 'Looking up name…'
+                  : 'Enter a handle or address'
+            }
             disabled={!entryValid}
             onPress={addPerson}
           />

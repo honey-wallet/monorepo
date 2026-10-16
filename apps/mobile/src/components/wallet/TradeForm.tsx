@@ -8,9 +8,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { formatPrice } from '@/lib/mock-wallet';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
@@ -53,12 +55,19 @@ export function MarketPill({
 }) {
   const styles = useStyles();
   const c = useTheme();
+  const loading = useFirstLoad(LOADS.market);
   return (
     <View style={[styles.market, { backgroundColor: c[surface] }]}>
       {leading ?? <TokenIcon symbol={symbol} size={32} />}
       <View style={styles.flex}>
         <Text style={styles.marketLabel}>{label}</Text>
-        <Text style={styles.meta}>{formatPrice(price)}</Text>
+        {loading ? (
+          <View style={styles.metaLine}>
+            <SkeletonBar width={72} height={12} />
+          </View>
+        ) : (
+          <Text style={styles.meta}>{formatPrice(price)}</Text>
+        )}
       </View>
       {chevron && <Icon name="chevronDown" size={13} color={c.textSecondary} />}
     </View>
@@ -204,15 +213,24 @@ export function AmountCard({
   );
 }
 
-/** "Label ........ value" lines under a form; values cross-fade as they change. */
-export function Summary({ rows }: { rows: [string, string][] }) {
+/**
+ * "Label ........ value" lines under a form; values cross-fade as they change. While
+ * `loading` (prices not in yet) the values are bars and the labels stay.
+ */
+export function Summary({ rows, loading }: { rows: [string, string][]; loading?: boolean }) {
   const styles = useStyles();
   return (
     <View style={styles.summary}>
       {rows.map(([label, value]) => (
         <View key={label} style={styles.summaryRow}>
           <Text style={styles.meta}>{label}</Text>
-          <TextSwap text={value} style={styles.summaryValue} />
+          {loading ? (
+            <View style={styles.metaLine}>
+              <SkeletonBar width={64} height={12} />
+            </View>
+          ) : (
+            <TextSwap text={value} style={styles.summaryValue} />
+          )}
         </View>
       ))}
     </View>
@@ -250,6 +268,11 @@ const useStyles = makeStyles((c) => ({
   meta: {
     color: c.textSecondary,
     fontSize: 14,
+  },
+  // A placeholder bar on a 14pt text line, so the row keeps its height.
+  metaLine: {
+    height: 18,
+    justifyContent: 'center',
   },
   sides: {
     marginTop: 12,

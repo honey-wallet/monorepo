@@ -75,7 +75,8 @@ export default function HelpScreen() {
           <EmptyState
             icon="search"
             title="No results"
-            hint={`Nothing matches "${query.trim()}". Try another word, or contact us.`}
+            hint={`Nothing matches "${query.trim()}". Try another word, or ask us directly.`}
+            action={{ label: 'Contact us', onPress: () => router.push('/contact') }}
           />
         ) : (
           results.map((f) => {
@@ -141,7 +142,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 4,
     paddingHorizontal: 20,
     color: c.textSecondary,
-    fontSize: 16,
+    fontSize: 15,
   },
   item: {
     borderBottomWidth: 1,

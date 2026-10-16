@@ -81,3 +81,68 @@ async fn skeleton_endpoints_return_501() {
     assert_eq!(status, StatusCode::NOT_IMPLEMENTED);
     assert_eq!(body["error"]["code"], "not_implemented");
 }
+
+mod pairing {
+    use super::*;
+
+    const CHANNEL: &str = "q2v8Zp0rWm4Tn6Yc1Lk3Hg";
+
+    fn put_json(uri: &str, body: &str) -> Request<Body> {
+        Request::put(uri)
+            .header("content-type", "application/json")
+            .body(Body::from(body.to_owned()))
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn delivers_a_message_once() {
+        // One router for the whole exchange: the mailbox lives in its state.
+        let app = build_router(&Config::default());
+        let uri = format!("/api/v1/pairing/{CHANNEL}/hello");
+
+        let empty = app
+            .clone()
+            .oneshot(Request::get(&uri).body(Body::empty()).unwrap());
+        assert_eq!(empty.await.unwrap().status(), StatusCode::NOT_FOUND);
+
+        let sent = app
+            .clone()
+            .oneshot(put_json(&uri, r#"{"data":"cHVibGljLWtleQ"}"#));
+        assert_eq!(sent.await.unwrap().status(), StatusCode::NO_CONTENT);
+
+        let again = app.clone().oneshot(put_json(&uri, r#"{"data":"b3RoZXI"}"#));
+        assert_eq!(again.await.unwrap().status(), StatusCode::CONFLICT);
+
+        let got = app
+            .clone()
+            .oneshot(Request::get(&uri).body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(got.status(), StatusCode::OK);
+        let bytes = got.into_body().collect().await.unwrap().to_bytes();
+        let body: Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(body["data"], "cHVibGljLWtleQ");
+
+        let gone = app.oneshot(Request::get(&uri).body(Body::empty()).unwrap());
+        assert_eq!(gone.await.unwrap().status(), StatusCode::NOT_FOUND);
+    }
+
+    #[tokio::test]
+    async fn rejects_bad_channels_slots_and_sizes() {
+        let (status, _, _) =
+            send(put_json("/api/v1/pairing/short/hello", r#"{"data":"eA"}"#)).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+
+        let uri = format!("/api/v1/pairing/{CHANNEL}/secrets");
+        let response = build_router(&Config::default())
+            .oneshot(put_json(&uri, r#"{"data":"eA"}"#))
+            .await
+            .unwrap();
+        assert!(response.status().is_client_error());
+
+        let huge = format!(r#"{{"data":"{}"}}"#, "a".repeat(20_000));
+        let uri = format!("/api/v1/pairing/{CHANNEL}/payload");
+        let (status, _, _) = send(put_json(&uri, &huge)).await;
+        assert_eq!(status, StatusCode::BAD_REQUEST);
+    }
+}

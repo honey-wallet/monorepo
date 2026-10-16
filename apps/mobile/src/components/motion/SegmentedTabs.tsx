@@ -25,6 +25,8 @@ type Props<T extends string> = {
   bare?: boolean;
   /** Spans the row with equal segments (½, ⅓, ¼…), e.g. Trade's products. */
   fill?: boolean;
+  /** Display text per option where it differs from the value, e.g. All → MAX. */
+  labels?: Partial<Record<T, string>>;
 };
 
 /** A segmented control for a few mutually exclusive views, e.g. Swap / Perps. */
@@ -34,6 +36,7 @@ export function SegmentedTabs<T extends string>({
   onChange,
   bare,
   fill,
+  labels,
 }: Props<T>) {
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
@@ -61,7 +64,7 @@ export function SegmentedTabs<T extends string>({
       style={[styles.bar, bare && styles.bare, fill && styles.fill]}
       accessibilityRole="tablist"
     >
-      <Animated.View style={[styles.pill, pillStyle]} />
+      <Animated.View style={[styles.pill, bare && styles.barePill, pillStyle]} />
       {options.map((option) => {
         const active = option === value;
         return (
@@ -85,7 +88,7 @@ export function SegmentedTabs<T extends string>({
               adjustsFontSizeToFit
               style={[styles.label, active && styles.labelActive]}
             >
-              {option}
+              {labels?.[option] ?? option}
             </Text>
           </Pressable>
         );
@@ -106,6 +109,10 @@ const useStyles = makeStyles((c) => ({
   bare: {
     alignSelf: 'stretch',
     backgroundColor: 'transparent',
+  },
+  // On the page itself a white pill would vanish, so it's the raised grey there.
+  barePill: {
+    backgroundColor: c.raised,
   },
   stretch: {
     flex: 1,

@@ -1,13 +1,10 @@
 import { usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
-  Extrapolation,
-  interpolate,
   useAnimatedRef,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
   useSharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,17 +14,18 @@ import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useTabReselect } from '@/lib/tab-reselect';
 import { makeStyles } from '@/theme';
 
-/** Scroll distance over which the large title hands over to the small one. */
-const COMPACT_FROM = 24;
-const COMPACT_TO = 52;
-const COMPACT_BAR = 40;
+/** Gap between the top bar and the content. */
+const BAR_GAP = 8;
+/** First-frame guess at the bar's height (title row ~44pt), until it's measured. */
+const BAR_GUESS = 12 + 44 + BAR_GAP;
 
 /**
- * Scrolling tab screen with an optional large title (`leading` before it, e.g. a
+ * Scrolling tab screen with an optional title bar (`leading` before the title, e.g. a
  * back button, and `right` beside it, e.g. HeaderActions), padded clear of the
  * floating tab bar. Content can grow to fill the screen (e.g. to pin a button low).
- * The first visit each session, the title then the content rise in; once the large
- * title scrolls away, a small centred one settles in at the top, as in iOS.
+ * The first visit each session, the bar then the content rise in. The bar stays put
+ * at the top, flat on the page colour with no hairline, like Search's pinned search
+ * row, so every tab's top bar looks and behaves the same; content scrolls under it.
  */
 export function TabScreen({
   title,
@@ -53,44 +51,16 @@ export function TabScreen({
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });
-  const compact = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [COMPACT_FROM, COMPACT_TO], [0, 1], Extrapolation.CLAMP),
-  }));
-  const compactTitle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        translateY: interpolate(
-          scrollY.value,
-          [COMPACT_FROM, COMPACT_TO],
-          [-4, 0],
-          Extrapolation.CLAMP,
-        ),
-      },
-    ],
-  }));
+  const [barHeight, setBarHeight] = useState(insets.top + BAR_GUESS);
   return (
     <Entrance id={`tab:${title ?? 'untitled'}`}>
-      {/* `Sticky` content (search, tabs, section headers) pins under the status bar, or under the small title once it shows. */}
-      <StickyArea
-        scrollY={scrollY}
-        top={insets.top + (title ? COMPACT_BAR : 0)}
-        style={styles.root}
-      >
-        <Animated.ScrollView
-          ref={scrollRef}
-          style={styles.root}
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            paddingTop: insets.top + 12,
-            flexGrow: 1,
-            paddingBottom: insets.bottom + (tabBar ? TAB_BAR_HEIGHT + 24 : 8),
-            paddingHorizontal: 18,
-          }}
-        >
-          <StatusBar style="auto" />
-          {title ? (
+      {/* `Sticky` content (search, tabs, section headers) pins under the status bar, or under the title bar. */}
+      <StickyArea scrollY={scrollY} top={title ? barHeight : insets.top} style={styles.root}>
+        {title ? (
+          <View
+            style={[styles.bar, { paddingTop: insets.top + 12 }]}
+            onLayout={(e) => setBarHeight(e.nativeEvent.layout.height)}
+          >
             <Rise style={styles.titleRow}>
               <View style={styles.titleLead}>
                 {leading}
@@ -100,27 +70,28 @@ export function TabScreen({
               </View>
               {right}
             </Rise>
-          ) : null}
+          </View>
+        ) : null}
+        <Animated.ScrollView
+          ref={scrollRef}
+          style={styles.root}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            paddingTop: title ? BAR_GAP : insets.top + 12,
+            flexGrow: 1,
+            paddingBottom: insets.bottom + (tabBar ? TAB_BAR_HEIGHT + 24 : 8),
+            paddingHorizontal: 18,
+          }}
+        >
+          <StatusBar style="auto" />
           <Rise index={1} style={styles.content}>
             {children}
           </Rise>
         </Animated.ScrollView>
         {/* Keeps scrolled content from running under the status bar. */}
-        <View style={[styles.statusCover, { height: insets.top }]} />
-        {title ? (
-          <Animated.View
-            pointerEvents="none"
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[
-              styles.compact,
-              { paddingTop: insets.top, height: insets.top + COMPACT_BAR },
-              compact,
-            ]}
-          >
-            <Animated.Text style={[styles.compactTitle, compactTitle]}>{title}</Animated.Text>
-          </Animated.View>
-        ) : null}
+        {title ? null : <View style={[styles.statusCover, { height: insets.top }]} />}
       </StickyArea>
     </Entrance>
   );
@@ -135,21 +106,11 @@ const useStyles = makeStyles((c) => ({
   content: {
     flexGrow: 1,
   },
-  compact: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+  // The fixed top bar: page colour, no hairline, like Search's pinned row.
+  bar: {
+    paddingHorizontal: 18,
+    paddingBottom: BAR_GAP,
     backgroundColor: c.canvas,
-    borderBottomWidth: 1,
-    borderBottomColor: c.divider,
-  },
-  compactTitle: {
-    color: c.text,
-    fontSize: 17,
-    fontWeight: '600',
   },
   statusCover: {
     position: 'absolute',
@@ -159,7 +120,6 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.canvas,
   },
   titleRow: {
-    marginBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

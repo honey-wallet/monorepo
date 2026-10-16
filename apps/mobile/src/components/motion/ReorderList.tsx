@@ -4,6 +4,9 @@
 // spring, so a row passed back and forth never jumps. On release it springs into its
 // slot carrying the finger's velocity, with the small overshoot a drag earns. Each
 // change of slot ticks a haptic. Under Reduce Motion there is no lift or overshoot.
+// Lists can run sideways too (`axis="x"`, e.g. favourite cards in a scrolling row);
+// there the whole item is the handle, picked up with a short hold so a plain swipe
+// still scrolls the row.
 import { type ReactNode, useEffect } from 'react';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -23,13 +26,24 @@ import { DURATION, EASE, SPRING } from '@/theme/motion';
 /** How far past an end the row follows the finger: a fifth, like iOS rubber-banding. */
 const ELASTIC = 0.2;
 
+/** Hold this long before a sideways item lifts, so a quick swipe scrolls instead. */
+const HOLD_MS = 220;
+
 type Props<T extends string> = {
   items: readonly T[];
-  /** Every row is this tall, so slots can be computed while dragging. */
+  /** Every row is this tall (this wide when sideways), so slots can be computed while dragging. */
   rowHeight: number;
   onReorder: (items: T[]) => void;
-  /** Renders a row; place `handle` where the drag handle should go. */
+  /** Renders a row; place `handle` where the drag handle should go (null when sideways). */
   renderRow: (item: T, handle: ReactNode) => ReactNode;
+  /** `x` lays the items out in a row and drags them sideways. */
+  axis?: 'x' | 'y';
+  /** Space between items. */
+  gap?: number;
+  /** Sideways only: the row's height. */
+  crossSize?: number;
+  /** Told when a drag starts and ends, e.g. to stop a parent scroll view meanwhile. */
+  onDragChange?: (dragging: boolean) => void;
 };
 
 /** A short list whose rows can be dragged into a new order by their handle. */
@@ -38,6 +52,10 @@ export function ReorderList<T extends string>({
   rowHeight,
   onReorder,
   renderRow,
+  axis = 'y',
+  gap = 0,
+  crossSize,
+  onDragChange,
 }: Props<T>) {
   // Slot of each item, keyed by item; shared so every row can react while one drags.
   const slots = useSharedValue<Record<string, number>>(toSlots(items));
@@ -49,16 +67,20 @@ export function ReorderList<T extends string>({
     onReorder([...items].sort((a, b) => next[a] - next[b]));
   };
 
+  const length = items.length * (rowHeight + gap) - gap;
   return (
-    <View style={{ height: items.length * rowHeight }}>
+    <View style={axis === 'x' ? { width: length, height: crossSize } : { height: length }}>
       {items.map((item) => (
         <Row
           key={item}
           item={item}
           count={items.length}
           rowHeight={rowHeight}
+          step={rowHeight + gap}
+          sideways={axis === 'x'}
           slots={slots}
           onCommit={commit}
+          onDragChange={onDragChange}
           renderRow={renderRow}
         />
       ))}
@@ -84,20 +106,28 @@ function Row<T extends string>({
   item,
   count,
   rowHeight,
+  step,
+  sideways,
   slots,
   onCommit,
+  onDragChange,
   renderRow,
 }: {
   item: T;
   count: number;
   rowHeight: number;
+  /** Distance from one slot to the next (size plus gap). */
+  step: number;
+  sideways: boolean;
   slots: { value: Record<string, number> };
   onCommit: (slots: Record<string, number>) => void;
+  onDragChange?: (dragging: boolean) => void;
   renderRow: Props<T>['renderRow'];
 }) {
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
-  const top = useSharedValue(slots.value[item] * rowHeight);
+  // Offset along the list's axis (down a column, or across a row).
+  const top = useSharedValue(slots.value[item] * step);
   const lifted = useSharedValue(0);
   const dragging = useSharedValue(false);
   const start = useSharedValue(0);
@@ -106,44 +136,52 @@ function Row<T extends string>({
   useAnimatedReaction(
     () => slots.value[item],
     (slot, previous) => {
-      if (slot !== previous && !dragging.value) top.value = withSpring(slot * rowHeight, SPRING.ui);
+      if (slot !== previous && !dragging.value) top.value = withSpring(slot * step, SPRING.ui);
     },
   );
 
-  const gesture = Gesture.Pan()
-    .minDistance(0)
-    .onBegin(() => {
+  const pan = Gesture.Pan();
+  // A handle drags at once; a whole sideways item waits for a short hold.
+  const gesture = (sideways ? pan.activateAfterLongPress(HOLD_MS) : pan.minDistance(0))
+    .onStart(() => {
       dragging.value = true;
       start.value = top.value;
       if (!reduceMotion)
         lifted.value = withTiming(1, { duration: DURATION.quick, easing: EASE.smoothOut });
       scheduleOnRN(tap);
+      if (onDragChange) scheduleOnRN(onDragChange, true);
     })
     .onUpdate((e) => {
-      const max = (count - 1) * rowHeight;
-      const raw = start.value + e.translationY;
+      const max = (count - 1) * step;
+      const raw = start.value + (sideways ? e.translationX : e.translationY);
       // Past either end the row moves a fraction of the finger's travel.
       top.value = raw < 0 ? raw * ELASTIC : raw > max ? max + (raw - max) * ELASTIC : raw;
-      const to = Math.min(Math.max(Math.round(top.value / rowHeight), 0), count - 1);
+      const to = Math.min(Math.max(Math.round(top.value / step), 0), count - 1);
       const from = slots.value[item];
       if (to === from) return;
       slots.value = moveTo(slots.value, item, to);
       scheduleOnRN(tap);
     })
     .onFinalize((e) => {
+      // A touch that never became a drag (a tap, or a swipe that scrolled) changes nothing.
+      if (!dragging.value) return;
       dragging.value = false;
-      const slot = slots.value[item] * rowHeight;
+      const slot = slots.value[item] * step;
       top.value = reduceMotion
         ? withTiming(slot, { duration: DURATION.quick, easing: EASE.smoothOut })
-        : withSpring(slot, { ...SPRING.release, velocity: e.velocityY });
+        : withSpring(slot, { ...SPRING.release, velocity: sideways ? e.velocityX : e.velocityY });
       lifted.value = withTiming(0, { duration: DURATION.quick, easing: EASE.smoothOut });
       scheduleOnRN(onCommit, slots.value);
+      if (onDragChange) scheduleOnRN(onDragChange, false);
     });
 
   // Position is a transform (composited), not `top`, so dragging never relayouts.
   const style = useAnimatedStyle(() => ({
     zIndex: dragging.value ? 10 : 0,
-    transform: [{ translateY: top.value }, { scale: 1 + lifted.value * 0.02 }],
+    transform: [
+      sideways ? { translateX: top.value } : { translateY: top.value },
+      { scale: 1 + lifted.value * (sideways ? 0.04 : 0.02) },
+    ],
     shadowOpacity: lifted.value * 0.3,
   }));
 
@@ -173,6 +211,21 @@ function Row<T extends string>({
     </GestureDetector>
   );
 
+  if (sideways) {
+    // The whole item is the handle; a hold picks it up.
+    return (
+      <GestureDetector gesture={gesture}>
+        <Animated.View
+          accessible
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={(e) => nudge(e.nativeEvent.actionName === 'increment' ? 1 : -1)}
+          style={[styles.item, { width: rowHeight }, style]}
+        >
+          {renderRow(item, null)}
+        </Animated.View>
+      </GestureDetector>
+    );
+  }
   return (
     <Animated.View style={[styles.row, { height: rowHeight }, style]}>
       {renderRow(item, handle)}
@@ -200,6 +253,15 @@ const useStyles = makeStyles((c) => ({
     right: 0,
     justifyContent: 'center',
     backgroundColor: c.card,
+    shadowColor: '#000',
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+  },
+  item: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
     shadowColor: '#000',
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 6 },

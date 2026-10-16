@@ -5,9 +5,11 @@ import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { EmptyState } from '@/components/wallet/parts';
-import { SheetRow, SheetScreen, SheetSection } from '@/components/wallet/Sheet';
+import { SheetRow, SheetRowSkeletons, SheetScreen, SheetSection } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { RECENT_RECIPIENTS, shortAddress } from '@/lib/mock-wallet';
 import { isEvmAddress } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
@@ -17,6 +19,7 @@ export default function SendSheet() {
   const styles = useStyles();
   const c = useTheme();
   const [query, setQuery] = useState('');
+  const loading = useFirstLoad(LOADS.recipients);
   const q = query.trim().toLowerCase();
   const results = RECENT_RECIPIENTS.filter(
     (r) => !q || r.address.toLowerCase().includes(q) || r.label?.toLowerCase().includes(q),
@@ -75,20 +78,40 @@ export default function SendSheet() {
       </ContentSwap>
 
       <SheetSection title="Recent" />
-      <ContentSwap id={q ? 'search' : 'recent'}>
-        {results.map((r) => (
-          <SheetRow
-            key={r.id}
-            leading={<Avatar name={r.label ?? r.address} size={38} seed={r.label ?? r.address} />}
-            title={r.label ?? shortAddress(r.address, 8, 6)}
-            subtitle={r.label ? shortAddress(r.address, 8, 6) : undefined}
-            onPress={() => choose(r.label ?? r.address)}
-          />
-        ))}
-        {results.length === 0 && !direct && (
-          <EmptyState icon="search" title="No matches" hint="Paste a full address to send to it." />
-        )}
-      </ContentSwap>
+      <SkeletonReveal
+        loading={loading}
+        skeleton={<SheetRowSkeletons count={4} icon={38} trailing={false} />}
+      >
+        <ContentSwap id={q ? 'search' : 'recent'}>
+          {results.map((r) => (
+            <SheetRow
+              key={r.id}
+              leading={<Avatar name={r.label ?? r.address} size={38} seed={r.label ?? r.address} />}
+              title={r.label ?? shortAddress(r.address, 8, 6)}
+              subtitle={r.label ? shortAddress(r.address, 8, 6) : undefined}
+              onPress={() => choose(r.label ?? r.address)}
+            />
+          ))}
+          {results.length === 0 &&
+            !direct &&
+            (q ? (
+              <EmptyState
+                compact
+                icon="search"
+                title="No matches"
+                hint="Paste a full address to send to it."
+                action={{ label: 'Clear search', onPress: () => setQuery('') }}
+              />
+            ) : (
+              <EmptyState
+                compact
+                icon="send"
+                title="No one yet"
+                hint="People you pay show up here. Paste an address or scan a QR code to start."
+              />
+            ))}
+        </ContentSwap>
+      </SkeletonReveal>
     </SheetScreen>
   );
 }

@@ -7,7 +7,9 @@ Guidance for AI coding agents working in this repository. Humans should start wi
 - `apps/server`: Rust API server (axum). Router is built in `src/lib.rs`; routes in `src/routes/`; integration tests in `tests/`.
 - `apps/web`: React + Vite.
 - `apps/mobile`: Expo Router app. See `apps/mobile/AGENTS.md` for Expo-specific rules.
+- `apps/extension`: Chrome extension (Vite + React, MV3). `pnpm build`, then load `apps/extension/dist` unpacked in `chrome://extensions`.
 - `packages/api-client`: typed fetch client shared by web and mobile. Types in `src/types.ts` mirror the server's response structs.
+- `packages/keyring`: recovery phrases, multichain address derivation, encrypted backups and QR pairing, shared by mobile and the extension. Its tests pin known addresses; never change a derivation path without a migration.
 
 ## Commands (run from the repo root)
 

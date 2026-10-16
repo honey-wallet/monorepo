@@ -1,6 +1,7 @@
-import { useLocalSearchParams } from 'expo-router';
+import { createURL } from 'expo-linking';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Text, View } from 'react-native';
+import { Linking, Share, Text, View } from 'react-native';
 import Animated, {
   interpolateColor,
   Keyframe,
@@ -15,14 +16,17 @@ import { Accordion } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { useHasMounted } from '@/components/motion/useHasMounted';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { Copyable } from '@/components/wallet/Details';
+import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import { MemberAvatar, NetworkBadge } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { closeSheet, SheetScreen, StatRow } from '@/components/wallet/Sheet';
 import { success, tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { formatUsd, shortAddress } from '@/lib/mock-wallet';
 import {
   approvalsLeft,
@@ -70,11 +74,19 @@ export default function ProposalSheet() {
   const [justSigned, setJustSigned] = useState(false);
   // Ticks that are there when the sheet opens just show; new ones pop in.
   const mounted = useHasMounted();
+  // Signatures and the cost estimate come from the chain with the wallet's proposals.
+  // Opened from a list they're already in; a shared link opens it cold.
+  const loading = useFirstLoad(LOADS.activity(proposal?.walletId ?? ''));
 
   if (!proposal || !multisig) {
     return (
       <SheetScreen title="Proposal">
-        <EmptyState icon="search" title="Proposal not found" hint="It may have been removed." />
+        <EmptyState
+          icon="search"
+          title="Proposal not found"
+          hint="It may have been removed."
+          action={{ label: 'Close', onPress: () => router.back() }}
+        />
       </SheetScreen>
     );
   }
@@ -95,6 +107,7 @@ export default function ProposalSheet() {
   const onReject = () => {
     tap();
     const outcome = reject(proposal.id);
+    setJustSigned(true);
     showToast(outcome === 'rejected' ? 'Proposal rejected' : 'You rejected it');
   };
   const onCancel = () => {
@@ -104,14 +117,51 @@ export default function ProposalSheet() {
     closeSheet();
   };
 
-  const actions = justSigned ? (
+  const executed = proposal.status === 'executed';
+  // Proposals get passed around: the link opens this sheet for the next signer, and
+  // once it has gone through, the explorer link shows it landed.
+  const share = () => {
+    const link = createURL(`/proposal/${proposal.id}`);
+    const message = executed
+      ? `${info.title}: done.\n${ids.explorer.url}`
+      : pending
+        ? `Can you approve proposal #${proposal.nonce}? ${info.title} (${proposal.approvals.length} of ${multisig.threshold} signed)\n${link}`
+        : `Proposal #${proposal.nonce}: ${info.title}\n${link}`;
+    Share.share({ message }).catch(() => {});
+  };
+
+  // Once you've signed, the usual next step is passing it on (or the receipt): Share
+  // beside Done.
+  const done = (
     <PillButton
       label="Done"
       onPress={() => {
         tap();
         closeSheet();
       }}
+      style={styles.flex}
     />
+  );
+  // Nothing left for you to do (you've voted, or it's closed): Done, plus Share while
+  // it still needs someone else's signature.
+  const finished = pending ? (
+    <View style={styles.buttons}>
+      <PillButton
+        label="Share"
+        variant="secondary"
+        onPress={() => {
+          tap();
+          share();
+        }}
+        style={styles.flex}
+      />
+      {done}
+    </View>
+  ) : (
+    done
+  );
+  const actions = justSigned ? (
+    finished
   ) : canVote ? (
     <View style={styles.buttons}>
       <PillButton label="Reject" variant="secondary" onPress={onReject} style={styles.flex} />
@@ -123,19 +173,31 @@ export default function ProposalSheet() {
     </View>
   ) : pending && mine ? (
     <PillButton label="Cancel proposal" variant="secondary" onPress={onCancel} />
-  ) : undefined;
-  // The buttons crossfade into Done once you've signed.
-  const footer = actions ? (
-    <ContentSwap id={justSigned ? 'done' : canVote ? 'vote' : 'cancel'}>{actions}</ContentSwap>
-  ) : undefined;
-  const executed = proposal.status === 'executed';
+  ) : (
+    finished
+  );
+  // The buttons crossfade into Done once you've voted.
+  const footer = (
+    <ContentSwap
+      id={canVote && !justSigned ? 'vote' : pending && mine && !justSigned ? 'cancel' : 'done'}
+    >
+      {actions}
+    </ContentSwap>
+  );
 
   return (
-    <SheetScreen title={`Proposal #${proposal.nonce}`} footer={footer}>
+    <SheetScreen
+      title={`Proposal #${proposal.nonce}`}
+      right={<HeaderShortcut icon="share" label="Share proposal" onPress={share} />}
+      footer={footer}
+    >
       <View>
         <View style={styles.summary}>
           {info.symbol ? <TokenIcon symbol={info.symbol} size={40} /> : null}
           <Text style={styles.title}>{info.title}</Text>
+          {'usd' in proposal.action && proposal.action.type !== 'swap' && proposal.action.usd ? (
+            <Text style={styles.usd}>{formatUsd(proposal.action.usd)}</Text>
+          ) : null}
           <StatusPill multisig={multisig} proposal={proposal} left={left} />
         </View>
 
@@ -247,16 +309,20 @@ export default function ProposalSheet() {
           <StatRow
             label={executed ? 'Executed' : 'Network cost'}
             value={
-              <TextSwap
-                text={
-                  executed && proposal.doneAt
-                    ? `${when(proposal.doneAt)} · ${ids.fee}`
-                    : pending
-                      ? `About ${ids.fee}`
-                      : 'Not sent'
-                }
-                style={styles.statValue}
-              />
+              loading ? (
+                <SkeletonBar width={64} height={12} />
+              ) : (
+                <TextSwap
+                  text={
+                    executed && proposal.doneAt
+                      ? `${when(proposal.doneAt)} · ${ids.fee}`
+                      : pending
+                        ? `About ${ids.fee}`
+                        : 'Not sent'
+                  }
+                  style={styles.statValue}
+                />
+              )
             }
           />
         </View>
@@ -376,13 +442,8 @@ function ActionRows({ action, multisig }: { action: ProposalAction; multisig: Mu
   switch (action.type) {
     case 'send':
       return (
-        <>
-          <StatRow
-            label="Amount"
-            value={`${action.amount} ${action.symbol} · ${formatUsd(action.usd)}`}
-          />
-          <StatRow label="To" value={shortAddress(action.to)} />
-        </>
+        // The amount is the sheet's title; the dollars sit under it.
+        <StatRow label="To" value={shortAddress(action.to)} />
       );
     case 'swap':
       return (
@@ -402,15 +463,7 @@ function ActionRows({ action, multisig }: { action: ProposalAction; multisig: Mu
     case 'jarAdd':
     case 'jarWithdraw':
     case 'sell':
-      return (
-        <>
-          <StatRow
-            label="Amount"
-            value={`${action.amount} ${action.symbol} · ${formatUsd(action.usd)}`}
-          />
-          {'jar' in action ? <StatRow label="Jar" value={action.jar} /> : null}
-        </>
-      );
+      return 'jar' in action ? <StatRow label="Jar" value={action.jar} /> : null;
     case 'addMember':
       return (
         <>
@@ -474,6 +527,12 @@ const useStyles = makeStyles((c) => ({
     fontWeight: '600',
     textAlign: 'center',
   },
+  usd: {
+    marginTop: -4,
+    color: c.textSecondary,
+    fontSize: 15,
+    fontVariant: ['tabular-nums'],
+  },
   pill: {
     marginTop: 2,
     height: 28,
@@ -492,7 +551,7 @@ const useStyles = makeStyles((c) => ({
   group: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: c.card,
   },
   groupHead: {
@@ -506,7 +565,7 @@ const useStyles = makeStyles((c) => ({
     marginLeft: 2,
     marginBottom: 8,
     color: c.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
   },
   groupGap: {
     marginTop: 16,

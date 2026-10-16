@@ -1,18 +1,11 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Keyboard,
-  ScrollView,
-  Share,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Keyboard, ScrollView, Share, Text, TextInput, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonList } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import {
   MEMBER_KIND_LABEL,
@@ -20,8 +13,9 @@ import {
   NetworkBadge,
   ThresholdStepper,
 } from '@/components/wallet/MultisigParts';
+import { EmptyState } from '@/components/wallet/parts';
 import { SearchField } from '@/components/wallet/SearchField';
-import { closeSheet, SHEET, SheetScreen, SheetSection, StatRow } from '@/components/wallet/Sheet';
+import { SHEET, SheetScreen, SheetSection, StatRow } from '@/components/wallet/Sheet';
 import { SuccessPage } from '@/components/wallet/SuccessPage';
 import { type EvmChain, loadEvmChains, matchesChain, POPULAR_EVM } from '@/lib/evm-chains';
 import { success, tap } from '@/lib/haptics';
@@ -187,15 +181,15 @@ export default function NewMultisigSheet() {
   };
 
   const back = () => {
-    const i = PAGES.indexOf(page);
-    if (page === 'name' || page === 'done') {
-      tap();
-      closeSheet();
-    } else go(PAGES[i - 1]);
+    go(PAGES[PAGES.indexOf(page) - 1]);
   };
 
   return (
-    <SheetScreen title={TITLES[page]} size="fill" onBack={back}>
+    <SheetScreen
+      title={TITLES[page]}
+      size="fill"
+      onBack={page === 'name' || page === 'done' ? undefined : back}
+    >
       <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
         <ContentSwap id={page} index={PAGES.indexOf(page)}>
           <View style={{ height: area }}>
@@ -518,10 +512,13 @@ function NetworkPage({
   const c = useTheme();
   const [all, setAll] = useState<EvmChain[] | null>(null);
   const [failed, setFailed] = useState(false);
+  // Bumped by Try again, to rerun the fetch after a failure.
+  const [attempt, setAttempt] = useState(0);
   const searching = query.trim().length > 0;
 
   useEffect(() => {
     if (!searching || all) return;
+    void attempt;
     let live = true;
     setFailed(false);
     loadEvmChains()
@@ -530,7 +527,7 @@ function NetworkPage({
     return () => {
       live = false;
     };
-  }, [searching, all]);
+  }, [searching, all, attempt]);
 
   const evm = (searching ? (all ?? POPULAR_EVM) : POPULAR_EVM).filter((ch) =>
     matchesChain(ch, query),
@@ -577,13 +574,25 @@ function NetworkPage({
             ),
           )}
         {searching && !all && !failed ? (
-          <ActivityIndicator style={styles.loading} color={c.textSecondary} />
+          <SkeletonList count={3} icon={34} trailing={false} />
         ) : null}
-        {failed ? (
-          <Text style={styles.note}>Couldn't load every network. Check your connection.</Text>
+        {searching && failed ? (
+          <EmptyState
+            compact
+            icon="warning"
+            title="Couldn't load every network"
+            hint="Check your connection and try again."
+            action={{ label: 'Try again', onPress: () => setAttempt((n) => n + 1) }}
+          />
         ) : null}
-        {searching && all && evm.length === 0 ? (
-          <Text style={styles.note}>No EVM network matches “{query.trim()}”.</Text>
+        {searching && all && evm.length === 0 && !showSolana ? (
+          <EmptyState
+            compact
+            icon="search"
+            title="No networks found"
+            hint={`No EVM network matches “${query.trim()}”. Try a name or chain ID.`}
+            action={{ label: 'Clear search', onPress: () => onQuery('') }}
+          />
         ) : null}
         {!searching ? (
           <Text style={styles.note}>
@@ -669,7 +678,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     marginBottom: 10,
     padding: 16,
-    borderRadius: 18,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -771,9 +780,6 @@ const useStyles = makeStyles((c) => ({
   },
   search: {
     marginBottom: 8,
-  },
-  loading: {
-    marginVertical: 16,
   },
   summary: {
     alignItems: 'center',

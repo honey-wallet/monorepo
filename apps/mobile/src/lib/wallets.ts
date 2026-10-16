@@ -1,12 +1,19 @@
+import type { Addresses } from '@honey-wallet/keyring';
 import { ADDRESS, BALANCE, otherWallets, type Wallet } from '@/lib/mock-wallet';
 import { useProfile } from '@/lib/profile';
 import { createStore } from '@/lib/store';
+import { loadAccounts, type VaultAccount } from '@/lib/vault';
 
 /**
  * A wallet added this session. Watched addresses can be viewed but not spent from;
  * burners are disposable wallets for sites you don't fully trust.
  */
-export type AddedWallet = Wallet & { watchOnly?: boolean; burner?: boolean };
+export type AddedWallet = Wallet & {
+  watchOnly?: boolean;
+  burner?: boolean;
+  /** Wallets with keys on this device: their address on each chain. */
+  addresses?: Partial<Addresses>;
+};
 
 /** The wallet the app is showing, and any wallets added this session. */
 export const wallets = createStore<{ activeId: string; added: AddedWallet[] }>({
@@ -15,6 +22,35 @@ export const wallets = createStore<{ activeId: string; added: AddedWallet[] }>({
 });
 
 export const useWallets = wallets.use;
+
+const fromVault = (account: VaultAccount): AddedWallet => ({
+  id: account.id,
+  kind: 'wallet',
+  label: account.label,
+  address: account.addresses.evm,
+  addresses: account.addresses,
+  usd: 0,
+});
+
+// Wallets created or imported on an earlier launch. Their keys stay in secure storage;
+// only the public addresses are loaded here.
+loadAccounts()
+  .then((accounts) =>
+    wallets.set((prev) => ({
+      ...prev,
+      added: [
+        ...accounts.map(fromVault),
+        ...prev.added.filter((w) => !accounts.some((a) => a.id === w.id)),
+      ],
+    })),
+  )
+  .catch((error) => console.warn('Couldn’t load saved wallets', error));
+
+/** Adds a wallet whose keys were just saved to the vault, and switches to it. */
+export function addVaultWallet(account: VaultAccount) {
+  wallets.set((prev) => ({ activeId: account.id, added: [...prev.added, fromVault(account)] }));
+  return account.id;
+}
 
 /** The user's own wallet plus the others, as one list. */
 export function allWallets(name: string, added: AddedWallet[]): AddedWallet[] {
@@ -47,7 +83,7 @@ export function nextBurnerLabel() {
   return `Burner ${wallets.get().added.filter((w) => w.burner).length + 1}`;
 }
 
-/** A random-looking address for wallets created in the demo. */
+/** A random-looking address for demo data (watched handles, multisig members). */
 export function demoAddress() {
   const hex = '0123456789abcdef';
   let out = '0x';

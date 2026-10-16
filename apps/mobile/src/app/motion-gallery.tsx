@@ -3,6 +3,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
+// import { HoneyRoll } from '@/components/logo/HoneyRoll';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { AvatarGroup } from '@/components/motion/AvatarGroup';
 import { Checkbox } from '@/components/motion/Checkbox';
@@ -100,6 +101,8 @@ const SECTIONS: { title: string; demos: (() => ReactNode)[] }[] = [
       TiltDemo,
     ],
   },
+  // Out for now; the honey wheel lives on in components/logo/HoneyRoll.tsx.
+  // { title: 'Just for fun', demos: [HoneyRollDemo] },
 ];
 
 /**
@@ -657,6 +660,16 @@ function TiltDemo() {
     </Demo>
   );
 }
+
+// --- Just for fun -------------------------------------------------------------
+
+// function HoneyRollDemo() {
+//   return (
+//     <Demo title="Honey wheel">
+//       <HoneyRoll width={170} />
+//     </Demo>
+//   );
+// }
 
 const useStyles = makeStyles((c) => ({
   screen: {

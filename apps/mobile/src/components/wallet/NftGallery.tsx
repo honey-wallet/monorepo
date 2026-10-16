@@ -8,6 +8,7 @@
 // view follows the finger 1:1, shrinking a little, and springs back if let go early.
 // The art itself tilts toward a pressing finger (TiltCard); the details, traits
 // included, arrive as one block. Under Reduce Motion the detail only fades.
+import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
   Modal,
@@ -34,12 +35,14 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Icon, type IconName } from '@/components/Icon';
 import { LikeButton } from '@/components/motion/LikeButton';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { TiltCard } from '@/components/motion/TiltCard';
 import { NftArt } from '@/components/wallet/NftArt';
-import { TokenIcon } from '@/components/wallet/parts';
+import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { StatRow } from '@/components/wallet/Sheet';
 import { NFTS, type Nft, nftFloorUsd, nftNative } from '@/lib/collectibles';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import { chainSymbol, formatUsd } from '@/lib/mock-wallet';
 import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
@@ -67,32 +70,64 @@ export function NftGallery() {
   const [open, setOpen] = useState<{ nft: Nft; from: Rect } | null>(null);
   const [play] = useState(() => !gridPlayed);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const loading = useFirstLoad(LOADS.nfts);
   useEffect(() => {
     gridPlayed = true;
   }, []);
 
   const tile = width ? (width - GAP * (COLUMNS - 1)) / COLUMNS : 0;
 
+  if (!loading && NFTS.length === 0) {
+    return (
+      <EmptyState
+        compact
+        icon="image"
+        title="No NFTs yet"
+        hint="Collectibles you own will show up here."
+        action={{ label: 'Receive', onPress: () => router.push('/receive') }}
+      />
+    );
+  }
+
   return (
     <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-      <View style={styles.grid}>
-        {tile
-          ? NFTS.map((nft, i) => (
-              <Tile
-                key={nft.id}
-                nft={nft}
-                size={tile}
-                index={i}
-                play={play}
-                lifted={open?.nft.id === nft.id}
-                onOpen={(from) => {
-                  tap();
-                  setOpen({ nft, from });
-                }}
-              />
-            ))
-          : null}
-      </View>
+      <SkeletonReveal
+        loading={loading}
+        skeleton={
+          <View style={styles.grid}>
+            {tile
+              ? Array.from({ length: COLUMNS * 2 }, (_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: placeholders have no identity
+                  <View key={i} style={{ width: tile }}>
+                    <SkeletonBar width={tile} height={tile} radius={TILE_RADIUS} />
+                    <View style={styles.nameSkeleton}>
+                      <SkeletonBar width="70%" height={10} radius={5} />
+                    </View>
+                  </View>
+                ))
+              : null}
+          </View>
+        }
+      >
+        <View style={styles.grid}>
+          {tile
+            ? NFTS.map((nft, i) => (
+                <Tile
+                  key={nft.id}
+                  nft={nft}
+                  size={tile}
+                  index={i}
+                  play={play}
+                  lifted={open?.nft.id === nft.id}
+                  onOpen={(from) => {
+                    tap();
+                    setOpen({ nft, from });
+                  }}
+                />
+              ))
+            : null}
+        </View>
+      </SkeletonReveal>
       {open ? (
         <NftDetail
           nft={open.nft}
@@ -381,6 +416,11 @@ const useStyles = makeStyles((c) => ({
   lifted: {
     backgroundColor: c.card,
   },
+  // Same footprint as the name line under a tile (13pt text and its margins).
+  nameSkeleton: {
+    marginTop: 9,
+    marginBottom: 11,
+  },
   name: {
     marginTop: 6,
     marginBottom: 8,
@@ -444,7 +484,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 8,
     marginLeft: 2,
     color: c.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
   },
   inline: {
     flexDirection: 'row',

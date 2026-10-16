@@ -14,6 +14,11 @@ pub enum AppError {
     NotFound,
     #[error("{0}")]
     BadRequest(String),
+    #[error("{0}")]
+    Conflict(String),
+    /// Temporarily out of room (e.g. the pairing mailbox is full); retry later.
+    #[error("server busy, try again shortly")]
+    Busy,
     /// The chain cannot do what was asked (e.g. commit-delay-reveal on Bitcoin).
     #[error("{0}")]
     Unsupported(String),
@@ -40,6 +45,8 @@ impl IntoResponse for AppError {
         let (status, code) = match &self {
             Self::NotFound => (StatusCode::NOT_FOUND, "not_found"),
             Self::BadRequest(_) => (StatusCode::BAD_REQUEST, "bad_request"),
+            Self::Conflict(_) => (StatusCode::CONFLICT, "conflict"),
+            Self::Busy => (StatusCode::SERVICE_UNAVAILABLE, "busy"),
             Self::Unsupported(_) => (StatusCode::UNPROCESSABLE_ENTITY, "unsupported"),
             Self::NotImplemented(_) => (StatusCode::NOT_IMPLEMENTED, "not_implemented"),
             Self::Internal(_) => (StatusCode::INTERNAL_SERVER_ERROR, "internal"),

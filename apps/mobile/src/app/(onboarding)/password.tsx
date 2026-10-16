@@ -1,3 +1,5 @@
+// NOT IN THE FLOW FOR NOW: verify goes straight to the wallet (see lib/onboarding.ts).
+// Kept as is so it can come back; nothing links here.
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text, TextInput, View } from 'react-native';

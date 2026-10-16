@@ -3,9 +3,11 @@ import { Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { Accordion } from '@/components/motion/Accordion';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { useFirstLoad } from '@/components/motion/Skeleton';
 import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { MemberAvatar, networkLabel, ProposalRow } from '@/components/wallet/MultisigParts';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import {
   hasVoted,
   type Member,
@@ -37,6 +39,9 @@ export function SharedWalletCard({ multisig }: { multisig: Multisig }) {
   const { pending } = useProposals(multisig.walletId);
   const yours = pending.filter((p) => !hasVoted(p, YOU));
   const sorted = [...yours, ...pending.filter((p) => hasVoted(p, YOU))];
+  // Proposals come from the chain (the same fetch as Activity's). Until they're in, the
+  // card is just its head; the list then opens in rather than popping.
+  const loading = useFirstLoad(LOADS.activity(multisig.walletId));
   const openWallet = () => {
     tap();
     router.push({ pathname: '/multisig/[id]', params: { id: multisig.walletId } });
@@ -59,7 +64,7 @@ export function SharedWalletCard({ multisig }: { multisig: Multisig }) {
         </View>
         <Icon name="chevronRight" size={13} color={c.textSecondary} />
       </PressableScale>
-      {sorted.length ? (
+      <Accordion open={!loading && sorted.length > 0}>
         <View style={styles.list}>
           <Text style={styles.section}>
             {yours.length ? `Needs your approval (${yours.length})` : 'Waiting for others'}
@@ -78,7 +83,7 @@ export function SharedWalletCard({ multisig }: { multisig: Multisig }) {
             </PressableScale>
           ) : null}
         </View>
-      ) : null}
+      </Accordion>
     </View>
   );
 }
@@ -87,6 +92,15 @@ export function SharedWalletCard({ multisig }: { multisig: Multisig }) {
  * On any other wallet: a nudge when proposals in your shared wallets are waiting
  * for you. Tapping opens the first one.
  */
+const dismissedNudge = createStore<string[]>([]);
+
+/** Whether the nudge is showing: something waits for you that you haven't closed. */
+export function useApprovalsNudgeShown() {
+  const waiting = useNeedsMyApproval();
+  const dismissed = dismissedNudge.use();
+  return waiting.some((p) => !dismissed.includes(p.id));
+}
+
 export function ApprovalsNudge() {
   const styles = useStyles();
   const c = useTheme();
@@ -166,7 +180,6 @@ const ICON = CARD_ICON;
 const PAIR_ITEM = 28;
 
 /** Waiting proposals whose Home card was closed; it comes back when a new one arrives. */
-const dismissedNudge = createStore<string[]>([]);
 
 const useStyles = makeStyles((c) => ({
   flex: {
@@ -212,7 +225,7 @@ const useStyles = makeStyles((c) => ({
   },
   section: {
     color: c.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
   },
   more: {
     paddingTop: 6,
@@ -224,7 +237,7 @@ const useStyles = makeStyles((c) => ({
   nudge: {
     marginTop: 12,
     padding: 14,
-    borderRadius: 18,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

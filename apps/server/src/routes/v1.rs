@@ -16,6 +16,7 @@ pub fn router() -> Router {
         .merge(super::session_signatures::router())
         .merge(super::relay::router())
         .merge(super::monitoring::router())
+        .merge(super::pairing::router())
 }
 
 async fn version() -> Json<VersionInfo> {

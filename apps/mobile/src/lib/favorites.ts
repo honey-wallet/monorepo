@@ -1,8 +1,12 @@
 import { useSyncExternalStore } from 'react';
 import { FAVORITES } from '@/lib/mock-wallet';
+import { showToast } from '@/lib/toast';
+
+/** Favourites fill one scrolling row on Search, so they stay a short list. */
+export const MAX_FAVORITES = 5;
 
 /** Favourite tokens by ticker, shared by token pages and search. In memory for now. */
-let favorites: string[] = [...FAVORITES];
+let favorites: string[] = FAVORITES.slice(0, MAX_FAVORITES);
 const listeners = new Set<() => void>();
 
 function set(next: string[]) {
@@ -11,7 +15,17 @@ function set(next: string[]) {
 }
 
 export function toggleFavorite(symbol: string) {
-  set(favorites.includes(symbol) ? favorites.filter((s) => s !== symbol) : [...favorites, symbol]);
+  if (favorites.includes(symbol)) return set(favorites.filter((s) => s !== symbol));
+  if (favorites.length >= MAX_FAVORITES) {
+    showToast(`You can keep up to ${MAX_FAVORITES} favorites. Remove one first.`);
+    return;
+  }
+  set([...favorites, symbol]);
+}
+
+/** Puts favourites in a new order (dragged on Search). */
+export function reorderFavorites(next: string[]) {
+  set(next);
 }
 
 export function useFavorites(): string[] {

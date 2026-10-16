@@ -1,11 +1,14 @@
+import { router } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 import Animated, { FadeOut } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { Chip } from '@/components/wallet/Chip';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
-import { SheetRow, SheetSection } from '@/components/wallet/Sheet';
+import { SheetRow, SheetRowSkeletons, SheetSection } from '@/components/wallet/Sheet';
 import { tap } from '@/lib/haptics';
+import { LOADS } from '@/lib/loads';
 import {
   type Chain,
   formatAmount,
@@ -17,6 +20,8 @@ import {
 } from '@/lib/mock-wallet';
 import { useSigner } from '@/lib/multisig';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
+import { useWalletView } from '@/lib/wallet-view';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, LAYOUT_MOVE } from '@/theme/motion';
 
@@ -45,9 +50,14 @@ export function TokenList({
   const swapState = useSwap();
   // A shared wallet lists its own balances, and only tokens on its network.
   const { multisig } = useSigner();
-  const owned = holdings ?? multisig?.holdings ?? HOLDINGS;
+  const activeWallet = useActiveWallet();
+  // A wallet that's never had money in it holds nothing yet.
+  const { empty } = useWalletView();
+  const owned = holdings ?? multisig?.holdings ?? (empty ? [] : HOLDINGS);
   const network = multisig ? (multisig.network.name as Chain) : sending ? null : swapState.network;
   const { bridgeTipDismissed } = swapState;
+  // Balances and prices arrive from the network; a shared wallet's are their own fetch.
+  const loading = useFirstLoad(LOADS.balances(multisig?.walletId ?? activeWallet.id));
 
   const q = query.trim().toLowerCase();
   const matches = (symbol: string, chain: Chain) =>
@@ -115,13 +125,10 @@ export function TokenList({
           </ScrollView>
         )}
 
-        {yours.length > 0 && (
-          <>
-            <View style={styles.sectionRow}>
-              <Icon name="wallet" size={15} color={c.textSecondary} />
-              <SheetSection title="Your tokens" />
-            </View>
-            {yours.map((h) => (
+        <SkeletonReveal loading={loading} skeleton={<SheetRowSkeletons count={6} />}>
+          {/* What you hold comes first, with no heading: balances make it obvious. */}
+          {yours.length > 0 &&
+            yours.map((h) => (
               <SheetRow
                 key={`${h.symbol}-${h.chain}`}
                 leading={<TokenIcon symbol={h.symbol} chain={h.chain} size={40} />}
@@ -136,34 +143,71 @@ export function TokenList({
                 onPress={() => onChoose({ symbol: h.symbol, chain: h.chain })}
               />
             ))}
-          </>
-        )}
 
-        {others.length > 0 && (
-          <>
-            <SheetSection title="Tokens" />
-            {others.map((t) => (
-              <SheetRow
-                key={`${t.symbol}-${t.chain}`}
-                leading={<TokenIcon symbol={t.symbol} chain={t.chain} size={40} />}
-                title={t.name}
-                subtitle={`${t.symbol} · ${t.chain}`}
-                value={formatUsd(t.price)}
-                onPress={() => onChoose({ symbol: t.symbol, chain: t.chain })}
-              />
-            ))}
-          </>
-        )}
+          {others.length > 0 && (
+            <>
+              {yours.length > 0 ? <SheetSection title="More tokens" /> : null}
+              {others.map((t) => (
+                <SheetRow
+                  key={`${t.symbol}-${t.chain}`}
+                  leading={<TokenIcon symbol={t.symbol} chain={t.chain} size={40} />}
+                  title={t.name}
+                  subtitle={`${t.symbol} · ${t.chain}`}
+                  value={formatUsd(t.price)}
+                  onPress={() => onChoose({ symbol: t.symbol, chain: t.chain })}
+                />
+              ))}
+            </>
+          )}
 
-        {yours.length === 0 && others.length === 0 && (
-          <EmptyState
-            icon="search"
-            title="No tokens found"
-            hint={network ? `Nothing matches on ${network}.` : 'Try another name or symbol.'}
-          />
-        )}
+          {yours.length === 0 && others.length === 0 && (
+            <TokenListEmpty
+              searching={!!q}
+              sending={sending}
+              network={network}
+              // Only Swap's own filter can be cleared; a shared wallet's network is fixed.
+              onAllNetworks={
+                !multisig && swapState.network ? () => updateSwap({ network: null }) : undefined
+              }
+            />
+          )}
+        </SkeletonReveal>
       </Animated.View>
     </>
+  );
+}
+
+/** Why the list is empty, and the way out when there is one. */
+function TokenListEmpty({
+  searching,
+  sending,
+  network,
+  onAllNetworks,
+}: {
+  searching: boolean;
+  sending: boolean;
+  network: Chain | null;
+  onAllNetworks?: () => void;
+}) {
+  if (sending && !searching) {
+    return (
+      <EmptyState
+        icon="send"
+        title="Nothing to send yet"
+        hint={
+          network ? `You don't hold anything on ${network}.` : 'Tokens you receive show up here.'
+        }
+        action={{ label: 'Receive', onPress: () => router.push('/receive') }}
+      />
+    );
+  }
+  return (
+    <EmptyState
+      icon="search"
+      title="No tokens found"
+      hint={network ? `Nothing matches on ${network}.` : 'Try another name or symbol.'}
+      action={onAllNetworks && { label: 'Search all networks', onPress: onAllNetworks }}
+    />
   );
 }
 
@@ -204,11 +248,6 @@ const useStyles = makeStyles((c) => ({
   chips: {
     gap: 8,
     paddingHorizontal: 20,
-  },
-  sectionRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 6,
   },
   end: {
     alignItems: 'flex-end',

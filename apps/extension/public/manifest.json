@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Honey Wallet",
+  "description": "All your crypto, one wallet. Pair with the Honey app on your phone.",
+  "version": "0.1.0",
+  "action": {
+    "default_title": "Honey Wallet",
+    "default_popup": "index.html"
+  },
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost:8080/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

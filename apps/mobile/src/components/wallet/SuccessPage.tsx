@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { type ReactNode, useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { type StyleProp, Text, View, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useReducedMotion,
@@ -39,25 +39,41 @@ export function SuccessPage({
   amount,
   rows,
   onDone,
+  secondary,
+  compact = false,
   children,
 }: {
   title: string;
   detail?: string;
   /** The headline figure, e.g. `{ symbol: 'USDC', text: '2 USDC', usd: '$2.00' }`. */
-  amount?: { symbol: string; chain?: Chain; text: string; usd?: string };
+  amount?: {
+    symbol: string;
+    chain?: Chain;
+    text: string;
+    usd?: string;
+    /** Drawn instead of the token logo, e.g. a perps market's monogram. */
+    icon?: ReactNode;
+  };
   /** A short receipt under the headline: To, Network, Fee… */
   rows?: { label: string; value: ReactNode }[];
   onDone?: () => void;
+  /** A second button beside Done, e.g. View position. */
+  secondary?: { label: string; onPress: () => void };
+  /**
+   * For a pop-up that sizes to its content (the swap dialog): no centring in a fixed
+   * height, a smaller check and figure, tighter gaps.
+   */
+  compact?: boolean;
   /** Extra content under the detail, e.g. who still has to approve. */
   children?: ReactNode;
 }) {
   const styles = useStyles();
   const c = useTheme();
   return (
-    <View style={styles.page}>
-      <View style={styles.flex} />
+    <View style={compact ? undefined : styles.page}>
+      {compact ? null : <View style={styles.flex} />}
       <View style={styles.body}>
-        <SuccessBurst />
+        <SuccessBurst size={compact ? 56 : 72} />
         <Appear at={AT.title}>
           <Text style={[styles.title, !amount && styles.titleLarge]} accessibilityRole="header">
             {title}
@@ -66,8 +82,19 @@ export function SuccessPage({
         {amount ? (
           <Appear at={AT.amount} style={styles.amountBlock}>
             <View style={styles.amountRow}>
-              <TokenIcon symbol={amount.symbol} chain={amount.chain} size={30} ring={c.sheet} />
-              <Text style={styles.amount} numberOfLines={1} adjustsFontSizeToFit>
+              {amount.icon ?? (
+                <TokenIcon
+                  symbol={amount.symbol}
+                  chain={amount.chain}
+                  size={compact ? 24 : 30}
+                  ring={c.sheet}
+                />
+              )}
+              <Text
+                style={[styles.amount, compact && styles.amountCompact]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
                 {amount.text}
               </Text>
             </View>
@@ -80,7 +107,7 @@ export function SuccessPage({
           </Appear>
         ) : null}
         {rows?.length ? (
-          <Appear at={AT.receipt} style={styles.receipt}>
+          <Appear at={AT.receipt} style={[styles.receipt, compact && styles.receiptCompact]}>
             {rows.map((row) => (
               <StatRow key={row.label} label={row.label} value={row.value} />
             ))}
@@ -92,10 +119,18 @@ export function SuccessPage({
           </Appear>
         ) : null}
       </View>
-      <View style={styles.flex} />
+      {compact ? null : <View style={styles.flex} />}
       {onDone ? (
-        <Appear at={AT.done} distance={0}>
-          <PillButton label="Done" onPress={onDone} style={styles.cta} />
+        <Appear at={AT.done} distance={0} style={styles.ctaRow}>
+          {secondary ? (
+            <PillButton
+              label={secondary.label}
+              variant="secondary"
+              onPress={secondary.onPress}
+              style={styles.ctaHalf}
+            />
+          ) : null}
+          <PillButton label="Done" onPress={onDone} style={styles.ctaHalf} />
         </Appear>
       ) : null}
     </View>
@@ -111,7 +146,7 @@ function Appear({
 }: {
   at: number;
   distance?: number;
-  style?: object;
+  style?: StyleProp<ViewStyle>;
   children: ReactNode;
 }) {
   const reduceMotion = useReducedMotion();
@@ -189,18 +224,29 @@ const useStyles = makeStyles((c) => ({
     lineHeight: 21,
     textAlign: 'center',
   },
+  amountCompact: {
+    fontSize: 28,
+  },
+  receiptCompact: {
+    marginTop: 18,
+  },
   receipt: {
     alignSelf: 'stretch',
     marginTop: 24,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: c.card,
   },
   extra: {
     marginTop: 18,
   },
-  cta: {
+  ctaRow: {
     marginTop: SHEET.footerGap,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  ctaHalf: {
+    flex: 1,
   },
 }));

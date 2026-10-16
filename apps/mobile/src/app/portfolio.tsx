@@ -9,12 +9,19 @@ import { MenuDropdown } from '@/components/motion/MenuDropdown';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
 import { RESIZE } from '@/components/motion/resize';
 import { SegmentedTabs } from '@/components/motion/SegmentedTabs';
+import {
+  SkeletonBar,
+  SkeletonChart,
+  SkeletonReveal,
+  useFirstLoad,
+} from '@/components/motion/Skeleton';
 import { TextSoftSwap } from '@/components/motion/TextSoftSwap';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { ActionFooter } from '@/components/wallet/ActionFooter';
 import { DonutChart } from '@/components/wallet/DonutChart';
-import { PriceChart } from '@/components/wallet/PriceChart';
-import { PushedScreen } from '@/components/wallet/parts';
+import { ChartEmpty, PriceChart } from '@/components/wallet/PriceChart';
+import { EmptyState, PushedScreen } from '@/components/wallet/parts';
+import { LOADS } from '@/lib/loads';
 import {
   BALANCE,
   BALANCE_CHANGE,
@@ -31,6 +38,8 @@ import {
 } from '@/lib/mock-wallet';
 import { useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
+import { useWalletView } from '@/lib/wallet-view';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
@@ -76,19 +85,24 @@ export default function PortfolioScreen() {
   const [range, setRange] = useState<Range>('1D');
   const [scrub, setScrub] = useState<number | null>(null);
   const [scope, setScope] = useState<Scope>('all');
+  const wallet = useActiveWallet();
   const [grouping, setGrouping] = useState<Grouping>('Tokens');
-  const shares = allocation(grouping);
+  // The balance is already known; its history and returns are fetched.
+  const loading = useFirstLoad(LOADS.history(wallet.id));
+  // A wallet that's never had money in it: nothing to chart, return or split yet.
+  const { empty } = useWalletView();
+  const shares = empty ? [] : allocation(grouping);
   const sharesTotal = shares.reduce((s, x) => s + x.value, 0) || 1;
 
   const todayPct = (BALANCE_CHANGE / (BALANCE - BALANCE_CHANGE)) * 100;
   const data = series('portfolio', range, BALANCE, range === '1D' ? todayPct : undefined);
-  const value = scrub === null ? BALANCE : data[scrub];
-  const delta = value - data[0];
-  const pct = (delta / data[0]) * 100;
+  const value = empty ? 0 : scrub === null ? BALANCE : data[scrub];
+  const delta = empty ? 0 : value - data[0];
+  const pct = empty ? 0 : (delta / data[0]) * 100;
   const color = delta < 0 ? c.error : c.success;
 
   // Placeholder performance, scaled by the chosen window.
-  const factor = scope === 'all' ? 1 : scope === 'month' ? 0.4 : 0.15;
+  const factor = empty ? 0 : scope === 'all' ? 1 : scope === 'month' ? 0.4 : 0.15;
   const unrealized =
     Object.values(TOKEN_INFO).reduce((s, t) => s + t.performance.unrealized, 0) * factor;
   const realized =
@@ -144,25 +158,33 @@ export default function PortfolioScreen() {
         ) : (
           <Text style={styles.balance}>{formatUsd(value)}</Text>
         )}
-        <View style={styles.changeRow}>
-          <Icon name={delta < 0 ? 'down' : 'up'} size={9} color={color} />
-          {/* Soft cross-fade when the range changes; plain while scrubbing. */}
-          {scrub === null ? (
-            <TextSoftSwap
-              text={`${formatUsd(Math.abs(delta))} (${Math.abs(pct).toFixed(2)}%)`}
-              style={styles.changeAmount}
-            />
-          ) : (
-            <Text style={styles.changeAmount}>
-              {formatUsd(Math.abs(delta))} ({Math.abs(pct).toFixed(2)}%)
-            </Text>
-          )}
-          <TextSwap text={scrub === null ? RANGE_LABEL[range] : ''} style={styles.changeLabel} />
-        </View>
+        {empty ? null : (
+          <View style={styles.changeRow}>
+            <Icon name={delta < 0 ? 'down' : 'up'} size={9} color={color} />
+            {/* Soft cross-fade when the range changes; plain while scrubbing. */}
+            {scrub === null ? (
+              <TextSoftSwap
+                text={`${formatUsd(Math.abs(delta))} (${Math.abs(pct).toFixed(2)}%)`}
+                style={styles.changeAmount}
+              />
+            ) : (
+              <Text style={styles.changeAmount}>
+                {formatUsd(Math.abs(delta))} ({Math.abs(pct).toFixed(2)}%)
+              </Text>
+            )}
+            <TextSwap text={scrub === null ? RANGE_LABEL[range] : ''} style={styles.changeLabel} />
+          </View>
+        )}
       </View>
 
       <View style={styles.chart}>
-        <PriceChart data={data} width={width} height={CHART_HEIGHT} onScrub={setScrub} />
+        <SkeletonReveal loading={loading} skeleton={<SkeletonChart height={CHART_HEIGHT} />}>
+          {empty ? (
+            <ChartEmpty height={CHART_HEIGHT} text="Your balance over time shows up here" />
+          ) : (
+            <PriceChart data={data} width={width} height={CHART_HEIGHT} onScrub={setScrub} />
+          )}
+        </SkeletonReveal>
       </View>
       <View style={styles.ranges}>
         <SegmentedTabs bare options={RANGES} value={range} onChange={setRange} />
@@ -186,17 +208,17 @@ export default function PortfolioScreen() {
         <Animated.View layout={RESIZE} style={[styles.perfCard, styles.perfRow]}>
           <View style={styles.flex}>
             <Text style={styles.perfLabel}>Total return</Text>
-            <Signed value={unrealized + realized} strong />
+            <Signed value={unrealized + realized} strong loading={loading} />
           </View>
           <View style={styles.perfDivider} />
           <View style={styles.flex}>
             <Text style={styles.perfLabel}>Unrealized</Text>
-            <Signed value={unrealized} />
+            <Signed value={unrealized} loading={loading} />
           </View>
           <View style={styles.perfDivider} />
           <View style={styles.flex}>
             <Text style={styles.perfLabel}>Realized</Text>
-            <Signed value={realized} />
+            <Signed value={realized} loading={loading} />
           </View>
         </Animated.View>
 
@@ -209,54 +231,81 @@ export default function PortfolioScreen() {
             onChange={setGrouping}
           />
         </View>
-        <Animated.View layout={RESIZE} style={[styles.perfCard, styles.allocation]}>
-          <DonutChart
-            size={124}
-            segments={shares.map((x) => ({
-              id: x.id,
-              value: x.value,
-              color: SEGMENT_COLOR[x.id] ?? c.textSecondary,
-            }))}
-          >
-            <Text style={styles.donutTotal}>{formatUsd(BALANCE)}</Text>
-            <Text style={styles.donutLabel}>Total</Text>
-          </DonutChart>
-          <View style={styles.legend}>
-            {shares
-              .filter((x) => x.value > 0)
-              .map((x) => (
-                <Animated.View
-                  key={x.id}
-                  // Exits are shorter than entries: the change has already happened.
-                  entering={FadeIn.duration(DURATION.fast)}
-                  exiting={FadeOut.duration(DURATION.quick)}
-                  layout={RESIZE}
-                  style={styles.legendRow}
-                >
-                  <View style={[styles.legendDot, { backgroundColor: SEGMENT_COLOR[x.id] }]} />
-                  <View style={styles.flex}>
-                    <TextSoftSwap text={x.label} style={styles.legendLabel} />
-                  </View>
-                  <TextSoftSwap
-                    text={`${((x.value / sharesTotal) * 100).toFixed(0)}%`}
-                    style={styles.legendValue}
-                    align="end"
-                  />
-                </Animated.View>
-              ))}
+        {shares.length === 0 ? (
+          <View style={styles.perfCard}>
+            <EmptyState
+              compact
+              icon="pie"
+              title="Nothing to split yet"
+              hint="Once you hold tokens, this shows how your balance is spread."
+              action={{ label: 'Deposit', onPress: () => router.push('/balance') }}
+            />
           </View>
-        </Animated.View>
+        ) : (
+          <Animated.View layout={RESIZE} style={[styles.perfCard, styles.allocation]}>
+            <DonutChart
+              size={124}
+              segments={shares.map((x) => ({
+                id: x.id,
+                value: x.value,
+                color: SEGMENT_COLOR[x.id] ?? c.textSecondary,
+              }))}
+            >
+              <Text style={styles.donutTotal}>{formatUsd(BALANCE)}</Text>
+              <Text style={styles.donutLabel}>Total</Text>
+            </DonutChart>
+            <View style={styles.legend}>
+              {shares
+                .filter((x) => x.value > 0)
+                .map((x) => (
+                  <Animated.View
+                    key={x.id}
+                    // Exits are shorter than entries: the change has already happened.
+                    entering={FadeIn.duration(DURATION.fast)}
+                    exiting={FadeOut.duration(DURATION.quick)}
+                    layout={RESIZE}
+                    style={styles.legendRow}
+                  >
+                    <View style={[styles.legendDot, { backgroundColor: SEGMENT_COLOR[x.id] }]} />
+                    <View style={styles.flex}>
+                      <TextSoftSwap text={x.label} style={styles.legendLabel} />
+                    </View>
+                    <TextSoftSwap
+                      text={`${((x.value / sharesTotal) * 100).toFixed(0)}%`}
+                      style={styles.legendValue}
+                      align="end"
+                    />
+                  </Animated.View>
+                ))}
+            </View>
+          </Animated.View>
+        )}
       </View>
     </PushedScreen>
   );
 }
 
 /** A dollar amount with its up/down triangle; `strong` for the total. */
-function Signed({ value, strong }: { value: number; strong?: boolean }) {
+function Signed({
+  value,
+  strong,
+  loading = false,
+}: {
+  value: number;
+  strong?: boolean;
+  loading?: boolean;
+}) {
   const styles = useStyles();
   const c = useTheme();
+  if (loading) {
+    return (
+      <View style={styles.valueSkeleton}>
+        <SkeletonBar width={64} height={14} />
+      </View>
+    );
+  }
   return (
-    <View style={styles.signed}>
+    <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.signed}>
       {Math.abs(value) >= 0.005 && (
         <Icon name={value < 0 ? 'down' : 'up'} size={9} color={value < 0 ? c.error : c.success} />
       )}
@@ -264,7 +313,7 @@ function Signed({ value, strong }: { value: number; strong?: boolean }) {
         text={formatUsd(Math.abs(value))}
         style={[styles.value, strong && styles.valueStrong]}
       />
-    </View>
+    </Animated.View>
   );
 }
 
@@ -323,7 +372,7 @@ const useStyles = makeStyles((c) => ({
   },
   heading: {
     color: c.textSecondary,
-    fontSize: 17,
+    fontSize: 15,
   },
   flex: {
     flex: 1,
@@ -348,6 +397,11 @@ const useStyles = makeStyles((c) => ({
   },
   valueStrong: {
     fontWeight: '600',
+  },
+  // The value's 16pt line box, so the card keeps its height while loading.
+  valueSkeleton: {
+    height: 20,
+    justifyContent: 'center',
   },
   signed: {
     flexDirection: 'row',

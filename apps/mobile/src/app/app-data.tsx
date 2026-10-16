@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { forgetLoads } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { HeaderIconButton, PushedScreen } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
@@ -47,12 +48,15 @@ export default function AppDataScreen() {
 
   const clear = (item: Item) => {
     tap();
+    // Cached prices and balances go, so every screen fetches (and skeletons) again.
+    if (item.id === 'cache') forgetLoads();
     setCleared((prev) => new Set(prev).add(item.id));
     showToast(item.done);
   };
 
   const clearAll = () => {
     tap();
+    forgetLoads();
     setCleared(new Set(ITEMS.map((i) => i.id)));
     showToast('All app data cleared');
   };
@@ -61,7 +65,9 @@ export default function AppDataScreen() {
     <PushedScreen
       title="App data"
       fallback="/settings"
-      right={<HeaderIconButton icon="help" label="Help" onPress={() => router.push('/help')} />}
+      right={
+        <HeaderIconButton bare icon="help" label="Help" onPress={() => router.push('/help')} />
+      }
       contentStyle={styles.content}
       footer={
         <PressableScale
