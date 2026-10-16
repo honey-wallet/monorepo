@@ -215,28 +215,33 @@ export default function TokenScreen() {
               {held.amount} {symbol}
             </Text>
           </Text>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ expanded: showBreakdown }}
-            onPress={() => {
-              tap();
-              setShowBreakdown((v) => !v);
-            }}
-            style={styles.breakdownHeader}
-          >
-            <Text style={styles.label}>Breakdown</Text>
-            <AccordionChevron open={showBreakdown} size={12} color={c.textSecondary} />
-          </Pressable>
-          <Accordion open={showBreakdown}>
-            {info.holdings.map((h) => (
-              <View key={h.chain} style={styles.holding}>
-                <TokenIcon symbol={chainSymbol(h.chain)} size={22} />
-                <Text style={styles.holdingUsd}>{formatUsd(h.usd)}</Text>
-                <Text style={styles.holdingChain}>{h.chain}</Text>
-                <Text style={styles.holdingAmount}>{h.amount}</Text>
-              </View>
-            ))}
-          </Accordion>
+          {/* One chain would only repeat the balance above. */}
+          {info.holdings.length > 1 && (
+            <>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: showBreakdown }}
+                onPress={() => {
+                  tap();
+                  setShowBreakdown((v) => !v);
+                }}
+                style={styles.breakdownHeader}
+              >
+                <Text style={styles.label}>Breakdown</Text>
+                <AccordionChevron open={showBreakdown} size={12} color={c.textSecondary} />
+              </Pressable>
+              <Accordion open={showBreakdown}>
+                {info.holdings.map((h) => (
+                  <View key={h.chain} style={styles.holding}>
+                    <TokenIcon symbol={chainSymbol(h.chain)} size={22} />
+                    <Text style={styles.holdingUsd}>{formatUsd(h.usd)}</Text>
+                    <Text style={styles.holdingChain}>{h.chain}</Text>
+                    <Text style={styles.holdingAmount}>{h.amount}</Text>
+                  </View>
+                ))}
+              </Accordion>
+            </>
+          )}
         </View>
       )}
 
