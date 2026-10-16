@@ -9,7 +9,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
-import { PlusMenuMorph } from '@/components/motion/PlusMenuMorph';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
@@ -52,7 +51,6 @@ export default function SavingsScreen() {
       title="Savings"
       right={
         <HeaderActions
-          balance={false}
           settingsLabel="Savings settings"
           onSettings={() =>
             router.push({ pathname: '/section-settings', params: { section: 'savings' } })
@@ -67,29 +65,7 @@ export default function SavingsScreen() {
         saved={{ usd: saved, apy: JAR_APY }}
         middle={
           <>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.section}>Your jars</Text>
-              {jars.length ? (
-                // The + grows into a short menu: a new jar, or straight into earning.
-                <PlusMenuMorph
-                  label="Add"
-                  title="Add to savings"
-                  items={[
-                    {
-                      label: 'New jar',
-                      leading: <Icon name="target" size={20} color={c.accentText} />,
-                      onPress: newJar,
-                    },
-                    ...(['USDC', 'USDT'] as const).map((symbol) => ({
-                      label: `Earn with ${symbol}`,
-                      leading: <TokenIcon symbol={symbol} size={24} />,
-                      onPress: () =>
-                        router.push({ pathname: '/earn/[symbol]', params: { symbol } }),
-                    })),
-                  ]}
-                />
-              ) : null}
-            </View>
+            <Text style={[styles.section, styles.sectionHeader]}>Your jars</Text>
             {jars.length ? (
               <View style={styles.jars}>
                 {jars.map((jar) => (
@@ -103,6 +79,17 @@ export default function SavingsScreen() {
                 hint="Set crypto aside for a goal and keep it out of your everyday balance."
               />
             )}
+            <PressableScale
+              accessibilityRole="button"
+              scaleTo={0.98}
+              onPress={newJar}
+              style={styles.newJar}
+            >
+              <View style={styles.newJarIcon}>
+                <Icon name="plus" size={15} color={c.accentText} />
+              </View>
+              <Text style={styles.newJarLabel}>Create new jar</Text>
+            </PressableScale>
           </>
         }
       />
@@ -239,13 +226,8 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
   },
   sectionHeader: {
-    // Above the jars, so the + menu opens over them.
-    zIndex: 1,
     marginTop: 12,
     marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   // The same quiet label as "Positions" below, so the page has one hierarchy.
   section: {
@@ -311,6 +293,30 @@ const useStyles = makeStyles((c) => ({
     borderRadius: 4,
     transformOrigin: 'left',
     backgroundColor: c.primary,
+  },
+  // A quiet row under the jars: a honey + and the label, on the same grey as the cards.
+  newJar: {
+    marginTop: 10,
+    height: 56,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderRadius: 20,
+    backgroundColor: c.card,
+  },
+  newJarIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.accentSurface,
+  },
+  newJarLabel: {
+    color: c.text,
+    fontSize: 16,
+    fontWeight: '500',
   },
   actions: {
     paddingTop: 14,

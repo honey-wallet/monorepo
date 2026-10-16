@@ -323,7 +323,17 @@ export default function SendAmountSheet() {
             ) : page === 'sent' ? (
               <SuccessPage
                 title="Sent"
-                detail={`${formatBalance(tokenValue)} ${symbol} on ${chain} to ${recipient.title}`}
+                amount={{
+                  symbol,
+                  chain,
+                  text: `${formatBalance(tokenValue)} ${symbol}`,
+                  usd: formatUsd(usdValue),
+                }}
+                rows={[
+                  { label: 'To', value: recipient.title },
+                  { label: 'Network', value: chain },
+                  { label: 'Network cost', value: '<$0.01' },
+                ]}
                 onDone={finish}
               />
             ) : (

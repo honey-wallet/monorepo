@@ -80,7 +80,8 @@ const dark: Palette = {
   brandWordmark: '#F6F3EB',
 };
 
-const palettes: Record<'light' | 'dark', Palette> = { light, dark };
+/** Both palettes, for the rare surface that keeps one look whatever the theme (a share card). */
+export const palettes: Record<'light' | 'dark', Palette> = { light, dark };
 
 export function useTheme(): Palette {
   return useColorScheme() === 'dark' ? palettes.dark : palettes.light;

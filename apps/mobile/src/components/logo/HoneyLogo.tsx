@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { useTheme } from '@/theme';
+import { palettes, useTheme } from '@/theme';
 import { EYES_PATH, MARK_VIEWBOX, RING_PATH, WORDMARK_PATH, WORDMARK_VIEWBOX } from './paths';
 
 const MARK_ASPECT = 400 / 350;
@@ -11,11 +11,14 @@ type Props = {
   variant?: 'mark' | 'wordmark' | 'lockup' | 'stacked';
   /** Height of the mark in points; the wordmark is sized to sit beside it. */
   height?: number;
+  /** Colour it for this scheme instead of the current theme (e.g. on a dark card). */
+  scheme?: 'light' | 'dark';
 };
 
 /** The Honey logo, coloured for the current light/dark theme. */
-export function HoneyLogo({ variant = 'lockup', height = 28 }: Props) {
-  const c = useTheme();
+export function HoneyLogo({ variant = 'lockup', height = 28, scheme }: Props) {
+  const theme = useTheme();
+  const c = scheme ? palettes[scheme] : theme;
 
   const mark = (
     <Svg width={height * MARK_ASPECT} height={height} viewBox={MARK_VIEWBOX}>

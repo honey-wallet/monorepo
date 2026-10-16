@@ -22,17 +22,15 @@ import Animated, {
   useSharedValue,
   withDelay,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
-import { Accordion } from '@/components/motion/Accordion';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { tap } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION, EASE, SPRING } from '@/theme/motion';
+import { DURATION, EASE } from '@/theme/motion';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
@@ -285,7 +283,7 @@ export function EarnHero({
         </View>
       </View>
 
-      {large ? <AddMoney rate={rate} hasBalance={now > 0} /> : null}
+      {large ? <AddMoney rate={rate} /> : null}
     </View>
   );
 }
@@ -371,140 +369,26 @@ const useStyles = makeStyles((c) => ({
     fontWeight: '500',
     fontVariant: ['tabular-nums'],
   },
-  add: {
-    marginTop: 22,
-  },
-  picker: {
-    alignItems: 'center',
-  },
-  addAmount: {
-    marginTop: 2,
-    color: c.text,
-    fontSize: 26,
-    fontWeight: '600',
-    fontVariant: ['tabular-nums'],
-  },
-  track: {
-    marginTop: 14,
-    alignSelf: 'stretch',
-    height: THUMB + 12,
-    justifyContent: 'center',
-  },
-  rail: {
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: c.raised,
-  },
-  railFill: {
-    position: 'absolute',
-    left: 0,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: c.primary,
-  },
-  thumb: {
-    position: 'absolute',
-    left: 0,
-    width: THUMB,
-    height: THUMB,
-    borderRadius: THUMB / 2,
-    backgroundColor: c.canvas,
-    borderWidth: 1,
-    borderColor: c.divider,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
   addButton: {
     marginTop: 14,
     alignSelf: 'stretch',
   },
 }));
 
-const ADD_MAX = 5000;
-const START_ADD = 1000;
-const ADD_STEP = 50;
-const THUMB = 26;
-
 /**
- * Aave's "what if": drag to pick an amount to add and see what it would grow to. The
- * thumb follows the finger 1:1 (direct manipulation, no easing) and grows a little
- * while held, settling back on the release spring; a light tick marks every $500.
- * With a balance already earning it starts as just the button, which opens the picker.
+ * Add money: opens the Add to savings sheet, where you type the amount and see what
+ * it could grow to at the rate this chart projects with.
  */
-function AddMoney({ rate, hasBalance }: { rate: number; hasBalance: boolean }) {
+function AddMoney({ rate }: { rate: number }) {
   const styles = useStyles();
-  const [open, setOpen] = useState(!hasBalance);
-  const [amount, setAmount] = useState(START_ADD);
-  const [width, setWidth] = useState(0);
-  const x = useSharedValue(0);
-  const held = useSharedValue(0);
-  const travel = Math.max(1, width - THUMB);
-
-  // Placed once the track is measured, at the starting amount; after that the finger
-  // moves it.
-  useEffect(() => {
-    if (width) x.value = (START_ADD / ADD_MAX) * travel;
-  }, [width, travel, x]);
-
-  const pick = (v: number) => {
-    if (v % 500 === 0) tap();
-    setAmount(v);
-  };
-  useAnimatedReaction(
-    () => Math.round(((x.value / travel) * ADD_MAX) / ADD_STEP) * ADD_STEP,
-    (v, prev) => {
-      if (prev !== null && v !== prev) scheduleOnRN(pick, v);
-    },
-  );
-
-  const drag = Gesture.Pan()
-    .activeOffsetX([-4, 4])
-    .failOffsetY([-10, 10])
-    .onStart(() => {
-      held.value = withTiming(1, { duration: DURATION.quick, easing: EASE.press });
-    })
-    .onUpdate((e) => {
-      x.value = Math.min(travel, Math.max(0, e.x - THUMB / 2));
-    })
-    .onFinalize(() => {
-      held.value = withSpring(0, SPRING.release);
-    });
-
-  const thumb = useAnimatedStyle(() => ({
-    transform: [{ translateX: x.value }, { scale: 1 + held.value * 0.15 }],
-  }));
-  const fill = useAnimatedStyle(() => ({ width: x.value + THUMB / 2 }));
-
-  const grown = amount * (1 + rate) ** AHEAD;
   return (
-    <View style={styles.add}>
-      <Accordion open={open}>
-        <View style={styles.picker}>
-          <Text style={styles.label}>If you add</Text>
-          <Text style={styles.addAmount}>${amount.toLocaleString('en-US')}</Text>
-          <Text style={styles.gain}>
-            ≈ {formatUsd(grown)} in {AHEAD} years
-          </Text>
-          <GestureDetector gesture={drag}>
-            <View style={styles.track} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-              <View style={styles.rail} />
-              <Animated.View style={[styles.railFill, fill]} />
-              <Animated.View style={[styles.thumb, thumb]} />
-            </View>
-          </GestureDetector>
-        </View>
-      </Accordion>
-      <PillButton
-        label={open ? `Add $${amount.toLocaleString('en-US')}` : 'Add money'}
-        onPress={() => {
-          tap();
-          if (!open) return setOpen(true);
-          router.push({ pathname: '/earn/[symbol]', params: { symbol: 'USDC' } });
-        }}
-        style={styles.addButton}
-      />
-    </View>
+    <PillButton
+      label="Add money"
+      onPress={() => {
+        tap();
+        router.push({ pathname: '/savings-add', params: { rate: String(rate) } });
+      }}
+      style={styles.addButton}
+    />
   );
 }

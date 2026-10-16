@@ -10,7 +10,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { ReasoningStream } from '@/components/motion/ReasoningStream';
 import { RESIZE } from '@/components/motion/resize';
 import { StreamingText } from '@/components/motion/StreamingText';
-import { SuccessCheck } from '@/components/motion/SuccessCheck';
+import { SuccessBurst } from '@/components/motion/SuccessBurst';
 import { ThinkingStates } from '@/components/motion/ThinkingStates';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
@@ -204,7 +204,7 @@ export function SwapReview({
 
           {step === 'done' && (
             <View style={styles.done}>
-              <SuccessCheck />
+              <SuccessBurst size={64} />
               <Text style={styles.doneTitle} accessibilityRole="header">
                 Swap complete
               </Text>

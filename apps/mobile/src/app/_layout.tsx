@@ -84,6 +84,7 @@ export default function RootLayout() {
           <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal' }} />
           <Stack.Screen name="wallets" options={sheet([0.75, 1])} />
           <Stack.Screen name="earn/[symbol]" options={sheet('fitToContents')} />
+          <Stack.Screen name="savings-add" options={sheet([1])} />
           <Stack.Screen name="receive" options={sheet('fitToContents')} />
           <Stack.Screen name="my-qr" options={sheet('fitToContents')} />
           <Stack.Screen name="networks" options={sheet('fitToContents')} />
@@ -94,6 +95,7 @@ export default function RootLayout() {
           <Stack.Screen name="trade-settings" options={sheet('fitToContents')} />
           <Stack.Screen name="balance" options={sheet('fitToContents')} />
           <Stack.Screen name="share-portfolio" options={sheet('fitToContents')} />
+          <Stack.Screen name="share-token" options={sheet('fitToContents')} />
           <Stack.Screen name="section-settings" options={sheet('fitToContents')} />
           <Stack.Screen name="trade-tabs" options={sheet('fitToContents')} />
           <Stack.Screen name="token-picker" options={sheet([0.9])} />

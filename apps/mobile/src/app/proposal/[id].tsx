@@ -2,6 +2,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Linking, Text, View } from 'react-native';
 import Animated, {
+  interpolateColor,
+  Keyframe,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -9,14 +11,17 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
+import { Accordion } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { TextSwap } from '@/components/motion/TextSwap';
+import { useHasMounted } from '@/components/motion/useHasMounted';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { MemberAvatar, NetworkBadge, ProposedPage } from '@/components/wallet/MultisigParts';
+import { Copyable } from '@/components/wallet/Details';
+import { MemberAvatar, NetworkBadge } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { closeSheet, SheetScreen, StatRow } from '@/components/wallet/Sheet';
-import { useCopy } from '@/lib/copy';
 import { success, tap } from '@/lib/haptics';
 import { formatUsd, shortAddress } from '@/lib/mock-wallet';
 import {
@@ -39,7 +44,16 @@ import {
 } from '@/lib/multisig';
 import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION, EASE } from '@/theme/motion';
+import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
+
+/** A new signature's tick: grows from half size as it fades in (small icons need the
+ * bigger change to read), 200ms on a strong ease-out. */
+const badgeIn = lazy(() =>
+  new Keyframe({
+    0: { opacity: 0, transform: [{ scale: 0.5 }] },
+    100: { opacity: 1, transform: [{ scale: 1 }], easing: EASE.smoothOut },
+  }).duration(DURATION.fast),
+);
 
 /**
  * One proposal on a shared wallet: what it does, who has approved, and your vote.
@@ -51,8 +65,11 @@ export default function ProposalSheet() {
   const c = useTheme();
   const proposal = useProposal(id);
   const multisig = useMultisig(proposal?.walletId);
-  // After you approve, the page turns into the outcome.
-  const [voted, setVoted] = useState(false);
+  // After you sign, the page stays and shows what changed (rather than swapping to a
+  // separate success page): the pill, your tick, the bar and the transaction.
+  const [justSigned, setJustSigned] = useState(false);
+  // Ticks that are there when the sheet opens just show; new ones pop in.
+  const mounted = useHasMounted();
 
   if (!proposal || !multisig) {
     return (
@@ -73,7 +90,7 @@ export default function ProposalSheet() {
   const onApprove = () => {
     success();
     approve(proposal.id);
-    setVoted(true);
+    setJustSigned(true);
   };
   const onReject = () => {
     tap();
@@ -87,7 +104,7 @@ export default function ProposalSheet() {
     closeSheet();
   };
 
-  const footer = voted ? (
+  const actions = justSigned ? (
     <PillButton
       label="Done"
       onPress={() => {
@@ -107,136 +124,143 @@ export default function ProposalSheet() {
   ) : pending && mine ? (
     <PillButton label="Cancel proposal" variant="secondary" onPress={onCancel} />
   ) : undefined;
+  // The buttons crossfade into Done once you've signed.
+  const footer = actions ? (
+    <ContentSwap id={justSigned ? 'done' : canVote ? 'vote' : 'cancel'}>{actions}</ContentSwap>
+  ) : undefined;
+  const executed = proposal.status === 'executed';
 
   return (
     <SheetScreen title={`Proposal #${proposal.nonce}`} footer={footer}>
-      <ContentSwap id={voted ? 'outcome' : 'proposal'} index={voted ? 1 : 0}>
-        {voted ? (
-          <ProposedPage multisig={multisig} proposal={proposal} />
-        ) : (
-          <View>
-            <View style={styles.summary}>
-              {info.symbol ? <TokenIcon symbol={info.symbol} size={40} /> : null}
-              <Text style={styles.title}>{info.title}</Text>
-              <StatusPill multisig={multisig} proposal={proposal} left={left} />
-            </View>
+      <View>
+        <View style={styles.summary}>
+          {info.symbol ? <TokenIcon symbol={info.symbol} size={40} /> : null}
+          <Text style={styles.title}>{info.title}</Text>
+          <StatusPill multisig={multisig} proposal={proposal} left={left} />
+        </View>
 
-            {/* What it does, and where */}
-            <View style={styles.group}>
-              <ActionRows action={proposal.action} multisig={multisig} />
-              <StatRow
-                label="Chain"
-                value={
-                  <View style={styles.inline}>
-                    <NetworkBadge network={multisig.network} size={18} />
-                    <Text style={styles.statValue}>{multisig.network.name}</Text>
-                  </View>
-                }
-              />
-              <StatRow label="Protocol" value={protocolName(multisig.protocol)} />
-            </View>
-
-            {/* Who signs, side by side: a tick on each who has */}
-            <View style={styles.groupHead}>
-              <Text style={styles.groupTitle}>{PURPOSES[multisig.purpose].signers}</Text>
-              <Text style={styles.groupCount}>
-                {proposal.approvals.length} of {multisig.members.length} signed
-              </Text>
-            </View>
-            <View style={styles.group}>
-              <SignatureBar signed={proposal.approvals.length} needed={multisig.members.length} />
-              <View style={styles.signers}>
-                {bySigning(multisig, proposal).map((m) => {
-                  const yes = proposal.approvals.find((v) => v.memberId === m.id);
-                  const no = proposal.rejections.find((v) => v.memberId === m.id);
-                  const idle = !yes && !no && !pending;
-                  const label = yes
-                    ? m.id === proposal.createdBy
-                      ? 'Proposed'
-                      : 'Signed'
-                    : no
-                      ? 'Rejected'
-                      : pending
-                        ? 'Waiting'
-                        : 'Not needed';
-                  return (
-                    <View
-                      key={m.id}
-                      accessible
-                      accessibilityLabel={`${memberName(multisig, m.id)}: ${label}`}
-                      style={[styles.signer, idle && styles.signerIdle]}
-                    >
-                      <View>
-                        <MemberAvatar member={m} size={40} />
-                        {yes || no ? (
-                          <View
-                            style={[styles.badge, { backgroundColor: yes ? c.success : c.error }]}
-                          >
-                            <Icon name={yes ? 'check' : 'close'} size={9} color="#FFFFFF" />
-                          </View>
-                        ) : null}
-                      </View>
-                      <Text style={styles.signerName} numberOfLines={1}>
-                        {memberName(multisig, m.id)}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.signerState,
-                          yes && { color: c.success },
-                          no && { color: c.error },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {label}
-                      </Text>
-                    </View>
-                  );
-                })}
+        {/* What it does, and where */}
+        <View style={styles.group}>
+          <ActionRows action={proposal.action} multisig={multisig} />
+          <StatRow
+            label="Chain"
+            value={
+              <View style={styles.inline}>
+                <NetworkBadge network={multisig.network} size={18} />
+                <Text style={styles.statValue}>{multisig.network.name}</Text>
               </View>
-            </View>
+            }
+          />
+          <StatRow label="Protocol" value={protocolName(multisig.protocol)} />
+        </View>
 
-            {/* Both ids together: the multisig's, then the chain's once it's sent */}
-            <Text style={[styles.groupTitle, styles.groupGap]}>Transaction</Text>
-            <View style={styles.group}>
-              <StatRow
-                label={multisig.protocol === 'safe' ? 'Safe tx hash' : 'Squads proposal'}
-                value={<Copyable value={ids.proposalHash} toast="Proposal ID copied" />}
-              />
-              {proposal.status === 'executed' ? (
-                <StatRow
-                  label="Transaction hash"
-                  value={
-                    <View style={styles.inline}>
-                      <Copyable value={ids.hash} toast="Transaction ID copied" />
-                      <PressableScale
-                        accessibilityRole="link"
-                        accessibilityLabel={`View on ${ids.explorer.name}`}
-                        hitSlop={10}
-                        onPress={() => {
-                          tap();
-                          Linking.openURL(ids.explorer.url).catch(() => {});
-                        }}
+        {/* Who signs, side by side: a tick on each who has */}
+        <View style={styles.groupHead}>
+          <Text style={styles.groupTitle}>{PURPOSES[multisig.purpose].signers}</Text>
+          <Text style={styles.groupCount}>
+            {proposal.approvals.length} of {multisig.members.length} signed
+          </Text>
+        </View>
+        <View style={styles.group}>
+          <SignatureBar signed={proposal.approvals.length} needed={multisig.members.length} />
+          <View style={styles.signers}>
+            {bySigning(multisig, proposal).map((m) => {
+              const yes = proposal.approvals.find((v) => v.memberId === m.id);
+              const no = proposal.rejections.find((v) => v.memberId === m.id);
+              const idle = !yes && !no && !pending;
+              const label = yes
+                ? m.id === proposal.createdBy
+                  ? 'Proposed'
+                  : 'Signed'
+                : no
+                  ? 'Rejected'
+                  : pending
+                    ? 'Waiting'
+                    : 'Not needed';
+              return (
+                // A new signature moves its signer into signing order (a layout
+                // move, ease-in-out) and pops its tick in.
+                <Animated.View
+                  key={m.id}
+                  layout={LAYOUT_MOVE}
+                  accessible
+                  accessibilityLabel={`${memberName(multisig, m.id)}: ${label}`}
+                  style={[styles.signer, idle && styles.signerIdle]}
+                >
+                  <View>
+                    <MemberAvatar member={m} size={40} />
+                    {yes || no ? (
+                      <Animated.View
+                        entering={mounted ? badgeIn() : undefined}
+                        style={[styles.badge, { backgroundColor: yes ? c.success : c.error }]}
                       >
-                        <Icon name="link" size={14} color={c.textSecondary} />
-                      </PressableScale>
-                    </View>
-                  }
-                />
-              ) : null}
-              <StatRow
-                label={proposal.status === 'executed' ? 'Executed' : 'Network cost'}
-                value={
-                  proposal.status === 'executed' && proposal.doneAt
+                        <Icon name={yes ? 'check' : 'close'} size={9} color="#FFFFFF" />
+                      </Animated.View>
+                    ) : null}
+                  </View>
+                  <Text style={styles.signerName} numberOfLines={1}>
+                    {memberName(multisig, m.id)}
+                  </Text>
+                  <TextSwap
+                    text={label}
+                    style={[
+                      styles.signerState,
+                      yes && { color: c.success },
+                      no && { color: c.error },
+                    ]}
+                  />
+                </Animated.View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Both ids together: the multisig's, then the chain's once it's sent */}
+        <Text style={[styles.groupTitle, styles.groupGap]}>Transaction</Text>
+        <View style={styles.group}>
+          <StatRow
+            label={multisig.protocol === 'safe' ? 'Safe tx hash' : 'Squads proposal'}
+            value={<Copyable value={ids.proposalHash} toast="Proposal ID copied" />}
+          />
+          {/* Slides open when the last signature sends it. */}
+          <Accordion open={executed}>
+            <StatRow
+              label="Transaction hash"
+              value={
+                <View style={styles.inline}>
+                  <Copyable value={ids.hash} toast="Transaction ID copied" />
+                  <PressableScale
+                    accessibilityRole="link"
+                    accessibilityLabel={`View on ${ids.explorer.name}`}
+                    hitSlop={10}
+                    onPress={() => {
+                      tap();
+                      Linking.openURL(ids.explorer.url).catch(() => {});
+                    }}
+                  >
+                    <Icon name="link" size={14} color={c.textSecondary} />
+                  </PressableScale>
+                </View>
+              }
+            />
+          </Accordion>
+          <StatRow
+            label={executed ? 'Executed' : 'Network cost'}
+            value={
+              <TextSwap
+                text={
+                  executed && proposal.doneAt
                     ? `${when(proposal.doneAt)} · ${ids.fee}`
                     : pending
                       ? `About ${ids.fee}`
                       : 'Not sent'
                 }
+                style={styles.statValue}
               />
-            </View>
-          </View>
-        )}
-      </ContentSwap>
+            }
+          />
+        </View>
+      </View>
     </SheetScreen>
   );
 }
@@ -327,29 +351,23 @@ function StatusPill({
         ? `Cancelled by ${memberName(multisig, proposal.createdBy)}`
         : `Waiting for ${left} more`;
   const color = done ? c.success : closed ? c.error : c.accentText;
+  // The status changes in place: its icon swaps, the words crossfade with a small
+  // rise, and the background eases from honey (waiting) to plain (200ms).
+  const waiting = !done && !closed;
+  const tone = useSharedValue(waiting ? 1 : 0);
+  useEffect(() => {
+    tone.value = withTiming(waiting ? 1 : 0, { duration: DURATION.fast, easing: EASE.ease });
+  }, [waiting, tone]);
+  const plain = c.card;
+  const honey = c.accentSurface;
+  const bg = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(tone.value, [0, 1], [plain, honey]),
+  }));
   return (
-    <View style={[styles.pill, !done && !closed && styles.pillWaiting]}>
-      <Icon name={done ? 'checkCircle' : closed ? 'close' : 'clock'} size={13} color={color} />
-      <Text style={[styles.pillText, { color }]}>{text}</Text>
-    </View>
-  );
-}
-
-/** A short hash that copies in full when tapped (its icon swaps to a check). */
-function Copyable({ value, toast }: { value: string; toast: string }) {
-  const styles = useStyles();
-  const c = useTheme();
-  const { copied, copy } = useCopy(value, toast);
-  return (
-    <PressableScale
-      accessibilityLabel={toast.replace(' copied', '')}
-      onPress={copy}
-      hitSlop={8}
-      style={styles.inline}
-    >
-      <Text style={styles.statValue}>{shortAddress(value)}</Text>
-      <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
-    </PressableScale>
+    <Animated.View style={[styles.pill, bg]}>
+      <IconSwap name={done ? 'checkCircle' : closed ? 'close' : 'clock'} size={13} color={color} />
+      <TextSwap text={text} style={[styles.pillText, { color }]} />
+    </Animated.View>
   );
 }
 
@@ -465,9 +483,6 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 5,
     backgroundColor: c.card,
-  },
-  pillWaiting: {
-    backgroundColor: c.accentSurface,
   },
   pillText: {
     fontSize: 14,

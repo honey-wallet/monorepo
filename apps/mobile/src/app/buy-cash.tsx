@@ -107,11 +107,18 @@ export default function BuyCashSheet() {
             ) : page === 'done' ? (
               <SuccessPage
                 title={selling ? 'Sold' : 'Bought'}
-                detail={
-                  selling
-                    ? `${formatBalance(tokenValue)} ${symbol} for ${formatUsd(value - fee)}`
-                    : `${formatBalance((value - fee) / price)} ${symbol} for ${formatUsd(value)}`
-                }
+                amount={{
+                  symbol,
+                  text: `${formatBalance(selling ? tokenValue : (value - fee) / price)} ${symbol}`,
+                }}
+                rows={[
+                  {
+                    label: selling ? 'You get' : 'You paid',
+                    value: formatUsd(selling ? value - fee : value),
+                  },
+                  { label: 'Fee', value: formatUsd(fee) },
+                  { label: selling ? 'To' : 'With', value: METHODS[method].label },
+                ]}
                 onDone={finish}
               />
             ) : page === 'amount' ? (

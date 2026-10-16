@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, Share, Text, useWindowDimensions, View } from 'react-native';
+import { Linking, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, type IconName } from '@/components/Icon';
@@ -15,6 +15,7 @@ import { SegmentedTabs } from '@/components/motion/SegmentedTabs';
 import { SkeletonBar, SkeletonReveal } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { ACTION_FOOTER_HEIGHT, ActionFooter } from '@/components/wallet/ActionFooter';
+import { Description } from '@/components/wallet/Description';
 import { PriceChart } from '@/components/wallet/PriceChart';
 import { Change, EmptyState, PushedScreen, TokenIcon } from '@/components/wallet/parts';
 import { StatRow } from '@/components/wallet/Sheet';
@@ -60,7 +61,6 @@ export default function TokenScreen() {
   const [scrub, setScrub] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(true);
-  const [readMore, setReadMore] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -111,10 +111,7 @@ export default function TokenScreen() {
               {
                 label: 'Share',
                 icon: 'link',
-                onPress: () =>
-                  Share.share({
-                    message: `${market.name} (${symbol}) on Honey: ${formatPrice(market.price)}`,
-                  }),
+                onPress: () => router.push({ pathname: '/share-token', params: { symbol, range } }),
               },
               ...(info
                 ? [
@@ -292,19 +289,7 @@ export default function TokenScreen() {
       {/* About */}
       {info && (
         <Animated.View layout={LAYOUT_MOVE} style={[styles.section, styles.gutter]}>
-          <Text style={styles.heading}>About {market.name}</Text>
-          <Text style={styles.about} numberOfLines={readMore ? undefined : 3}>
-            {info.about}
-          </Text>
-          <Pressable
-            hitSlop={8}
-            onPress={() => {
-              tap();
-              setReadMore((v) => !v);
-            }}
-          >
-            <TextSwap text={readMore ? 'Read less' : 'Read more'} style={styles.readMore} />
-          </Pressable>
+          <Description title={`About ${market.name}`} text={info.about} />
         </Animated.View>
       )}
 
@@ -534,17 +519,6 @@ const useStyles = makeStyles((c) => ({
   statSkeleton: {
     gap: 16,
     paddingVertical: 8,
-  },
-  about: {
-    color: c.text,
-    fontSize: 16,
-    lineHeight: 23,
-  },
-  readMore: {
-    marginTop: 6,
-    color: c.accentText,
-    fontSize: 16,
-    fontWeight: '500',
   },
   links: {
     flexDirection: 'row',

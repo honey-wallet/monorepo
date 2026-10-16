@@ -25,7 +25,7 @@ import { ShimmerText } from '@/components/motion/ShimmerText';
 import { SkeletonBar, SkeletonReveal } from '@/components/motion/Skeleton';
 import { SpinningCounter } from '@/components/motion/SpinningCounter';
 import { StreamingText } from '@/components/motion/StreamingText';
-import { SuccessCheck } from '@/components/motion/SuccessCheck';
+import { SuccessBurst } from '@/components/motion/SuccessBurst';
 import { TextMorph } from '@/components/motion/TextMorph';
 import { TextSoftSwap } from '@/components/motion/TextSoftSwap';
 import { TextSwap } from '@/components/motion/TextSwap';
@@ -338,7 +338,7 @@ function SuccessDemo() {
   const tick = useTick(2400);
   return (
     <Demo title="Success">
-      <SuccessCheck key={tick} size={56} />
+      <SuccessBurst key={tick} size={56} />
     </Demo>
   );
 }

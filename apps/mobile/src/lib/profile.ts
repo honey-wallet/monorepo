@@ -13,10 +13,6 @@ export type Profile = {
   /** DiceBear seed for the generated avatar, used when there's no photo. */
   avatarSeed: string;
   haptics: boolean;
-  /** Short bio shown on the profile; empty when unset. */
-  bio: string;
-  /** X (Twitter) handle without the "@"; empty when unset. */
-  twitter: string;
 };
 
 let profile: Profile = {
@@ -24,8 +20,6 @@ let profile: Profile = {
   photo: null,
   avatarSeed: randomAvatarSeed(),
   haptics: true,
-  bio: '',
-  twitter: '',
 };
 const listeners = new Set<() => void>();
 

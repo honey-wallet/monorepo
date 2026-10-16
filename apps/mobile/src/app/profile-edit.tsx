@@ -17,25 +17,18 @@ import { makeStyles, useTheme } from '@/theme';
 
 const AVATAR = 88;
 
-/** Edit the name, photo, bio and X handle shown on the user's profile. */
+/** Edit the name and photo: all a wallet profile needs, and all anyone sees. */
 export default function ProfileEditSheet() {
   const styles = useStyles();
   const c = useTheme();
   const profile = useProfile();
   const [name, setName] = useState(profile.name);
-  const [bio, setBio] = useState(profile.bio);
-  const [twitter, setTwitter] = useState(profile.twitter);
   const [photo, setPhoto] = useState(profile.photo);
   const [seed, setSeed] = useState(profile.avatarSeed);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handle = twitter.trim().replace(/^@/, '');
   const changed =
-    name.trim() !== profile.name ||
-    bio.trim() !== profile.bio ||
-    handle !== profile.twitter ||
-    photo !== profile.photo ||
-    seed !== profile.avatarSeed;
+    name.trim() !== profile.name || photo !== profile.photo || seed !== profile.avatarSeed;
   const valid = name.trim().length > 0;
 
   const choosePhoto = async () => {
@@ -51,7 +44,7 @@ export default function ProfileEditSheet() {
 
   const save = () => {
     tap();
-    setProfile({ name: name.trim(), bio: bio.trim(), twitter: handle, photo, avatarSeed: seed });
+    setProfile({ name: name.trim(), photo, avatarSeed: seed });
     showToast('Profile saved');
     closeSheet();
   };
@@ -118,7 +111,6 @@ export default function ProfileEditSheet() {
           alwaysBounceVertical={false}
           style={styles.flex}
         >
-          <View style={styles.banner} />
           <View style={styles.identity}>
             <PressableScale
               accessibilityRole="button"
@@ -134,9 +126,6 @@ export default function ProfileEditSheet() {
                 <Icon name="pencil" size={13} color={c.onPrimary} />
               </View>
             </PressableScale>
-            <Text style={styles.name} numberOfLines={1}>
-              {name.trim() || 'Your name'}
-            </Text>
             <Text style={styles.address}>{shortAddress(ADDRESS)}</Text>
           </View>
 
@@ -152,33 +141,6 @@ export default function ProfileEditSheet() {
                 maxLength={32}
                 autoCorrect={false}
                 accessibilityLabel="Name"
-              />
-            </Field>
-            <Field label="Bio">
-              <TextInput
-                value={bio}
-                onChangeText={setBio}
-                placeholder="Type a bio for your profile"
-                placeholderTextColor={c.placeholder}
-                style={styles.input}
-                selectionColor={c.primary}
-                maxLength={160}
-                multiline
-                accessibilityLabel="Bio"
-              />
-            </Field>
-            <Field label="X (Twitter)">
-              <TextInput
-                value={twitter}
-                onChangeText={setTwitter}
-                placeholder="@username"
-                placeholderTextColor={c.placeholder}
-                style={styles.input}
-                selectionColor={c.primary}
-                autoCapitalize="none"
-                autoCorrect={false}
-                maxLength={16}
-                accessibilityLabel="X (Twitter) username"
               />
             </Field>
           </View>
@@ -238,18 +200,11 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 16,
   },
-  banner: {
-    marginTop: 12,
-    height: 110,
-    borderRadius: 22,
-    backgroundColor: c.accentSurface,
-  },
   identity: {
-    marginTop: -AVATAR / 2,
-    paddingHorizontal: 18,
+    marginTop: 24,
+    alignItems: 'center',
   },
   avatarRing: {
-    alignSelf: 'flex-start',
     padding: 4,
     borderRadius: AVATAR / 2 + 4,
     backgroundColor: c.sheet,
@@ -267,20 +222,16 @@ const useStyles = makeStyles((c) => ({
     borderWidth: 3,
     borderColor: c.card,
   },
-  name: {
-    marginTop: 10,
-    color: c.text,
-    fontSize: 26,
-    fontWeight: '600',
-  },
   address: {
-    marginTop: 2,
+    marginTop: 10,
     color: c.textSecondary,
     fontSize: 16,
   },
   fields: {
-    marginTop: 24,
-    paddingHorizontal: 18,
+    marginTop: 28,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    backgroundColor: c.card,
   },
   field: {
     flexDirection: 'row',
@@ -289,7 +240,7 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
   },
   fieldLabel: {
-    width: 104,
+    width: 72,
     paddingTop: 2,
     color: c.textSecondary,
     fontSize: 17,

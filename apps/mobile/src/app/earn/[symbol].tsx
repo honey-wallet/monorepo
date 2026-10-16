@@ -53,7 +53,8 @@ export default function EarnSheet() {
         ) : deposited ? (
           <SuccessPage
             title="Deposited"
-            detail={`${deposited} ${symbol} is now earning ${vault.apy.toFixed(2)}% APY.`}
+            amount={{ symbol, text: `${deposited} ${symbol}` }}
+            detail={`Now earning ${vault.apy.toFixed(2)}% APY`}
             onDone={() => finishDemo('nothing was deposited')}
           />
         ) : depositing ? (

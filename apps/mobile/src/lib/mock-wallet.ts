@@ -398,7 +398,7 @@ type TokenInfo = {
 export const TOKEN_INFO: Record<string, TokenInfo> = {
   ETH: {
     about:
-      'Ethereum is a smart contract platform that lets developers build tokens and decentralised apps. ETH is its native currency and pays the network fees.',
+      'Ethereum is a smart contract platform that lets developers build tokens and decentralised apps. ETH is its native currency and pays the network fees. In other words, a shared world computer anyone can build on. Since 2022 it runs on proof of stake: validators lock up ETH to secure the network and earn rewards for it.',
     website: 'https://ethereum.org',
     explorer: { label: 'Etherscan', url: 'https://etherscan.io' },
     fdv: 284e9,
@@ -409,7 +409,7 @@ export const TOKEN_INFO: Record<string, TokenInfo> = {
   },
   BTC: {
     about:
-      'Bitcoin is the first decentralised digital currency: a fixed supply of 21 million coins, secured by proof of work and held by millions of people.',
+      'Bitcoin is the first decentralised digital currency: a fixed supply of 21 million coins, secured by proof of work and held by millions of people. New bitcoin is mined roughly every ten minutes, and the reward halves about every four years until the last coin is issued around 2140.',
     website: 'https://bitcoin.org',
     explorer: { label: 'Mempool', url: 'https://mempool.space' },
     fdv: 1.69e12,

@@ -75,7 +75,12 @@ export default function JarMoveSheet() {
         ) : done ? (
           <SuccessPage
             title={adding ? 'Added' : 'Withdrawn'}
-            detail={`${amount} ${jar.symbol} ${adding ? 'is now in' : 'came out of'} ${jar.name}.`}
+            amount={{
+              symbol: jar.symbol,
+              text: `${amount} ${jar.symbol}`,
+              usd: formatUsd(usdValue(jar.symbol, value)),
+            }}
+            detail={`${adding ? 'To' : 'From'} ${jar.name}`}
             onDone={finish}
           />
         ) : (

@@ -96,6 +96,8 @@ const ICONS = {
   clock: { ios: 'clock', android: 'schedule', web: 'schedule' },
   predict: { ios: 'chart.bar.xaxis', android: 'insights', web: 'insights' },
   layers: { ios: 'square.stack.3d.up.fill', android: 'layers', web: 'layers' },
+  text: { ios: 'text.alignleft', android: 'notes', web: 'notes' },
+  verified: { ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof ICONS | 'piggyBank';
