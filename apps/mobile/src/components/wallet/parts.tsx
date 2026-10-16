@@ -29,6 +29,7 @@ import { NumberPopIn } from '@/components/motion/NumberPopIn';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { useEntrancePlaying } from '@/components/motion/Rise';
+import { StickyArea } from '@/components/motion/Sticky';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { NETWORK_LOGOS } from '@/components/wallet/network-logos';
 import { TOKEN_LOGOS } from '@/components/wallet/token-logos';
@@ -397,6 +398,9 @@ export function BalanceAmount({
   );
 }
 
+/** Height of a pushed screen's header row (back, title, buttons). */
+const HEADER_HEIGHT = 52;
+
 /** Scroll distance over which the header's hairline fades in. */
 const RULE_FADE = 8;
 
@@ -438,7 +442,12 @@ export function PushedScreen({
     opacity: interpolate(scrollY.value, [0, RULE_FADE], [0, 1], Extrapolation.CLAMP),
   }));
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    // Section headers marked `Sticky` pin just under the header as they scroll up.
+    <StickyArea
+      scrollY={scrollY}
+      top={insets.top + HEADER_HEIGHT}
+      style={[styles.screen, { paddingTop: insets.top }]}
+    >
       <ScreenHeader title={title} fallback={fallback} right={right} />
       <Animated.View pointerEvents="none" style={[styles.headerRule, rule]} />
       {scroll ? (
@@ -459,7 +468,7 @@ export function PushedScreen({
           {footer}
         </View>
       )}
-    </View>
+    </StickyArea>
   );
 }
 
@@ -541,7 +550,7 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.divider,
   },
   header: {
-    height: 52,
+    height: HEADER_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,

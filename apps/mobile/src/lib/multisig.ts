@@ -1,9 +1,10 @@
 import type { IconName } from '@/components/Icon';
 import { type Chain, formatUsd } from '@/lib/mock-wallet';
+import { getProfile } from '@/lib/profile';
 import { notify } from '@/lib/push';
 import { createStore } from '@/lib/store';
 import { showToast } from '@/lib/toast';
-import { addWallet, demoAddress, useActiveWallet, wallets } from '@/lib/wallets';
+import { addWallet, allWallets, demoAddress, useActiveWallet, wallets } from '@/lib/wallets';
 
 /**
  * Shared wallets (multisigs). Every outgoing action from one is a proposal that
@@ -89,6 +90,8 @@ export type MultisigEvent = {
   id: string;
   proposalId: string;
   kind: 'approved' | 'rejected' | 'executed';
+  /** Who approved or rejected; empty for an executed proposal. */
+  memberId: string;
   memberName: string;
   at: number;
 };
@@ -278,7 +281,33 @@ const store = createStore<State>({
       doneAt: minutesAgo(60 * 24),
     },
   ],
-  events: [],
+  // What already happened on the seeded wallets, so Notifications has history.
+  events: [
+    {
+      id: 'e-lena',
+      proposalId: 'p-swap',
+      kind: 'approved',
+      memberId: 'lena',
+      memberName: 'Lena',
+      at: minutesAgo(40),
+    },
+    {
+      id: 'e-design-done',
+      proposalId: 'p-design',
+      kind: 'executed',
+      memberId: '',
+      memberName: '',
+      at: minutesAgo(60 * 24),
+    },
+    {
+      id: 'e-design-sam',
+      proposalId: 'p-design',
+      kind: 'approved',
+      memberId: 'sam',
+      memberName: 'Sam',
+      at: minutesAgo(60 * 24 + 1),
+    },
+  ],
 });
 
 export const useMultisigState = store.use;
@@ -499,11 +528,21 @@ function vote(proposalId: string, memberId: string, kind: 'approve' | 'reject') 
         id: nextId('e'),
         proposalId,
         kind: kind === 'approve' ? 'approved' : 'rejected',
+        memberId,
         memberName: actorName(m, memberId),
         at,
       },
       ...(outcome === 'executed'
-        ? [{ id: nextId('e'), proposalId, kind: 'executed' as const, memberName: '', at }]
+        ? [
+            {
+              id: nextId('e'),
+              proposalId,
+              kind: 'executed' as const,
+              memberId: '',
+              memberName: '',
+              at,
+            },
+          ]
         : []),
       ...s.events,
     ];
@@ -603,10 +642,10 @@ function demoApproval(proposalId: string, m: Multisig) {
 }
 
 /** A wallet's name, for notifications. */
-function walletName(walletId: string) {
-  const known: Record<string, string> = { family: 'Family', team: 'Team Treasury' };
+export function walletName(walletId: string) {
   return (
-    known[walletId] ?? wallets.get().added.find((w) => w.id === walletId)?.label ?? 'Shared wallet'
+    allWallets(getProfile().name, wallets.get().added).find((w) => w.id === walletId)?.label ??
+    'Shared wallet'
   );
 }
 
@@ -649,11 +688,11 @@ export function startDemoRequests() {
     store.set((prev) => ({ ...prev, proposals: [...prev.proposals, proposal] }));
     notify({
       title: 'Maya wants to send 25 USDC',
-      body: 'Family · needs your approval',
+      body: `${walletName('family')} · needs your approval`,
       proposalId: proposal.id,
       approval: true,
     }).then((shown) => {
-      if (!shown) showToast('Maya wants to send 25 USDC from Family');
+      if (!shown) showToast(`Maya wants to send 25 USDC from ${walletName('family')}`);
     });
   }, DEMO_REQUEST_MS);
 }

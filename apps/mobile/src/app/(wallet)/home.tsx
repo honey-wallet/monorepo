@@ -19,6 +19,7 @@ import { ContentSwap } from '@/components/motion/ContentSwap';
 import { IconSwap, Swap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { Entrance, Rise } from '@/components/motion/Rise';
+import { Sticky, StickyArea } from '@/components/motion/Sticky';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { ApprovalsNudge, SharedWalletCard } from '@/components/wallet/ApprovalsCard';
@@ -95,7 +96,8 @@ export default function HomeScreen() {
 
   return (
     <Entrance id="home">
-      <View style={styles.root}>
+      {/* The Tokens · NFTs · Positions row pins under the compact balance bar. */}
+      <StickyArea scrollY={scrollY} top={insets.top + COMPACT_BAR} style={styles.root}>
         <Animated.ScrollView
           style={styles.root}
           onScroll={onScroll}
@@ -254,25 +256,27 @@ export default function HomeScreen() {
           </Rise>
 
           {/* Tokens / NFTs / Positions */}
-          <Rise index={7}>
-            <View style={[styles.sections, styles.gutter]}>
-              {SECTIONS.map((name) => (
-                <PressableScale
-                  key={name}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: section === name }}
-                  hitSlop={8}
-                  onPress={() => {
-                    tap();
-                    setSection(name);
-                  }}
-                >
-                  <Text style={[styles.section, section === name && styles.sectionActive]}>
-                    {name}
-                  </Text>
-                </PressableScale>
-              ))}
-            </View>
+          <Rise index={7} style={styles.sectionsGap}>
+            <Sticky id="sections">
+              <View style={[styles.sections, styles.gutter]}>
+                {SECTIONS.map((name) => (
+                  <PressableScale
+                    key={name}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: section === name }}
+                    hitSlop={8}
+                    onPress={() => {
+                      tap();
+                      setSection(name);
+                    }}
+                  >
+                    <Text style={[styles.section, section === name && styles.sectionActive]}>
+                      {name}
+                    </Text>
+                  </PressableScale>
+                ))}
+              </View>
+            </Sticky>
           </Rise>
 
           <ContentSwap id={section} index={SECTIONS.indexOf(section)}>
@@ -348,7 +352,7 @@ export default function HomeScreen() {
         {/* Keeps scrolled content from running under the status bar. */}
         <View style={[styles.statusCover, { height: insets.top }]} />
         <CompactBalance scrollY={scrollY} top={insets.top} />
-      </View>
+      </StickyArea>
     </Entrance>
   );
 }
@@ -616,9 +620,13 @@ const useStyles = makeStyles((c) => ({
   coinOverlap: {
     marginLeft: -9,
   },
+  // The gap above sits outside the pinned row, so the pinned copy is just the tabs.
+  sectionsGap: {
+    marginTop: 18,
+  },
   sections: {
-    marginTop: 22,
-    marginBottom: 4,
+    paddingTop: 4,
+    paddingBottom: 8,
     flexDirection: 'row',
     gap: 20,
   },

@@ -9,6 +9,7 @@ import { MatrixLoader } from '@/components/motion/MatrixLoader';
 import { PanelReveal } from '@/components/motion/PanelReveal';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { ShimmerText } from '@/components/motion/ShimmerText';
+import { Sticky } from '@/components/motion/Sticky';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -81,9 +82,11 @@ export default function TradeScreen() {
       {/* The products you've chosen, sharing the row equally; edit them from settings.
           With a single product there's nothing to switch between, so no tabs. */}
       {tabs.length > 1 && (
-        <View style={styles.modes}>
-          <UnderlineTabs options={tabs} value={mode} onChange={setPicked} icons={TRADE_ICONS} />
-        </View>
+        <Sticky id="trade-tabs">
+          <View style={styles.modes}>
+            <UnderlineTabs options={tabs} value={mode} onChange={setPicked} icons={TRADE_ICONS} />
+          </View>
+        </Sticky>
       )}
       <ContentSwap id={mode} index={tabs.indexOf(mode)} fill={mode === 'Swap'}>
         {mode === 'Swap' && <SwapForm />}

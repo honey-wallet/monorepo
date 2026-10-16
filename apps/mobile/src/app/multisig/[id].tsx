@@ -3,6 +3,7 @@ import { Linking, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { Sticky } from '@/components/motion/Sticky';
 import {
   MEMBER_KIND_LABEL,
   MemberAvatar,
@@ -119,7 +120,9 @@ export default function MultisigScreen() {
       ) : null}
 
       {/* Waiting for approval */}
-      <Text style={styles.section}>Waiting for approval</Text>
+      <Sticky id="waiting" style={styles.sectionGap}>
+        <Text style={styles.section}>Waiting for approval</Text>
+      </Sticky>
       {pending.length ? (
         pending.map((p) => (
           <ProposalRow
@@ -136,7 +139,9 @@ export default function MultisigScreen() {
       )}
 
       {/* Members */}
-      <Text style={styles.section}>{PURPOSES[multisig.purpose].members}</Text>
+      <Sticky id="members" style={styles.sectionGap}>
+        <Text style={styles.section}>{PURPOSES[multisig.purpose].members}</Text>
+      </Sticky>
       {multisig.members.map((m) => (
         <View key={m.id} style={styles.member}>
           <MemberAvatar member={m} size={36} />
@@ -158,7 +163,9 @@ export default function MultisigScreen() {
       <SheetRow icon="plus" title="Add member" onPress={() => edit('member')} accessory="chevron" />
 
       {/* Rules: changing either needs approvals */}
-      <Text style={styles.section}>Rules</Text>
+      <Sticky id="rules" style={styles.sectionGap}>
+        <Text style={styles.section}>Rules</Text>
+      </Sticky>
       <SheetRow
         icon="checkCircle"
         title="Approvals needed"
@@ -178,7 +185,9 @@ export default function MultisigScreen() {
       {/* History */}
       {history.length ? (
         <>
-          <Text style={styles.section}>History</Text>
+          <Sticky id="history" style={styles.sectionGap}>
+            <Text style={styles.section}>History</Text>
+          </Sticky>
           {history.map((p) => (
             <ProposalRow
               key={p.id}
@@ -269,9 +278,12 @@ const useStyles = makeStyles((c) => ({
     fontSize: 16,
     textAlign: 'right',
   },
+  sectionGap: {
+    marginTop: 18,
+  },
   section: {
-    marginTop: 26,
-    marginBottom: 4,
+    paddingTop: 8,
+    paddingBottom: 4,
     color: c.textSecondary,
     fontSize: 15,
   },

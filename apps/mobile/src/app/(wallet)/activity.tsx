@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
+import { Sticky } from '@/components/motion/Sticky';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
 import { ProposalRow } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
@@ -57,7 +58,9 @@ export default function ActivityScreen() {
     >
       {multisig && pending.length > 0 && (
         <View style={styles.month}>
-          <Text style={styles.monthLabel}>Awaiting approval</Text>
+          <Sticky id="awaiting">
+            <Text style={styles.monthLabel}>Awaiting approval</Text>
+          </Sticky>
           {pending.map((p) => (
             <ProposalRow
               key={p.id}
@@ -71,7 +74,9 @@ export default function ActivityScreen() {
       {/* A shared wallet's history is its proposals: done, rejected or cancelled. */}
       {multisig && (
         <View style={styles.month}>
-          <Text style={styles.monthLabel}>History</Text>
+          <Sticky id="history">
+            <Text style={styles.monthLabel}>History</Text>
+          </Sticky>
           {history.map((p) => (
             <ProposalRow
               key={p.id}
@@ -92,7 +97,9 @@ export default function ActivityScreen() {
       {!multisig &&
         months.map((month) => (
           <View key={month} style={styles.month}>
-            <Text style={styles.monthLabel}>{month}</Text>
+            <Sticky id={`month-${month}`}>
+              <Text style={styles.monthLabel}>{month}</Text>
+            </Sticky>
             {shown
               .filter((a) => a.month === month)
               .map((a) => (
@@ -161,7 +168,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 12,
   },
   monthLabel: {
-    marginBottom: 6,
+    paddingVertical: 4,
     color: c.textSecondary,
     fontSize: 16,
   },

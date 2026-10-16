@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Entrance, Rise } from '@/components/motion/Rise';
+import { StickyArea } from '@/components/motion/Sticky';
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { makeStyles } from '@/theme';
 
@@ -62,7 +63,12 @@ export function TabScreen({
   }));
   return (
     <Entrance id={`tab:${title ?? 'untitled'}`}>
-      <View style={styles.root}>
+      {/* `Sticky` content (search, tabs, section headers) pins under the status bar, or under the small title once it shows. */}
+      <StickyArea
+        scrollY={scrollY}
+        top={insets.top + (title ? COMPACT_BAR : 0)}
+        style={styles.root}
+      >
         <Animated.ScrollView
           style={styles.root}
           onScroll={onScroll}
@@ -107,7 +113,7 @@ export function TabScreen({
             <Animated.Text style={[styles.compactTitle, compactTitle]}>{title}</Animated.Text>
           </Animated.View>
         ) : null}
-      </View>
+      </StickyArea>
     </Entrance>
   );
 }

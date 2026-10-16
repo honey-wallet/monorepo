@@ -8,6 +8,7 @@ import { Swap } from '@/components/motion/IconSwap';
 import { MenuDropdown, type MenuOption } from '@/components/motion/MenuDropdown';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { Sticky } from '@/components/motion/Sticky';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { Chip } from '@/components/wallet/Chip';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
@@ -88,17 +89,20 @@ export default function SearchScreen() {
 
   return (
     <TabScreen>
-      <View style={styles.top}>
-        <View style={styles.flex}>
-          <SearchField value={query} onChangeText={setQuery} placeholder="Search tokens" />
+      {/* The search bar stays at the top while results scroll. */}
+      <Sticky id="search">
+        <View style={styles.top}>
+          <View style={styles.flex}>
+            <SearchField value={query} onChangeText={setQuery} placeholder="Search tokens" />
+          </View>
+          <HeaderActions
+            settingsLabel="Search settings"
+            onSettings={() =>
+              router.push({ pathname: '/section-settings', params: { section: 'search' } })
+            }
+          />
         </View>
-        <HeaderActions
-          settingsLabel="Search settings"
-          onSettings={() =>
-            router.push({ pathname: '/section-settings', params: { section: 'search' } })
-          }
-        />
-      </View>
+      </Sticky>
 
       <ContentSwap id={q ? 'results' : 'browse'}>
         {q ? (
