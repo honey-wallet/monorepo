@@ -1,5 +1,5 @@
 // Toasts follow the Sonner lessons. A new toast rises one full toast-height from
-// below with a fade and a 0.97 → 1 scale (400ms on `ease`: a toast isn't urgent, so
+// below with a fade and a 0.97 → 1 scale (250ms on `ease`: a toast isn't urgent, so
 // it can be a touch slower and elegant). Older ones push back rather than leave: each
 // step back rises 13% of a toast, shrinks 5% and dims. Every move is a transition from wherever the toast
 // is now, never a restarting keyframe, so a toast arriving mid-animation doesn't make
@@ -10,6 +10,7 @@ import { useEffect } from 'react';
 import { Text } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   Keyframe,
   ReduceMotion,
   useAnimatedStyle,
@@ -38,7 +39,11 @@ const PEEK = TOAST_HEIGHT * 0.13;
 const DEPTH_SCALE = 0.05;
 const DEPTH_FADE = 0.4;
 /** Sonner's toast clock: `ease`, slightly slower than other UI. */
-const STACK = { duration: DURATION.verySlow, easing: EASE.ease };
+const STACK = {
+  duration: DURATION.medium,
+  easing: EASE.ease,
+  reduceMotion: ReduceMotion.Never,
+};
 /** A pull this far down, or a flick this fast (pt/s), dismisses. */
 const DISMISS_DISTANCE = 40;
 const FLICK = 500;
@@ -92,6 +97,7 @@ function StackedToast({ toast, depth }: { toast: Toast; depth: number }) {
   const appear = useSharedValue(0);
   const d = useSharedValue(depth);
   const drag = useSharedValue(0);
+  const start = useSharedValue(0);
 
   useEffect(() => {
     appear.value = withTiming(1, STACK);
@@ -105,17 +111,26 @@ function StackedToast({ toast, depth }: { toast: Toast; depth: number }) {
   const swipe = Gesture.Pan()
     .enabled(depth === 0)
     .activeOffsetY([-6, 6])
+    .onStart(() => {
+      cancelAnimation(drag);
+      start.value = drag.value;
+    })
     .onUpdate((e) => {
-      drag.value = e.translationY < 0 ? e.translationY * RUBBER : e.translationY;
+      const next = start.value + e.translationY;
+      drag.value = next < 0 ? next * RUBBER : next;
     })
     .onEnd((e) => {
       if (drag.value > DISMISS_DISTANCE || e.velocityY > FLICK) {
-        drag.value = withSpring(RISE * 6, { ...SPRING.ui, velocity: e.velocityY });
+        if (!reduceMotion)
+          drag.value = withSpring(RISE * 6, { ...SPRING.ui, velocity: e.velocityY });
         appear.value = withTiming(0, { duration: DURATION.quick, easing: EASE.ease });
         scheduleOnRN(dismissToast, toast.id);
       } else {
-        drag.value = withSpring(0, { ...SPRING.ui, velocity: e.velocityY });
+        drag.value = reduceMotion ? 0 : withSpring(0, { ...SPRING.ui, velocity: e.velocityY });
       }
+    })
+    .onFinalize((_e, finished) => {
+      if (!finished) drag.value = reduceMotion ? 0 : withSpring(0, SPRING.ui);
     });
 
   // Depth 1 dims to 0.6 and depth 2 to 0.36.

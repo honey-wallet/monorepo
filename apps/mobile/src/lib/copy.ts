@@ -12,6 +12,7 @@ export function useCopy(value: string, toast?: string) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const copy = async () => {
+    if (!value) return;
     tap();
     await Clipboard.setStringAsync(value);
     if (toast) showToast(toast);

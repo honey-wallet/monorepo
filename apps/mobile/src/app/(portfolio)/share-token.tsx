@@ -9,16 +9,9 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetRow, SheetScreen } from '@/components/sheets/Sheet';
 import { EmptyState } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
-import {
-  formatBalance,
-  formatUsd,
-  MARKET,
-  RANGES,
-  type Range,
-  series,
-  TOKENS,
-} from '@/lib/mock-wallet';
+import { formatBalance, formatUsd, MARKET, RANGES, type Range, series } from '@/lib/mock-wallet';
 import { showToast } from '@/lib/toast';
+import { useWalletView } from '@/lib/wallet-view';
 
 /**
  * Share a token's price as an image card. Your holding is left off unless you turn it
@@ -29,7 +22,8 @@ export default function ShareTokenSheet() {
   const symbol = params.symbol ?? 'ETH';
   const range = params.range && RANGES.includes(params.range) ? params.range : '1D';
   const market = MARKET.find((t) => t.symbol === symbol);
-  const held = TOKENS.find((t) => t.symbol === symbol);
+  const { tokens } = useWalletView();
+  const held = tokens.find((t) => t.symbol === symbol);
   const [showHolding, setShowHolding] = useState(false);
   const [sharing, setSharing] = useState(false);
   const card = useRef<View>(null);

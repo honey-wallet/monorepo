@@ -5,6 +5,7 @@
 import { type ReactNode, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -28,6 +29,7 @@ export function Accordion({ open, children }: { open: boolean; children: ReactNo
   useEffect(() => {
     progress.value = reduceMotion ? (open ? 1 : 0) : withTiming(open ? 1 : 0, panelTiming(open));
     fade.value = withTiming(open ? 1 : 0, {
+      reduceMotion: ReduceMotion.Never,
       duration: open ? DURATION.medium : DURATION.fast,
       easing: EASE.ease,
     });

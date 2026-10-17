@@ -1,5 +1,6 @@
 import { type Href, router } from 'expo-router';
 import { useState } from 'react';
+import { SHEET_EXIT } from '@/lib/navigation';
 import { settings, useSettings } from '@/lib/settings';
 
 /**
@@ -178,7 +179,9 @@ export const useSimulateFailures = () => useSettings().simulateFailures;
 export function followFix(failure: Failure, close: () => void = () => router.back()) {
   if (!failure.action.href) return false;
   close();
-  router.push(failure.action.href);
+  // After the sheet or tray has gone, or the push is undone with it.
+  const href = failure.action.href;
+  setTimeout(() => router.push(href), SHEET_EXIT);
   return true;
 }
 

@@ -8,6 +8,7 @@ import type { ReactNode } from 'react';
 import { useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   interpolate,
   useAnimatedStyle,
   useReducedMotion,
@@ -33,9 +34,13 @@ export function SwipeDismiss({
   const { width } = useWindowDimensions();
   const x = useSharedValue(0);
   const fade = useSharedValue(1);
+  const start = useSharedValue(0);
+  const leaving = useSharedValue(false);
 
   const out = (direction: number) => {
     'worklet';
+    if (leaving.value) return;
+    leaving.value = true;
     const done = (finished?: boolean) => {
       'worklet';
       if (finished) scheduleOnRN(onDismiss);
@@ -51,13 +56,23 @@ export function SwipeDismiss({
   const pan = Gesture.Pan()
     .activeOffsetX([-12, 12])
     .failOffsetY([-10, 10])
+    .onStart(() => {
+      if (leaving.value) return;
+      cancelAnimation(x);
+      start.value = x.value;
+    })
     .onUpdate((e) => {
-      x.value = e.translationX;
+      if (!leaving.value) x.value = start.value + e.translationX;
     })
     .onEnd((e) => {
-      const thrown = Math.abs(e.translationX) > width / 3 || Math.abs(e.velocityX) > FLICK;
-      if (thrown) out(Math.sign(e.translationX || e.velocityX));
-      else x.value = withSpring(0, SPRING.release);
+      if (leaving.value) return;
+      const flicked = Math.abs(e.velocityX) > FLICK;
+      const thrown = Math.abs(x.value) > width / 3 || flicked;
+      if (thrown) out(Math.sign(flicked ? e.velocityX : x.value));
+      else x.value = reduceMotion ? 0 : withSpring(0, { ...SPRING.release, velocity: e.velocityX });
+    })
+    .onFinalize((_e, finished) => {
+      if (!finished && !leaving.value) x.value = reduceMotion ? 0 : withSpring(0, SPRING.release);
     });
 
   const style = useAnimatedStyle(() => ({

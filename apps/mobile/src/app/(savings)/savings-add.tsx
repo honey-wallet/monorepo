@@ -9,6 +9,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetRow, SheetScreen, StatRow } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
+import { FlowTray, InlineTray } from '@/components/sheets/Tray';
 import { applyKey, Keypad, TypedAmount } from '@/components/wallet/Keypad';
 import { TokenIcon } from '@/components/wallet/parts';
 import { success, tap } from '@/lib/haptics';
@@ -69,135 +70,144 @@ export default function SavingsAddSheet() {
   };
 
   return (
-    <SheetScreen
-      title={page === 'amount' ? 'Add money' : page === 'review' ? 'Add to savings' : undefined}
-      size="fill"
-      onBack={page === 'review' ? () => go('amount') : undefined}
-    >
-      <ContentSwap id={page} index={PAGES.indexOf(page)} fill>
-        {page === 'failed' && outcome.failure ? (
-          <FailurePage
-            failure={outcome.failure}
-            rows={[{ label: 'Adding', value: dollars }]}
-            onRetry={() => {
-              tap();
-              if (outcome.failure && followFix(outcome.failure)) return;
-              setPage('review');
-            }}
-            onClose={() => {
-              tap();
-              closeSheet();
-            }}
-          />
-        ) : page === 'done' ? (
-          <SuccessPage
-            title="Added to savings"
-            amount={{ symbol: 'USDC', text: `${amount.toLocaleString('en-US')} USDC` }}
-            rows={[
-              { label: 'Earning', value: apy },
-              { label: 'Paid with', value: METHODS[method].label },
-              { label: 'Withdraw', value: 'Any time' },
-            ]}
-            onDone={finish}
-          />
-        ) : page === 'amount' ? (
-          <View style={styles.flex}>
-            <View style={styles.amountArea}>
-              <TypedAmount value={typed} prefix="$" size={56} />
-              {rateLoading ? (
-                <View style={styles.hintLine}>
-                  <SkeletonBar width={150} height={12} />
-                </View>
-              ) : (
-                <TextSwap
-                  text={
-                    amount ? `≈ ${formatUsd(grown)} in ${AHEAD} years` : `Earns ${apy}, no lockup`
-                  }
-                  style={[styles.hint, amount > 0 && styles.gain]}
-                />
-              )}
-            </View>
-            <Keypad onKey={(key) => setTyped((v) => applyKey(v, key, 2))} />
-            <PillButton
-              label={amount ? 'Continue' : 'Enter an amount'}
-              disabled={!amount}
-              onPress={() => go('review')}
-              style={styles.cta}
-            />
-          </View>
-        ) : (
-          <View style={styles.flex}>
-            <View style={styles.hero}>
-              <Text style={styles.amount}>{dollars}</Text>
-              <Text style={[styles.hint, styles.gain]}>
-                ≈ {formatUsd(grown)} in {AHEAD} years
-              </Text>
-            </View>
-
-            <Text style={styles.label}>Pay with</Text>
-            <View style={styles.methods}>
-              {(Object.keys(METHODS) as Method[]).map((m) => {
-                const short = m === 'wallet' && !walletEnough;
-                return (
-                  <SheetRow
-                    key={m}
-                    leading={
-                      m === 'wallet' ? (
-                        <TokenIcon symbol="USDC" size={34} />
-                      ) : (
-                        <View style={styles.well}>
-                          <Icon name={METHODS[m].icon} size={17} color={c.text} />
-                        </View>
-                      )
-                    }
-                    title={METHODS[m].label}
-                    subtitle={
-                      m === 'wallet'
-                        ? !inWallet
-                          ? 'No USDC in your wallet yet'
-                          : short
-                            ? `Only ${formatUsd(inWallet)} available`
-                            : `${formatUsd(inWallet)} available`
-                        : `${(METHODS[m].fee * 100).toFixed(2)}% fee`
-                    }
-                    accessory="check"
-                    selected={method === m}
-                    onPress={
-                      short
-                        ? undefined
-                        : () => {
-                            tap();
-                            setMethod(m);
-                          }
-                    }
-                  />
-                );
-              })}
-            </View>
-
-            <View style={styles.stats}>
-              <StatRow label="Earns" value={apy} />
-              <StatRow label="Fee" value={fee ? formatUsd(fee) : 'Free'} />
-              <StatRow label="Withdraw" value="Any time, no lockup" />
-            </View>
-
-            <View style={styles.flex} />
-            <PillButton
-              label={`Add ${dollars}`}
-              onPress={() => {
-                if (outcome.attempt()) {
-                  setPage('failed');
-                  return;
+    <FlowTray>
+      <SheetScreen title="Add money" size="fill">
+        <View style={styles.flex}>
+          <View style={styles.amountArea}>
+            <TypedAmount value={typed} prefix="$" size={56} />
+            {rateLoading ? (
+              <View style={styles.hintLine}>
+                <SkeletonBar width={150} height={12} />
+              </View>
+            ) : (
+              <TextSwap
+                text={
+                  amount ? `≈ ${formatUsd(grown)} in ${AHEAD} years` : `Earns ${apy}, no lockup`
                 }
-                success();
-                setPage('done');
-              }}
-              style={styles.cta}
-            />
+                style={[styles.hint, amount > 0 && styles.gain]}
+              />
+            )}
           </View>
+          <Keypad onKey={(key) => setTyped((v) => applyKey(v, key, 2))} />
+          <PillButton
+            label={amount ? 'Continue' : 'Enter an amount'}
+            disabled={!amount}
+            onPress={() => go('review')}
+            style={styles.cta}
+          />
+        </View>
+      </SheetScreen>
+      {/* Review and result rise in a tray over the amount (Family's pattern). */}
+      <InlineTray onClose={() => (page === 'done' ? finish() : go('amount'))}>
+        {page === 'amount' ? null : (
+          <ContentSwap id={page} index={PAGES.indexOf(page)}>
+            {page === 'failed' && outcome.failure ? (
+              <SheetScreen>
+                <FailurePage
+                  compact
+                  failure={outcome.failure}
+                  rows={[{ label: 'Adding', value: dollars }]}
+                  onRetry={() => {
+                    tap();
+                    if (outcome.failure && followFix(outcome.failure)) return;
+                    setPage('review');
+                  }}
+                  onClose={() => {
+                    tap();
+                    closeSheet();
+                  }}
+                />
+              </SheetScreen>
+            ) : page === 'done' ? (
+              <SheetScreen>
+                <SuccessPage
+                  compact
+                  title="Added to savings"
+                  amount={{ symbol: 'USDC', text: `${amount.toLocaleString('en-US')} USDC` }}
+                  rows={[
+                    { label: 'Earning', value: apy },
+                    { label: 'Paid with', value: METHODS[method].label },
+                    { label: 'Withdraw', value: 'Any time' },
+                  ]}
+                  onDone={finish}
+                />
+              </SheetScreen>
+            ) : (
+              <SheetScreen title="Add to savings" onBack={() => go('amount')}>
+                <View style={styles.flex}>
+                  <View style={styles.hero}>
+                    <Text style={styles.amount}>{dollars}</Text>
+                    <Text style={[styles.hint, styles.gain]}>
+                      ≈ {formatUsd(grown)} in {AHEAD} years
+                    </Text>
+                  </View>
+
+                  <Text style={styles.label}>Pay with</Text>
+                  <View style={styles.methods}>
+                    {(Object.keys(METHODS) as Method[]).map((m) => {
+                      const short = m === 'wallet' && !walletEnough;
+                      return (
+                        <SheetRow
+                          key={m}
+                          leading={
+                            m === 'wallet' ? (
+                              <TokenIcon symbol="USDC" size={34} />
+                            ) : (
+                              <View style={styles.well}>
+                                <Icon name={METHODS[m].icon} size={17} color={c.text} />
+                              </View>
+                            )
+                          }
+                          title={METHODS[m].label}
+                          subtitle={
+                            m === 'wallet'
+                              ? !inWallet
+                                ? 'No USDC in your wallet yet'
+                                : short
+                                  ? `Only ${formatUsd(inWallet)} available`
+                                  : `${formatUsd(inWallet)} available`
+                              : `${(METHODS[m].fee * 100).toFixed(2)}% fee`
+                          }
+                          accessory="check"
+                          selected={method === m}
+                          onPress={
+                            short
+                              ? undefined
+                              : () => {
+                                  tap();
+                                  setMethod(m);
+                                }
+                          }
+                        />
+                      );
+                    })}
+                  </View>
+
+                  <View style={styles.stats}>
+                    <StatRow label="Earns" value={apy} />
+                    <StatRow label="Fee" value={fee ? formatUsd(fee) : 'Free'} />
+                    <StatRow label="Withdraw" value="Any time, no lockup" />
+                  </View>
+
+                  <PillButton
+                    label={`Add ${dollars}`}
+                    onPress={() => {
+                      if (outcome.attempt()) {
+                        setPage('failed');
+                        return;
+                      }
+                      success();
+                      setPage('done');
+                    }}
+                    style={styles.cta}
+                  />
+                </View>
+              </SheetScreen>
+            )}
+          </ContentSwap>
         )}
-      </ContentSwap>
-    </SheetScreen>
+      </InlineTray>
+    </FlowTray>
   );
 }
 

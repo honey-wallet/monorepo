@@ -1,5 +1,5 @@
-// Candlestick chart for perps. On a new range the candles fade and rise 10px into
-// place (smooth ease-out, a little longer for more candles); dragging a finger along
+// Candlestick chart for perps. On a new range the candles fade and rise 6px into
+// place (200ms, independent of candle count); dragging a finger along
 // it highlights one candle and reports it, like the line chart's scrub.
 import { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
@@ -21,9 +21,6 @@ import { useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const PAD_Y = 12;
-/** Extra reveal time per candle, so a dense chart doesn't snap in. */
-const PER_CANDLE = 12;
-
 type Props = {
   data: Candle[];
   width: number;
@@ -50,18 +47,19 @@ function Candles({ data, width, height, onScrub }: Props) {
     return { y: (v: number) => PAD_Y + (1 - (v - min) / span) * (height - PAD_Y * 2) };
   }, [data, height]);
 
-  // Rise in whenever the data changes (first load, or a new range).
+  // Range switches stay quick even with hundreds of candles.
   const reveal = useSharedValue(0);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: new data triggers the reveal, even though timing is independent of candle count.
   useEffect(() => {
     reveal.value = 0;
     reveal.value = withTiming(1, {
-      duration: reduceMotion ? 0 : DURATION.fast + PER_CANDLE * data.length,
+      duration: DURATION.fast,
       easing: EASE.smoothOut,
     });
-  }, [data, reduceMotion, reveal]);
+  }, [data, reveal]);
   const revealStyle = useAnimatedStyle(() => ({
     opacity: reveal.value,
-    transform: [{ translateY: (1 - reveal.value) * 10 }],
+    transform: [{ translateY: reduceMotion ? 0 : (1 - reveal.value) * 6 }],
   }));
 
   // Scrubbing
@@ -75,14 +73,15 @@ function Candles({ data, width, height, onScrub }: Props) {
     .minDistance(0)
     .onBegin((e) => {
       scrubX.value = e.x;
-      scrubbing.value = withTiming(1, { duration: DURATION.quick });
+      scrubbing.value = 1;
       scheduleOnRN(tap);
     })
     .onUpdate((e) => {
       scrubX.value = e.x;
     })
     .onFinalize(() => {
-      scrubbing.value = withTiming(0, { duration: DURATION.fast, easing: EASE.smoothOut });
+      // Hide before resetting the index, so the highlight doesn't jump to candle zero.
+      scrubbing.value = 0;
       scrubX.value = -1;
       scheduleOnRN(report, null);
     });
@@ -91,7 +90,6 @@ function Candles({ data, width, height, onScrub }: Props) {
     (i, previous) => {
       if (i >= 0 && i !== previous) {
         scheduleOnRN(report, i);
-        scheduleOnRN(tap);
       }
     },
   );

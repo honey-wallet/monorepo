@@ -10,9 +10,11 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { Copyable, ExplorerLink } from '@/components/sheets/Details';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { SHEET, SheetScreen, StatRow } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
+import { FlowTray, InlineTray } from '@/components/sheets/Tray';
 import {
   applyKey,
   Keypad,
@@ -37,6 +39,7 @@ import {
 } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { txReceipt } from '@/lib/tx-receipt';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -91,7 +94,6 @@ export default function SendAmountSheet() {
   const [unit, setUnit] = useState<Unit>('usd');
   const [amount, setAmount] = useState('');
   const [page, setPage] = useState<Page>('amount');
-  const [area, setArea] = useState(0);
 
   const token =
     sendable.find((h) => h.symbol === symbol && h.chain === chain) ?? sendable[0] ?? SENDABLE[0];
@@ -101,9 +103,11 @@ export default function SendAmountSheet() {
   const usdValue = unit === 'usd' ? value : value * price;
   const insufficient = tokenValue > token.amount * (1 + 1e-9);
   const ready = value > 0 && !insufficient;
-  const label = !value ? 'Enter an amount' : insufficient ? 'Insufficient balance' : 'Review';
+  const label = !value ? 'Enter an amount' : insufficient ? 'Insufficient balance' : 'Continue';
 
   const recipient = describeRecipient(to);
+  // The sent transaction's id and explorer link, for the receipt.
+  const tx = txReceipt(chain, `${recipient.address}:${tokenValue}`);
   const { copied, copy } = useCopy(recipient.address);
 
   const go = (next: Page) => {
@@ -187,196 +191,179 @@ export default function SendAmountSheet() {
     );
   }
 
+  // Family's pattern: the amount is entered on the page; the review, and then the
+  // result, rise over it in one tray that fits its content.
+  const trayPage = page === 'review' || page === 'sent' || page === 'failed' ? page : null;
+  const closeTray = () => {
+    if (page === 'sent') finish();
+    else go('amount');
+  };
   return (
-    // Each page keeps its own button so it slides in with that page's content.
-    <SheetScreen
-      title={page === 'review' ? 'Review send' : page === 'pick' ? 'Choose token' : 'Send'}
-      size="fill"
-      onBack={page === 'review' || page === 'pick' ? () => go('amount') : undefined}
-    >
-      <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
-        <ContentSwap id={page} index={PAGES.indexOf(page)}>
-          <View style={{ height: area }}>
-            {page === 'pick' ? (
-              <>
-                <SearchField
-                  value={query}
-                  onChangeText={setQuery}
-                  placeholder="Search your tokens"
-                  style={styles.pickSearch}
-                />
-                <ScrollView
-                  style={styles.flex}
-                  alwaysBounceVertical={false}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                >
-                  <TokenList
-                    query={query}
-                    sending
-                    holdings={signer.multisig?.holdings}
-                    onChoose={choose}
+    <FlowTray>
+      <SheetScreen
+        title={page === 'pick' ? 'Choose token' : 'Send'}
+        size="fill"
+        onBack={page === 'pick' ? () => go('amount') : undefined}
+      >
+        <View style={styles.flex}>
+          <ContentSwap
+            id={page === 'pick' ? 'pick' : 'amount'}
+            index={page === 'pick' ? 0 : 1}
+            fill
+          >
+            <View style={styles.flex}>
+              {page === 'pick' ? (
+                <>
+                  <SearchField
+                    value={query}
+                    onChangeText={setQuery}
+                    placeholder="Search your tokens"
+                    style={styles.pickSearch}
                   />
-                </ScrollView>
-              </>
-            ) : page === 'amount' ? (
-              <>
-                <View style={styles.toCard}>
-                  <Text style={styles.toLabel}>To</Text>
-                  <Avatar name={recipient.title} size={32} seed={to} />
-                  <View style={styles.flex}>
-                    <Text style={styles.toTitle} numberOfLines={1}>
-                      {recipient.title}
-                    </Text>
-                    {/* Swaps to a confirmation for a moment after copying. */}
-                    {recipient.subtitle || copied ? (
-                      <View style={styles.toSubtitleLine}>
-                        <TextSwap
-                          text={copied ? 'Address copied' : (recipient.subtitle ?? '')}
-                          style={[styles.toSubtitle, copied && styles.toCopied]}
+                  <ScrollView
+                    style={styles.pickList}
+                    alwaysBounceVertical={false}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <TokenList
+                      query={query}
+                      sending
+                      holdings={signer.multisig?.holdings}
+                      onChoose={choose}
+                    />
+                  </ScrollView>
+                </>
+              ) : (
+                <>
+                  <View style={styles.toCard}>
+                    <Text style={styles.toLabel}>To</Text>
+                    <Avatar name={recipient.title} size={32} seed={to} />
+                    <View style={styles.flex}>
+                      <Text style={styles.toTitle} numberOfLines={1}>
+                        {recipient.title}
+                      </Text>
+                      {/* Swaps to a confirmation for a moment after copying. */}
+                      {recipient.subtitle || copied ? (
+                        <View style={styles.toSubtitleLine}>
+                          <TextSwap
+                            text={copied ? 'Address copied' : (recipient.subtitle ?? '')}
+                            style={[styles.toSubtitle, copied && styles.toCopied]}
+                          />
+                        </View>
+                      ) : null}
+                    </View>
+                    {recipient.address ? (
+                      <PressableScale
+                        accessibilityRole="button"
+                        accessibilityLabel={copied ? 'Address copied' : 'Copy address'}
+                        hitSlop={8}
+                        onPress={copy}
+                        style={styles.copy}
+                      >
+                        <IconSwap
+                          name={copied ? 'check' : 'copy'}
+                          size={15}
+                          color={copied ? c.success : c.textSecondary}
                         />
-                      </View>
+                      </PressableScale>
                     ) : null}
                   </View>
-                  {recipient.address ? (
+
+                  <View style={styles.tokenBar}>
                     <PressableScale
                       accessibilityRole="button"
-                      accessibilityLabel={copied ? 'Address copied' : 'Copy address'}
-                      hitSlop={8}
-                      onPress={copy}
-                      style={styles.copy}
+                      accessibilityLabel={`Sending ${symbol} on ${chain}. Change token or network`}
+                      onPress={() => {
+                        tap();
+                        setPage('pick');
+                      }}
+                      style={styles.pill}
                     >
-                      <IconSwap
-                        name={copied ? 'check' : 'copy'}
-                        size={15}
-                        color={copied ? c.success : c.textSecondary}
-                      />
+                      <TokenIcon symbol={symbol} chain={chain} size={26} ring={c.sheet} />
+                      <View>
+                        <Text style={styles.pillLabel}>{symbol}</Text>
+                        <Text style={styles.pillChain}>{chain}</Text>
+                      </View>
+                      <Icon name="chevronDown" size={12} color={c.textSecondary} />
                     </PressableScale>
-                  ) : null}
-                </View>
-
-                <View style={styles.tokenBar}>
-                  <PressableScale
-                    accessibilityRole="button"
-                    accessibilityLabel={`Sending ${symbol} on ${chain}. Change token or network`}
-                    onPress={() => {
-                      tap();
-                      setPage('pick');
-                    }}
-                    style={styles.pill}
-                  >
-                    <TokenIcon symbol={symbol} chain={chain} size={26} ring={c.sheet} />
-                    <View>
-                      <Text style={styles.pillLabel}>{symbol}</Text>
-                      <Text style={styles.pillChain}>{chain}</Text>
-                    </View>
-                    <Icon name="chevronDown" size={12} color={c.textSecondary} />
-                  </PressableScale>
-                  {/* Tapping the balance sends all of it, like Max. */}
-                  <PressableScale
-                    accessibilityRole="button"
-                    accessibilityLabel={`Balance ${formatBalance(token.amount)} ${symbol}`}
-                    accessibilityHint="Enters your whole balance"
-                    hitSlop={10}
-                    onPress={() => {
-                      tap();
-                      setAmount(
-                        unit === 'usd' ? trimNumber(token.usd, 2) : trimNumber(token.amount, 8),
-                      );
-                    }}
-                  >
-                    {loading ? (
-                      <SkeletonBar width={120} height={12} />
-                    ) : (
-                      <TextSwap
-                        text={`Balance: ${formatBalance(token.amount)} ${symbol}`}
-                        style={styles.balance}
-                      />
-                    )}
-                  </PressableScale>
-                </View>
-
-                <View style={styles.amountArea}>
-                  <View style={styles.amountRow}>
-                    <TypedAmount
-                      value={amount}
-                      prefix={unit === 'usd' ? '$' : ''}
-                      size={amount.length > 9 ? 40 : 56}
-                    />
-                    {unit === 'token' ? <Text style={styles.unit}>{symbol}</Text> : null}
+                    {/* Tapping the balance sends all of it, like Max. */}
+                    <PressableScale
+                      accessibilityRole="button"
+                      accessibilityLabel={`Balance ${formatBalance(token.amount)} ${symbol}`}
+                      accessibilityHint="Enters your whole balance"
+                      hitSlop={10}
+                      onPress={() => {
+                        tap();
+                        setAmount(
+                          unit === 'usd' ? trimNumber(token.usd, 2) : trimNumber(token.amount, 8),
+                        );
+                      }}
+                    >
+                      {loading ? (
+                        <SkeletonBar width={120} height={12} />
+                      ) : (
+                        <TextSwap
+                          text={`Balance: ${formatBalance(token.amount)} ${symbol}`}
+                          style={styles.balance}
+                        />
+                      )}
+                    </PressableScale>
                   </View>
-                  <PressableScale
-                    accessibilityRole="button"
-                    accessibilityLabel="Switch between dollars and token"
-                    hitSlop={10}
-                    onPress={flipUnit}
-                    style={styles.convert}
-                  >
-                    <Icon name="expand" size={13} color={c.textSecondary} />
-                    <TextSwap
-                      text={
-                        unit === 'usd'
-                          ? `${formatBalance(tokenValue)} ${symbol}`
-                          : formatUsd(usdValue)
-                      }
-                      style={styles.convertLabel}
-                    />
-                  </PressableScale>
-                </View>
 
-                <PercentChips
-                  balance={unit === 'usd' ? token.usd : token.amount}
-                  decimals={unit === 'usd' ? 2 : 8}
-                  onPick={setAmount}
-                  style={styles.shares}
-                />
-                <Keypad
-                  onKey={(key) => setAmount((a) => applyKey(a, key, unit === 'usd' ? 2 : 8))}
-                />
-                <PillButton
-                  label={label}
-                  disabled={!ready}
-                  onPress={() => go('review')}
-                  style={styles.cta}
-                />
-              </>
-            ) : page === 'failed' && outcome.failure ? (
-              <FailurePage
-                failure={outcome.failure}
-                rows={[
-                  { label: 'Amount', value: `${formatBalance(tokenValue)} ${symbol}` },
-                  { label: 'To', value: recipient.title },
-                ]}
-                onRetry={() => {
-                  tap();
-                  if (outcome.failure && followFix(outcome.failure)) return;
-                  go('review');
-                }}
-                onClose={() => {
-                  tap();
-                  router.dismissAll();
-                }}
-              />
-            ) : page === 'sent' && proposalId ? (
-              <LiveProposedPage proposalId={proposalId} onDone={finish} />
-            ) : page === 'sent' ? (
-              <SuccessPage
-                title="Sent"
-                amount={{
-                  symbol,
-                  chain,
-                  text: `${formatBalance(tokenValue)} ${symbol}`,
-                  usd: formatUsd(usdValue),
-                }}
-                rows={[
-                  { label: 'To', value: recipient.title },
-                  { label: 'Network', value: chain },
-                  { label: 'Network cost', value: '<$0.01' },
-                ]}
-                onDone={finish}
-              />
-            ) : (
-              <>
+                  <View style={styles.amountArea}>
+                    <View style={styles.amountRow}>
+                      <TypedAmount
+                        value={amount}
+                        prefix={unit === 'usd' ? '$' : ''}
+                        size={amount.length > 9 ? 40 : 56}
+                      />
+                      {unit === 'token' ? <Text style={styles.unit}>{symbol}</Text> : null}
+                    </View>
+                    <PressableScale
+                      accessibilityRole="button"
+                      accessibilityLabel="Switch between dollars and token"
+                      hitSlop={10}
+                      onPress={flipUnit}
+                      style={styles.convert}
+                    >
+                      <Icon name="expand" size={13} color={c.textSecondary} />
+                      <Text style={styles.convertLabel}>
+                        {unit === 'usd'
+                          ? `${formatBalance(tokenValue)} ${symbol}`
+                          : formatUsd(usdValue)}
+                      </Text>
+                    </PressableScale>
+                  </View>
+
+                  <PercentChips
+                    balance={unit === 'usd' ? token.usd : token.amount}
+                    decimals={unit === 'usd' ? 2 : 8}
+                    onPick={setAmount}
+                    style={styles.shares}
+                  />
+                  <Keypad
+                    onKey={(key) => setAmount((a) => applyKey(a, key, unit === 'usd' ? 2 : 8))}
+                  />
+                </>
+              )}
+            </View>
+          </ContentSwap>
+        </View>
+        {page !== 'pick' ? (
+          <PillButton
+            label={label}
+            disabled={!ready}
+            onPress={() => go('review')}
+            style={styles.cta}
+          />
+        ) : null}
+      </SheetScreen>
+      <InlineTray onClose={closeTray}>
+        {trayPage ? (
+          <ContentSwap id={trayPage} index={PAGES.indexOf(trayPage)}>
+            {trayPage === 'review' ? (
+              <SheetScreen title="Review send" onBack={() => go('amount')}>
                 <View style={styles.summary}>
                   <Text style={styles.summaryLabel}>You're sending</Text>
                   <Text style={styles.summaryAmount} adjustsFontSizeToFit numberOfLines={1}>
@@ -422,21 +409,89 @@ export default function SendAmountSheet() {
                     value={<Text style={styles.total}>{formatUsd(usdValue)}</Text>}
                   />
                 </View>
-                <View style={styles.flex} />
-                <Text style={styles.note}>
+                <Text style={[styles.note, styles.noteInTray]}>
                   Sends can't be undone. Check the address before you send.
                 </Text>
-                <PillButton label={signer.cta('Send', action)} onPress={send} style={styles.cta} />
-              </>
+                <PillButton
+                  label={signer.cta('Confirm send', action)}
+                  onPress={send}
+                  style={styles.cta}
+                />
+              </SheetScreen>
+            ) : trayPage === 'failed' && outcome.failure ? (
+              <SheetScreen>
+                <FailurePage
+                  compact
+                  failure={outcome.failure}
+                  rows={[
+                    { label: 'Amount', value: `${formatBalance(tokenValue)} ${symbol}` },
+                    { label: 'To', value: recipient.title },
+                  ]}
+                  onRetry={() => {
+                    tap();
+                    if (outcome.failure && followFix(outcome.failure)) return;
+                    go('review');
+                  }}
+                  onClose={() => {
+                    tap();
+                    router.dismissAll();
+                  }}
+                />
+              </SheetScreen>
+            ) : proposalId ? (
+              <SheetScreen>
+                <LiveProposedPage proposalId={proposalId} onDone={finish} compact />
+              </SheetScreen>
+            ) : (
+              <SheetScreen>
+                <SuccessPage
+                  compact
+                  title="Sent"
+                  amount={{
+                    symbol,
+                    chain,
+                    text: `${formatBalance(tokenValue)} ${symbol}`,
+                    usd: formatUsd(usdValue),
+                  }}
+                  rows={[
+                    // A saved name first, then the address itself, so it can be checked.
+                    ...(recipient.subtitle ? [{ label: 'To', value: recipient.title }] : []),
+                    {
+                      label: recipient.subtitle ? 'Address' : 'To',
+                      value: <Copyable value={recipient.address} toast="Address copied" />,
+                    },
+                    {
+                      label: 'Transaction',
+                      value: (
+                        <View style={styles.inline}>
+                          <Copyable value={tx.hash} toast="Transaction ID copied" />
+                          <ExplorerLink name={tx.explorer.name} url={tx.explorer.url} />
+                        </View>
+                      ),
+                    },
+                    { label: 'Network', value: chain },
+                    { label: 'Network cost', value: '<$0.01' },
+                    { label: 'Sent', value: 'Just now' },
+                  ]}
+                  onDone={finish}
+                />
+              </SheetScreen>
             )}
-          </View>
-        </ContentSwap>
-      </View>
-    </SheetScreen>
+          </ContentSwap>
+        ) : null}
+      </InlineTray>
+    </FlowTray>
   );
 }
 
 const useStyles = makeStyles((c) => ({
+  // The token list fills the sheet.
+  pickList: {
+    flex: 1,
+  },
+  noteInTray: {
+    marginTop: 16,
+  },
   flex: {
     flex: 1,
   },

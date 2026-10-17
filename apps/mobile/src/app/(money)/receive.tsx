@@ -40,6 +40,13 @@ export default function ReceiveSheet() {
   const list = receiveAddresses(wallet);
   const perChain = !multisig && list.length > 1;
 
+  if (wallet.demo)
+    return (
+      <SheetScreen title="Demo wallet">
+        <Text style={{ color: c.text }}>Create or import a wallet before receiving funds.</Text>
+      </SheetScreen>
+    );
+
   return (
     <SheetScreen title="Receive crypto">
       <SheetText>

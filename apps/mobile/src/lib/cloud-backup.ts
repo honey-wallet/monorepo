@@ -4,6 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
+import { confirmOwner } from '@/lib/auth';
 import { createStore } from '@/lib/store';
 import { readPrimaryMnemonic } from '@/lib/vault';
 
@@ -45,7 +46,7 @@ export const backupPrefs = createStore<{ provider: CloudProvider; savedTo: Cloud
   provider: AVAILABLE[0] ?? 'gdrive',
   savedTo: null,
 });
-export const useBackupPrefs = backupPrefs.use;
+export const useBackupPrefs = backupPrefs.useValue;
 
 export const setBackupProvider = (provider: CloudProvider) =>
   backupPrefs.set((prev) => ({ ...prev, provider }));
@@ -54,6 +55,7 @@ const FILE_NAME = 'Honey wallet backup.json';
 
 /** Encrypts the device's phrase and opens the share sheet to save it to `provider`. */
 export async function saveBackupFile(password: string, provider: CloudProvider) {
+  if (!(await confirmOwner('Export your recovery phrase'))) return false;
   const phrase = await readPrimaryMnemonic();
   if (!phrase) throw new Error('This device doesn’t have a recovery phrase yet');
   const backup = await encryptBackup(phrase, password, getRandomBytes);
@@ -71,7 +73,14 @@ export async function saveBackupFile(password: string, provider: CloudProvider) 
     // The share sheet has made its own copy; don't leave one lying in the cache.
     file.delete();
   }
+  // Sharing cannot distinguish saving from cancellation. Verify a user-selected copy.
+  const saved = await pickBackupFile();
+  if (!saved) return false;
+  if ((await decryptBackup(saved, password)) !== phrase) {
+    throw new Error('That backup belongs to a different recovery phrase');
+  }
   backupPrefs.set((prev) => ({ ...prev, savedTo: provider }));
+  return true;
 }
 
 /** Lets the user pick a backup file. Null if they cancel. */
@@ -84,6 +93,7 @@ export async function pickBackupFile(): Promise<Backup | null> {
   const file = new File(result.assets[0]?.uri ?? '');
   let parsed: unknown;
   try {
+    if (file.size > 16 * 1024) throw new Error('Backup file is too large');
     parsed = JSON.parse(await file.text());
   } catch {
     parsed = null;

@@ -24,7 +24,7 @@ export const swap = createStore<SwapState>({
   bridgeTipDismissed: false,
 });
 
-export const useSwap = swap.use;
+export const useSwap = swap.useValue;
 
 export function updateSwap(update: Partial<SwapState>) {
   swap.set((prev) => ({ ...prev, ...update }));

@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import { type ReactNode, useEffect } from 'react';
-import { type StyleProp, Text, View, type ViewStyle } from 'react-native';
+import { Share, type StyleProp, Text, View, type ViewStyle } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -23,8 +24,8 @@ import { DISTANCE, DURATION, EASE } from '@/theme/motion';
  * amount, the line under it, the receipt and the button, so the eye reads top-down.
  * Stagger is decorative, so the button is tappable from the start.
  */
-export const AT = { title: 180, amount: 240, detail: 300, receipt: 380, done: 460 } as const;
-const RISE = { duration: DURATION.verySlow, easing: EASE.smoothOut } as const;
+export const AT = { title: 60, amount: 100, detail: 140, receipt: 180, done: 0 } as const;
+const RISE = { duration: DURATION.fast, easing: EASE.smoothOut } as const;
 
 /**
  * The last page of a money flow (send, buy, deposit, an order): the check pops in with
@@ -40,6 +41,7 @@ export function SuccessPage({
   rows,
   onDone,
   secondary,
+  share,
   compact = false,
   children,
 }: {
@@ -57,8 +59,10 @@ export function SuccessPage({
   /** A short receipt under the headline: To, Network, Fee… */
   rows?: { label: string; value: ReactNode }[];
   onDone?: () => void;
-  /** A second button beside Done, e.g. View position. */
+  /** A second button beside Done, e.g. View position. Without one, Share sits there. */
   secondary?: { label: string; onPress: () => void };
+  /** What Share sends; defaults to the title and amount. */
+  share?: string;
   /**
    * For a pop-up that sizes to its content (the swap dialog): no centring in a fixed
    * height, a smaller check and figure, tighter gaps.
@@ -122,14 +126,21 @@ export function SuccessPage({
       {compact ? null : <View style={styles.flex} />}
       {onDone ? (
         <Appear at={AT.done} distance={0} style={styles.ctaRow}>
-          {secondary ? (
-            <PillButton
-              label={secondary.label}
-              variant="secondary"
-              onPress={secondary.onPress}
-              style={styles.ctaHalf}
-            />
-          ) : null}
+          {/* A second action, or else Share: the receipt is the thing people pass on. */}
+          <PillButton
+            label={secondary?.label ?? 'Share'}
+            variant="secondary"
+            onPress={
+              secondary?.onPress ??
+              (() => {
+                tap();
+                Share.share({
+                  message: share ?? [title, amount?.text, amount?.usd].filter(Boolean).join(' · '),
+                }).catch(() => {});
+              })
+            }
+            style={styles.ctaHalf}
+          />
           <PillButton label="Done" onPress={onDone} style={styles.ctaHalf} />
         </Appear>
       ) : null}
@@ -152,7 +163,9 @@ export function Appear({
   const reduceMotion = useReducedMotion();
   const progress = useSharedValue(0);
   useEffect(() => {
-    progress.value = withDelay(reduceMotion ? 0 : at, withTiming(1, RISE));
+    progress.value = reduceMotion
+      ? withTiming(1, { ...RISE, reduceMotion: ReduceMotion.Never })
+      : withDelay(at, withTiming(1, RISE));
   }, [at, reduceMotion, progress]);
   const animated = useAnimatedStyle(() => ({
     opacity: progress.value,
@@ -166,7 +179,6 @@ export function Appear({
  * (or, with `all`, every sheet back to the screen underneath).
  */
 export function finishDemo(what: string, { all = false }: { all?: boolean } = {}) {
-  tap();
   showDemoToast(what);
   if (all) router.dismissAll();
   else closeSheet();

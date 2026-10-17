@@ -1,48 +1,22 @@
 // The menu grows out of the footer button that opens it: from its bottom-right corner,
-// 0.97 → 1 with a fade (200ms, strong ease-out), and closes faster with barely any
-// shrink (→ 0.99, 150ms). Under Reduce Motion it only fades.
+// 0.97 → 1 with a fade (200ms, strong ease-out), and closes faster (150ms).
+// Retargeting the same surface keeps rapid toggles continuous. Under Reduce Motion it only fades.
+import { useEffect, useState } from 'react';
 import { Pressable, Text } from 'react-native';
-import Animated, { Keyframe, ReduceMotion, useReducedMotion } from 'react-native-reanimated';
+import Animated, {
+  ReduceMotion,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/Icon';
 import { tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION, EASE, lazy } from '@/theme/motion';
+import { DURATION, EASE } from '@/theme/motion';
 import { PressableRow } from './PressableRow';
 
 export type PopoverAction = { label: string; icon: IconName; onPress: () => void };
-
-const enter = lazy(() =>
-  new Keyframe({
-    0: { opacity: 0, transform: [{ scale: 0.97 }] },
-    100: { opacity: 1, transform: [{ scale: 1 }], easing: EASE.smoothOut },
-  }).duration(DURATION.fast),
-);
-
-const exit = lazy(() =>
-  new Keyframe({
-    0: { opacity: 1, transform: [{ scale: 1 }] },
-    100: { opacity: 0, transform: [{ scale: 0.99 }], easing: EASE.smoothOut },
-  }).duration(DURATION.quick),
-);
-
-// Reduce Motion: the same fades with no scale, played rather than skipped.
-const fadeIn = lazy(() =>
-  new Keyframe({
-    0: { opacity: 0 },
-    100: { opacity: 1, easing: EASE.ease },
-  })
-    .duration(DURATION.fast)
-    .reduceMotion(ReduceMotion.Never),
-);
-
-const fadeOut = lazy(() =>
-  new Keyframe({
-    0: { opacity: 1 },
-    100: { opacity: 0, easing: EASE.ease },
-  })
-    .duration(DURATION.quick)
-    .reduceMotion(ReduceMotion.Never),
-);
 
 /**
  * A menu of large actions that opens above a footer button, like Uniswap's token
@@ -66,15 +40,37 @@ export function PopoverMenu({
   const styles = useStyles();
   const c = useTheme();
   const reduceMotion = useReducedMotion();
-  if (!open) return null;
+  const [mounted, setMounted] = useState(open);
+  const progress = useSharedValue(0);
+  useEffect(() => {
+    progress.value = withTiming(open ? 1 : 0, {
+      duration: open ? DURATION.fast : DURATION.quick,
+      easing: reduceMotion ? EASE.ease : EASE.smoothOut,
+      reduceMotion: ReduceMotion.Never,
+    });
+    if (open) {
+      setMounted(true);
+      return;
+    }
+    const timer = setTimeout(() => setMounted(false), DURATION.quick);
+    return () => clearTimeout(timer);
+  }, [open, reduceMotion, progress]);
+  const animated = useAnimatedStyle(() => ({
+    opacity: progress.value,
+    transform: [{ scale: reduceMotion ? 1 : 0.97 + 0.03 * progress.value }],
+  }));
+  if (!mounted) return null;
   return (
     <>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close menu" />
+      {open && (
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Close menu" />
+      )}
       <Animated.View
-        entering={reduceMotion ? fadeIn() : enter()}
-        exiting={reduceMotion ? fadeOut() : exit()}
+        pointerEvents={open ? 'auto' : 'none'}
+        accessibilityElementsHidden={!open}
+        importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
         accessibilityRole="menu"
-        style={[styles.menu, { bottom, right }]}
+        style={[styles.menu, { bottom, right }, animated]}
       >
         {actions.map((action) => (
           <PressableRow

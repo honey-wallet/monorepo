@@ -12,7 +12,7 @@ export function useWalletView() {
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
   const { funded } = useOnboarding();
-  if (!multisig && wallet.id === 'main' && !funded) {
+  if (!multisig && (!wallet.demo || (wallet.id === 'main' && !funded))) {
     return { wallet, multisig, usd: 0, change: 0, tokens: [] as Token[], empty: true };
   }
   if (!multisig) {

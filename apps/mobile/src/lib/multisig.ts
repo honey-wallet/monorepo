@@ -1,4 +1,5 @@
 import type { IconName } from '@/components/Icon';
+import { moveJar } from '@/lib/jars';
 import { type Chain, formatUsd } from '@/lib/mock-wallet';
 import { getProfile } from '@/lib/profile';
 import { notify } from '@/lib/push';
@@ -62,7 +63,14 @@ export type ProposalAction =
   | { type: 'send'; symbol: string; chain: Chain; amount: number; usd: number; to: string }
   | { type: 'swap'; from: Amount; to: Amount; usd: number; withApproval: boolean }
   | { type: 'earnDeposit' | 'earnWithdraw'; symbol: string; amount: number; usd: number }
-  | { type: 'jarAdd' | 'jarWithdraw'; jar: string; symbol: string; amount: number; usd: number }
+  | {
+      type: 'jarAdd' | 'jarWithdraw';
+      jarId: string;
+      jar: string;
+      symbol: string;
+      amount: number;
+      usd: number;
+    }
   | { type: 'sell'; symbol: string; amount: number; usd: number }
   | { type: 'addMember'; member: Member }
   | { type: 'removeMember'; memberId: string; name: string }
@@ -319,7 +327,7 @@ const store = createStore<State>({
   ],
 });
 
-export const useMultisigState = store.use;
+export const useMultisigState = store.useValue;
 
 // ---------------------------------------------------------------------------
 // Reading
@@ -329,7 +337,7 @@ export function multisigOf(state: State, walletId: string): Multisig | undefined
 }
 
 export function useMultisig(walletId: string | undefined) {
-  const state = store.use();
+  const state = store.useValue();
   return walletId ? state.multisigs[walletId] : undefined;
 }
 
@@ -340,12 +348,12 @@ export function useActiveMultisig() {
 }
 
 export function useProposal(id: string) {
-  return store.use().proposals.find((p) => p.id === id);
+  return store.useValue().proposals.find((p) => p.id === id);
 }
 
 /** A wallet's proposals: pending ones first (in queue order), then history, newest first. */
 export function useProposals(walletId: string) {
-  const { proposals } = store.use();
+  const { proposals } = store.useValue();
   const mine = proposals.filter((p) => p.walletId === walletId);
   return {
     pending: mine.filter((p) => p.status === 'pending').sort((a, b) => a.nonce - b.nonce),
@@ -361,11 +369,11 @@ export const hasVoted = (p: Proposal, memberId: string) =>
 
 /** Pending proposals, on any of your shared wallets, still waiting for your answer. */
 export function useNeedsMyApproval() {
-  const { proposals } = store.use();
+  const { proposals } = store.useValue();
   return proposals.filter((p) => p.status === 'pending' && !hasVoted(p, YOU));
 }
 
-export const useMultisigEvents = () => store.use().events;
+export const useMultisigEvents = () => store.useValue().events;
 
 export const memberOf = (m: Multisig, id: string) => m.members.find((x) => x.id === id);
 
@@ -502,6 +510,10 @@ const isConfig = (a: ProposalAction) =>
 /** Applies an executed proposal's effect on the wallet (members, rules, spending). */
 function applyEffect(m: Multisig, action: ProposalAction): Multisig {
   switch (action.type) {
+    case 'jarAdd':
+    case 'jarWithdraw':
+      moveJar(action.jarId, action.type === 'jarAdd' ? action.amount : -action.amount);
+      return m;
     case 'addMember':
       return { ...m, members: [...m.members, action.member] };
     case 'removeMember': {

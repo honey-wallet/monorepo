@@ -195,7 +195,7 @@ export function LabeledRule({ label }: { label: string }) {
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
 /** The sparkline draws in just after the balance beside it has landed. */
-const SPARK_DRAW = { duration: 600, easing: EASE.smoothOut } as const;
+const SPARK_DRAW = { duration: DURATION.medium, easing: EASE.smoothOut } as const;
 const SPARK_DELAY = DURATION.stagger * 2;
 
 /**

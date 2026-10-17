@@ -1,7 +1,7 @@
 // A dialog sits on top of the page rather than coming from a trigger, so it scales from
 // its centre: 0.95 → 1 with a fade over 250ms on a strong ease-out, and leaves faster
 // (150ms). With `placement="bottom"` it's a sheet: it rises on the iOS sheet curve
-// (450ms; the steep start keeps it snappy) and follows the finger 1:1 when dragged
+// (300ms) and follows the finger 1:1 when dragged
 // down. Let go past 40% of its height or with a downward flick and it carries that
 // speed out; otherwise it springs back. It rubber-bands if pulled up, and the backdrop
 // dims with the sheet's position, so the two can never drift apart. Under Reduce
@@ -12,6 +12,7 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import Animated, {
   cancelAnimation,
   interpolate,
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -22,7 +23,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { DURATION, EASE, SPRING } from '@/theme/motion';
 
 const DIALOG = { open: 250, close: DURATION.quick, scale: 0.95 } as const;
-const SHEET = { open: 450, close: DURATION.medium } as const;
+const SHEET = { open: DURATION.slow, close: DURATION.fast } as const;
 /** Share of the sheet's height dragged down that dismisses it on release. */
 const DISMISS_AT = 0.4;
 /** Downward release speed (pt/s) that dismisses even a short drag (a flick). */
@@ -69,6 +70,7 @@ export function ModalDialog({
         progress.value = withTiming(1, {
           duration: reduceMotion ? DURATION.fast : DIALOG.open,
           easing: reduceMotion ? EASE.ease : EASE.smoothOut,
+          reduceMotion: ReduceMotion.Never,
         });
       }
       return;
@@ -80,6 +82,7 @@ export function ModalDialog({
       progress.value = withTiming(0, {
         duration: close,
         easing: reduceMotion ? EASE.ease : EASE.smoothOut,
+        reduceMotion: ReduceMotion.Never,
       });
     }
     // Unmount once the close has played.
@@ -93,7 +96,7 @@ export function ModalDialog({
 
   // Track: the sheet is the finger. Release: a spring seeded with the finger's speed.
   const drag = Gesture.Pan()
-    .enabled(bottom && dismissable)
+    .enabled(bottom && dismissable && visible)
     .activeOffsetY([-8, 8])
     .onStart(() => {
       cancelAnimation(y);
@@ -106,11 +109,15 @@ export function ModalDialog({
     .onEnd((e) => {
       const dismiss = y.value > height.value * DISMISS_AT || e.velocityY > FLICK;
       if (dismiss) {
-        y.value = withSpring(height.value, { ...SPRING.ui, velocity: e.velocityY });
+        if (!reduceMotion)
+          y.value = withSpring(height.value, { ...SPRING.ui, velocity: e.velocityY });
         scheduleOnRN(onRequestClose);
       } else {
-        y.value = withSpring(0, { ...SPRING.ui, velocity: e.velocityY });
+        y.value = reduceMotion ? 0 : withSpring(0, { ...SPRING.ui, velocity: e.velocityY });
       }
+    })
+    .onFinalize((_e, finished) => {
+      if (!finished) y.value = reduceMotion ? 0 : withSpring(0, SPRING.ui);
     });
 
   const backdrop = useAnimatedStyle(() => ({
@@ -120,7 +127,9 @@ export function ModalDialog({
   }));
   const surface = useAnimatedStyle(() => {
     if (bottom) {
-      return reduceMotion ? { opacity: progress.value } : { transform: [{ translateY: y.value }] };
+      return reduceMotion
+        ? { opacity: progress.value, transform: [{ translateY: y.value }] }
+        : { transform: [{ translateY: y.value }] };
     }
     return reduceMotion
       ? { opacity: progress.value }

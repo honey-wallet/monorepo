@@ -193,15 +193,14 @@ function JarCard({ jar }: { jar: Jar }) {
 
   const press = () => {
     tap();
-    if (vault) router.push({ pathname: '/earn/[symbol]', params: { symbol: jar.symbol } });
-    else setOpen((v) => !v);
+    setOpen((v) => !v);
   };
 
   return (
     <View style={styles.card}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityState={vault ? undefined : { expanded: open }}
+        accessibilityState={{ expanded: open }}
         scaleTo={0.98}
         onPress={press}
       >
@@ -229,7 +228,7 @@ function JarCard({ jar }: { jar: Jar }) {
           </Text>
         ) : null}
       </PressableScale>
-      {vault ? null : (
+      {
         <Accordion open={open}>
           <View style={styles.actions}>
             <PillButton
@@ -251,7 +250,7 @@ function JarCard({ jar }: { jar: Jar }) {
             />
           </View>
         </Accordion>
-      )}
+      }
     </View>
   );
 }

@@ -101,7 +101,7 @@ const dismissedNudge = createStore<string[]>([]);
 export function useApprovalsNudgeShown() {
   const loading = useFirstLoad(LOADS.approvals);
   const waiting = useNeedsMyApproval();
-  const dismissed = dismissedNudge.use();
+  const dismissed = dismissedNudge.useValue();
   return !loading && waiting.some((p) => !dismissed.includes(p.id));
 }
 
@@ -114,7 +114,7 @@ export function ApprovalsNudge({ open }: { open: boolean }) {
   const c = useTheme();
   const waiting = useNeedsMyApproval();
   const { multisigs } = useMultisigState();
-  const dismissed = dismissedNudge.use();
+  const dismissed = dismissedNudge.useValue();
   if (!waiting.length) return null;
   // Closed until something new is waiting (the bell still has them all).
   const shown = open && waiting.some((p) => !dismissed.includes(p.id));
@@ -131,7 +131,13 @@ export function ApprovalsNudge({ open }: { open: boolean }) {
   }
   return (
     <Accordion open={shown}>
-      <SwipeDismiss onDismiss={dismiss}>
+      <SwipeDismiss
+        key={waiting
+          .map((p) => p.id)
+          .sort()
+          .join(':')}
+        onDismiss={dismiss}
+      >
         {(throwAway) => (
           <PressableScale
             onPress={() => openProposal(first.id)}

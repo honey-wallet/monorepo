@@ -1,7 +1,7 @@
 import { parsePairUri } from '@honey-wallet/keyring';
 import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useRef } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,8 @@ import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
 import { holdScannedOffer } from '@/lib/pair-offer';
 import { showToast } from '@/lib/toast';
+import { isEvmAddress } from '@/lib/wallets';
+import { holdWatchedAddress } from '@/lib/watch-scan';
 import { makeStyles, useTheme } from '@/theme';
 
 const FRAME = 260;
@@ -21,6 +23,7 @@ const CORNER = 44;
 
 /** Full-screen QR scanner. The camera needs a real device; simulators show the frame only. */
 export default function ScanScreen() {
+  const { purpose } = useLocalSearchParams<{ purpose?: string }>();
   const insets = useSafeAreaInsets();
   const styles = useStyles();
   const c = useTheme();
@@ -35,6 +38,17 @@ export default function ScanScreen() {
     if (handled.current) return;
     handled.current = true;
     tap();
+    if (purpose === 'watch') {
+      const address = data.replace(/^ethereum:/i, '').split(/[?@]/)[0];
+      if (!isEvmAddress(address)) {
+        showToast('Scan an EVM wallet address');
+        handled.current = false;
+        return;
+      }
+      holdWatchedAddress(address);
+      router.back();
+      return;
+    }
     if (parsePairUri(data)) {
       // Passed in memory, not as a route param, so only this scanner can start pairing.
       holdScannedOffer(data);

@@ -37,7 +37,7 @@ const prefs = createStore<TradePrefs>({
   optionsExpiry: 'Dec 26',
 });
 
-export const useTradePrefs = prefs.use;
+export const useTradePrefs = prefs.useValue;
 
 export function updateTradePrefs(update: Partial<TradePrefs>) {
   prefs.set((prev) => ({ ...prev, ...update }));

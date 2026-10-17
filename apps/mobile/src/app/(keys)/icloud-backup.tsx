@@ -7,7 +7,7 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { PushedScreen } from '@/components/wallet/parts';
+import { SheetScreen } from '@/components/sheets/Sheet';
 import {
   AVAILABLE,
   type CloudProvider,
@@ -20,7 +20,7 @@ import { tap } from '@/lib/haptics';
 import { completeStep } from '@/lib/onboarding';
 import { updateSettings, useSettings } from '@/lib/settings';
 import { showToast } from '@/lib/toast';
-import { readPrimaryMnemonic } from '@/lib/vault';
+import { hasPrimaryMnemonic } from '@/lib/vault';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
@@ -44,8 +44,8 @@ export default function CloudBackupScreen() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    readPrimaryMnemonic()
-      .then((phrase) => setHasPhrase(!!phrase))
+    hasPrimaryMnemonic()
+      .then(setHasPhrase)
       .catch(() => setHasPhrase(false));
   }, []);
 
@@ -55,7 +55,7 @@ export default function CloudBackupScreen() {
       ? 'No phrase yet'
       : backedUp
         ? savedTo
-          ? `Saved to ${PROVIDERS[savedTo].name}`
+          ? 'Verified copy'
           : 'Backed up'
         : 'Not backed up';
   const ok = hasPhrase !== false && backedUp;
@@ -67,13 +67,13 @@ export default function CloudBackupScreen() {
     tap();
     setBusy(true);
     try {
-      await saveBackupFile(password, provider);
+      if (!(await saveBackupFile(password, provider))) return;
       updateSettings({ backedUp: true });
       completeStep('backup');
       setEditing(false);
       setPassword('');
       setConfirm('');
-      showToast(`Backup saved to ${where}`);
+      showToast(`Primary phrase backup verified`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Couldn’t make the backup');
     } finally {
@@ -89,9 +89,8 @@ export default function CloudBackupScreen() {
         : `At least ${MIN_PASSWORD_LENGTH} characters. You’ll need it to restore, and Honey can’t reset it.`;
 
   return (
-    <PushedScreen
+    <SheetScreen
       title="Cloud backup"
-      fallback="/settings"
       contentStyle={styles.content}
       footer={
         showForm ? (
@@ -116,7 +115,10 @@ export default function CloudBackupScreen() {
     >
       <Text style={styles.body}>
         Your recovery phrase is locked with a password on this device, then saved to {where}. To
-        restore on a new phone, pick the backup file and enter the password.
+        restore on a new phone, pick the backup file and enter the password. After saving, select
+        the saved file to verify it. This covers only your primary phrase. Imported phrases and
+        private keys need their own original recovery copies; wallet labels and account indexes are
+        not included.
       </Text>
       <View style={styles.row}>
         <Text style={styles.label}>Recovery phrase</Text>
@@ -192,7 +194,7 @@ export default function CloudBackupScreen() {
           ) : null}
         </Animated.View>
       ) : null}
-    </PushedScreen>
+    </SheetScreen>
   );
 }
 
@@ -229,8 +231,7 @@ function ProviderOption({
 
 const useStyles = makeStyles((c) => ({
   content: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    paddingTop: 4,
   },
   flex: {
     flex: 1,

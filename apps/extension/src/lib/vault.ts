@@ -27,8 +27,19 @@ type Unlocked = { mnemonic: string; at: number };
 export const random = (bytes: number) => crypto.getRandomValues(new Uint8Array(bytes));
 
 export function createVault(local: Store, session: Store, now = Date.now) {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const listeners = new Set<() => void>();
+  async function lock() {
+    clearTimeout(timer);
+    for (const listener of listeners) listener();
+    await session.remove(KEY.unlocked);
+  }
   async function remember(mnemonic: string) {
     await session.set(KEY.unlocked, { mnemonic, at: now() } satisfies Unlocked);
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      void lock();
+    }, AUTO_LOCK_MS);
   }
 
   return {
@@ -55,14 +66,20 @@ export function createVault(local: Store, session: Store, now = Date.now) {
       }
     },
 
-    lock: () => session.remove(KEY.unlocked),
+    lock,
+    onLock(listener: () => void) {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
 
     /** The phrase while unlocked and recently used; otherwise null (and locks). */
     async unlocked(): Promise<string | null> {
       const state = await session.get<Unlocked>(KEY.unlocked);
       if (!state) return null;
-      if (now() - state.at > AUTO_LOCK_MS) {
-        await session.remove(KEY.unlocked);
+      if (now() - state.at >= AUTO_LOCK_MS) {
+        await lock();
         return null;
       }
       await remember(state.mnemonic);
@@ -78,6 +95,7 @@ export function createVault(local: Store, session: Store, now = Date.now) {
 
     /** Forgets everything on this browser. The phone and backups are untouched. */
     async reset() {
+      await lock();
       await local.clear();
       await session.clear();
     },

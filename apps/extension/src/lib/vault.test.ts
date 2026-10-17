@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { memoryStore } from './storage';
 import { AUTO_LOCK_MS, createVault } from './vault';
 
@@ -46,4 +46,22 @@ describe('extension vault', () => {
     const [account] = await vault.accounts(PHRASE);
     expect(account?.addresses.evm).toBe('0x9858EfFD232B4033E47d90003D41EC34EcaEda94');
   });
+});
+
+it('expires an open popup session and notifies the UI without a getter', async () => {
+  const { vault, session } = setup();
+  await vault.save(PHRASE, 'correct horse', []);
+  vi.useFakeTimers();
+  try {
+    // Reading refreshes the deadline and schedules the timer under the fake clock.
+    await vault.unlocked();
+    const locked = vi.fn();
+    const unsubscribe = vault.onLock(locked);
+    await vi.advanceTimersByTimeAsync(AUTO_LOCK_MS);
+    expect(await session.get('unlocked')).toBeUndefined();
+    expect(locked).toHaveBeenCalledOnce();
+    unsubscribe();
+  } finally {
+    vi.useRealTimers();
+  }
 });

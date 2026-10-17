@@ -16,7 +16,7 @@ export const jars = createStore<Jar[]>([
   { id: 'trip', name: 'Japan trip', symbol: 'USDC', goal: 1500, saved: 420, demo: true },
 ]);
 
-export const useJars = jars.use;
+export const useJars = jars.useValue;
 
 export function addJar(jar: Omit<Jar, 'id' | 'saved'>) {
   const id = `jar-${Date.now()}`;
@@ -35,4 +35,11 @@ export function usdValue(symbol: string, amount: number) {
 /** How full a jar is, from 0 to 1. */
 export function jarProgress(jar: Jar) {
   return jar.goal > 0 ? Math.min(jar.saved / jar.goal, 1) : 0;
+}
+
+/** Apply a completed movement by stable id, never by a user-editable label. */
+export function moveJar(id: string, amount: number) {
+  jars.set((list) =>
+    list.map((jar) => (jar.id === id ? { ...jar, saved: Math.max(0, jar.saved + amount) } : jar)),
+  );
 }

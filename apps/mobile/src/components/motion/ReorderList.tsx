@@ -11,6 +11,7 @@ import { type ReactNode, useEffect } from 'react';
 import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   useAnimatedReaction,
   useAnimatedStyle,
   useReducedMotion,
@@ -19,7 +20,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
-import { tap } from '@/lib/haptics';
+import { grab, tap } from '@/lib/haptics';
 import { makeStyles } from '@/theme';
 import { DURATION, EASE, SPRING } from '@/theme/motion';
 
@@ -131,12 +132,14 @@ function Row<T extends string>({
   const lifted = useSharedValue(0);
   const dragging = useSharedValue(false);
   const start = useSharedValue(0);
+  const beforeDrag = useSharedValue<Record<string, number>>({});
 
   // Slide into place whenever this row's slot changes (someone else dragged past it).
   useAnimatedReaction(
     () => slots.value[item],
     (slot, previous) => {
-      if (slot !== previous && !dragging.value) top.value = withSpring(slot * step, SPRING.ui);
+      if (slot !== previous && !dragging.value)
+        top.value = reduceMotion ? slot * step : withSpring(slot * step, SPRING.ui);
     },
   );
 
@@ -144,11 +147,13 @@ function Row<T extends string>({
   // A handle drags at once; a whole sideways item waits for a short hold.
   const gesture = (sideways ? pan.activateAfterLongPress(HOLD_MS) : pan.minDistance(0))
     .onStart(() => {
+      cancelAnimation(top);
+      beforeDrag.value = { ...slots.value };
       dragging.value = true;
       start.value = top.value;
       if (!reduceMotion)
         lifted.value = withTiming(1, { duration: DURATION.quick, easing: EASE.smoothOut });
-      scheduleOnRN(tap);
+      scheduleOnRN(grab);
       if (onDragChange) scheduleOnRN(onDragChange, true);
     })
     .onUpdate((e) => {
@@ -162,16 +167,17 @@ function Row<T extends string>({
       slots.value = moveTo(slots.value, item, to);
       scheduleOnRN(tap);
     })
-    .onFinalize((e) => {
+    .onFinalize((e, finished) => {
       // A touch that never became a drag (a tap, or a swipe that scrolled) changes nothing.
       if (!dragging.value) return;
+      if (!finished) slots.value = beforeDrag.value;
       dragging.value = false;
       const slot = slots.value[item] * step;
       top.value = reduceMotion
-        ? withTiming(slot, { duration: DURATION.quick, easing: EASE.smoothOut })
+        ? slot
         : withSpring(slot, { ...SPRING.release, velocity: sideways ? e.velocityX : e.velocityY });
       lifted.value = withTiming(0, { duration: DURATION.quick, easing: EASE.smoothOut });
-      scheduleOnRN(onCommit, slots.value);
+      if (finished) scheduleOnRN(onCommit, slots.value);
       if (onDragChange) scheduleOnRN(onDragChange, false);
     });
 
@@ -190,6 +196,7 @@ function Row<T extends string>({
     const from = slots.value[item];
     const to = Math.min(Math.max(from + by, 0), count - 1);
     if (to === from) return;
+    tap();
     slots.value = moveTo(slots.value, item, to);
     onCommit(slots.value);
   };

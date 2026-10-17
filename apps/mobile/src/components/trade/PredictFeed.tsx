@@ -2,9 +2,8 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import Animated, {
+  cancelAnimation,
   Easing,
-  FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -35,7 +34,6 @@ import {
 } from '@/lib/predict';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION, LAYOUT_MOVE } from '@/theme/motion';
 
 /** "$41.00M" → "$41M", "$2.40M" → "$2.4M". */
 const shortVolume = (n: number) => formatCompactUsd(n).replace(/\.?0+([A-Z]?)$/, '$1');
@@ -119,14 +117,9 @@ export function PredictFeed({
           skeleton={[0, 1, 2].map((i) => <MarketCardSkeleton key={i} />)}
         >
           {markets.map((market) => (
-            <Animated.View
-              key={market.id}
-              entering={FadeIn.duration(DURATION.fast)}
-              exiting={FadeOut.duration(DURATION.quick)}
-              layout={LAYOUT_MOVE}
-            >
+            <View key={market.id}>
               <MarketCard market={market} />
-            </Animated.View>
+            </View>
           ))}
           {markets.length === 0 &&
             (q ? (
@@ -388,6 +381,7 @@ function LiveBadge() {
     if (reduceMotion) return;
     // Constant, ambient motion runs on a linear clock; it stops under Reduce Motion.
     pulse.value = withRepeat(withTiming(0.25, { duration: 800, easing: Easing.linear }), -1, true);
+    return () => cancelAnimation(pulse);
   }, [reduceMotion, pulse]);
   const dotStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
   return (

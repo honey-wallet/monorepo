@@ -21,8 +21,11 @@ import {
 } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   Extrapolation,
   interpolate,
+  ReduceMotion,
+  useAnimatedScrollHandler,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -162,11 +165,13 @@ function Tile({
   const shown = useSharedValue(play ? 0 : 1);
   useEffect(() => {
     if (!play) return;
-    shown.value = withDelay(
-      index * 30,
-      withTiming(1, { duration: DURATION.slow, easing: EASE.smoothOut }),
-    );
-  }, [play, index, shown]);
+    const fade = withTiming(1, {
+      duration: DURATION.medium,
+      easing: EASE.smoothOut,
+      reduceMotion: ReduceMotion.Never,
+    });
+    shown.value = reduceMotion ? fade : withDelay(Math.min(index, 3) * 30, fade);
+  }, [play, index, shown, reduceMotion]);
   const still = reduceMotion;
   const enter = useAnimatedStyle(() => ({
     opacity: shown.value,
@@ -216,7 +221,14 @@ function NftDetail({
   const progress = useSharedValue(0);
   const details = useSharedValue(0);
   const drag = useSharedValue(0);
-  const closing = useRef(false);
+  const dragStart = useSharedValue(0);
+  const closing = useSharedValue(false);
+  const scrollY = useSharedValue(0);
+  const ownsDrag = useSharedValue(false);
+  const nativeScroll = Gesture.Native();
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+  });
 
   // Where the art lands, and how to get there from the tile (centre offset and scale).
   // Smaller on short screens, so the details and actions still fit below it.
@@ -228,35 +240,64 @@ function NftDetail({
 
   useEffect(() => {
     progress.value = reduceMotion
-      ? withTiming(1, { duration: DURATION.medium, easing: EASE.ease })
+      ? withTiming(1, {
+          duration: DURATION.fast,
+          easing: EASE.ease,
+          reduceMotion: ReduceMotion.Never,
+        })
       : withSpring(1, SPRING.ui);
-    details.value = withDelay(
-      reduceMotion ? 0 : 80,
-      withTiming(1, { duration: DURATION.slow, easing: EASE.smoothOut }),
-    );
+    const fade = withTiming(1, {
+      duration: DURATION.fast,
+      easing: EASE.smoothOut,
+      reduceMotion: ReduceMotion.Never,
+    });
+    details.value = reduceMotion ? fade : withDelay(80, fade);
   }, [progress, details, reduceMotion]);
 
   const close = () => {
-    if (closing.current) return;
-    closing.current = true;
-    const out = { duration: DURATION.medium, easing: EASE.smoothOut };
+    if (closing.value) return;
+    closing.value = true;
+    const out = {
+      duration: DURATION.fast,
+      easing: EASE.smoothOut,
+      reduceMotion: ReduceMotion.Never,
+    };
     details.value = withTiming(0, { duration: DURATION.micro, easing: EASE.ease });
-    drag.value = withTiming(0, out);
+    if (!reduceMotion) drag.value = withTiming(0, out);
     progress.value = withTiming(0, out, (done) => {
       if (done) scheduleOnRN(onClosed);
     });
   };
 
   const pan = Gesture.Pan()
+    .simultaneousWithExternalGesture(nativeScroll)
     .activeOffsetY(10)
+    .failOffsetY(-10)
     .failOffsetX([-24, 24])
+    .onBegin(() => {
+      ownsDrag.value = scrollY.value <= 0;
+    })
+    .onStart(() => {
+      if (closing.value || !ownsDrag.value) return;
+      cancelAnimation(drag);
+      dragStart.value = drag.value;
+    })
     .onUpdate((e) => {
+      if (closing.value || !ownsDrag.value) return;
       // Follows the finger down; resists being pulled up.
-      drag.value = e.translationY > 0 ? e.translationY : e.translationY * 0.2;
+      const next = dragStart.value + e.translationY;
+      drag.value = next > 0 ? next : next * 0.2;
     })
     .onEnd((e) => {
-      if (e.translationY > DISMISS_AT || e.velocityY > FLICK) scheduleOnRN(close);
-      else drag.value = withSpring(0, SPRING.release);
+      if (closing.value || !ownsDrag.value) return;
+      if (drag.value > DISMISS_AT || e.velocityY > FLICK) scheduleOnRN(close);
+      else
+        drag.value = reduceMotion ? 0 : withSpring(0, { ...SPRING.release, velocity: e.velocityY });
+    })
+    .onFinalize((_e, finished) => {
+      if (!finished && !closing.value && ownsDrag.value)
+        drag.value = reduceMotion ? 0 : withSpring(0, SPRING.release);
+      ownsDrag.value = false;
     });
 
   const still = reduceMotion;
@@ -321,43 +362,54 @@ function NftDetail({
               </View>
             </Animated.View>
 
-            <Animated.View style={[styles.info, { top: to.y + to.w + 16 }, info]}>
-              <Text style={styles.detailName}>{nft.name}</Text>
+            <Animated.View
+              style={[styles.info, { top: to.y + to.w + 16, bottom: insets.bottom + 72 }, info]}
+            >
+              <GestureDetector gesture={nativeScroll}>
+                <Animated.ScrollView
+                  onScroll={onScroll}
+                  scrollEventThrottle={16}
+                  bounces={false}
+                  style={styles.flex}
+                >
+                  <Text style={styles.detailName}>{nft.name}</Text>
 
-              <View style={styles.group}>
-                <StatRow
-                  label="Floor"
-                  value={
-                    <Text style={styles.rowValue}>
-                      {formatFloor(nft)} <Text style={styles.rowMuted}>· {usd}</Text>
-                    </Text>
-                  }
-                />
-                <StatRow
-                  label="Chain"
-                  value={
-                    <View style={styles.inline}>
-                      <TokenIcon symbol={chainSymbol(nft.chain)} size={16} />
-                      <Text style={styles.rowValue}>{nft.chain}</Text>
-                    </View>
-                  }
-                />
-              </View>
+                  <View style={styles.group}>
+                    <StatRow
+                      label="Floor"
+                      value={
+                        <Text style={styles.rowValue}>
+                          {formatFloor(nft)} <Text style={styles.rowMuted}>· {usd}</Text>
+                        </Text>
+                      }
+                    />
+                    <StatRow
+                      label="Chain"
+                      value={
+                        <View style={styles.inline}>
+                          <TokenIcon symbol={chainSymbol(nft.chain)} size={16} />
+                          <Text style={styles.rowValue}>{nft.chain}</Text>
+                        </View>
+                      }
+                    />
+                  </View>
 
-              <Text style={styles.groupTitle}>Traits</Text>
-              <View style={styles.group}>
-                {nft.traits.map((t) => (
-                  <StatRow
-                    key={t.type}
-                    label={t.type}
-                    value={
-                      <Text style={styles.rowValue}>
-                        {t.value} <Text style={styles.rowMuted}>· {t.rarity}%</Text>
-                      </Text>
-                    }
-                  />
-                ))}
-              </View>
+                  <Text style={styles.groupTitle}>Traits</Text>
+                  <View style={styles.group}>
+                    {nft.traits.map((t) => (
+                      <StatRow
+                        key={t.type}
+                        label={t.type}
+                        value={
+                          <Text style={styles.rowValue}>
+                            {t.value} <Text style={styles.rowMuted}>· {t.rarity}%</Text>
+                          </Text>
+                        }
+                      />
+                    ))}
+                  </View>
+                </Animated.ScrollView>
+              </GestureDetector>
             </Animated.View>
 
             {/* Two equal actions along the bottom, like every other page's footer */}

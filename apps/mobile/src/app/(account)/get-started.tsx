@@ -2,14 +2,16 @@ import { type Href, Redirect, router, useLocalSearchParams } from 'expo-router';
 import { type ReactNode, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import Svg, { G, Path, Rect } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { Icon, type IconName } from '@/components/Icon';
 import { AppleGlyph } from '@/components/logo/AppleGlyph';
 import { useErrorShake } from '@/components/motion/ErrorShake';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { KeyGlyph, PhraseGlyph } from '@/components/onboarding/icons';
 import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
 import { LabeledRule } from '@/components/wallet/parts';
 import { failure, tap } from '@/lib/haptics';
+import { leaveSheetTo } from '@/lib/navigation';
 import { finishOnboarding } from '@/lib/onboarding';
 import { settings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
@@ -68,8 +70,7 @@ export default function GetStartedSheet() {
   // Leave the sheet, then open the next step full screen.
   const go = (href: Href) => {
     tap();
-    router.back();
-    router.push(href);
+    leaveSheetTo(href);
   };
 
   return (
@@ -212,43 +213,6 @@ function MoreRow({
         )
       }
     />
-  );
-}
-
-/** A recovery phrase: its words as a little grid of chips, two columns of three. */
-function PhraseGlyph({ color }: { color: string }) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 20 20">
-      {[3, 8.5, 14].map((y) =>
-        [2, 11].map((x) => (
-          <Rect key={`${x}-${y}`} x={x} y={y} width={7} height={3.5} rx={1.75} fill={color} />
-        )),
-      )}
-    </Svg>
-  );
-}
-
-/**
- * A private key: a solid key tipped at 45°, round head (with its hole) up and to the
- * right, the blade running down-left with two notched teeth. Drawn level, then turned.
- */
-function KeyGlyph({ color }: { color: string }) {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 20 20">
-      <G rotation={-45} origin="10, 10">
-        {/* Head, with the hole cut out */}
-        <Path
-          fill={color}
-          fillRule="evenodd"
-          d="M9.2 10a5.3 5.3 0 1 0 10.6 0a5.3 5.3 0 1 0 -10.6 0ZM15.4 10a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0Z"
-        />
-        {/* Blade and teeth */}
-        <Path
-          fill={color}
-          d="M10.5 8.4H1.6a1.2 1.2 0 0 0 -1.2 1.2v3.6a1 1 0 0 0 1 1h1.6v-1.6h1.8v1.1h1.9v-2.1h3.8Z"
-        />
-      </G>
-    </Svg>
   );
 }
 

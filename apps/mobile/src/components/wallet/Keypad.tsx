@@ -1,7 +1,7 @@
-import { type StyleProp, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, type StyleProp, Text, View, type ViewStyle } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { tap } from '@/lib/haptics';
+import { keypress, tap } from '@/lib/haptics';
 import { makeStyles, useTheme } from '@/theme';
 import { PRESS_SCALE } from '@/theme/motion';
 
@@ -92,17 +92,15 @@ export function Keypad({
   return (
     <View style={styles.pad}>
       {KEYS.map((key) => (
-        <PressableScale
+        <Pressable
           key={key}
           accessibilityRole="button"
           accessibilityLabel={key === 'back' ? 'Delete' : key}
-          // Keys are hit constantly: feedback is felt, not seen.
-          scaleTo={PRESS_SCALE}
           onPress={() => {
-            tap();
+            keypress();
             onKey(key);
           }}
-          style={[styles.key, { height: keyHeight }]}
+          style={({ pressed }) => [styles.key, { height: keyHeight }, pressed && styles.keyDown]}
         >
           {key === 'back' ? (
             <Icon name="backspace" size={22} color={c.text} />
@@ -112,7 +110,7 @@ export function Keypad({
           ) : (
             <Text style={styles.keyLabel}>{key}</Text>
           )}
-        </PressableScale>
+        </Pressable>
       ))}
     </View>
   );
@@ -182,6 +180,10 @@ const useStyles = makeStyles((c) => ({
     height: 64,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 20,
+  },
+  keyDown: {
+    backgroundColor: c.raised,
   },
   keyLabel: {
     color: c.text,

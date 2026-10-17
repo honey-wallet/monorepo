@@ -1,15 +1,13 @@
 import { useLocalSearchParams } from 'expo-router';
 import { usePreventScreenCapture } from 'expo-screen-capture';
-import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { AppState, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   FadeIn,
-  FadeOut,
   Keyframe,
   ReduceMotion,
   useReducedMotion,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { Checkbox } from '@/components/motion/Checkbox';
 import { IconSwap } from '@/components/motion/IconSwap';
@@ -18,17 +16,19 @@ import { SkeletonBar } from '@/components/motion/Skeleton';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PhraseQuiz } from '@/components/onboarding/PhraseQuiz';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { PushedScreen, SCREEN } from '@/components/wallet/parts';
-import { confirmOwner } from '@/lib/auth';
+import { SheetScreen } from '@/components/sheets/Sheet';
+import { InlineTray } from '@/components/sheets/Tray';
+import { PushedScreen } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
 import { finishOnboarding } from '@/lib/onboarding';
+import { createPhraseAccess } from '@/lib/phrase-access';
 import { getProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
-import { draftMnemonic, readPrimaryMnemonic, startWithMnemonic } from '@/lib/vault';
+import { startWithMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
-import { DISTANCE, DURATION, EASE, lazy } from '@/theme/motion';
+import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 /** Phrases are 12 words here (24-word imports are shown from Settings too). */
 const PLACEHOLDER = Array<string>(12).fill('');
@@ -39,9 +39,7 @@ const PLACEHOLDER = Array<string>(12).fill('');
 // zero): Reanimated would otherwise skip the entrance entirely.
 const rise = (index: number, reduced: boolean) =>
   reduced
-    ? FadeIn.duration(DURATION.fast)
-        .delay(index * DURATION.stagger)
-        .reduceMotion(ReduceMotion.Never)
+    ? FadeIn.duration(DURATION.fast).reduceMotion(ReduceMotion.Never)
     : new Keyframe({
         0: { opacity: 0, transform: [{ translateY: DISTANCE.medium }] },
         100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
@@ -49,25 +47,28 @@ const rise = (index: number, reduced: boolean) =>
         .duration(DURATION.verySlow)
         .delay(index * DURATION.stagger);
 
-const panelIn = lazy(() =>
-  new Keyframe({
-    0: { opacity: 0, transform: [{ translateY: 40 }] },
-    100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
-  }).duration(DURATION.medium),
-);
+// The old bottom panel's motion; the warning is a tray now, which animates itself.
+// const panelIn = lazy(() =>
+//   new Keyframe({
+//     0: { opacity: 0, transform: [{ translateY: 40 }] },
+//     100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },
+//   }).duration(DURATION.medium),
+// );
 
-const panelOut = lazy(() =>
-  new Keyframe({
-    0: { opacity: 1, transform: [{ translateY: 0 }] },
-    100: { opacity: 0, transform: [{ translateY: 40 }], easing: EASE.smoothOut },
-  }).duration(DURATION.fast),
-);
+// const panelOut = lazy(() =>
+//   new Keyframe({
+//     0: { opacity: 1, transform: [{ translateY: 0 }] },
+//     100: { opacity: 0, transform: [{ translateY: 40 }], easing: EASE.smoothOut },
+//   }).duration(DURATION.fast),
+// );
 
 /** Shows the recovery phrase, but only after a "view this in private" warning. */
 export default function RecoveryPhraseScreen() {
   // From onboarding ("Create with a recovery phrase"), writing it down creates the wallet.
-  const { onboarding } = useLocalSearchParams<{ onboarding?: string }>();
-  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ onboarding?: string }>();
+  const [access] = useState(() => createPhraseAccess(params.onboarding === '1'));
+  const onboarding = access.isDraft;
+  const viewing = useRef(false);
   const styles = useStyles();
   const c = useTheme();
   const [warning, setWarning] = useState(true);
@@ -79,15 +80,21 @@ export default function RecoveryPhraseScreen() {
   const [checked, setChecked] = useState(false);
   // From onboarding, a brand-new phrase that's only saved once it's written down.
   // From Settings, the device's phrase, read from secure storage (null if none yet).
-  const [phrase, setPhrase] = useState<string | null | undefined>(() =>
-    onboarding ? draftMnemonic() : undefined,
-  );
+  const [phrase, setPhrase] = useState<string | null | undefined>(() => access.draft);
   useEffect(() => {
-    if (onboarding) return;
-    readPrimaryMnemonic()
-      .then(setPhrase)
-      .catch(() => setPhrase(null));
-  }, [onboarding]);
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        if (state === 'background') access.cancel();
+        setRevealed(false);
+        setWarning(true);
+        if (!onboarding) setPhrase(undefined);
+      }
+    });
+    return () => {
+      access.cancel();
+      sub.remove();
+    };
+  }, [onboarding, access]);
   const words = phrase ? phrase.split(' ') : PLACEHOLDER;
   const half = words.length / 2;
   const missing = phrase === null;
@@ -111,10 +118,21 @@ export default function RecoveryPhraseScreen() {
 
   // A saved phrase needs Face ID (or the passcode) first; a brand-new one doesn't.
   const view = async () => {
+    if (viewing.current) return;
+    viewing.current = true;
     tap();
-    if (!onboarding && !missing && !(await confirmOwner('Show your recovery phrase'))) return;
-    setWarning(false);
-    setRevealed(!missing);
+    try {
+      const result = await access.read();
+      if (!result || AppState.currentState !== 'active') return;
+      const value = result.phrase;
+      if (!onboarding) setPhrase(value);
+      setWarning(false);
+      setRevealed(!!value);
+    } catch {
+      showToast('Couldn’t read your recovery phrase. Try again');
+    } finally {
+      viewing.current = false;
+    }
   };
 
   const close = () => {
@@ -198,29 +216,33 @@ export default function RecoveryPhraseScreen() {
       }
       scroll={false}
       contentStyle={styles.content}
-      // The privacy warning covers the whole screen, header included, until dismissed.
+      // The privacy warning rises in a tray (Family's pattern): what this is, three plain
+      // rules, then Close or View.
       overlay={
-        warning ? (
-          <>
-            <Animated.View
-              entering={FadeIn.duration(DURATION.fast)}
-              exiting={FadeOut.duration(DURATION.fast)}
-              style={styles.scrim}
-            >
-              <Pressable style={styles.fill} onPress={close} accessibilityLabel="Close" />
-            </Animated.View>
-            <Animated.View
-              entering={panelIn()}
-              exiting={panelOut()}
-              style={[styles.panel, { paddingBottom: insets.bottom + SCREEN.footerBottom }]}
-            >
-              <View style={[styles.warnTile, { backgroundColor: `${c.error}22` }]}>
-                <Icon name="warning" size={24} color={c.error} />
+        <InlineTray onClose={close}>
+          {warning ? (
+            <SheetScreen>
+              <View style={[styles.warnTile, { backgroundColor: `${c.error}1F` }]}>
+                <Icon name="warning" size={22} color={c.error} />
               </View>
-              <Text style={styles.panelTitle}>View this in a private place</Text>
+              <Text style={styles.panelTitle}>View in a private place</Text>
               <Text style={styles.panelBody}>
-                Anyone who knows your recovery phrase can access your wallet and funds.
+                These words are the key to your wallet. Open them where no one can see your screen.
               </Text>
+              <View style={styles.panelRules}>
+                {(
+                  [
+                    { icon: 'lock', text: 'Keep it somewhere safe, offline' },
+                    { icon: 'eyeSlash', text: 'Never share it, not even with Honey support' },
+                    { icon: 'warning', text: 'If you lose it, no one can recover it' },
+                  ] as const
+                ).map((r) => (
+                  <View key={r.text} style={styles.panelRule}>
+                    <Icon name={r.icon} size={15} color={c.textSecondary} />
+                    <Text style={styles.panelRuleText}>{r.text}</Text>
+                  </View>
+                ))}
+              </View>
               <View style={styles.buttons}>
                 <PillButton
                   label="Close"
@@ -230,9 +252,9 @@ export default function RecoveryPhraseScreen() {
                 />
                 <PillButton label="View" onPress={view} style={styles.flexButton} />
               </View>
-            </Animated.View>
-          </>
-        ) : null
+            </SheetScreen>
+          ) : null}
+        </InlineTray>
       }
     >
       <View style={styles.hero}>
@@ -458,18 +480,34 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'center',
   },
   panelTitle: {
-    marginTop: 18,
+    marginTop: 14,
     color: c.text,
-    fontSize: 20,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   panelBody: {
-    marginTop: 8,
+    marginTop: 4,
     color: c.textSecondary,
     fontSize: 15,
-    lineHeight: 21,
-    textAlign: 'center',
+    lineHeight: 20,
+  },
+  panelRules: {
+    marginTop: 16,
+    paddingTop: 14,
+    gap: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: c.divider,
+  },
+  panelRule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  panelRuleText: {
+    flex: 1,
+    color: c.textSecondary,
+    fontSize: 14,
   },
   buttons: {
     marginTop: 26,

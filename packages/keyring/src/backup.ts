@@ -33,7 +33,11 @@ export const MIN_PASSWORD_LENGTH = 8;
 const AAD = utf8ToBytes('honey-backup-v1');
 
 const keyFor = (password: string, salt: Uint8Array, kdf: { N: number; r: number; p: number }) =>
-  scryptAsync(utf8ToBytes(password.normalize('NFKC')), salt, { ...kdf, dkLen: 32 });
+  scryptAsync(utf8ToBytes(password.normalize('NFKC')), salt, {
+    ...kdf,
+    dkLen: 32,
+    maxmem: 72 * 1024 * 1024,
+  });
 
 export async function encryptBackup(
   phrase: string,
@@ -68,15 +72,35 @@ export function isBackup(value: unknown): value is Backup {
     b.version === 1 &&
     b.kdf?.name === 'scrypt' &&
     b.cipher?.name === 'xchacha20-poly1305' &&
-    typeof b.data === 'string'
+    typeof b.data === 'string' &&
+    b.data.length <= 2048 &&
+    typeof b.kdf.salt === 'string' &&
+    b.kdf.salt.length === 24 &&
+    typeof b.cipher.nonce === 'string' &&
+    b.cipher.nonce.length === 32
   );
 }
 
 /** The phrase inside a backup. Throws `WrongPasswordError` if the password doesn't open it. */
 export async function decryptBackup(backup: Backup, password: string): Promise<string> {
+  if (!isBackup(backup)) throw new Error('Unsupported backup');
   const { N, r, p, salt } = backup.kdf;
   // Refuse absurd parameters from a tampered file rather than hang the app.
-  if (N > 2 ** 20 || r > 16 || p > 4) throw new Error('Unsupported backup');
+  if (
+    ![N, r, p].every((n) => Number.isSafeInteger(n) && n > 0) ||
+    N < 2 ||
+    N > 2 ** 16 ||
+    (N & (N - 1)) !== 0 ||
+    r > 8 ||
+    p > 4 ||
+    N * r * p > 2 ** 19 ||
+    128 * r * (N + p + 1) > 72 * 1024 * 1024
+  ) {
+    throw new Error('Unsupported backup');
+  }
+  if (base64.decode(salt).length !== 16 || base64.decode(backup.cipher.nonce).length !== 24) {
+    throw new Error('Unsupported backup');
+  }
   const key = await keyFor(password, base64.decode(salt), { N, r, p });
   let plain: Uint8Array;
   try {

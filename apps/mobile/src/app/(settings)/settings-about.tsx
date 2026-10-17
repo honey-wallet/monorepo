@@ -1,8 +1,8 @@
 import Constants from 'expo-constants';
-import { router } from 'expo-router';
 import { Linking, Text } from 'react-native';
 import { SheetRow, SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
+import { leaveSheetTo } from '@/lib/navigation';
 import { makeStyles } from '@/theme';
 
 const PRIVACY_URL = 'https://honeywallet.app/privacy';
@@ -38,8 +38,7 @@ export default function AboutSheet() {
         accessory="chevron"
         onPress={() => {
           tap();
-          router.dismiss();
-          router.push('/disclosures');
+          leaveSheetTo('/disclosures');
         }}
       />
       <Text style={styles.version}>Honey {version}</Text>

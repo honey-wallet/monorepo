@@ -10,9 +10,10 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetHeader, SheetScreen } from '@/components/sheets/Sheet';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import { ADDRESS, handleFor, shortAddress } from '@/lib/mock-wallet';
+import { handleFor, shortAddress } from '@/lib/mock-wallet';
 import { setProfile, useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 const AVATAR = 104;
@@ -24,12 +25,13 @@ const MAX_NAME = 32;
  */
 export default function ProfileEditSheet() {
   const styles = useStyles();
+  const wallet = useActiveWallet();
   const c = useTheme();
   const profile = useProfile();
   const [name, setName] = useState(profile.name);
   const [photo, setPhoto] = useState(profile.photo);
   const [seed, setSeed] = useState(profile.avatarSeed);
-  const { copied, copy } = useCopy(ADDRESS, 'Address copied');
+  const { copied, copy } = useCopy(wallet.demo ? '' : wallet.address, 'Address copied');
 
   const trimmed = name.trim();
   const changed =
@@ -152,7 +154,7 @@ export default function ProfileEditSheet() {
         </View>
         <View style={styles.flex}>
           <Text style={styles.addressLabel}>Wallet address</Text>
-          <Text style={styles.addressValue}>{shortAddress(ADDRESS, 6, 4)}</Text>
+          <Text style={styles.addressValue}>{shortAddress(wallet.address, 6, 4)}</Text>
         </View>
         <IconSwap name={copied ? 'check' : 'copy'} size={16} color={c.textSecondary} />
       </PressableScale>

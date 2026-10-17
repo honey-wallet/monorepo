@@ -2,7 +2,9 @@ import { useEffect, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  cancelAnimation,
   Easing,
+  ReduceMotion,
   useAnimatedProps,
   useAnimatedReaction,
   useAnimatedStyle,
@@ -25,7 +27,7 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
  * The line draws itself in on a strong ease-out whenever the data changes. Charts open
  * and change range often, so it stays short; under Reduce Motion it fades in instead.
  */
-const DRAW_DURATION = 500;
+const DRAW_DURATION = DURATION.medium;
 const PAD_Y = 12;
 /** Room on the right so the end dot's pulse isn't clipped. */
 const PAD_RIGHT = 10;
@@ -126,7 +128,11 @@ function PriceLine({ data, width, height, onScrub }: Props) {
       // No travel along the line: show it whole and fade it in.
       drawn.value = 1;
       shown.value = 0;
-      shown.value = withTiming(1, { duration: DURATION.fast, easing: EASE.ease });
+      shown.value = withTiming(1, {
+        duration: DURATION.fast,
+        easing: EASE.ease,
+        reduceMotion: ReduceMotion.Never,
+      });
       return;
     }
     shown.value = 1;
@@ -151,6 +157,7 @@ function PriceLine({ data, width, height, onScrub }: Props) {
       ),
       -1,
     );
+    return () => cancelAnimation(pulse);
   }, [reduceMotion, pulse]);
 
   // Scrubbing
@@ -170,14 +177,15 @@ function PriceLine({ data, width, height, onScrub }: Props) {
     .minDistance(0)
     .onBegin((e) => {
       scrubX.value = e.x;
-      scrubbing.value = withTiming(1, { duration: DURATION.quick });
+      scrubbing.value = 1;
       scheduleOnRN(tap);
     })
     .onUpdate((e) => {
       scrubX.value = e.x;
     })
     .onFinalize(() => {
-      scrubbing.value = withTiming(0, { duration: DURATION.quick, easing: EASE.smoothOut });
+      // Hide before resetting the index, so the cursor never flashes at point zero.
+      scrubbing.value = 0;
       scrubX.value = -1;
       scheduleOnRN(report, null);
     });

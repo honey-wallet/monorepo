@@ -5,6 +5,7 @@
 import { type ReactNode, useEffect, useState, useSyncExternalStore } from 'react';
 import { type DimensionValue, type StyleProp, View, type ViewStyle } from 'react-native';
 import Animated, {
+  cancelAnimation,
   FadeIn,
   FadeOut,
   ReduceMotion,
@@ -28,10 +29,9 @@ export const LOAD_DELAY = 600;
 
 // Keys whose data has already arrived this session. Coming back to a screen shows the
 // cached data straight away, the way a real query cache would; only a first visit waits.
-// Every change bumps `version`, so screens still mounted (the tabs) see it straight away:
+// Every change notifies the screens still mounted (the tabs), so they see it straight away:
 // one screen's load reveals the others on the same key, and Clear cache re-skeletons them.
 const loaded = new Set<string>();
-let version = 0;
 const listeners = new Set<() => void>();
 const subscribe = (listener: () => void) => {
   listeners.add(listener);
@@ -39,9 +39,7 @@ const subscribe = (listener: () => void) => {
     listeners.delete(listener);
   };
 };
-const getVersion = () => version;
 const notify = () => {
-  version += 1;
   for (const listener of listeners) listener();
 };
 
@@ -50,8 +48,9 @@ const notify = () => {
  * showing the same data share one, and revisits don't skeleton again.
  */
 export function useFirstLoad(key: string, delay = LOAD_DELAY): boolean {
-  useSyncExternalStore(subscribe, getVersion);
-  const loading = !loaded.has(key);
+  // Read through the store, not straight from `loaded`: the React Compiler memoizes
+  // plain reads of module state, which kept every skeleton up after its data arrived.
+  const loading = useSyncExternalStore(subscribe, () => !loaded.has(key));
   useEffect(() => {
     if (!loading) return;
     const timer = setTimeout(() => {
@@ -88,6 +87,7 @@ function usePulse() {
   useEffect(() => {
     if (reduceMotion) return;
     opacity.value = withRepeat(withTiming(PULSE_LOW, PULSE), -1, true);
+    return () => cancelAnimation(opacity);
   }, [reduceMotion, opacity]);
   return useAnimatedStyle(() => ({ opacity: opacity.value }));
 }

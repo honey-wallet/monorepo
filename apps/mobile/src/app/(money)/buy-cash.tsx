@@ -10,9 +10,11 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { Copyable } from '@/components/sheets/Details';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetScreen, StatRow } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
+import { FlowTray, InlineTray } from '@/components/sheets/Tray';
 import { applyKey, Keypad, TypedAmount } from '@/components/wallet/Keypad';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
@@ -22,6 +24,7 @@ import { formatBalance, formatPrice, formatUsd, MARKET, marketOf } from '@/lib/m
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { markFunded, useOnboarding } from '@/lib/onboarding';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { txReceipt } from '@/lib/tx-receipt';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -66,7 +69,6 @@ export default function BuyCashSheet() {
   const [method, setMethod] = useState<Method>('card');
   const [picking, setPicking] = useState(false);
   const [page, setPage] = useState<Page>(preset ? 'review' : 'amount');
-  const [area, setArea] = useState(0);
 
   const price = marketOf(symbol)?.price ?? 1;
   const held = owned.find((t) => t.symbol === symbol);
@@ -141,161 +143,176 @@ export default function BuyCashSheet() {
   }
 
   return (
-    // Each page keeps its own button so it slides in with that page's content.
-    <SheetScreen
-      title={page === 'review' ? `Review ${verb.toLowerCase()}` : verb}
-      size="fill"
-      onBack={page === 'review' ? () => go('amount') : undefined}
-    >
-      <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
-        <ContentSwap id={page} index={PAGES.indexOf(page)}>
-          <View style={{ height: area }}>
-            {page === 'failed' && outcome.failure ? (
-              <FailurePage
-                failure={outcome.failure}
-                rows={[
-                  {
-                    label: selling ? 'Selling' : 'Buying',
-                    value: `${formatUsd(value)} of ${symbol}`,
-                  },
-                  { label: selling ? 'To' : 'With', value: METHODS[method].label },
-                ]}
-                onRetry={() => {
-                  tap();
-                  if (outcome.failure && followFix(outcome.failure)) return;
-                  // Over the limit: change the amount; anything else: back to the review,
-                  // where the payment method can change too.
-                  setPage(outcome.failure?.kind === 'limit' ? 'amount' : 'review');
-                }}
-                onClose={() => {
-                  tap();
-                  closeSheet();
-                }}
-              />
-            ) : page === 'done' && proposalId ? (
-              <LiveProposedPage proposalId={proposalId} onDone={finish} />
-            ) : page === 'done' ? (
-              <SuccessPage
-                title={selling ? 'Sold' : 'Bought'}
-                amount={{
-                  symbol,
-                  text: `${formatBalance(selling ? tokenValue : (value - fee) / price)} ${symbol}`,
-                }}
-                rows={[
-                  {
-                    label: selling ? 'You get' : 'You paid',
-                    value: formatUsd(selling ? value - fee : value),
-                  },
-                  { label: 'Fee', value: formatUsd(fee) },
-                  { label: selling ? 'To' : 'With', value: METHODS[method].label },
-                ]}
-                onDone={finish}
-              />
-            ) : page === 'amount' ? (
-              <>
-                <View style={styles.tokenBar}>
-                  <PressableScale
-                    accessibilityRole="button"
-                    accessibilityLabel={`Token: ${symbol}. Change token`}
-                    accessibilityState={{ expanded: picking }}
-                    onPress={() => {
-                      tap();
-                      setPicking((v) => !v);
-                    }}
-                    style={styles.pill}
-                  >
-                    <TokenIcon symbol={symbol} size={26} />
-                    <Text style={styles.pillLabel}>{symbol}</Text>
-                    <AccordionChevron open={picking} size={12} color={c.textSecondary} />
-                  </PressableScale>
-                </View>
-                <Accordion open={picking}>
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.chooser}
-                  >
-                    {symbols.map((s) => (
-                      <PressableScale
-                        key={s}
-                        accessibilityRole="button"
-                        accessibilityState={{ selected: s === symbol }}
-                        onPress={() => pick(s)}
-                        style={[styles.choice, s === symbol && styles.choiceActive]}
-                      >
-                        <TokenIcon symbol={s} size={22} />
-                        <Text style={styles.choiceLabel}>{s}</Text>
-                      </PressableScale>
-                    ))}
-                  </ScrollView>
-                </Accordion>
-
-                <View style={styles.amountArea}>
-                  <TypedAmount value={amount} prefix="$" size={amount.length > 8 ? 44 : 60} />
-                  {loading ? (
-                    <View style={styles.convertLine}>
-                      <SkeletonBar width={120} height={14} />
-                    </View>
-                  ) : (
-                    <TextSwap
-                      text={`≈ ${formatBalance(tokenValue)} ${symbol}`}
-                      style={styles.convert}
-                    />
-                  )}
-                  {selling && held && loading ? (
-                    <SkeletonBar width={170} height={12} />
-                  ) : selling && held ? (
-                    <Text style={styles.held}>
-                      You have {formatBalance(held.amount)} {symbol} ({formatUsd(heldUsd)})
-                    </Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.quick}>
-                  {quick.map((q) => (
-                    <PressableScale
-                      key={q.label}
-                      accessibilityRole="button"
-                      onPress={() => {
-                        tap();
-                        setAmount(q.value);
-                      }}
-                      style={[styles.chip, amount === q.value && styles.chipActive]}
-                    >
-                      <Text style={styles.chipLabel}>{q.label}</Text>
-                    </PressableScale>
-                  ))}
-                </View>
-
-                <PressableRow
+    <FlowTray>
+      <SheetScreen title={verb} size="fill">
+        <View style={styles.flex}>
+          <View style={styles.tokenBar}>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={`Token: ${symbol}. Change token`}
+              accessibilityState={{ expanded: picking }}
+              onPress={() => {
+                tap();
+                setPicking((v) => !v);
+              }}
+              style={styles.pill}
+            >
+              <TokenIcon symbol={symbol} size={26} />
+              <Text style={styles.pillLabel}>{symbol}</Text>
+              <AccordionChevron open={picking} size={12} color={c.textSecondary} />
+            </PressableScale>
+          </View>
+          <Accordion open={picking}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chooser}
+            >
+              {symbols.map((s) => (
+                <PressableScale
+                  key={s}
                   accessibilityRole="button"
-                  accessibilityLabel={`${selling ? 'Receive to' : 'Pay with'} ${METHODS[method].label}. Change`}
-                  onPress={() => {
-                    tap();
-                    setMethod((m) => (m === 'card' ? 'bank' : 'card'));
-                  }}
-                  style={styles.method}
+                  accessibilityState={{ selected: s === symbol }}
+                  onPress={() => pick(s)}
+                  style={[styles.choice, s === symbol && styles.choiceActive]}
                 >
-                  <View style={styles.methodIcon}>
-                    <IconSwap name={METHODS[method].icon} size={18} color={c.accentText} />
-                  </View>
-                  <View style={styles.flex}>
-                    <Text style={styles.methodHint}>{selling ? 'Receive to' : 'Pay with'}</Text>
-                    <TextSwap text={METHODS[method].label} style={styles.methodLabel} />
-                  </View>
-                  <Icon name="chevronRight" size={14} color={c.textSecondary} />
-                </PressableRow>
+                  <TokenIcon symbol={s} size={22} />
+                  <Text style={styles.choiceLabel}>{s}</Text>
+                </PressableScale>
+              ))}
+            </ScrollView>
+          </Accordion>
 
-                <Keypad onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
-                <PillButton
-                  label={label}
-                  disabled={!ready}
-                  onPress={() => go('review')}
-                  style={styles.cta}
-                />
-              </>
+          <View style={styles.amountArea}>
+            <TypedAmount value={amount} prefix="$" size={amount.length > 8 ? 44 : 60} />
+            {loading ? (
+              <View style={styles.convertLine}>
+                <SkeletonBar width={120} height={14} />
+              </View>
             ) : (
-              <>
+              <Text style={styles.convert}>
+                ≈ {formatBalance(tokenValue)} {symbol}
+              </Text>
+            )}
+            {selling && held && loading ? (
+              <SkeletonBar width={170} height={12} />
+            ) : selling && held ? (
+              <Text style={styles.held}>
+                You have {formatBalance(held.amount)} {symbol} ({formatUsd(heldUsd)})
+              </Text>
+            ) : null}
+          </View>
+
+          <View style={styles.quick}>
+            {quick.map((q) => (
+              <PressableScale
+                key={q.label}
+                accessibilityRole="button"
+                onPress={() => {
+                  tap();
+                  setAmount(q.value);
+                }}
+                style={[styles.chip, amount === q.value && styles.chipActive]}
+              >
+                <Text style={styles.chipLabel}>{q.label}</Text>
+              </PressableScale>
+            ))}
+          </View>
+
+          <PressableRow
+            accessibilityRole="button"
+            accessibilityLabel={`${selling ? 'Receive to' : 'Pay with'} ${METHODS[method].label}. Change`}
+            onPress={() => {
+              tap();
+              setMethod((m) => (m === 'card' ? 'bank' : 'card'));
+            }}
+            style={styles.method}
+          >
+            <View style={styles.methodIcon}>
+              <IconSwap name={METHODS[method].icon} size={18} color={c.accentText} />
+            </View>
+            <View style={styles.flex}>
+              <Text style={styles.methodHint}>{selling ? 'Receive to' : 'Pay with'}</Text>
+              <TextSwap text={METHODS[method].label} style={styles.methodLabel} />
+            </View>
+            <Icon name="chevronRight" size={14} color={c.textSecondary} />
+          </PressableRow>
+
+          <Keypad onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
+        </View>
+        <PillButton
+          label={label}
+          disabled={!ready}
+          onPress={() => go('review')}
+          style={styles.cta}
+        />
+      </SheetScreen>
+      {/* Family's pattern: the amount on the page, the review and result in a tray over it. */}
+      <InlineTray onClose={() => (page === 'done' ? finish() : go('amount'))}>
+        {page === 'amount' ? null : (
+          <ContentSwap id={page} index={PAGES.indexOf(page)}>
+            {page === 'failed' && outcome.failure ? (
+              <SheetScreen>
+                <FailurePage
+                  compact
+                  failure={outcome.failure}
+                  rows={[
+                    {
+                      label: selling ? 'Selling' : 'Buying',
+                      value: `${formatUsd(value)} of ${symbol}`,
+                    },
+                    { label: selling ? 'To' : 'With', value: METHODS[method].label },
+                  ]}
+                  onRetry={() => {
+                    tap();
+                    if (outcome.failure && followFix(outcome.failure)) return;
+                    // Over the limit: change the amount; anything else: back to the review,
+                    // where the payment method can change too.
+                    setPage(outcome.failure?.kind === 'limit' ? 'amount' : 'review');
+                  }}
+                  onClose={() => {
+                    tap();
+                    closeSheet();
+                  }}
+                />
+              </SheetScreen>
+            ) : page === 'done' && proposalId ? (
+              <SheetScreen>
+                <LiveProposedPage proposalId={proposalId} onDone={finish} compact />
+              </SheetScreen>
+            ) : page === 'done' ? (
+              <SheetScreen>
+                <SuccessPage
+                  compact
+                  title={selling ? 'Sold' : 'Bought'}
+                  amount={{
+                    symbol,
+                    text: `${formatBalance(selling ? tokenValue : (value - fee) / price)} ${symbol}`,
+                  }}
+                  rows={[
+                    {
+                      label: selling ? 'You get' : 'You paid',
+                      value: formatUsd(selling ? value - fee : value),
+                    },
+                    { label: 'Fee', value: formatUsd(fee) },
+                    { label: selling ? 'To' : 'With', value: METHODS[method].label },
+                    {
+                      // The provider's order id, to quote to support.
+                      label: 'Order ID',
+                      value: (
+                        <Copyable
+                          value={txReceipt('Ethereum', `${symbol}:${value}:${method}`).hash}
+                          toast="Order ID copied"
+                        />
+                      ),
+                    },
+                    { label: selling ? 'Sold' : 'Bought', value: 'Just now' },
+                  ]}
+                  onDone={finish}
+                />
+              </SheetScreen>
+            ) : (
+              <SheetScreen title={`Review ${verb.toLowerCase()}`} onBack={() => go('amount')}>
                 <View style={styles.summary}>
                   <TokenIcon symbol={symbol} size={48} />
                   <Text style={styles.summaryLabel}>
@@ -332,21 +349,21 @@ export default function BuyCashSheet() {
                     }
                   />
                 </View>
-                <View style={styles.flex} />
                 <Text style={styles.note}>
                   Prices move. The final amount is set when your order goes through.
                 </Text>
+
                 <PillButton
-                  label={selling ? signer.cta('Sell now', sellAction) : 'Buy now'}
+                  label={selling ? signer.cta('Confirm sale', sellAction) : 'Confirm buy'}
                   onPress={confirm}
                   style={styles.cta}
                 />
-              </>
+              </SheetScreen>
             )}
-          </View>
-        </ContentSwap>
-      </View>
-    </SheetScreen>
+          </ContentSwap>
+        )}
+      </InlineTray>
+    </FlowTray>
   );
 }
 

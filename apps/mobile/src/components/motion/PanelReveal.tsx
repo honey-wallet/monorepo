@@ -4,6 +4,7 @@
 import { type ReactNode, useEffect } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -32,6 +33,7 @@ export function PanelReveal({
   useEffect(() => {
     const duration = open ? PANEL.open : PANEL.close;
     progress.value = withTiming(open ? 1 : 0, {
+      reduceMotion: ReduceMotion.Never,
       duration,
       easing: reduceMotion ? EASE.ease : EASE.smoothOut,
     });

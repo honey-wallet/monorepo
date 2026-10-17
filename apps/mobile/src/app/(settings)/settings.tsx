@@ -13,9 +13,10 @@ import { SheetRow, SheetSection } from '@/components/sheets/Sheet';
 import { PushedScreen } from '@/components/wallet/parts';
 import { api } from '@/lib/api';
 import { tap } from '@/lib/haptics';
-import { ADDRESS, shortAddress } from '@/lib/mock-wallet';
+import { shortAddress } from '@/lib/mock-wallet';
 import { setProfile, useProfile } from '@/lib/profile';
 import { useSettings } from '@/lib/settings';
+import { useActiveWallet } from '@/lib/wallets';
 // import { showToast } from '@/lib/toast'; (with the other-wallets list)
 import { makeStyles, useTheme } from '@/theme';
 
@@ -25,6 +26,7 @@ const AVATAR_CREDIT_URL = 'https://www.figma.com/community/file/1356575240759683
 
 export default function SettingsScreen() {
   const styles = useStyles();
+  const wallet = useActiveWallet();
   const c = useTheme();
   const profile = useProfile();
   const settings = useSettings();
@@ -58,7 +60,7 @@ export default function SettingsScreen() {
         <Avatar name={profile.name} size={52} uri={profile.photo} seed={profile.avatarSeed} />
         <View style={styles.flex}>
           <Text style={styles.profileName}>{profile.name}</Text>
-          <Text style={styles.value}>{shortAddress(ADDRESS, 8, 6)}</Text>
+          <Text style={styles.value}>{shortAddress(wallet.address, 8, 6)}</Text>
         </View>
         <Icon name="chevronRight" size={15} color={c.textSecondary} />
       </PressableRow>

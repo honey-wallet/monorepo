@@ -1,7 +1,10 @@
 import { Toggle } from '@/components/motion/Toggle';
 import { SheetRow, SheetScreen } from '@/components/sheets/Sheet';
+import { setAppLock } from '@/lib/app-lock';
 import { tap } from '@/lib/haptics';
+import { completeStep } from '@/lib/onboarding';
 import { updateSettings, useSettings } from '@/lib/settings';
+import { showToast } from '@/lib/toast';
 
 /** When Honey asks for Face ID: opening the app and/or approving transactions. */
 export default function FaceIdSheet() {
@@ -16,9 +19,14 @@ export default function FaceIdSheet() {
           <Toggle
             accessibilityLabel="Require Face ID to open app"
             value={faceIdAppAccess}
-            onValueChange={(v) => {
+            onValueChange={async (v) => {
               tap();
-              updateSettings({ faceIdAppAccess: v });
+              try {
+                const changed = await setAppLock(v);
+                if (changed && v) completeStep('faceId');
+              } catch {
+                showToast('Couldn’t save app protection. Try again');
+              }
             }}
           />
         }

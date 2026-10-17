@@ -6,7 +6,7 @@ import { createStore } from '@/lib/store';
  */
 const unread = createStore(true);
 
-export const useUnreadNotifications = unread.use;
+export const useUnreadNotifications = unread.useValue;
 
 export function markNotificationsRead() {
   unread.set(false);

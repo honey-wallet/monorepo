@@ -10,6 +10,7 @@ import Animated, {
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -82,6 +83,7 @@ const EARN_BY_RATE = [...EARN].sort((a, b) => b.apy - a.apy);
 const tokenHref = (symbol: string): Href => ({ pathname: '/token/[symbol]', params: { symbol } });
 
 export default function HomeScreen() {
+  const reduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
   const styles = useStyles();
@@ -149,7 +151,7 @@ export default function HomeScreen() {
   const scrollY = useSharedValue(0);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   // Tapping Home again while it's open scrolls back to the top.
-  useTabReselect('home', () => scrollRef.current?.scrollTo({ y: 0, animated: true }));
+  useTabReselect('home', () => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion }));
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });

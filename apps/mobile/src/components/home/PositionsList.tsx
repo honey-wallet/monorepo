@@ -5,13 +5,12 @@
 // and profit or loss, which pop in as prices tick (NumberPopIn), then the trades. Tapping a row opens its details in
 // place (Accordion: the height eases on the snappy ease-out while the details fade;
 // one open at a time). Motion only where it explains something:
-// - Interest accrues every second, so the earned amount rolls forward digit by digit
-//   (SpinningCounter).
+// - Interest accrues every second, so earned amounts update without rolling reels.
 // - A liquidity position's price marker eases along its range (ease-in-out, it's
 //   moving on screen) as the price ticks.
 // - A loan's health bar grows to its level when it opens (strong ease-out).
 // - Claim morphs its label in place, "Claim" → "Claiming" → "Claimed" (TextMorph),
-//   the icon swapping to a check, and the earned amount rolls to zero.
+//   the icon swapping to a check, and the earned amount updates to zero.
 // Under Reduce Motion the bars and marker jump and everything only fades.
 import { type Href, router } from 'expo-router';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -36,7 +35,6 @@ import {
   SkeletonReveal,
   useFirstLoad,
 } from '@/components/motion/Skeleton';
-import { SpinningCounter } from '@/components/motion/SpinningCounter';
 import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
 import { TextMorph } from '@/components/motion/TextMorph';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
@@ -426,7 +424,7 @@ function Row({
             <View style={styles.flex}>
               <Text style={styles.label}>Earned so far</Text>
               <View style={styles.earnedWrap}>
-                <SpinningCounter value={`$${earned.toFixed(4)}`} style={styles.earned} />
+                <Text style={styles.earned}>${earned.toFixed(4)}</Text>
               </View>
             </View>
             <PressableScale
@@ -761,6 +759,7 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 17,
     fontWeight: '500',
+    fontVariant: ['tabular-nums'],
   },
   // A small pill, like the Review and Reject ones on Notifications.
   pill: {

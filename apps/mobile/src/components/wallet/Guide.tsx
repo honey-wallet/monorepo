@@ -52,7 +52,7 @@ export function Guide({
   // `?step=2` opens a later step, e.g. from a deep link.
   const { step: startAt } = useLocalSearchParams<{ step?: string }>();
   const [index, setIndex] = useState(
-    Math.min(Math.max(Number(startAt ?? 1) - 1, 0), steps.length - 1) || 0,
+    Math.min(Math.max(Math.floor(Number(startAt ?? 1)) - 1, 0), steps.length - 1) || 0,
   );
   const step = steps[index];
   const last = index === steps.length - 1;

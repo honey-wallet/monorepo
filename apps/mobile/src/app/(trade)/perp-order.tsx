@@ -1,14 +1,13 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
-import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetScreen } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
+import { FlowTray, InlineTray } from '@/components/sheets/Tray';
 import { LeverageSlider } from '@/components/trade/LeverageSlider';
 import { MarketIcon } from '@/components/trade/MarketIcon';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
@@ -88,161 +87,163 @@ function PerpOrderSheet() {
   };
 
   return (
-    <SheetScreen size="fill">
-      <ContentSwap
-        id={opened ? 'done' : outcome.failure ? 'failed' : 'order'}
-        index={opened || outcome.failure ? 1 : 0}
-        fill
-      >
-        {outcome.failure ? (
-          <FailurePage
-            failure={outcome.failure}
-            rows={[
-              { label: 'Order', value: `${multiple}x ${side.toLowerCase()} ${symbol}` },
-              { label: 'Margin', value: formatUsd(value) },
-            ]}
-            onRetry={() => {
-              tap();
-              if (outcome.failure && followFix(outcome.failure)) return;
-              outcome.clear();
-            }}
-            onClose={() => {
-              tap();
-              closeSheet();
-            }}
-          />
-        ) : opened ? (
-          <SuccessPage
-            title={`${side} opened`}
-            amount={{
-              symbol,
-              icon: <MarketIcon market={market} size={30} />,
-              text: formatUsd(size),
-              usd: `${multiple}x ${side.toLowerCase()} on ${market.name}`,
-            }}
-            rows={[
-              { label: 'Margin', value: formatUsd(value) },
-              { label: 'Entry price', value: formatPrice(market.price) },
-              { label: 'Liquidation price', value: formatPrice(liquidation) },
-            ]}
-            secondary={{
-              label: 'View position',
-              onPress: () => {
-                tap();
-                closeSheet();
-              },
-            }}
-            onDone={() => finishDemo(`opened a ${multiple}x ${symbol} ${side.toLowerCase()}`)}
-          />
-        ) : (
-          <View style={styles.flex}>
-            {/* The market, and Long or Short as a compact pill beside it */}
-            <View style={styles.market}>
-              <MarketIcon market={market} size={40} />
-              <View style={styles.flex}>
-                <Text style={styles.symbol}>{market.symbol}</Text>
-                <View style={styles.priceRow}>
-                  {pricesLoading ? (
-                    <SkeletonBar width={110} height={12} />
-                  ) : (
-                    <>
-                      <Text style={styles.meta}>{formatPrice(market.price)}</Text>
-                      <Change value={market.change} size={14} />
-                    </>
-                  )}
-                </View>
-              </View>
-              <View style={styles.sides}>
-                {(['Long', 'Short'] as const).map((s) => {
-                  const active = s === side;
-                  const color = s === 'Long' ? c.success : c.error;
-                  return (
-                    <PressableScale
-                      key={s}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: active }}
-                      onPress={() => {
-                        tap();
-                        setSide(s);
-                      }}
-                      style={[styles.side, active && { backgroundColor: color }]}
-                    >
-                      <Text style={[styles.sideLabel, active && styles.sideLabelOn]}>{s}</Text>
-                    </PressableScale>
-                  );
-                })}
+    <FlowTray>
+      <SheetScreen size="fill">
+        <View style={styles.flex}>
+          {/* The market, and Long or Short as a compact pill beside it */}
+          <View style={styles.market}>
+            <MarketIcon market={market} size={40} />
+            <View style={styles.flex}>
+              <Text style={styles.symbol}>{market.symbol}</Text>
+              <View style={styles.priceRow}>
+                {pricesLoading ? (
+                  <SkeletonBar width={110} height={12} />
+                ) : (
+                  <>
+                    <Text style={styles.meta}>{formatPrice(market.price)}</Text>
+                    <Change value={market.change} size={14} />
+                  </>
+                )}
               </View>
             </View>
-
-            {/* No cash, no keypad: say how to get some. */}
-            {cash <= 0 ? (
-              <View style={styles.flex}>
-                <EmptyState
-                  icon="wallet"
-                  title="No cash to trade yet"
-                  hint="Add USDC to your wallet, then come back to open a position."
-                  action={{
-                    label: 'Add money',
-                    onPress: () =>
-                      router.replace({ pathname: '/buy-cash', params: { symbol: 'USDC' } }),
-                  }}
-                />
-              </View>
-            ) : (
-              <>
-                {/* Your margin, and the position it opens */}
-                <View style={styles.amountArea}>
-                  <TypedAmount value={amount} prefix="$" size={64} />
-                  <TextSwap
-                    text={
-                      tooMuch
-                        ? `You have ${formatUsd(cash)} to trade`
-                        : value
-                          ? `${formatUsd(size)} position · Liq. ${formatPrice(liquidation)}`
-                          : `${multiple}x ${side.toLowerCase()} on ${market.name}`
-                    }
-                    style={[styles.hint, tooMuch && styles.error]}
-                  />
-                </View>
-
-                <LeverageSlider
-                  stops={stops}
-                  value={multiple}
-                  onChange={(n) => setLeverage(`${n}x`)}
-                />
-                <PercentChips
-                  balance={cash}
-                  decimals={2}
-                  onPick={setAmount}
-                  style={styles.shares}
-                />
-                <Keypad keyHeight={52} onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
-                <View style={styles.footNote}>
-                  {cashLoading ? (
-                    <SkeletonBar width={100} height={12} />
-                  ) : (
-                    <Text style={styles.meta}>{formatUsd(cash)} available</Text>
-                  )}
-                  <Text style={styles.meta}>Fee {formatUsd(size * FEE)}</Text>
-                </View>
-                <PillButton
-                  label={
-                    !value
-                      ? 'Enter an amount'
-                      : tooMuch
-                        ? 'Not enough cash'
-                        : `${long ? 'Long' : 'Short'} ${symbol} · ${multiple}x`
-                  }
-                  disabled={!value || tooMuch}
-                  onPress={confirm}
-                  style={styles.cta}
-                />
-              </>
-            )}
+            <View style={styles.sides}>
+              {(['Long', 'Short'] as const).map((s) => {
+                const active = s === side;
+                const color = s === 'Long' ? c.success : c.error;
+                return (
+                  <PressableScale
+                    key={s}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: active }}
+                    onPress={() => {
+                      tap();
+                      setSide(s);
+                    }}
+                    style={[styles.side, active && { backgroundColor: color }]}
+                  >
+                    <Text style={[styles.sideLabel, active && styles.sideLabelOn]}>{s}</Text>
+                  </PressableScale>
+                );
+              })}
+            </View>
           </View>
-        )}
-      </ContentSwap>
-    </SheetScreen>
+
+          {/* No cash, no keypad: say how to get some. */}
+          {cash <= 0 ? (
+            <View style={styles.flex}>
+              <EmptyState
+                icon="wallet"
+                title="No cash to trade yet"
+                hint="Add USDC to your wallet, then come back to open a position."
+                action={{
+                  label: 'Add money',
+                  onPress: () =>
+                    router.replace({ pathname: '/buy-cash', params: { symbol: 'USDC' } }),
+                }}
+              />
+            </View>
+          ) : (
+            <>
+              {/* Your margin, and the position it opens */}
+              <View style={styles.amountArea}>
+                <TypedAmount value={amount} prefix="$" size={64} />
+                <Text style={[styles.hint, tooMuch && styles.error]}>
+                  {tooMuch
+                    ? `You have ${formatUsd(cash)} to trade`
+                    : value
+                      ? `${formatUsd(size)} position · Liq. ${formatPrice(liquidation)}`
+                      : `${multiple}x ${side.toLowerCase()} on ${market.name}`}
+                </Text>
+              </View>
+
+              <LeverageSlider
+                stops={stops}
+                value={multiple}
+                onChange={(n) => setLeverage(`${n}x`)}
+              />
+              <PercentChips balance={cash} decimals={2} onPick={setAmount} style={styles.shares} />
+              <Keypad keyHeight={52} onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
+              <View style={styles.footNote}>
+                {cashLoading ? (
+                  <SkeletonBar width={100} height={12} />
+                ) : (
+                  <Text style={styles.meta}>{formatUsd(cash)} available</Text>
+                )}
+                <Text style={styles.meta}>Fee {formatUsd(size * FEE)}</Text>
+              </View>
+              <PillButton
+                label={
+                  !value
+                    ? 'Enter an amount'
+                    : tooMuch
+                      ? 'Not enough cash'
+                      : `${long ? 'Long' : 'Short'} ${symbol} · ${multiple}x`
+                }
+                disabled={!value || tooMuch}
+                onPress={confirm}
+                style={styles.cta}
+              />
+            </>
+          )}
+        </View>
+      </SheetScreen>
+      {/* The result rises in a tray over the order (Family's pattern). */}
+      <InlineTray
+        onClose={() =>
+          outcome.failure
+            ? outcome.clear()
+            : finishDemo(`opened a ${multiple}x ${symbol} ${side.toLowerCase()}`)
+        }
+      >
+        {outcome.failure ? (
+          <SheetScreen>
+            <FailurePage
+              compact
+              failure={outcome.failure}
+              rows={[
+                { label: 'Order', value: `${multiple}x ${side.toLowerCase()} ${symbol}` },
+                { label: 'Margin', value: formatUsd(value) },
+              ]}
+              onRetry={() => {
+                tap();
+                if (outcome.failure && followFix(outcome.failure)) return;
+                outcome.clear();
+              }}
+              onClose={() => {
+                tap();
+                closeSheet();
+              }}
+            />
+          </SheetScreen>
+        ) : opened ? (
+          <SheetScreen>
+            <SuccessPage
+              compact
+              title={`${side} opened`}
+              amount={{
+                symbol,
+                icon: <MarketIcon market={market} size={30} />,
+                text: formatUsd(size),
+                usd: `${multiple}x ${side.toLowerCase()} on ${market.name}`,
+              }}
+              rows={[
+                { label: 'Margin', value: formatUsd(value) },
+                { label: 'Entry price', value: formatPrice(market.price) },
+                { label: 'Liquidation price', value: formatPrice(liquidation) },
+              ]}
+              secondary={{
+                label: 'View position',
+                onPress: () => {
+                  tap();
+                  closeSheet();
+                },
+              }}
+              onDone={() => finishDemo(`opened a ${multiple}x ${symbol} ${side.toLowerCase()}`)}
+            />
+          </SheetScreen>
+        ) : null}
+      </InlineTray>
+    </FlowTray>
   );
 }
 
@@ -254,6 +255,8 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    // Clear of the tray's close button.
+    paddingRight: 40,
   },
   symbol: {
     color: c.text,

@@ -10,19 +10,17 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Icon } from '@/components/Icon';
 import { Accordion } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { Swap } from '@/components/motion/IconSwap';
-import { ModalDialog } from '@/components/motion/ModalDialog';
 import { PressableScale } from '@/components/motion/PressableScale';
-import { RESIZE } from '@/components/motion/resize';
 import { LOAD_DELAY, SkeletonBar } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { SuccessPage } from '@/components/sheets/SuccessPage';
+import { InlineTray } from '@/components/sheets/Tray';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { LabeledDivider, TokenIcon } from '@/components/wallet/parts';
 import { success, tap } from '@/lib/haptics';
@@ -65,7 +63,6 @@ export function SwapReview({
 }) {
   const styles = useStyles();
   const c = useTheme();
-  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('review');
   const [more, setMore] = useState(false);
   // The network cost is re-estimated each time the review opens.
@@ -110,145 +107,143 @@ export function SwapReview({
     `Confirming on ${pay.chain}`,
   ];
   return (
-    <ModalDialog
-      visible={visible}
-      onRequestClose={onClose}
-      dismissable={step !== 'pending'}
-      placement="bottom"
-    >
-      <Animated.View layout={RESIZE} style={[styles.card, { paddingBottom: insets.bottom + 12 }]}>
-        <View style={styles.grabber} />
-        <ContentSwap id={step} index={STEPS.indexOf(step)}>
-          {step === 'review' && (
-            <View>
-              <Text style={styles.kicker} accessibilityRole="header">
-                You're swapping
-              </Text>
-              <Leg leg={pay} />
-              <View style={styles.arrow}>
-                <Icon name="arrowDown" size={14} color={c.textSecondary} />
+    // A tray rising inside the swap screen, so the swap stays in view behind it
+    // (Family's pattern); it can't be closed while the swap is in flight.
+    <InlineTray onClose={onClose} dismissible={step !== 'pending'}>
+      {visible ? (
+        <View style={styles.trayBody}>
+          <ContentSwap id={step} index={STEPS.indexOf(step)}>
+            {step === 'review' && (
+              <View>
+                <Text style={styles.kicker} accessibilityRole="header">
+                  You're swapping
+                </Text>
+                <Leg leg={pay} />
+                <View style={styles.arrow}>
+                  <Icon name="arrowDown" size={14} color={c.textSecondary} />
+                </View>
+                <Leg leg={get} />
+                <LabeledDivider
+                  label={more ? 'Show less' : 'Show more'}
+                  open={more}
+                  onPress={() => setMore((m) => !m)}
+                />
+                <Accordion open={more}>
+                  <Row label="Route" value={route} />
+                  <Row label="Max slippage" value="Auto · 5.5%" />
+                  <Row label="Price impact" value="<0.01%" />
+                </Accordion>
+                <Row label="Fee" value="Free" />
+                <Row label="Network cost" value={networkCost} loading={estimating} />
+                {signer.rule(action) ? (
+                  <Row label="Shared wallet" value={signer.rule(action) ?? ''} />
+                ) : null}
+                {/* After Uniswap: a square Back beside one big Swap, confirmed with Face ID. */}
+                <View style={styles.actions}>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel="Back"
+                    onPress={() => {
+                      tap();
+                      onClose();
+                    }}
+                    style={styles.back}
+                  >
+                    <Icon name="chevronLeft" size={18} color={c.text} />
+                  </PressableScale>
+                  <PressableScale
+                    accessibilityRole="button"
+                    accessibilityLabel={signer.cta('Swap', action)}
+                    onPress={confirm}
+                    style={styles.swap}
+                  >
+                    <Icon name="faceId" size={20} color={c.onPrimary} />
+                    <Text style={styles.swapLabel}>{signer.cta('Swap', action)}</Text>
+                  </PressableScale>
+                </View>
               </View>
-              <Leg leg={get} />
-              <LabeledDivider
-                label={more ? 'Show less' : 'Show more'}
-                open={more}
-                onPress={() => setMore((m) => !m)}
+            )}
+
+            {step === 'pending' && (
+              <SwapProgress
+                pay={pay}
+                get={get}
+                steps={states}
+                onDone={() => {
+                  // Whether it landed is only known once the network answers.
+                  if (outcome.attempt()) {
+                    setStep('failed');
+                    return;
+                  }
+                  success();
+                  setStep('done');
+                }}
               />
-              <Accordion open={more}>
-                <Row label="Route" value={route} />
-                <Row label="Max slippage" value="Auto · 5.5%" />
-                <Row label="Price impact" value="<0.01%" />
-              </Accordion>
-              <Row label="Fee" value="Free" />
-              <Row label="Network cost" value={networkCost} loading={estimating} />
-              {signer.rule(action) ? (
-                <Row label="Shared wallet" value={signer.rule(action) ?? ''} />
-              ) : null}
-              {/* After Uniswap: a square Back beside one big Swap, confirmed with Face ID. */}
-              <View style={styles.actions}>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel="Back"
+            )}
+
+            {step === 'failed' && outcome.failure && (
+              <FailurePage
+                compact
+                failure={outcome.failure}
+                rows={[
+                  { label: 'Paying', value: `${pay.amount} ${pay.symbol}` },
+                  { label: 'For', value: `${get.amount} ${get.symbol}` },
+                ]}
+                onRetry={() => {
+                  tap();
+                  if (outcome.failure && followFix(outcome.failure, onClose)) return;
+                  // Back to the review, with a fresh quote and network cost.
+                  setEstimating(true);
+                  setTimeout(() => setEstimating(false), LOAD_DELAY);
+                  setStep('review');
+                }}
+                onClose={() => {
+                  tap();
+                  onClose();
+                }}
+              />
+            )}
+
+            {step === 'proposed' && proposalId && (
+              <View style={styles.proposed}>
+                <LiveProposedPage proposalId={proposalId} />
+                <PillButton
+                  label="Done"
                   onPress={() => {
                     tap();
-                    onClose();
+                    onDone();
                   }}
-                  style={styles.back}
-                >
-                  <Icon name="chevronLeft" size={18} color={c.text} />
-                </PressableScale>
-                <PressableScale
-                  accessibilityRole="button"
-                  accessibilityLabel={signer.cta('Swap', action)}
-                  onPress={confirm}
-                  style={styles.swap}
-                >
-                  <Icon name="faceId" size={20} color={c.onPrimary} />
-                  <Text style={styles.swapLabel}>{signer.cta('Swap', action)}</Text>
-                </PressableScale>
+                  style={styles.cta}
+                />
               </View>
-            </View>
-          )}
+            )}
 
-          {step === 'pending' && (
-            <SwapProgress
-              pay={pay}
-              get={get}
-              steps={states}
-              onDone={() => {
-                // Whether it landed is only known once the network answers.
-                if (outcome.attempt()) {
-                  setStep('failed');
-                  return;
-                }
-                success();
-                setStep('done');
-              }}
-            />
-          )}
-
-          {step === 'failed' && outcome.failure && (
-            <FailurePage
-              compact
-              failure={outcome.failure}
-              rows={[
-                { label: 'Paying', value: `${pay.amount} ${pay.symbol}` },
-                { label: 'For', value: `${get.amount} ${get.symbol}` },
-              ]}
-              onRetry={() => {
-                tap();
-                if (outcome.failure && followFix(outcome.failure, onClose)) return;
-                // Back to the review, with a fresh quote and network cost.
-                setEstimating(true);
-                setTimeout(() => setEstimating(false), LOAD_DELAY);
-                setStep('review');
-              }}
-              onClose={() => {
-                tap();
-                onClose();
-              }}
-            />
-          )}
-
-          {step === 'proposed' && proposalId && (
-            <View style={styles.proposed}>
-              <LiveProposedPage proposalId={proposalId} />
-              <PillButton
-                label="Done"
-                onPress={() => {
+            {step === 'done' && (
+              <SuccessPage
+                compact
+                title="Swapped"
+                amount={{
+                  symbol: get.symbol,
+                  chain: get.chain,
+                  text: `${get.amount} ${get.symbol}`,
+                  usd: get.usd,
+                }}
+                detail={bridging ? `Lands on ${get.chain} in about a minute` : undefined}
+                rows={[
+                  { label: 'Paid', value: `${pay.amount} ${pay.symbol}` },
+                  { label: 'Route', value: route },
+                  { label: 'Network cost', value: networkCost },
+                ]}
+                onDone={() => {
                   tap();
                   onDone();
                 }}
-                style={styles.cta}
               />
-            </View>
-          )}
-
-          {step === 'done' && (
-            <SuccessPage
-              compact
-              title="Swapped"
-              amount={{
-                symbol: get.symbol,
-                chain: get.chain,
-                text: `${get.amount} ${get.symbol}`,
-                usd: get.usd,
-              }}
-              detail={bridging ? `Lands on ${get.chain} in about a minute` : undefined}
-              rows={[
-                { label: 'Paid', value: `${pay.amount} ${pay.symbol}` },
-                { label: 'Route', value: route },
-                { label: 'Network cost', value: networkCost },
-              ]}
-              onDone={() => {
-                tap();
-                onDone();
-              }}
-            />
-          )}
-        </ContentSwap>
-      </Animated.View>
-    </ModalDialog>
+            )}
+          </ContentSwap>
+        </View>
+      ) : null}
+    </InlineTray>
   );
 }
 
@@ -425,6 +420,11 @@ function Row({ label, value, loading }: { label: string; value: string; loading?
 }
 
 const useStyles = makeStyles((c) => ({
+  trayBody: {
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
+  },
   progress: {
     paddingTop: 8,
     alignItems: 'center',
@@ -502,22 +502,6 @@ const useStyles = makeStyles((c) => ({
   },
   proposed: {
     paddingTop: 8,
-  },
-  card: {
-    paddingTop: 8,
-    paddingHorizontal: 20,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    overflow: 'hidden',
-    backgroundColor: c.sheet,
-  },
-  grabber: {
-    alignSelf: 'center',
-    width: 36,
-    height: 5,
-    marginBottom: 18,
-    borderRadius: 3,
-    backgroundColor: c.divider,
   },
   kicker: {
     marginBottom: 12,

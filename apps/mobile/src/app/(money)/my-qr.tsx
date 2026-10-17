@@ -43,6 +43,13 @@ export default function MyQRSheet() {
   const address = entry?.address ?? wallet.address;
   const { copied, copy } = useCopy(address);
 
+  if (wallet.demo)
+    return (
+      <SheetScreen title="Demo wallet">
+        <Text style={{ color: c.text }}>Create or import a wallet before receiving funds.</Text>
+      </SheetScreen>
+    );
+
   return (
     <SheetScreen
       contentStyle={styles.top}

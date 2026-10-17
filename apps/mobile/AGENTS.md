@@ -65,8 +65,37 @@ Docs: https://docs.expo.dev/eas/index.md
 - **Buttons:** primary is honey (`c.primary`); secondary is grey (`c.raised` with `c.text`). Honey tint (`c.primaryTint`/`c.accentSurface`) means a disabled primary, so never use it for a secondary button.
 - **Icon wells:** round (`borderRadius` = half the size) on `c.accentSurface` with an `c.accentText` icon.
 - **Header icons:** bare grey icons (`HeaderShortcut`), no circles; sheets never get a close-only back chevron (swipe down closes).
-- **Money flows** end on `SuccessPage` (`compact` inside pop-ups); detail sheets use the `Details` pieces.
+- **Trays (Family's structure, Honey's look):** every sheet is a tray (`tray()` in `app/_layout.tsx`) except amount entry: a card inset 10px from the sides and bottom, 40px corners, sized to its content (long lists scroll inside it). Header: title on the left (19pt bold), a round grey back button before it on later steps, bare icons (Share) then the tray's round close button on the right. Amount entry (send, buy/sell, savings, jars, perps, predict) stays on a full-height sheet (`sheet([1])`) so the amount has room and the keypad sits at the bottom; never squeeze a keypad into a tray. Its review and result rise over it in one `InlineTray` (wrap the page in `FlowTray`), height easing to each step. Results end on Share + Done. Safety trays follow Family: icon, title, one line, a divider, three plain rules with icons, then the buttons. Leave room only where it earns it (a field that brings up the keyboard).
+- **Money flows** end on `SuccessPage` (`compact` inside trays and pop-ups) with a full receipt: copyable address and transaction id (`Copyable`, `ExplorerLink`, `txReceipt`); detail sheets use the `Details` pieces.
 - **Two cards at most:** between Home's actions and its tabs, show only the two highest-priority cards (approvals → add money / finish setup → Earn promo); the rest wait their turn. Never a black CTA: the main action is always honey.
 - **Selected chips:** an outline on the page colour, never a honey tint (that reads as disabled).
 - **Loading:** `useFirstLoad(LOADS.x)` (keys in `src/lib/loads.ts`; same data = same key) with `SkeletonReveal` and the `Skeleton*` pieces. Skeleton only what's genuinely fetched; anything already in memory (a proposal opened from a list, labels, our own copy) renders straight away. Bars use `c.skeleton` (never `c.raised`, which vanishes on cards), are pills by default, and match the real layout so nothing jumps.
 - **Empty:** every list gets an `EmptyState` (`compact` inside cards) with an `action` when there's a next step; an unfunded wallet (`useWalletView().empty`) never shows demo money.
+
+## Motion and haptics
+
+Use the installed animations.dev `animate` skill for motion decisions, `gesture-ui` for direct
+manipulation, and `animation-accessibility` for the reduced variant. Apply their principles with
+Reanimated and Gesture Handler; web recipes are not a reason to add a web animation library here.
+Use `mobile-touch`, `fintech-banking`, `elegance-sophistication`, and Axiom's `haptics` skill as
+supporting references. The wallet's frequent actions take precedence over luxury-site timings.
+
+- Reuse `theme/motion.ts`. Ordinary transitions take 150–300ms; exits are shorter. Limit first-visit
+  stagger to the first few groups. A sliding tray already supplies an entrance for its content.
+- Keypad input and chart scrubbing update immediately. Press states may change colour, but digits
+  must never queue animation. Reserve celebrations for completed outcomes.
+- Gesture tracking follows the finger on the UI thread. Preserve the current offset on re-grab,
+  distinguish list scrolling from dismissal, reset cancelled gestures, and derive the backdrop from
+  the card position. Layout animation is reserved for contained, content-sized surfaces.
+- Reduce Motion retains fades and direct manipulation, but removes decorative travel, scale,
+  stagger, automatic loops, and release bounce. Verify both variants in the running app.
+- Route haptics through `lib/haptics.ts`; never vibrate from render or for every animation frame.
+  Signal a selection once, a drag pickup once, and success only on completion. Respect the app
+  preference and foreground state; native feedback failure must never fail the wallet action.
+- Android uses semantic system haptics, with silence on unsupported devices instead of a long
+  vibration fallback. Simulator checks verify behavior, but physical feel needs a real device.
+
+References: [animations.dev](https://animations.dev),
+[animation-principles](https://github.com/dylantarre/animation-principles),
+[Axiom haptics](https://github.com/CharlesWiltgen/Axiom/blob/2c4a7f45936b9ac2c1cc22df8721fb3b99139362/.claude-plugin/plugins/axiom/skills/haptics/SKILL.md),
+[Android haptic principles](https://developer.android.com/develop/ui/views/haptics/haptics-principles).

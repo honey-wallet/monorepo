@@ -7,6 +7,7 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -16,10 +17,13 @@ import Animated, {
 import { useAppRevealed } from '@/lib/launch';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
-/** A once-per-session moment, so it may take the slower duration. */
-const RISE = { duration: DURATION.verySlow, easing: EASE.smoothOut } as const;
+const RISE = {
+  duration: DURATION.medium,
+  easing: EASE.smoothOut,
+  reduceMotion: ReduceMotion.Never,
+} as const;
 /** Past this many blocks the rest arrive together, so long lists never keep you waiting. */
-const MAX_STEPS = 12;
+const MAX_STEPS = 3;
 
 const played = new Set<string>();
 const EntranceContext = createContext(false);
@@ -56,12 +60,13 @@ export function Rise({
 
   useEffect(() => {
     if (!play || !revealed) return;
-    progress.value = withDelay(Math.min(index, MAX_STEPS) * DURATION.stagger, withTiming(1, RISE));
-  }, [play, revealed, index, progress]);
+    const delay = reduceMotion ? 0 : Math.min(index, MAX_STEPS) * DURATION.stagger;
+    progress.set(reduceMotion ? withTiming(1, RISE) : withDelay(delay, withTiming(1, RISE)));
+  }, [play, revealed, index, reduceMotion, progress]);
 
   const animated = useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ translateY: reduceMotion ? 0 : (1 - progress.value) * DISTANCE.base }],
+    opacity: progress.get(),
+    transform: [{ translateY: reduceMotion ? 0 : (1 - progress.get()) * DISTANCE.base }],
   }));
 
   return <Animated.View style={[style, animated]}>{children}</Animated.View>;

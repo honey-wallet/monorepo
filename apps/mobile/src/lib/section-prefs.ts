@@ -33,7 +33,7 @@ const prefs = createStore<SectionPrefs>({
   activityHideApprovals: false,
 });
 
-export const useSectionPrefs = prefs.use;
+export const useSectionPrefs = prefs.useValue;
 
 export function updateSectionPrefs(update: Partial<SectionPrefs>) {
   prefs.set((prev) => ({ ...prev, ...update }));

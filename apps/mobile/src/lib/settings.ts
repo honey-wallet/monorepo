@@ -63,14 +63,14 @@ export const settings = createStore<Settings>({
   faceIdAppAccess: false,
   faceIdTransactions: true,
   analytics: true,
-  backedUp: true,
+  backedUp: false,
   hideBalance: false,
   tradeTabs: [...AVAILABLE_TRADE_MODES],
   earnPromo: true,
   simulateFailures: false,
 });
 
-export const useSettings = settings.use;
+export const useSettings = settings.useValue;
 
 export function updateSettings(update: Partial<Settings>) {
   settings.set((prev) => ({ ...prev, ...update }));

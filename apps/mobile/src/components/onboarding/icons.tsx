@@ -1,4 +1,4 @@
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Circle, G, Path, Rect } from 'react-native-svg';
 
 type IconProps = { size?: number; color: string };
 type ChevronProps = IconProps & { weight?: number };
@@ -88,6 +88,43 @@ export function ShuffleIcon({ size = 20, color }: IconProps) {
         strokeLinejoin="round"
         fill="none"
       />
+    </Svg>
+  );
+}
+
+/** A recovery phrase: its words as a little grid of chips, two columns of three. */
+export function PhraseGlyph({ color, size = 20 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20">
+      {[3, 8.5, 14].map((y) =>
+        [2, 11].map((x) => (
+          <Rect key={`${x}-${y}`} x={x} y={y} width={7} height={3.5} rx={1.75} fill={color} />
+        )),
+      )}
+    </Svg>
+  );
+}
+
+/**
+ * A private key: a solid key tipped at 45°, round head (with its hole) up and to the
+ * right, the blade running down-left with two notched teeth. Drawn level, then turned.
+ */
+export function KeyGlyph({ color, size = 20 }: { color: string; size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 20 20">
+      <G rotation={-45} origin="10, 10">
+        {/* Head, with the hole cut out */}
+        <Path
+          fill={color}
+          fillRule="evenodd"
+          d="M9.2 10a5.3 5.3 0 1 0 10.6 0a5.3 5.3 0 1 0 -10.6 0ZM15.4 10a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0 -3.4 0Z"
+        />
+        {/* Blade and teeth */}
+        <Path
+          fill={color}
+          d="M10.5 8.4H1.6a1.2 1.2 0 0 0 -1.2 1.2v3.6a1 1 0 0 0 1 1h1.6v-1.6h1.8v1.1h1.9v-2.1h3.8Z"
+        />
+      </G>
     </Svg>
   );
 }

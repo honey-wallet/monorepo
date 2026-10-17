@@ -4,8 +4,9 @@ import { Share, Text, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextsReveal } from '@/components/motion/TextsReveal';
+import { PillButton } from '@/components/onboarding/PillButton';
 import { Copyable, DetailGroup, ExplorerLink, StatusPill } from '@/components/sheets/Details';
-import { SheetScreen, StatRow } from '@/components/sheets/Sheet';
+import { closeSheet, SheetScreen, StatRow } from '@/components/sheets/Sheet';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
@@ -61,6 +62,20 @@ export default function ActivitySheet() {
     <SheetScreen
       title={TITLE[activity.kind]}
       right={<HeaderShortcut icon="share" label="Share transaction" onPress={share} />}
+      footer={
+        <View style={styles.actions}>
+          <PillButton
+            label="Share"
+            variant="secondary"
+            onPress={() => {
+              tap();
+              share();
+            }}
+            style={styles.flex}
+          />
+          <PillButton label="Done" onPress={() => closeSheet()} style={styles.flex} />
+        </View>
+      }
     >
       <View style={styles.summary}>
         <TokenIcon symbol={activity.symbol} size={40} />
@@ -151,6 +166,13 @@ function Receipt({
 }
 
 const useStyles = makeStyles((c) => ({
+  actions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  flex: {
+    flex: 1,
+  },
   summary: {
     alignItems: 'center',
     gap: 6,

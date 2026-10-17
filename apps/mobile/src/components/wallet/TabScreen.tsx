@@ -5,6 +5,7 @@ import { Text, View } from 'react-native';
 import Animated, {
   useAnimatedRef,
   useAnimatedScrollHandler,
+  useReducedMotion,
   useSharedValue,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,11 +44,12 @@ export function TabScreen({
 }) {
   const insets = useSafeAreaInsets();
   const styles = useStyles();
+  const reduceMotion = useReducedMotion();
   const scrollY = useSharedValue(0);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   // Tapping this tab again while it's open scrolls back to the top.
   const tab = usePathname().split('/').filter(Boolean).pop();
-  useTabReselect(tab, () => scrollRef.current?.scrollTo({ y: 0, animated: true }));
+  useTabReselect(tab, () => scrollRef.current?.scrollTo({ y: 0, animated: !reduceMotion }));
   const onScroll = useAnimatedScrollHandler((e) => {
     scrollY.value = e.contentOffset.y;
   });

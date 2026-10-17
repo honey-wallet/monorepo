@@ -1,10 +1,11 @@
 // Motion: checking fills the box (150ms), then the checkmark draws itself along its
-// stroke (250ms, strong ease-out); unchecking clears both faster (150ms). Every change
+// stroke (200ms, strong ease-out); unchecking clears both faster (150ms). Every change
 // starts from the current state, so quick re-taps never jump. Under Reduce Motion the
 // filled box and its check simply fade in and out together.
 import { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedProps,
   useAnimatedStyle,
   useReducedMotion,
@@ -18,9 +19,13 @@ import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const BOX = { duration: DURATION.quick, easing: EASE.smoothOut } as const;
-const DRAW = { duration: DURATION.medium, easing: EASE.smoothOut } as const;
+const DRAW = { duration: DURATION.fast, easing: EASE.smoothOut } as const;
 const CLEAR = { duration: DURATION.quick, easing: EASE.smoothOut } as const;
-const FADE = { duration: DURATION.quick, easing: EASE.ease } as const;
+const FADE = {
+  duration: DURATION.quick,
+  easing: EASE.ease,
+  reduceMotion: ReduceMotion.Never,
+} as const;
 
 const SIZE = 22;
 /** Length of the check's stroke below; the dash hides exactly this much. */

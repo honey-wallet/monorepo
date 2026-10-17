@@ -1,8 +1,8 @@
 // Motion: each digit is a clipped reel of 0-9 cells. The total shows up still (this
 // screen opens tens of times a day, so it must not perform every time); only when the
-// value changes does each changed digit roll forward to its new value (400ms,
-// ease-in-out, no overshoot), each column 40ms after the one before, so the whole
-// change lands within ~600ms. Under Reduce Motion the new value fades in instead.
+// value changes does each changed digit roll forward to its new value (200ms,
+// ease-in-out, no overshoot), with at most two 40ms stagger steps. Under Reduce
+// Motion the new value fades in instead. Do not use for values ticking every second.
 import { useEffect, useRef, useState } from 'react';
 import { type StyleProp, Text, type TextStyle, View } from 'react-native';
 import Animated, {
@@ -16,7 +16,7 @@ import { DURATION, EASE } from '@/theme/motion';
 import { fadeIn } from './reducedFade';
 import { useHasMounted } from './useHasMounted';
 
-const ROLL = { duration: DURATION.verySlow, easing: EASE.inOut } as const;
+const ROLL = { duration: DURATION.fast, easing: EASE.inOut } as const;
 /** Two 0-9 sets, so a digit can roll forward past 9 (e.g. 8 → 2). */
 const CELLS = Array.from({ length: 20 }, (_, i) => String(i % 10));
 
@@ -93,11 +93,11 @@ function Reel({
       return;
     }
     // Roll forward from the digit showing now, wrapping past 9 if needed.
-    const from = Math.round(offset.value) % 10;
+    const from = offset.value % 10;
     if (from === digit) return;
     offset.value = from;
     offset.value = withDelay(
-      column * DURATION.stagger,
+      Math.min(column, 2) * DURATION.stagger,
       withTiming(digit > from ? digit : digit + 10, ROLL),
     );
   }, [digit, cell, column, offset]);

@@ -16,6 +16,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonRow } from '@/components/motion/Skeleton';
+import { TRAY_CLOSE, useInTray } from '@/components/sheets/Tray';
 import { useActiveMultisig } from '@/lib/multisig';
 import { goBackOr, leaveSheetTo } from '@/lib/navigation';
 import { AVAILABLE_TRADE_MODES, useSettings } from '@/lib/settings';
@@ -26,6 +27,10 @@ import { makeStyles, useTheme } from '@/theme';
  * each other: same gap under the grabber, same gutters, same space above the
  * home indicator.
  */
+/** In a tray, the header row's top: centres it on the close button. */
+const TRAY_HEADER_TOP = TRAY_CLOSE.top + TRAY_CLOSE.size / 2 - 22;
+const TRAY_BOTTOM = 20;
+
 export const SHEET = {
   /** Space between the grabber and the title row. */
   top: 24,
@@ -74,15 +79,21 @@ export function SheetScreen({
 }: SheetScreenProps) {
   const insets = useSafeAreaInsets();
   const styles = useStyles();
-  const fill = size === 'fill' || !!scroll;
+  const inTray = useInTray();
+  // A tray sizes itself to its content and scrolls when it must, so inside one every
+  // sheet is a fitted one: no full-height fill, no scroll root of its own.
+  const fill = !inTray && (size === 'fill' || !!scroll);
   const clear = useStatusBarClearance(fill);
   const header = title ? <SheetHeader title={title} onBack={onBack} right={right} /> : null;
   const footerView = footer ? <View style={styles.footer}>{footer}</View> : null;
   // iOS sizes fitted sheets clear of the home indicator itself; adding the inset
   // again left a tall gap under the buttons.
   const bottom = (fill || Platform.OS !== 'ios' ? insets.bottom : 0) + SHEET.bottom;
+  // A tray floats above the home indicator and has no grabber: its header lines up
+  // with the close button, and the footer gets the room a sheet's home indicator took.
+  const top = inTray ? (header ? TRAY_HEADER_TOP : SHEET.top) : SHEET.top + clear.top;
 
-  if (scroll) {
+  if (scroll && !inTray) {
     // The ScrollView must be the sheet's root: iOS form sheets lay a ScrollView out
     // against the sheet itself, so wrapping it leaves it zero-height, and a title
     // placed above it floats over the rows. The title (and any `sticky` content) is
@@ -120,10 +131,14 @@ export function SheetScreen({
         styles.root,
         styles.gutter,
         fill && styles.fill,
-        { paddingTop: SHEET.top + clear.top, paddingBottom: bottom },
+        { paddingTop: top, paddingBottom: inTray ? TRAY_BOTTOM : bottom },
       ]}
     >
       {header}
+      {inTray && scroll && sticky ? (
+        // With no title row, keep the pinned content (a search field) clear of the close button.
+        <View style={!header && styles.trayClear}>{sticky}</View>
+      ) : null}
       <View style={[fill && styles.fill, contentStyle]}>{children}</View>
       {footerView}
     </View>
@@ -167,6 +182,31 @@ export function SheetHeader({
 }) {
   const styles = useStyles();
   const c = useTheme();
+  const inTray = useInTray();
+  if (inTray) {
+    // Tray header: the title reads from the left, after a back chevron on later steps;
+    // the tray's own close button sits at the far right.
+    return (
+      <View style={[styles.header, styles.trayHeader]}>
+        {onBack ? (
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            hitSlop={10}
+            onPress={onBack}
+            style={styles.trayBack}
+          >
+            <Icon name="chevronLeft" size={14} color={c.textSecondary} />
+          </PressableScale>
+        ) : null}
+        <Text style={styles.trayTitle} accessibilityRole="header" numberOfLines={1}>
+          {title}
+        </Text>
+        {/* Bare icons (Share…) sit just before the tray's own close button. */}
+        {right}
+      </View>
+    );
+  }
   return (
     <View style={styles.header}>
       <View style={styles.side}>
@@ -441,6 +481,30 @@ const useStyles = makeStyles((c) => ({
   },
   sideRight: {
     alignItems: 'flex-end',
+  },
+  // Title from the left (after a round back button on later steps), then any bare
+  // icons, then the tray's own close button.
+  trayHeader: {
+    gap: 10,
+    paddingRight: TRAY_CLOSE.size + TRAY_CLOSE.right - SHEET.gutter + 8,
+  },
+  trayClear: {
+    paddingRight: TRAY_CLOSE.size + TRAY_CLOSE.right - SHEET.gutter + 8,
+  },
+  trayBack: {
+    width: TRAY_CLOSE.size,
+    height: TRAY_CLOSE.size,
+    borderRadius: TRAY_CLOSE.size / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.raised,
+  },
+  trayTitle: {
+    flex: 1,
+    color: c.text,
+    fontSize: 19,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   title: {
     flex: 1,

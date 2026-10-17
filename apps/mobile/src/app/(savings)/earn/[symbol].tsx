@@ -41,7 +41,7 @@ export default function EarnSheet() {
   const outcome = useFailure('earn');
   const signer = useSigner();
   const [proposalId, setProposalId] = useState<string | null>(null);
-  const vault = VAULTS[symbol];
+  const vault = Object.hasOwn(VAULTS, symbol) ? VAULTS[symbol] : undefined;
   // The vault's live numbers: rate, deposits, liquidity, what it's exposed to.
   const loading = useFirstLoad(LOADS.earn(symbol));
   // The rate is the same one Savings and Search show, so it shares their load.

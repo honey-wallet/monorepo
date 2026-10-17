@@ -5,6 +5,7 @@
 import { useEffect } from 'react';
 import { Text } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -32,9 +33,13 @@ export function Tooltip({ label, visible }: { label: string; visible: boolean })
     shown.value = visible
       ? withDelay(
           DELAY,
-          withTiming(1, { duration: IN_DUR, easing: reduceMotion ? EASE.ease : EASE.smoothOut }),
+          withTiming(1, {
+            duration: IN_DUR,
+            easing: reduceMotion ? EASE.ease : EASE.smoothOut,
+            reduceMotion: ReduceMotion.Never,
+          }),
         )
-      : withTiming(0, { duration: OUT_DUR, easing: EASE.ease });
+      : withTiming(0, { duration: OUT_DUR, easing: EASE.ease, reduceMotion: ReduceMotion.Never });
   }, [visible, reduceMotion, shown]);
 
   const style = useAnimatedStyle(() => ({

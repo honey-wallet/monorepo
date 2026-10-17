@@ -4,6 +4,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
+import { leaveSheetTo } from '@/lib/navigation';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Buy (or sell) sheet: with cash, or by swapping what you already hold. */
@@ -30,8 +31,7 @@ export default function BuySheet() {
       title: 'Swap tokens',
       hint: 'Trade using your existing balance',
       onPress: () => {
-        router.dismiss();
-        router.navigate('/trade');
+        leaveSheetTo('/trade', { navigate: true });
       },
     },
   ];

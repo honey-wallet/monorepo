@@ -14,7 +14,12 @@ export function goBackOr(fallback: Href) {
  * the sheet instead would show the screen inside the sheet's card (grey band, rounded
  * top, doubled status-bar gap).
  */
-export function leaveSheetTo(href: Href) {
+export function leaveSheetTo(href: Href, { navigate = false }: { navigate?: boolean } = {}) {
   router.dismiss();
-  router.push(href);
+  // Open the next screen once the sheet or tray has gone: a tray holds its removal
+  // for its exit animation, and pushing during it got the push undone.
+  setTimeout(() => (navigate ? router.navigate(href) : router.push(href)), SHEET_EXIT);
 }
+
+/** Long enough for a tray's or sheet's exit to finish. */
+export const SHEET_EXIT = 230;

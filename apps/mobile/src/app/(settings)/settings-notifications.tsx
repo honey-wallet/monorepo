@@ -30,9 +30,7 @@ const PREVIEW = [
 // zero): Reanimated would otherwise skip the entrance entirely.
 const rise = (index: number, reduced: boolean) =>
   reduced
-    ? FadeIn.duration(DURATION.fast)
-        .delay(DURATION.fast + index * DURATION.stagger * 2)
-        .reduceMotion(ReduceMotion.Never)
+    ? FadeIn.duration(DURATION.fast).reduceMotion(ReduceMotion.Never)
     : new Keyframe({
         0: { opacity: 0, transform: [{ translateY: DISTANCE.medium }] },
         100: { opacity: 1, transform: [{ translateY: 0 }], easing: EASE.smoothOut },

@@ -41,6 +41,8 @@ export default function App() {
     })();
   }, []);
 
+  useEffect(() => vault.onLock(() => setScreen({ name: 'unlock' })), []);
+
   const welcome = () => setScreen({ name: 'welcome' });
   const askPassword = (pending: Pending) => setScreen({ name: 'password', pending });
 

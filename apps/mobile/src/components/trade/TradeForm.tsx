@@ -9,7 +9,6 @@ import Animated, {
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
-import { TextSwap } from '@/components/motion/TextSwap';
 import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
@@ -214,7 +213,7 @@ export function AmountCard({
 }
 
 /**
- * "Label ........ value" lines under a form; values cross-fade as they change. While
+ * "Label ........ value" lines under a form; values track input immediately. While
  * `loading` (prices not in yet) the values are bars and the labels stay.
  */
 export function Summary({ rows, loading }: { rows: [string, string][]; loading?: boolean }) {
@@ -229,7 +228,7 @@ export function Summary({ rows, loading }: { rows: [string, string][]; loading?:
               <SkeletonBar width={64} height={12} />
             </View>
           ) : (
-            <TextSwap text={value} style={styles.summaryValue} />
+            <Text style={styles.summaryValue}>{value}</Text>
           )}
         </View>
       ))}

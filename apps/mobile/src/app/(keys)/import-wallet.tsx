@@ -1,11 +1,12 @@
 import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { Text, TextInput, View } from 'react-native';
-import { Icon } from '@/components/Icon';
+import { useRef, useState } from 'react';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { Icon, type IconName } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { TextsReveal } from '@/components/motion/TextsReveal';
+import { KeyGlyph, PhraseGlyph } from '@/components/onboarding/icons';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
@@ -35,16 +36,19 @@ export default function ImportWalletSheet() {
     onboarding?: string;
   }>();
   const isKey = kind === 'key';
-  const [phrase, setPhrase] = useState('');
+  // A private key is one field; a phrase is one cell per word, like the paper it's copied from.
+  const [keyText, setKeyText] = useState('');
+  const [target, setTarget] = useState<12 | 24>(12);
+  const [slots, setSlots] = useState<string[]>(() => Array(24).fill(''));
+  const cells = useRef<(TextInput | null)[]>([]);
   const [busy, setBusy] = useState(false);
 
-  const words = wordsOf(phrase);
-  const target = words.length > 12 ? 24 : 12;
-  const key = keyOf(phrase);
-  const invalid = isKey ? /[^0-9a-f]/i.test(key) : words.some((w) => !/^[a-z]+$/.test(w));
-  const complete = isKey
-    ? key.length === 64 && !invalid
-    : (words.length === 12 || words.length === 24) && !invalid;
+  const words = slots.slice(0, target).filter(Boolean);
+  const phrase = isKey ? keyText : words.join(' ');
+  const key = keyOf(keyText);
+  const badWord = (w: string) => !/^[a-z]+$/.test(w);
+  const invalid = isKey ? /[^0-9a-f]/i.test(key) : words.some(badWord);
+  const complete = isKey ? key.length === 64 && !invalid : words.length === target && !invalid;
   // Every word is real but the last one doesn't match: a typo or the wrong order.
   const badChecksum = !isKey && complete && !isValidMnemonic(phrase);
   const copy = isKey
@@ -69,16 +73,82 @@ export default function ImportWalletSheet() {
           ? 'Words should only contain letters.'
           : badChecksum
             ? 'These words don’t make a valid phrase. Check the spelling and order.'
-            : 'Enter the words in order, separated by spaces.',
+            : 'Type each word in its box. A space moves to the next one.',
         warning: 'Never share your recovery phrase. Anyone with it can take your funds.',
       };
+
+  /** Puts `list` into the cells from `from` on, then moves to the cell after the last one. */
+  const fill = (from: number, list: string[]) => {
+    const size = from + list.length > 12 ? 24 : target;
+    setTarget(size);
+    setSlots((prev) => {
+      const next = [...prev];
+      list.slice(0, 24 - from).forEach((w, i) => {
+        next[from + i] = w;
+      });
+      return next;
+    });
+    const after = Math.min(from + list.length, size - 1);
+    cells.current[after]?.focus();
+  };
+
+  // A space (or a pasted run of words) spills into the following cells.
+  const onCell = (i: number, text: string) => {
+    const list = wordsOf(text);
+    if (/\s/.test(text) && list.length > 0) fill(i, list);
+    else setSlots((prev) => prev.map((w, j) => (j === i ? text.trim().toLowerCase() : w)));
+  };
 
   const paste = async () => {
     tap();
     const text = await Clipboard.getStringAsync();
-    if (text) setPhrase(isKey ? text.trim() : wordsOf(text).join(' '));
-    else showToast('Clipboard is empty');
+    if (!text) {
+      showToast('Clipboard is empty');
+      return;
+    }
+    if (isKey) setKeyText(text.trim());
+    else {
+      const list = wordsOf(text).slice(0, 24);
+      setSlots(Array.from({ length: 24 }, (_, i) => list[i] ?? ''));
+      setTarget(list.length > 12 ? 24 : 12);
+    }
   };
+
+  const half = target / 2;
+  // Two columns read top to bottom (1–6, then 7–12), the way it's written on paper.
+  const column = (start: number) => (
+    <View style={styles.column}>
+      {Array.from({ length: half }, (_, k) => {
+        const i = start + k;
+        const word = slots[i];
+        return (
+          <View key={i} style={[styles.cell, word && badWord(word) && styles.cellError]}>
+            <Text style={styles.cellNumber}>{i + 1}</Text>
+            <TextInput
+              ref={(el) => {
+                cells.current[i] = el;
+              }}
+              value={word}
+              onChangeText={(text) => onCell(i, text)}
+              onKeyPress={(e) => {
+                if (e.nativeEvent.key === 'Backspace' && !word && i > 0)
+                  cells.current[i - 1]?.focus();
+              }}
+              onSubmitEditing={() => cells.current[i + 1]?.focus()}
+              returnKeyType={i === target - 1 ? 'done' : 'next'}
+              blurOnSubmit={i === target - 1}
+              accessibilityLabel={`Word ${i + 1}`}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="off"
+              spellCheck={false}
+              style={styles.cellInput}
+            />
+          </View>
+        );
+      })}
+    </View>
+  );
 
   const submit = async () => {
     tap();
@@ -102,48 +172,105 @@ export default function ImportWalletSheet() {
     router.dismissAll();
   };
 
+  const pasteButton = (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel="Paste from clipboard"
+      onPress={paste}
+      style={styles.paste}
+    >
+      <Icon name="copy" size={13} color={c.text} />
+      <Text style={styles.pasteLabel}>Paste</Text>
+    </PressableScale>
+  );
+
+  // Family's safety tray: what this is, then three plain rules with their icons.
+  const rules: { icon: IconName; text: string }[] = isKey
+    ? [
+        { icon: 'lock', text: 'It stays on this phone. Honey never sees it.' },
+        { icon: 'eyeSlash', text: 'Never share it, not even with Honey support.' },
+        { icon: 'warning', text: 'Anyone with this key can take the funds in it.' },
+      ]
+    : [
+        { icon: 'lock', text: 'It stays on this phone. Honey never sees it.' },
+        { icon: 'eyeSlash', text: 'Never share it, not even with Honey support.' },
+        { icon: 'warning', text: 'Anyone with these words can take your funds.' },
+      ];
+
   return (
     // The button stays inline under the field rather than pinned as a footer, so
     // it sits above the keyboard while typing.
-    <SheetScreen title={isKey ? 'Import private key' : 'Import recovery phrase'} size="fill">
+    <SheetScreen>
+      <View style={styles.glyph}>
+        {isKey ? (
+          <KeyGlyph color={c.accentText} size={22} />
+        ) : (
+          <PhraseGlyph color={c.accentText} size={22} />
+        )}
+      </View>
       <TextsReveal
         id={`import-${isKey ? 'key' : 'phrase'}`}
-        align="center"
         first={<Text style={styles.title}>{copy.title}</Text>}
         second={<Text style={styles.subtitle}>{copy.subtitle}</Text>}
       />
 
-      <View style={[styles.field, (invalid || badChecksum) && styles.fieldError]}>
-        <TextInput
-          value={phrase}
-          onChangeText={setPhrase}
-          placeholder={copy.placeholder}
-          placeholderTextColor={c.placeholder}
-          multiline
-          autoCapitalize="none"
-          autoCorrect={false}
-          autoComplete="off"
-          spellCheck={false}
-          textAlignVertical="top"
-          style={styles.input}
-        />
-        <View style={styles.fieldFooter}>
-          <TextSwap text={copy.count} style={[styles.count, complete && styles.countDone]} />
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="Paste from clipboard"
-            onPress={paste}
-            style={styles.paste}
-          >
-            <Icon name="copy" size={13} color={c.text} />
-            <Text style={styles.pasteLabel}>Paste</Text>
-          </PressableScale>
+      {isKey ? (
+        <View style={[styles.field, invalid && styles.fieldError]}>
+          <TextInput
+            value={keyText}
+            onChangeText={setKeyText}
+            placeholder={copy.placeholder}
+            placeholderTextColor={c.placeholder}
+            multiline
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="off"
+            spellCheck={false}
+            textAlignVertical="top"
+            style={styles.input}
+          />
+          <View style={styles.fieldFooter}>
+            <TextSwap text={copy.count} style={[styles.count, complete && styles.countDone]} />
+            {pasteButton}
+          </View>
         </View>
-      </View>
+      ) : (
+        <>
+          <View style={styles.gridHeader}>
+            <TextSwap text={copy.count} style={[styles.count, complete && styles.countDone]} />
+            <View style={styles.gridActions}>
+              <Text
+                accessibilityRole="button"
+                style={styles.switchLength}
+                onPress={() => {
+                  tap();
+                  setTarget(target === 12 ? 24 : 12);
+                }}
+              >
+                {target === 12 ? 'Use 24 words' : 'Use 12 words'}
+              </Text>
+              {pasteButton}
+            </View>
+          </View>
+          <View style={styles.grid}>
+            {column(0)}
+            {column(half)}
+          </View>
+        </>
+      )}
       <TextSwap
         text={copy.hint}
         style={[styles.hint, (invalid || badChecksum) && styles.hintError]}
       />
+
+      <View style={styles.rules}>
+        {rules.map((r) => (
+          <View key={r.text} style={styles.rule}>
+            <Icon name={r.icon} size={15} color={c.textSecondary} />
+            <Text style={styles.ruleText}>{r.text}</Text>
+          </View>
+        ))}
+      </View>
 
       <PillButton
         label={busy ? 'Importing…' : copy.cta}
@@ -151,39 +278,45 @@ export default function ImportWalletSheet() {
         onPress={submit}
         style={styles.cta}
       />
-      <View style={styles.warning}>
-        <Icon name="warning" size={14} color={c.accentText} />
-        <Text style={styles.warningText}>{copy.warning}</Text>
-      </View>
     </SheetScreen>
   );
 }
 
 const useStyles = makeStyles((c) => ({
+  glyph: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: c.accentSurface,
+    marginBottom: 14,
+  },
   title: {
     color: c.text,
     fontSize: 22,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   subtitle: {
-    marginTop: 6,
+    marginTop: 4,
     color: c.textSecondary,
     fontSize: 15,
     lineHeight: 20,
-    textAlign: 'center',
   },
   field: {
-    marginTop: 22,
+    marginTop: 18,
     padding: 14,
     borderRadius: 18,
+    borderWidth: 1,
+    borderColor: 'transparent',
     backgroundColor: c.raised,
   },
   fieldError: {
     borderColor: c.error,
   },
   input: {
-    minHeight: 120,
+    minHeight: 96,
     padding: 0,
     color: c.text,
     fontSize: 17,
@@ -217,6 +350,60 @@ const useStyles = makeStyles((c) => ({
     fontSize: 14,
     fontWeight: '600',
   },
+  gridHeader: {
+    marginTop: 18,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  gridActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  switchLength: {
+    color: c.accentText,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  grid: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  column: {
+    flex: 1,
+    gap: 8,
+  },
+  cell: {
+    height: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    // Raised, not card: on the tray's own surface a card-coloured cell vanishes in dark mode.
+    backgroundColor: c.raised,
+  },
+  cellError: {
+    borderColor: c.error,
+  },
+  cellNumber: {
+    width: 20,
+    color: c.textSecondary,
+    fontSize: 14,
+    fontVariant: ['tabular-nums'],
+  },
+  cellInput: {
+    flex: 1,
+    height: '100%',
+    paddingRight: 12,
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '500',
+  },
   hint: {
     marginTop: 10,
     color: c.textSecondary,
@@ -225,22 +412,25 @@ const useStyles = makeStyles((c) => ({
   hintError: {
     color: c.error,
   },
-  cta: {
-    marginTop: 24,
-  },
-  warning: {
+  rules: {
     marginTop: 16,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: c.accentSurface,
+    paddingTop: 14,
+    gap: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: c.divider,
   },
-  warningText: {
+  rule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  ruleText: {
     flex: 1,
-    color: c.accentText,
-    fontSize: 13,
-    lineHeight: 18,
+    color: c.textSecondary,
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  cta: {
+    marginTop: 20,
   },
 }));

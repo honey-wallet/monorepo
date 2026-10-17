@@ -424,10 +424,13 @@ export function ProposedPage({
   multisig,
   proposal,
   onDone,
+  compact,
 }: {
   multisig: Multisig;
   proposal: Proposal;
   onDone?: () => void;
+  /** Inside a tray or pop-up. */
+  compact?: boolean;
 }) {
   const left = Math.max(0, multisig.threshold - proposal.approvals.length);
   const info = describe(proposal.action);
@@ -437,6 +440,7 @@ export function ProposedPage({
   const vault = multisig.members.every((m) => m.kind !== 'person');
   return (
     <SuccessPage
+      compact={compact}
       title={done ? info.done : 'Proposed'}
       detail={
         done
@@ -456,12 +460,14 @@ export function ProposedPage({
 export function LiveProposedPage({
   proposalId,
   onDone,
+  compact,
 }: {
   proposalId: string;
   onDone?: () => void;
+  compact?: boolean;
 }) {
   const proposal = useProposal(proposalId);
   const multisig = useMultisig(proposal?.walletId);
   if (!proposal || !multisig) return null;
-  return <ProposedPage multisig={multisig} proposal={proposal} onDone={onDone} />;
+  return <ProposedPage multisig={multisig} proposal={proposal} onDone={onDone} compact={compact} />;
 }

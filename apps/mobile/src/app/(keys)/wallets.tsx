@@ -3,7 +3,6 @@ import { Pressable, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
-import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -73,6 +72,7 @@ export default function WalletsSheet() {
 
   return (
     <SheetScreen scroll>
+      {/* The tray draws its own close button now.
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel="Close"
@@ -82,7 +82,7 @@ export default function WalletsSheet() {
         style={styles.close}
       >
         <Icon name="close" size={14} color={c.textSecondary} />
-      </PressableScale>
+      </PressableScale> */}
       <View style={styles.current}>
         <WalletAvatar wallet={active} profile={profile} size={64} />
         <TextSwap text={active.label} style={styles.name} />
@@ -101,8 +101,7 @@ export default function WalletsSheet() {
           if (shared.multisigs[active.id]) {
             leaveSheetTo({ pathname: '/multisig/[id]', params: { id: active.id } });
           } else {
-            router.dismiss();
-            router.push('/settings');
+            leaveSheetTo('/settings');
           }
         }}
         style={styles.settingsButton}

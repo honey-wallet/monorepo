@@ -85,28 +85,34 @@ export function TextMorph({ text, style }: { text: string; style?: StyleProp<Tex
     <View style={{ flexDirection: 'row' }} accessible accessibilityLabel={text}>
       <Text style={style}>{parts.start}</Text>
       {/* The old middle sizes the box first; the new one is measured, then the box eases to it. */}
-      <Animated.View style={box}>
+      <Animated.View style={[box, { overflow: 'hidden' }]}>
         <Animated.Text
           style={[style, outgoing]}
           numberOfLines={1}
+          ellipsizeMode="clip"
           onLayout={(e) => {
             fromWidth.current = e.nativeEvent.layout.width;
           }}
         >
           {parts.from}
         </Animated.Text>
-        <Animated.Text
-          style={[style, { position: 'absolute', left: 0 }, incoming]}
-          numberOfLines={1}
-          onLayout={(e) => {
-            const to = e.nativeEvent.layout.width;
-            width.value = fromWidth.current;
-            width.value = withTiming(to, { duration: RESIZE_DUR, easing: EASE.height });
-            fade.value = withTiming(1, { duration: DUR, easing: EASE.ease });
-          }}
-        >
-          {parts.to}
-        </Animated.Text>
+        {/* A wide, clipped track: the new middle lays out at its own width (not the old
+            one's) so it's measured right and never shows an ellipsis while it grows. */}
+        <View style={{ position: 'absolute', left: 0, top: 0, width: 1000, flexDirection: 'row' }}>
+          <Animated.Text
+            style={[style, incoming]}
+            numberOfLines={1}
+            ellipsizeMode="clip"
+            onLayout={(e) => {
+              const to = e.nativeEvent.layout.width;
+              width.value = fromWidth.current;
+              width.value = withTiming(to, { duration: RESIZE_DUR, easing: EASE.height });
+              fade.value = withTiming(1, { duration: DUR, easing: EASE.ease });
+            }}
+          >
+            {parts.to}
+          </Animated.Text>
+        </View>
       </Animated.View>
       <Text style={style}>{parts.end}</Text>
     </View>

@@ -1,8 +1,8 @@
 // A menu grows out of its trigger, never the screen's centre: from the trigger's
-// corner, 0.97 → 1 with a fade (200ms, strong ease-out). It closes faster and barely
-// shrinks (→ 0.99, 150ms), since the choice is already made. Under Reduce Motion it
+// corner, 0.97 → 1 with a fade (200ms, strong ease-out). It closes faster on the same
+// path (150ms), since the choice is already made. Under Reduce Motion it
 // only fades.
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import {
   Modal,
   Pressable,
@@ -13,6 +13,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -27,7 +28,6 @@ import { PressableRow } from './PressableRow';
 import { PressableScale } from './PressableScale';
 
 const PRE_SCALE = 0.97;
-const CLOSING_SCALE = 0.99;
 
 export type MenuOption<T extends string> = {
   value: T;
@@ -65,33 +65,35 @@ export function MenuDropdown<T extends string>({
   const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
   const [open, setOpen] = useState(false);
   const progress = useSharedValue(0);
-  const closing = useSharedValue(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
 
   const show = () => {
+    clearTimeout(closeTimer.current);
     tap();
     trigger.current?.measureInWindow((x, y, w, h) => {
       setAnchor({ top: y + h + 8, right: screenWidth - (x + w) });
       setOpen(true);
-      closing.value = false;
-      progress.value = 0;
       progress.value = withTiming(1, {
         duration: DURATION.fast,
         easing: reduceMotion ? EASE.ease : EASE.smoothOut,
+        reduceMotion: ReduceMotion.Never,
       });
     });
   };
 
   const hide = () => {
-    closing.value = true;
+    clearTimeout(closeTimer.current);
     progress.value = withTiming(0, {
       duration: DURATION.quick,
       easing: reduceMotion ? EASE.ease : EASE.smoothOut,
+      reduceMotion: ReduceMotion.Never,
     });
-    setTimeout(() => setOpen(false), DURATION.quick);
+    closeTimer.current = setTimeout(() => setOpen(false), DURATION.quick);
   };
 
   const menuStyle = useAnimatedStyle(() => {
-    const from = reduceMotion ? 1 : closing.value ? CLOSING_SCALE : PRE_SCALE;
+    const from = reduceMotion ? 1 : PRE_SCALE;
     return {
       opacity: progress.value,
       transform: [{ scale: from + (1 - from) * progress.value }],
@@ -129,8 +131,10 @@ export function MenuDropdown<T extends string>({
                 accessibilityRole="menuitem"
                 accessibilityState={{ selected: option.value === value }}
                 onPress={() => {
-                  tap();
-                  onChange(option.value);
+                  if (option.value !== value) {
+                    tap();
+                    onChange(option.value);
+                  }
                   hide();
                 }}
                 style={styles.item}

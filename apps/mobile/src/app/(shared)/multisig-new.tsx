@@ -102,7 +102,6 @@ export default function NewMultisigSheet() {
   const c = useTheme();
   const profile = useProfile();
   const [page, setPage] = useState<Page>('name');
-  const [area, setArea] = useState(0);
 
   const [name, setName] = useState(NAME_IDEAS[0].name);
   const [network, setNetwork] = useState<MultisigNetwork>(POPULAR_EVM[0]);
@@ -198,9 +197,9 @@ export default function NewMultisigSheet() {
       size="fill"
       onBack={page === 'name' || page === 'done' || page === 'failed' ? undefined : back}
     >
-      <View style={styles.flex} onLayout={(e) => setArea(e.nativeEvent.layout.height)}>
+      <View>
         <ContentSwap id={page} index={PAGES.indexOf(page)}>
-          <View style={{ height: area }}>
+          <View>
             {page === 'name' && (
               <>
                 <View style={styles.hero}>

@@ -82,7 +82,7 @@ const onboarding = createStore<Onboarding>({
   credit: 0,
 });
 
-export const useOnboarding = onboarding.use;
+export const useOnboarding = onboarding.useValue;
 
 /** True once every setup step is done. */
 export const setupComplete = (state: Onboarding) => state.done.length === SETUP_STEPS.length;
@@ -90,13 +90,13 @@ export const setupComplete = (state: Onboarding) => state.done.length === SETUP_
 /**
  * Ends onboarding and opens the wallet. A new wallet starts empty; a restored one
  * already holds money (the demo portfolio). Backing up is done already when the user
- * wrote down a phrase or signed in with Apple or Google (their account is the backup).
+ * wrote down a phrase. Social sign-in is a demo and does not back up keys.
  */
 export function finishOnboarding(
   method: SignInMethod,
   { restored = method === 'import', email }: { restored?: boolean; email?: string } = {},
 ) {
-  const backedUp = method === 'phrase' || method === 'apple' || method === 'google';
+  const backedUp = method === 'phrase';
   onboarding.set({
     method,
     funded: restored,
@@ -148,10 +148,10 @@ export function simulateDemoDeposit() {
 /**
  * Signs out: the wallet comes off this phone (keys, profile and wallets added here),
  * and the app goes back to Welcome. The money stays where it is, on the network, and
- * comes back with the account or the recovery phrase.
+ * is accessible again with the original recovery phrase or private key.
  */
-export async function signOut() {
-  await eraseVault();
+export async function signOut(confirmedAccountIds: readonly string[]) {
+  await eraseVault(confirmedAccountIds);
   onboarding.set({ method: null, funded: false, done: [], credit: 0 });
   wallets.set({ activeId: 'main', added: [] });
   setProfile({ name: 'Honey', photo: null, avatarSeed: randomAvatarSeed() });

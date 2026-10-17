@@ -5,6 +5,7 @@ import { TextSwap } from '@/components/motion/TextSwap';
 import { Toggle } from '@/components/motion/Toggle';
 import { SheetRow, SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
+import { leaveSheetTo } from '@/lib/navigation';
 import { updateSettings, useSettings } from '@/lib/settings';
 import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
@@ -18,8 +19,7 @@ export default function AdvancedSheet() {
   /** Full pages open over Settings, so the sheet gets out of the way first. */
   const openPage = (href: Href) => {
     tap();
-    router.dismiss();
-    router.push(href);
+    leaveSheetTo(href);
   };
 
   return (

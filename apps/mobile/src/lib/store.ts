@@ -19,6 +19,9 @@ export function createStore<T>(initial: T) {
       state = typeof next === 'function' ? (next as (prev: T) => T)(state) : next;
       for (const listener of listeners) listener();
     },
-    use: () => useSyncExternalStore(subscribe, () => state),
+    // Named like a hook so the React Compiler treats it as one. Called `use`, it reads as
+    // React's `use()`, which may be skipped, and the compiler memoized it away on re-render
+    // (AppGate crashed on launch with a changed hook order).
+    useValue: () => useSyncExternalStore(subscribe, () => state),
   };
 }

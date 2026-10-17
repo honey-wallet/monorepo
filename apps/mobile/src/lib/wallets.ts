@@ -10,6 +10,7 @@ import { loadAccounts, type VaultAccount } from '@/lib/vault';
  */
 export type AddedWallet = Wallet & {
   watchOnly?: boolean;
+  demo?: boolean;
   burner?: boolean;
   /** Wallets with keys on this device: their address on each chain. */
   addresses?: Partial<Addresses>;
@@ -21,7 +22,7 @@ export const wallets = createStore<{ activeId: string; added: AddedWallet[] }>({
   added: [],
 });
 
-export const useWallets = wallets.use;
+export const useWallets = wallets.useValue;
 
 const fromVault = (account: VaultAccount): AddedWallet => ({
   id: account.id,
@@ -34,17 +35,22 @@ const fromVault = (account: VaultAccount): AddedWallet => ({
 
 // Wallets created or imported on an earlier launch. Their keys stay in secure storage;
 // only the public addresses are loaded here.
-loadAccounts()
-  .then((accounts) =>
+export const walletLoad = createStore({ ready: false, error: false });
+export async function hydrateWallets() {
+  try {
+    const accounts = await loadAccounts();
     wallets.set((prev) => ({
-      ...prev,
+      activeId: prev.activeId === 'main' && accounts.length ? accounts[0].id : prev.activeId,
       added: [
         ...accounts.map(fromVault),
         ...prev.added.filter((w) => !accounts.some((a) => a.id === w.id)),
       ],
-    })),
-  )
-  .catch((error) => console.warn('Couldn’t load saved wallets', error));
+    }));
+    walletLoad.set({ ready: true, error: false });
+  } catch {
+    walletLoad.set({ ready: false, error: true });
+  }
+}
 
 /** Adds a wallet whose keys were just saved to the vault, and switches to it. */
 export function addVaultWallet(account: VaultAccount) {
@@ -54,9 +60,10 @@ export function addVaultWallet(account: VaultAccount) {
 
 /** The user's own wallet plus the others, as one list. */
 export function allWallets(name: string, added: AddedWallet[]): AddedWallet[] {
+  if (added.some((wallet) => wallet.addresses)) return added;
   return [
-    { id: 'main', kind: 'wallet', label: name, address: ADDRESS, usd: BALANCE },
-    ...otherWallets(name),
+    { demo: true, id: 'main', kind: 'wallet', label: name, address: ADDRESS, usd: BALANCE },
+    ...otherWallets(name).map((wallet) => ({ ...wallet, demo: true })),
     ...added,
   ];
 }

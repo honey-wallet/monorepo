@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
@@ -13,6 +13,7 @@ import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { showToast } from '@/lib/toast';
 import { addWallet, demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
+import { takeWatchedAddress } from '@/lib/watch-scan';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Watch an address: follow its balance and activity without its keys. */
@@ -21,6 +22,12 @@ export default function WatchWalletSheet() {
   const c = useTheme();
   const [address, setAddress] = useState('');
   const [nickname, setNickname] = useState('');
+  useFocusEffect(
+    useCallback(() => {
+      const scanned = takeWatchedAddress();
+      if (scanned) setAddress(scanned);
+    }, []),
+  );
   const value = address.trim();
   const handle = isHoneyHandle(value);
   const valid = isEvmAddress(value) || handle;
@@ -89,7 +96,7 @@ export default function WatchWalletSheet() {
           scaleTo={0.97}
           onPress={() => {
             tap();
-            router.push('/scan');
+            router.push({ pathname: '/scan', params: { purpose: 'watch' } });
           }}
         >
           <Icon name="scan" size={19} color={c.textSecondary} />

@@ -31,7 +31,7 @@ const HELP: Record<HelpTopic, Help> = {
 /** Help for an onboarding step, opened from its "?" button. */
 export default function StepHelpSheet() {
   const { topic = 'email' } = useLocalSearchParams<{ topic?: HelpTopic }>();
-  const help = HELP[topic] ?? HELP.email;
+  const help = (Object.hasOwn(HELP, topic) ? HELP[topic] : undefined) ?? HELP.email;
   return (
     <SheetScreen title={help.title} footer={<PillButton label="Got it" onPress={closeSheet} />}>
       {help.intro ? <SheetText>{help.intro}</SheetText> : null}

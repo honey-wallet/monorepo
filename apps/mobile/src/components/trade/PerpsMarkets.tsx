@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import type { IconName } from '@/components/Icon';
 import { MenuDropdown } from '@/components/motion/MenuDropdown';
@@ -29,7 +28,6 @@ import {
   useSavedPerps,
 } from '@/lib/perps';
 import { makeStyles, useTheme } from '@/theme';
-import { DURATION, LAYOUT_MOVE } from '@/theme/motion';
 
 type Category = (typeof PERP_CATEGORIES)[number] | 'Saved';
 
@@ -108,19 +106,19 @@ export function PerpsMarkets({
 
       {/* Your open positions first, as FOMO leads with them */}
       {positions.length ? (
-        <Animated.View layout={LAYOUT_MOVE} style={styles.section}>
+        <View style={styles.section}>
           <Text style={styles.heading}>Your positions</Text>
           <View style={styles.positions}>
             {positions.map((p) => (
               <PerpPositionCard key={p.id} position={p} compact />
             ))}
           </View>
-        </Animated.View>
+        </View>
       ) : null}
 
       {/* A few big markets as cards, after Polymarket's Featured row */}
       {category === 'All' && !q ? (
-        <Animated.View layout={LAYOUT_MOVE} style={styles.section}>
+        <View style={styles.section}>
           <Text style={styles.heading}>Featured</Text>
           <ScrollView
             horizontal
@@ -134,10 +132,10 @@ export function PerpsMarkets({
               return market ? <FeaturedCard key={symbol} market={market} /> : null;
             })}
           </ScrollView>
-        </Animated.View>
+        </View>
       ) : null}
 
-      <Animated.View layout={LAYOUT_MOVE} style={styles.listHeader}>
+      <View style={styles.listHeader}>
         <Text style={styles.heading}>
           {loading ? 'Markets' : `${markets.length} ${markets.length === 1 ? 'market' : 'markets'}`}
         </Text>
@@ -151,22 +149,15 @@ export function PerpsMarkets({
           onChange={setSort}
           triggerLabel={order.short}
         />
-      </Animated.View>
+      </View>
 
-      <Animated.View layout={LAYOUT_MOVE}>
+      <View>
         <SkeletonReveal
           loading={loading}
           skeleton={[0, 1, 2, 3, 4, 5].map((i) => <MarketRowSkeleton key={i} />)}
         >
           {markets.map((market) => (
-            <Animated.View
-              key={market.symbol}
-              entering={FadeIn.duration(DURATION.fast)}
-              exiting={FadeOut.duration(DURATION.quick)}
-              layout={LAYOUT_MOVE}
-            >
-              <MarketRow market={market} />
-            </Animated.View>
+            <MarketRow key={market.symbol} market={market} />
           ))}
           {markets.length === 0 &&
             (q ? (
@@ -185,7 +176,7 @@ export function PerpsMarkets({
               />
             ))}
         </SkeletonReveal>
-      </Animated.View>
+      </View>
     </View>
   );
 }

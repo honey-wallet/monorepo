@@ -7,4 +7,4 @@ import { createStore } from '@/lib/store';
 const revealed = createStore(false);
 
 export const revealApp = () => revealed.set(true);
-export const useAppRevealed = revealed.use;
+export const useAppRevealed = revealed.useValue;

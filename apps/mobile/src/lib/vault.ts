@@ -16,8 +16,8 @@ import * as SecureStore from 'expo-secure-store';
  * in iCloud or Google backups (THIS_DEVICE_ONLY); the backup step covers that.
  *
  * One phrase is the primary one: "Create new wallet" adds the next account under it
- * (like MetaMask), so the user only ever has one phrase to back up. Imported phrases
- * and keys are stored alongside it.
+ * (like MetaMask). Imported phrases and keys are stored alongside it and need
+ * their own recovery copies; exporting the primary phrase does not include them.
  */
 
 /** A wallet backed by a secret on this device. Addresses are public, so they're cached. */
@@ -69,6 +69,10 @@ async function saveAccount(account: VaultAccount) {
   const accounts = await loadAccounts();
   await write(KEY.accounts, JSON.stringify([...accounts, account]));
   return account;
+}
+
+export async function hasPrimaryMnemonic() {
+  return !!(await read(KEY.primary));
 }
 
 /** The primary phrase, or null before the first wallet is created. */
@@ -161,9 +165,12 @@ export async function readPrimaryWallet(): Promise<{
  * Erases every secret this app keeps: each phrase, each imported key, and the list of
  * accounts. Used by Sign out, so nothing sensitive stays on the phone afterwards.
  */
-export const eraseVault = serial(async () => {
+export const eraseVault = serial(async (confirmedAccountIds: readonly string[]) => {
   const remove = (key: string) => SecureStore.deleteItemAsync(key, OPTIONS);
   const accounts = await loadAccounts();
+  if (accounts.some((account) => !confirmedAccountIds.includes(account.id))) {
+    throw new Error('Confirm recovery for every wallet before signing out');
+  }
   const seeds = new Set<string>();
   for (const account of accounts) {
     if (account.source.kind === 'phrase') seeds.add(account.source.seedId);

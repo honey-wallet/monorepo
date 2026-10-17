@@ -1,12 +1,13 @@
 // Motion: the end of a money flow is rare and earned, so this is the one place the app
-// celebrates. The disc springs in from 60% with a little overshoot (small elements need
+// celebrates. The disc settles in from 90% with a little overshoot (small elements need
 // more bounce to read), a ring ripples out behind it and fades, a handful of honey and
 // green specks burst outward and shrink away, and the tick draws on as the disc lands.
-// It all settles in under ~700ms and never blocks the page. Under Reduce Motion the
+// It all settles in about 500ms and never blocks the page. Under Reduce Motion the
 // finished check fades in, with no burst, ring or spring.
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
+  ReduceMotion,
   type SharedValue,
   useAnimatedProps,
   useAnimatedStyle,
@@ -21,15 +22,15 @@ import { useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const BURST = {
-  pop: { duration: 520, dampingRatio: 0.55 },
-  fade: { duration: DURATION.quick, easing: EASE.ease },
-  ring: { duration: 700, easing: EASE.smoothOut },
-  specks: { duration: 650, easing: EASE.smoothOut },
+  pop: { duration: 400, dampingRatio: 0.85 },
+  fade: { duration: DURATION.quick, easing: EASE.ease, reduceMotion: ReduceMotion.Never },
+  ring: { duration: 450, easing: EASE.smoothOut },
+  specks: { duration: 400, easing: EASE.smoothOut },
   draw: { duration: DURATION.slow, easing: EASE.smoothOut },
   ringDelay: 60,
   specksDelay: 90,
-  drawDelay: 160,
-  scaleFrom: 0.6,
+  drawDelay: 60,
+  scaleFrom: 0.9,
 } as const;
 
 /** The tick in a 48×48 box, and its length for the stroke draw. */

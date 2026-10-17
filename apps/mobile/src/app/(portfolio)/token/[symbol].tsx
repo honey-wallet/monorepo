@@ -61,7 +61,7 @@ export default function TokenScreen() {
   // What the wallet in use holds: none for a new wallet, its own for a shared one.
   const view = useWalletView();
   const held = view.tokens.find((t) => t.symbol === symbol && t.amount > 0);
-  const vault = VAULTS[symbol];
+  const vault = Object.hasOwn(VAULTS, symbol) ? VAULTS[symbol] : undefined;
 
   const [range, setRange] = useState<Range>('1D');
   const [scrub, setScrub] = useState<number | null>(null);

@@ -6,6 +6,7 @@
 import { type ReactNode, useEffect } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
+  ReduceMotion,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -53,7 +54,11 @@ export function FailurePage({
   useEffect(() => {
     failureBuzz();
     if (reduceMotion) {
-      show.value = withTiming(1, { duration: DURATION.fast, easing: EASE.ease });
+      show.value = withTiming(1, {
+        duration: DURATION.fast,
+        easing: EASE.ease,
+        reduceMotion: ReduceMotion.Never,
+      });
       return;
     }
     show.value = withTiming(1, { duration: DURATION.fast, easing: EASE.smoothOut });
@@ -110,7 +115,9 @@ export function FailurePage({
       </View>
       {compact ? null : <View style={styles.flex} />}
       <Appear at={AT.done} distance={0} style={styles.ctaRow}>
-        <PillButton label="Close" variant="secondary" onPress={onClose} style={styles.flex} />
+        {/* Close takes only its label's width; the fix gets the rest, so labels like
+            "Pay another way" stay on one line. */}
+        <PillButton label="Close" variant="secondary" onPress={onClose} />
         <PillButton label={failure.action.label} onPress={onRetry} style={styles.flex} />
       </Appear>
     </View>

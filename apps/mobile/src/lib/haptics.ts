@@ -1,17 +1,49 @@
 import * as Haptics from 'expo-haptics';
+import { AppState, Platform } from 'react-native';
 import { getProfile } from '@/lib/profile';
 
-/** A light tap, unless the user turned off Haptic touch in Settings. */
+// Feedback is supplementary: unsupported hardware or a rejected native request
+// must never interrupt a wallet action. Android uses its semantic system effects,
+// not the legacy Vibrator fallback. Web stays quiet rather than producing a buzz.
+function play(android: Haptics.AndroidHaptics, ios: () => Promise<void>) {
+  if (!getProfile().haptics || AppState.currentState !== 'active' || Platform.OS === 'web') return;
+  try {
+    const result = Platform.OS === 'android' ? Haptics.performAndroidHapticsAsync(android) : ios();
+    void result.catch(() => {});
+  } catch {
+    // Haptics are unavailable on some devices and in some system states.
+  }
+}
+
+/** A discrete selection changed: tabs, chips, switches and picker stops. */
 export function tap() {
-  if (getProfile().haptics) Haptics.selectionAsync();
+  play(Haptics.AndroidHaptics.Segment_Tick, () => Haptics.selectionAsync());
 }
 
-/** The success notification buzz, for a finished send or swap. */
+/** Frequent input needs the lightest feedback, synchronous with the digit. */
+export function keypress() {
+  play(Haptics.AndroidHaptics.Keyboard_Tap, () =>
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft),
+  );
+}
+
+/** Picking an object up, once when a drag actually starts. */
+export function grab() {
+  play(Haptics.AndroidHaptics.Drag_Start, () =>
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
+  );
+}
+
+/** A completed action, never the start of a request. */
 export function success() {
-  if (getProfile().haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  play(Haptics.AndroidHaptics.Confirm, () =>
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
+  );
 }
 
-/** The error notification buzz, for a payment or order that didn't go through. */
+/** A rejected action, paired with visible explanation and recovery. */
 export function failure() {
-  if (getProfile().haptics) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  play(Haptics.AndroidHaptics.Reject, () =>
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error),
+  );
 }

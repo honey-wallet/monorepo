@@ -72,8 +72,10 @@ export function TabBar({ state, navigation }: TabBarProps) {
   }));
 
   const go = (name: string) => {
-    tap();
-    if (current !== name) navigation.navigate(name);
+    if (current !== name) {
+      tap();
+      navigation.navigate(name);
+    }
     // Already here: back to the top, like a normal iOS tab bar.
     else reselectTab(name);
   };

@@ -3,7 +3,6 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useErrorShake } from '@/components/motion/ErrorShake';
-import { popIn } from '@/components/motion/NumberPopIn';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { StepScreen } from '@/components/onboarding/StepScreen';
 import { failure } from '@/lib/haptics';
@@ -83,9 +82,7 @@ export default function VerifyScreen() {
                 {i === LENGTH / 2 && <View style={styles.dash} />}
                 <View style={[styles.box, active && styles.boxActive, error && styles.boxError]}>
                   {digit ? (
-                    <Animated.Text key={digit} entering={popIn()} style={styles.digit}>
-                      {digit}
-                    </Animated.Text>
+                    <Text style={styles.digit}>{digit}</Text>
                   ) : (
                     <Text style={[styles.digit, styles.digitPlaceholder]}>0</Text>
                   )}

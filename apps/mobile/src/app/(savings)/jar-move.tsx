@@ -1,17 +1,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { ContentSwap } from '@/components/motion/ContentSwap';
-import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetScreen } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
+import { FlowTray, InlineTray } from '@/components/sheets/Tray';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { success, tap } from '@/lib/haptics';
-import { jars, usdValue, useJars } from '@/lib/jars';
+import { moveJar, usdValue, useJars } from '@/lib/jars';
 import { formatUsd } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
@@ -55,6 +54,7 @@ export default function JarMoveSheet() {
   const tooMuch = value > available + 1e-9;
   const action: ProposalAction = {
     type: adding ? 'jarAdd' : 'jarWithdraw',
+    jarId: jar.id,
     jar: jar.name,
     symbol: jar.symbol,
     amount: value,
@@ -68,52 +68,16 @@ export default function JarMoveSheet() {
     const { proposal, executed } = signer.multisig
       ? propose(signer.walletId, action)
       : { proposal: null, executed: true };
-    if (executed) {
-      jars.set((list) =>
-        list.map((j) =>
-          j.id === jar.id ? { ...j, saved: Math.max(0, j.saved + (adding ? value : -value)) } : j,
-        ),
-      );
-    } else if (proposal) setProposalId(proposal.id);
+    if (executed && !signer.multisig) moveJar(jar.id, adding ? value : -value);
+    else if (!executed && proposal) setProposalId(proposal.id);
     setDone(true);
   };
   const finish = () => finishDemo(adding ? 'nothing was added' : 'nothing was withdrawn');
 
   return (
-    <SheetScreen title={`${verb} ${adding ? 'to' : 'from'} ${jar.name}`} size="fill">
-      <ContentSwap
-        id={done ? 'done' : outcome.failure ? 'failed' : 'amount'}
-        index={done || outcome.failure ? 1 : 0}
-        fill
-      >
-        {outcome.failure ? (
-          <FailurePage
-            failure={outcome.failure}
-            rows={[{ label: adding ? 'Adding' : 'Withdrawing', value: formatUsd(value) }]}
-            onRetry={() => {
-              tap();
-              if (outcome.failure && followFix(outcome.failure)) return;
-              outcome.clear();
-            }}
-            onClose={() => {
-              tap();
-              closeSheet();
-            }}
-          />
-        ) : done && proposalId ? (
-          <LiveProposedPage proposalId={proposalId} onDone={finish} />
-        ) : done ? (
-          <SuccessPage
-            title={adding ? 'Added' : 'Withdrawn'}
-            amount={{
-              symbol: jar.symbol,
-              text: `${amount} ${jar.symbol}`,
-              usd: formatUsd(usdValue(jar.symbol, value)),
-            }}
-            detail={`${adding ? 'To' : 'From'} ${jar.name}`}
-            onDone={finish}
-          />
-        ) : available <= 0 ? (
+    <FlowTray>
+      <SheetScreen title={`${verb} ${adding ? 'to' : 'from'} ${jar.name}`} size="fill">
+        {available <= 0 ? (
           // Nothing to move: adding needs the token first; an empty jar has nothing to take.
           <EmptyState
             icon={adding ? 'wallet' : 'target'}
@@ -142,14 +106,11 @@ export default function JarMoveSheet() {
             <View style={styles.amountArea}>
               <TokenIcon symbol={jar.symbol} size={36} />
               <TypedAmount value={amount} size={52} />
-              <TextSwap
-                text={
-                  value
-                    ? `≈ ${formatUsd(usdValue(jar.symbol, value))}`
-                    : `${adding ? 'Wallet' : 'In jar'}: ${available} ${jar.symbol}`
-                }
-                style={[styles.hint, tooMuch && styles.error]}
-              />
+              <Text style={[styles.hint, tooMuch && styles.error]}>
+                {value
+                  ? `≈ ${formatUsd(usdValue(jar.symbol, value))}`
+                  : `${adding ? 'Wallet' : 'In jar'}: ${available} ${jar.symbol}`}
+              </Text>
             </View>
             {available > 0 ? (
               <PercentChips balance={available} onPick={setAmount} style={styles.chips} />
@@ -170,8 +131,47 @@ export default function JarMoveSheet() {
             />
           </View>
         )}
-      </ContentSwap>
-    </SheetScreen>
+      </SheetScreen>
+      {/* The result rises in a tray over the order (Family's pattern). */}
+      <InlineTray onClose={() => (outcome.failure ? outcome.clear() : finish())}>
+        {outcome.failure ? (
+          <SheetScreen>
+            <FailurePage
+              compact
+              failure={outcome.failure}
+              rows={[{ label: adding ? 'Adding' : 'Withdrawing', value: formatUsd(value) }]}
+              onRetry={() => {
+                tap();
+                if (outcome.failure && followFix(outcome.failure)) return;
+                outcome.clear();
+              }}
+              onClose={() => {
+                tap();
+                closeSheet();
+              }}
+            />
+          </SheetScreen>
+        ) : done && proposalId ? (
+          <SheetScreen>
+            <LiveProposedPage proposalId={proposalId} onDone={finish} compact />
+          </SheetScreen>
+        ) : done ? (
+          <SheetScreen>
+            <SuccessPage
+              compact
+              title={adding ? 'Added' : 'Withdrawn'}
+              amount={{
+                symbol: jar.symbol,
+                text: `${amount} ${jar.symbol}`,
+                usd: formatUsd(usdValue(jar.symbol, value)),
+              }}
+              detail={`${adding ? 'To' : 'From'} ${jar.name}`}
+              onDone={finish}
+            />
+          </SheetScreen>
+        ) : null}
+      </InlineTray>
+    </FlowTray>
   );
 }
 
