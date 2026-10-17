@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { Icon, type IconName } from '@/components/Icon';
+import { Text, View } from 'react-native';
+import { Icon } from '@/components/Icon';
 import { Checkbox } from '@/components/motion/Checkbox';
+import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetScreen } from '@/components/sheets/Sheet';
 import { confirmOwner } from '@/lib/auth';
@@ -12,18 +13,16 @@ import { showToast } from '@/lib/toast';
 import { loadAccounts, type VaultAccount } from '@/lib/vault';
 import { makeStyles, useTheme } from '@/theme';
 
-const RULES: { icon: IconName; text: string }[] = [
-  { icon: 'key', text: 'Keep the recovery phrase or private key for every wallet' },
-  { icon: 'cloud', text: 'Cloud backup covers only your main phrase' },
-  { icon: 'lock', text: 'Your money stays safe on the network' },
-];
-
-/** Every stored wallet needs its own recovery acknowledgement before deleting secrets. */
+/**
+ * Two steps in one tray: what signing out does, then a tick for each wallet's phrase or
+ * key. Every stored wallet needs its own tick before its secrets are deleted.
+ */
 export default function SignOutSheet() {
   const styles = useStyles();
   const c = useTheme();
   const [accounts, setAccounts] = useState<VaultAccount[] | null>(null);
   const [confirmed, setConfirmed] = useState<string[]>([]);
+  const [step, setStep] = useState<'about' | 'check'>('about');
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     loadAccounts()
@@ -31,6 +30,8 @@ export default function SignOutSheet() {
       .catch(() => showToast('Couldn’t load wallets. Reopen this screen'));
   }, []);
   const ready = accounts?.every((a) => confirmed.includes(a.id));
+  // Nothing stored on this phone (signed in with Apple, Google or email): no ticks needed.
+  const hasSecrets = (accounts?.length ?? 0) > 0;
 
   const confirm = async () => {
     if (!ready || busy) return;
@@ -49,61 +50,78 @@ export default function SignOutSheet() {
     }
   };
 
-  return (
-    // Family's safety tray: what happens, the rules that matter, then one tick per wallet.
-    <SheetScreen>
-      <View style={styles.tile}>
-        <Icon name="warning" size={22} color={c.error} />
-      </View>
-      <Text style={styles.title}>Sign out of Honey?</Text>
-      <Text style={styles.body}>
-        This removes every wallet and its keys from this phone. Apple, Google and email can’t bring
-        them back.
-      </Text>
-      <View style={styles.rules}>
-        {RULES.map((r) => (
-          <View key={r.text} style={styles.rule}>
-            <Icon name={r.icon} size={15} color={c.textSecondary} />
-            <Text style={styles.ruleText}>{r.text}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.check}>
-        {accounts?.map((wallet) => (
-          <Checkbox
-            key={wallet.id}
-            label={`I have the ${wallet.source.kind === 'key' ? 'private key' : 'recovery phrase'} for ${wallet.label}`}
-            checked={confirmed.includes(wallet.id)}
-            onChange={(checked) =>
-              setConfirmed((prev) =>
-                checked ? [...prev, wallet.id] : prev.filter((id) => id !== wallet.id),
-              )
-            }
-          />
-        ))}
-        <Text
-          accessibilityRole="button"
-          style={styles.link}
-          onPress={() => {
-            tap();
-            leaveSheetTo('/recovery-phrase');
-          }}
-        >
-          Show my recovery phrase
-        </Text>
-      </View>
+  const signOutButton = (
+    <PillButton
+      label={busy ? 'Signing out…' : 'Sign out'}
+      variant="danger"
+      disabled={!ready || busy}
+      onPress={confirm}
+      style={styles.flex}
+    />
+  );
 
-      <View style={styles.buttons}>
-        <PillButton label="Cancel" variant="secondary" onPress={closeSheet} style={styles.flex} />
-        <PillButton
-          label={busy ? 'Signing out…' : 'Sign out'}
-          variant="danger"
-          disabled={!ready || busy}
-          onPress={confirm}
-          style={styles.flex}
-        />
-      </View>
-    </SheetScreen>
+  return (
+    <ContentSwap id={step} index={step === 'about' ? 0 : 1}>
+      {step === 'about' ? (
+        <SheetScreen>
+          <View style={styles.tile}>
+            <Icon name="warning" size={22} color={c.error} />
+          </View>
+          <Text style={styles.title}>Sign out?</Text>
+          <Text style={styles.body}>
+            Your wallets leave this phone. You’ll need your recovery phrase to get back in.
+          </Text>
+          <View style={styles.buttons}>
+            <PillButton
+              label="Cancel"
+              variant="secondary"
+              onPress={closeSheet}
+              style={styles.flex}
+            />
+            {hasSecrets ? (
+              <PillButton
+                label="Continue"
+                onPress={() => {
+                  tap();
+                  setStep('check');
+                }}
+                style={styles.flex}
+              />
+            ) : (
+              signOutButton
+            )}
+          </View>
+        </SheetScreen>
+      ) : (
+        <SheetScreen title="Saved your phrase?" onBack={() => setStep('about')}>
+          <View style={styles.check}>
+            {accounts?.map((wallet) => (
+              <Checkbox
+                key={wallet.id}
+                label={`${wallet.label} · ${wallet.source.kind === 'key' ? 'private key' : 'recovery phrase'}`}
+                checked={confirmed.includes(wallet.id)}
+                onChange={(checked) =>
+                  setConfirmed((prev) =>
+                    checked ? [...prev, wallet.id] : prev.filter((id) => id !== wallet.id),
+                  )
+                }
+              />
+            ))}
+          </View>
+          <Text
+            accessibilityRole="button"
+            style={styles.link}
+            onPress={() => {
+              tap();
+              leaveSheetTo('/recovery-phrase');
+            }}
+          >
+            Show my phrase
+          </Text>
+          <View style={styles.buttons}>{signOutButton}</View>
+        </SheetScreen>
+      )}
+    </ContentSwap>
   );
 }
 
@@ -132,25 +150,8 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     lineHeight: 20,
   },
-  rules: {
-    marginTop: 16,
-    paddingTop: 14,
-    gap: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: c.divider,
-  },
-  rule: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  ruleText: {
-    flex: 1,
-    color: c.textSecondary,
-    fontSize: 14,
-  },
   check: {
-    marginTop: 16,
+    marginTop: 4,
     padding: 14,
     gap: 14,
     borderRadius: 18,
@@ -158,6 +159,7 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.raised,
   },
   link: {
+    marginTop: 14,
     color: c.accentText,
     fontSize: 15,
     fontWeight: '600',

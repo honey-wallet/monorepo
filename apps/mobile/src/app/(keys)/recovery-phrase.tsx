@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { usePreventScreenCapture } from 'expo-screen-capture';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, StyleSheet, Text, View } from 'react-native';
+import { AppState, Text, View } from 'react-native';
 import Animated, {
   FadeIn,
   Keyframe,
@@ -172,21 +172,21 @@ export default function RecoveryPhraseScreen() {
   const hero = checking
     ? {
         title: 'Check your phrase',
-        body: 'Tap the right word for each number, using the copy you wrote down.',
+        body: 'Tap the right word for each number.',
       }
     : missing
       ? {
           title: 'No recovery phrase yet',
-          body: 'This device doesn’t have one. Create or import a wallet to get one.',
+          body: 'Create or import a wallet first.',
         }
       : onboarding
         ? {
             title: 'Write down your recovery phrase',
-            body: 'These 12 words are the key to your wallet. Write them on paper, in order, and keep it somewhere safe.',
+            body: 'Write them on paper, in order. Keep it safe.',
           }
         : {
             title: 'Your recovery phrase',
-            body: 'Anyone with these words can take your funds. Never share them or type them into a website.',
+            body: 'Never share them or type them into a website.',
           };
 
   return (
@@ -216,8 +216,7 @@ export default function RecoveryPhraseScreen() {
       }
       scroll={false}
       contentStyle={styles.content}
-      // The privacy warning rises in a tray (Family's pattern): what this is, three plain
-      // rules, then Close or View.
+      // The privacy warning rises in a tray (Family's pattern): one line, then Close or View.
       overlay={
         <InlineTray onClose={close}>
           {warning ? (
@@ -225,24 +224,8 @@ export default function RecoveryPhraseScreen() {
               <View style={[styles.warnTile, { backgroundColor: `${c.error}1F` }]}>
                 <Icon name="warning" size={22} color={c.error} />
               </View>
-              <Text style={styles.panelTitle}>View in a private place</Text>
-              <Text style={styles.panelBody}>
-                These words are the key to your wallet. Open them where no one can see your screen.
-              </Text>
-              <View style={styles.panelRules}>
-                {(
-                  [
-                    { icon: 'lock', text: 'Keep it somewhere safe, offline' },
-                    { icon: 'eyeSlash', text: 'Never share it, not even with Honey support' },
-                    { icon: 'warning', text: 'If you lose it, no one can recover it' },
-                  ] as const
-                ).map((r) => (
-                  <View key={r.text} style={styles.panelRule}>
-                    <Icon name={r.icon} size={15} color={c.textSecondary} />
-                    <Text style={styles.panelRuleText}>{r.text}</Text>
-                  </View>
-                ))}
-              </View>
+              <Text style={styles.panelTitle}>Check no one can see</Text>
+              <Text style={styles.panelBody}>Anyone with these words can take your funds.</Text>
               <View style={styles.buttons}>
                 <PillButton
                   label="Close"
@@ -491,23 +474,6 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 15,
     lineHeight: 20,
-  },
-  panelRules: {
-    marginTop: 16,
-    paddingTop: 14,
-    gap: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: c.divider,
-  },
-  panelRule: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  panelRuleText: {
-    flex: 1,
-    color: c.textSecondary,
-    fontSize: 14,
   },
   buttons: {
     marginTop: 26,

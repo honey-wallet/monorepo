@@ -1,8 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
-import { Icon, type IconName } from '@/components/Icon';
+import { Text, TextInput, View } from 'react-native';
+import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { TextsReveal } from '@/components/motion/TextsReveal';
@@ -51,30 +51,27 @@ export default function ImportWalletSheet() {
   const complete = isKey ? key.length === 64 && !invalid : words.length === target && !invalid;
   // Every word is real but the last one doesn't match: a typo or the wrong order.
   const badChecksum = !isKey && complete && !isValidMnemonic(phrase);
+  // As few words as the screen needs: what to enter, where it stays, one warning.
   const copy = isKey
     ? {
         title: 'Enter your private key',
-        subtitle: 'Your key stays on this device. Honey never sees or stores it.',
+        subtitle: 'It stays on this phone.',
         placeholder: '0x…',
-        count: `${key.length} / 64 characters`,
-        cta: complete ? 'Import wallet' : 'Enter 64 characters',
-        hint: invalid
-          ? 'A private key only uses 0–9 and a–f.'
-          : 'Paste the key exported from your other wallet.',
-        warning: 'Never share your private key. Anyone with it can take the funds in this wallet.',
+        count: `${key.length}/64`,
+        cta: complete ? 'Import' : 'Enter your key',
+        hint: invalid ? 'Only 0–9 and a–f.' : '',
       }
     : {
         title: 'Enter your recovery phrase',
-        subtitle: 'Your phrase stays on this device. Honey never sees or stores it.',
-        placeholder: 'word1 word2 word3 …',
-        count: `${words.length} / ${target} words`,
-        cta: complete ? 'Continue' : `Enter ${target} words`,
+        subtitle: 'It stays on this phone.',
+        placeholder: '',
+        count: `${words.length}/${target}`,
+        cta: complete ? 'Import' : `Enter ${target} words`,
         hint: invalid
-          ? 'Words should only contain letters.'
+          ? 'Letters only.'
           : badChecksum
-            ? 'These words don’t make a valid phrase. Check the spelling and order.'
-            : 'Type each word in its box. A space moves to the next one.',
-        warning: 'Never share your recovery phrase. Anyone with it can take your funds.',
+            ? 'These words don’t match. Check the spelling and order.'
+            : '',
       };
 
   /** Puts `list` into the cells from `from` on, then moves to the cell after the last one. */
@@ -184,19 +181,6 @@ export default function ImportWalletSheet() {
     </PressableScale>
   );
 
-  // Family's safety tray: what this is, then three plain rules with their icons.
-  const rules: { icon: IconName; text: string }[] = isKey
-    ? [
-        { icon: 'lock', text: 'It stays on this phone. Honey never sees it.' },
-        { icon: 'eyeSlash', text: 'Never share it, not even with Honey support.' },
-        { icon: 'warning', text: 'Anyone with this key can take the funds in it.' },
-      ]
-    : [
-        { icon: 'lock', text: 'It stays on this phone. Honey never sees it.' },
-        { icon: 'eyeSlash', text: 'Never share it, not even with Honey support.' },
-        { icon: 'warning', text: 'Anyone with these words can take your funds.' },
-      ];
-
   return (
     // The button stays inline under the field rather than pinned as a footer, so
     // it sits above the keyboard while typing.
@@ -247,7 +231,7 @@ export default function ImportWalletSheet() {
                   setTarget(target === 12 ? 24 : 12);
                 }}
               >
-                {target === 12 ? 'Use 24 words' : 'Use 12 words'}
+                {target === 12 ? '24 words' : '12 words'}
               </Text>
               {pasteButton}
             </View>
@@ -258,18 +242,12 @@ export default function ImportWalletSheet() {
           </View>
         </>
       )}
-      <TextSwap
-        text={copy.hint}
-        style={[styles.hint, (invalid || badChecksum) && styles.hintError]}
-      />
+      {/* Only when something's wrong. */}
+      {copy.hint ? <Text style={[styles.hint, styles.hintError]}>{copy.hint}</Text> : null}
 
-      <View style={styles.rules}>
-        {rules.map((r) => (
-          <View key={r.text} style={styles.rule}>
-            <Icon name={r.icon} size={15} color={c.textSecondary} />
-            <Text style={styles.ruleText}>{r.text}</Text>
-          </View>
-        ))}
+      <View style={styles.rule}>
+        <Icon name="warning" size={15} color={c.textSecondary} />
+        <Text style={styles.ruleText}>Never share it. Anyone with it can take your funds.</Text>
       </View>
 
       <PillButton
@@ -412,14 +390,8 @@ const useStyles = makeStyles((c) => ({
   hintError: {
     color: c.error,
   },
-  rules: {
-    marginTop: 16,
-    paddingTop: 14,
-    gap: 10,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: c.divider,
-  },
   rule: {
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
