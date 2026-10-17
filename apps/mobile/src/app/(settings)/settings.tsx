@@ -91,6 +91,12 @@ export default function SettingsScreen() {
       <View style={styles.gutter}>
         <SheetSection title="Preferences" />
         <SheetRow
+          icon="grid"
+          title="App icon"
+          onPress={open('/settings-app-icon')}
+          accessory="chevron"
+        />
+        <SheetRow
           icon="theme"
           title="Theme"
           value={THEME_LABEL[settings.theme]}

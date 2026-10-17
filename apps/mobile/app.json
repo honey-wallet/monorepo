@@ -18,9 +18,8 @@
     "android": {
       "package": "com.honeywallet.app",
       "adaptiveIcon": {
-        "backgroundColor": "#000000",
+        "backgroundColor": "#FEBE2B",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
@@ -65,7 +64,29 @@
         {
           "faceIDPermission": "Honey uses Face ID to show your recovery phrase and approve payments."
         }
-      ]
+      ],
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Midnight",
+            "ios": "./assets/images/icon-midnight.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-midnight.png",
+              "backgroundColor": "#17140F"
+            }
+          },
+          {
+            "name": "Graphite",
+            "ios": "./assets/images/icon-graphite.png",
+            "android": {
+              "foregroundImage": "./assets/images/android-icon-graphite.png",
+              "backgroundColor": "#292929"
+            }
+          }
+        ]
+      ],
+      "./plugins/withQuotedBundleScript"
     ],
     "experiments": {
       "typedRoutes": true,

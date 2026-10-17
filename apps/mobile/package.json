@@ -6,12 +6,14 @@
   "main": "expo-router/entry",
   "scripts": {
     "dev": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "doctor": "expo-doctor",
-    "clean": "rm -rf .expo dist"
+    "clean": "rm -rf .expo dist",
+    "icons": "node scripts/gen-app-icons.mjs"
   },
   "dependencies": {
     "@dicebear/core": "^10.7.0",
@@ -22,6 +24,7 @@
     "@honey-wallet/api-client": "workspace:*",
     "@honey-wallet/keyring": "workspace:*",
     "expo": "~57.0.30",
+    "expo-alternate-app-icons": "^8.0.0",
     "expo-camera": "~57.0.6",
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.22",
@@ -58,8 +61,11 @@
   "devDependencies": {
     "@iconify-json/cryptocurrency-color": "^1.2.4",
     "@react-native/metro-config": "0.86.3",
+    "@types/node": "^24.19.2",
     "@types/react": "~19.2.2",
     "@types/react-dom": "~19.2.7",
-    "typescript": "catalog:"
+    "sharp": "^0.35.5",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

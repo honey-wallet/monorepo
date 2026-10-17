@@ -134,6 +134,7 @@ export default function RootLayout() {
           <Stack.Screen name="(settings)/disclosures" />
           <Stack.Screen name="(settings)/help" />
           <Stack.Screen name="(settings)/settings-theme" options={sheet('fitToContents')} />
+          <Stack.Screen name="(settings)/settings-app-icon" options={sheet('fitToContents')} />
           <Stack.Screen name="(settings)/settings-currency" options={sheet([0.8, 1])} />
           <Stack.Screen name="(settings)/settings-language" options={sheet([0.8, 1])} />
           <Stack.Screen name="(settings)/settings-notifications" options={sheet('fitToContents')} />

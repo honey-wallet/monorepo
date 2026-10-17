@@ -18,6 +18,47 @@ pnpm install
 pnpm dev
 ```
 
+### Mobile app icons and native builds
+
+From `apps/mobile`, run `pnpm icons` to regenerate the bundled Honey, Midnight and
+Graphite icons from `src/components/logo/paths.ts`. Update the generator, the
+alternate icons in `app.json`, and the picker options together when adding a style.
+The operating system persists the choice; the picker lives in Settings → App icon.
+
+After changing icon assets, config, or native dependencies, run
+`pnpm exec expo prebuild` before `pnpm ios` or `pnpm android`. For a standalone local
+release, use `pnpm exec expo run:ios --configuration Release` (choose a simulator
+without device signing) or `pnpm exec expo run:android --variant release`. Store
+distribution requires the project's signing credentials. Expo Go and web can
+preview the choices but cannot change the installed icon.
+`plugins/withQuotedBundleScript.js` keeps iOS release bundling working in checkout
+paths containing spaces; keep this fix in the plugin, not the generated project.
+
+The `expo-alternate-app-icons` patch reads Android's enabled launcher components
+instead of the running activity's stale component, disables other icons after a
+switch, and copies deep-link filters to alternate launchers. When upgrading it,
+verify Honey → Midnight → Graphite → Honey, relaunch persistence, and deep links.
+
+### Dependency security patches
+
+`pnpm-workspace.yaml` pins Xcode's UUID dependency to 11.1.1 and query-string's
+decoder to 0.5.0. The decoder patch preserves its callable CommonJS export for
+Expo Router without changing the upstream decoding fix.
+
+Until fixed releases exist, two tracked patches address high-severity advisories:
+
+- `node-forge@1.4.0`: enforce the nested DigestAlgorithm element count and empty
+  NULL parameters, extending
+  [upstream PR 1152](https://github.com/digitalbazaar/forge/pull/1152)
+  (GHSA-86w9-cpqp-85rv).
+- `braces@3.0.3`: reject nesting deeper than 128 in the parser and recursive AST
+  walkers, including parentheses and direct AST input (GHSA-vfj7-8cjw-p6xm).
+
+Run `pnpm --filter @honey-wallet/mobile test` to verify the installed dependency
+paths, rejection cases, and normal parsing/signing behavior. `pnpm audit` still
+reports the two patched versions: do not suppress these warnings. Replace the
+patches with upstream fixed releases when available and rerun these regressions.
+
 ## Making a change
 
 1. Fork the repo and create a branch from `main`: `git checkout -b fix/short-description`.
