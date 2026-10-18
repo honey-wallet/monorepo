@@ -75,6 +75,7 @@ export default function SectionSettingsSheet() {
       {section === 'search' && (
         <>
           <SheetField label="Sort tokens by" hint="How Top tokens is ordered when Search opens.">
+            {/* review: pills, like the network ones below and Search's own.
             <OptionChips
               options={SORTS.map((s) => s.label)}
               value={SORTS.find((s) => s.value === prefs.searchSort)?.label ?? 'Volume'}
@@ -83,7 +84,18 @@ export default function SectionSettingsSheet() {
                   searchSort: SORTS.find((s) => s.label === label)?.value ?? 'volume',
                 })
               }
-            />
+            /> */}
+            <View style={NETWORK_CHIPS}>
+              {SORTS.map((sort) => (
+                <Chip
+                  key={sort.value}
+                  label={sort.label}
+                  accessibilityRole="radio"
+                  selected={prefs.searchSort === sort.value}
+                  onPress={() => updateSectionPrefs({ searchSort: sort.value })}
+                />
+              ))}
+            </View>
           </SheetField>
           <SheetField label="Network" hint="Search starts filtered to this network.">
             {/* review: the same network chips as Search itself, logo and name.

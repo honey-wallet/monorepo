@@ -51,7 +51,7 @@ export default function ReceiveSheet() {
 
   return (
     <SheetScreen title="Receive crypto">
-      <SheetText>
+      <SheetText lead>
         {multisig
           ? `Only send tokens on ${multisig.network.name} to this shared wallet. Tokens sent on another network can't be recovered.`
           : perChain

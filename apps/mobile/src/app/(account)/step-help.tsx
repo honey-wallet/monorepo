@@ -35,7 +35,7 @@ export default function StepHelpSheet() {
   const help = (Object.hasOwn(HELP, topic) ? HELP[topic] : undefined) ?? HELP.email;
   return (
     <SheetScreen title={help.title} footer={<PillButton label="Got it" onPress={closeSheet} />}>
-      {help.intro ? <SheetText>{help.intro}</SheetText> : null}
+      {help.intro ? <SheetText lead>{help.intro}</SheetText> : null}
       {help.points.map(([icon, title, subtitle]) => (
         <SheetRow key={title} icon={icon} title={title} subtitle={subtitle} />
       ))}

@@ -56,7 +56,7 @@ export default function MyQRSheet() {
   if (!chain && !multisig && list.length > 1)
     return (
       <SheetScreen title="Which network?">
-        <SheetText>Each network has its own address.</SheetText>
+        <SheetText lead>Each network has its own address.</SheetText>
         <View style={styles.picker}>
           <ChainPicker entries={list} onPick={(family) => router.setParams({ chain: family })} />
         </View>

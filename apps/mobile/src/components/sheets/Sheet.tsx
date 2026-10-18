@@ -307,9 +307,22 @@ export function WalletSettingsRow({ tradeTabs = false }: { tradeTabs?: boolean }
  * A line of grey text under a tray's title. Left-aligned like the title (review: centred
  * text under a left title looked off); `center` for centred headers and footnotes.
  */
-export function SheetText({ children, center }: { children: ReactNode; center?: boolean }) {
+export function SheetText({
+  children,
+  center,
+  lead,
+}: {
+  children: ReactNode;
+  center?: boolean;
+  /** Right under the tray's title: closer to it (review: the gap read as a new section). */
+  lead?: boolean;
+}) {
   const styles = useStyles();
-  return <Text style={[styles.text, center && styles.textCenter]}>{children}</Text>;
+  return (
+    <Text style={[styles.text, center && styles.textCenter, lead && styles.textLead]}>
+      {children}
+    </Text>
+  );
 }
 
 type SheetRowProps = {
@@ -545,6 +558,10 @@ const useStyles = makeStyles((c) => ({
   },
   textCenter: {
     textAlign: 'center',
+  },
+  // The header row is 44 tall with 8 under it; pull the line up into that space.
+  textLead: {
+    marginTop: -10,
   },
   skeletonRow: {
     minHeight: 56,

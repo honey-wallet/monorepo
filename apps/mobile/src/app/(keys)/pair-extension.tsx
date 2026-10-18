@@ -148,8 +148,11 @@ export default function PairExtensionSheet() {
 
   if (state.step === 'done') {
     return (
-      <SheetScreen size="fill">
+      // review: a full-height tray left a lot of empty space; fit it like setup's.
+      // <SheetScreen size="fill">
+      <SheetScreen>
         <SuccessPage
+          compact
           title={toPhone ? 'Wallet added' : 'Paired'}
           detail={
             toPhone
@@ -259,16 +262,18 @@ export default function PairExtensionSheet() {
           </View>
         }
       >
+        {/* review: the same icon, title and line as this flow's other steps. */}
         <View style={styles.hero}>
+          <View style={styles.well}>
+            <Icon name="wallet" size={24} color={c.accentText} />
+          </View>
           <TextsReveal
             id="review"
             align="center"
             first={<Text style={styles.title}>Add this wallet?</Text>}
             second={
-              <Text style={styles.subtitle}>
-                From the browser that took your code. Only add it if the extension just said it sent
-                it.
-              </Text>
+              // From the browser that took your code. Only add it if the extension just said it sent it.
+              <Text style={styles.subtitle}>From your browser. Only add it if it’s yours.</Text>
             }
           />
         </View>
@@ -296,13 +301,16 @@ export default function PairExtensionSheet() {
             ? {
                 icon: 'warning',
                 title: 'Send your wallet to a browser?',
-                body: 'Pairing copies your recovery phrase to the browser that showed this code. Whoever controls that browser can move your funds.',
+                // review: shorter.
+                // body: 'Pairing copies your recovery phrase to the browser that showed this code. Whoever controls that browser can move your funds.',
+                body: 'Your recovery phrase goes to that browser. Whoever has it can move your funds.',
               }
             : state.step === 'compare'
               ? {
                   icon: 'globe',
                   title: 'Enter the code',
-                  body: 'Type the 6 digits the browser extension shows, so your wallet only goes to your browser.',
+                  // body: 'Type the 6 digits the browser extension shows, so your wallet only goes to your browser.',
+                  body: 'Type the 6 digits the extension shows.',
                 }
               : {
                   icon: 'globe',
@@ -353,11 +361,14 @@ export default function PairExtensionSheet() {
       {state.step === 'intro' ? (
         <View style={styles.card}>
           {[
-            'Only pair a browser on your own computer, open in front of you.',
-            'Never scan a pairing code that a website, message or another person sent you.',
-            toPhone
-              ? 'Someone else’s wallet can look like yours. Only send money to one you made.'
-              : 'Honey will never ask you to pair to fix a problem or claim a reward.',
+            // review: too much text. Before:
+            // 'Only pair a browser on your own computer, open in front of you.',
+            // 'Never scan a pairing code that a website, message or another person sent you.',
+            // toPhone ? 'Someone else’s wallet can look like yours. Only send money to one you made.'
+            //   : 'Honey will never ask you to pair to fix a problem or claim a reward.',
+            'Only your own computer, in front of you.',
+            'Never a code someone sent you.',
+            toPhone ? 'Only add a wallet you made.' : 'Honey never asks you to pair.',
           ].map((line) => (
             <View key={line} style={styles.rule}>
               <Icon name="check" size={16} color={c.textSecondary} />
