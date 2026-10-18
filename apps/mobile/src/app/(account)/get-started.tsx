@@ -126,7 +126,15 @@ export default function GetStartedSheet() {
                 router.push({ pathname: '/pair-phone', params: { onboarding: '1' } });
               }}
             />
-          ) : null}
+          ) : (
+            // On the phone, the wallet you made in Honey for Chrome, by its QR code.
+            <MoreRow
+              disabled={!!signingIn}
+              icon="qr"
+              title="Scan from Honey for Chrome"
+              onPress={() => go({ pathname: '/scan', params: { purpose: 'pair' } })}
+            />
+          )}
           <MoreRow
             disabled={!!signingIn}
             icon="phrase"

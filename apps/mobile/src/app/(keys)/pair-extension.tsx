@@ -1,7 +1,7 @@
 import type { PairChannel } from '@honey-wallet/api-client';
 import { type PairSession, sealPayload } from '@honey-wallet/keyring';
 import { getRandomBytes } from 'expo-crypto';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
@@ -12,6 +12,7 @@ import { SuccessPage } from '@/components/sheets/SuccessPage';
 import { api } from '@/lib/api';
 import { confirmOwner } from '@/lib/auth';
 import { success, tap } from '@/lib/haptics';
+import { finishOnboarding } from '@/lib/onboarding';
 import {
   offerDirection,
   phoneHandshake,
@@ -47,6 +48,8 @@ type State =
 export default function PairExtensionSheet() {
   const styles = useStyles();
   const c = useTheme();
+  // From onboarding: the wallet that comes across is this phone's wallet; open it.
+  const { onboarding } = useLocalSearchParams<{ onboarding?: string }>();
   const [state, setState] = useState<State>(() => {
     const uri = takeScannedOffer();
     return uri ? { step: 'intro', uri } : { step: 'missing' };
@@ -82,6 +85,10 @@ export default function PairExtensionSheet() {
       for (const account of added) addVaultWallet(account);
       if (added[0]) setActiveWallet(added[0].id);
       success();
+      if (onboarding) {
+        finishOnboarding('import');
+        return;
+      }
       setState({ step: 'done' });
     } catch (error) {
       if (!abort.current.signal.aborted) setState({ step: 'error', message: messageOf(error) });

@@ -25,7 +25,7 @@ import { wallets } from '@/lib/wallets';
  */
 export type SignInMethod = 'apple' | 'google' | 'email' | 'phrase' | 'import';
 
-export type SetupStep = 'wallet' | 'backup' | 'faceId' | 'notifications' | 'profile';
+export type SetupStep = 'wallet' | 'backup' | 'phone' | 'faceId' | 'notifications' | 'profile';
 
 /**
  * The steps that earn the fee credit, in the order the checklist shows them. The first
@@ -45,6 +45,12 @@ const ALL_STEPS: { id: SetupStep; title: string; hint: string; href: string }[] 
     hint: 'So you can get back in on a new device',
     // No iCloud or Google Drive in a browser: writing the phrase down is the backup.
     href: isWeb ? '/recovery-phrase' : '/icloud-backup',
+  },
+  {
+    id: 'phone',
+    title: 'Get Honey on your phone',
+    hint: 'Scan a code with the Honey app',
+    href: '/pair-phone?send=1',
   },
   {
     id: 'faceId',
@@ -70,13 +76,17 @@ const ALL_STEPS: { id: SetupStep; title: string; hint: string; href: string }[] 
 // and can still be finished. Its backup is writing the phrase down, so a wallet with no
 // phrase on this device (signed in with Apple, Google or email) has no backup step there.
 const PHONE_ONLY: SetupStep[] = ['faceId', 'notifications'];
+// Sending this wallet to the phone is the browser's step; it needs a phrase to send.
+const BROWSER_ONLY: SetupStep[] = ['phone'];
 const NO_PHRASE: (SignInMethod | null)[] = ['apple', 'google', 'email'];
 
 /** The checklist for how this wallet was set up, on this platform. */
 export function setupSteps(method: SignInMethod | null) {
-  if (!isWeb) return ALL_STEPS;
+  if (!isWeb) return ALL_STEPS.filter((s) => !BROWSER_ONLY.includes(s.id));
   return ALL_STEPS.filter(
-    (s) => !PHONE_ONLY.includes(s.id) && !(s.id === 'backup' && NO_PHRASE.includes(method)),
+    (s) =>
+      !PHONE_ONLY.includes(s.id) &&
+      !((s.id === 'backup' || s.id === 'phone') && NO_PHRASE.includes(method)),
   );
 }
 

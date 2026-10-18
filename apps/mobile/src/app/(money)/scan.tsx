@@ -12,7 +12,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { SCREEN } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
-import { holdScannedOffer } from '@/lib/pair-offer';
+import { holdScannedOffer, offerDirection } from '@/lib/pair-offer';
 import { showToast } from '@/lib/toast';
 import { isWalletConnectUri, pairWalletConnect } from '@/lib/walletconnect';
 import { isEvmAddress } from '@/lib/wallets';
@@ -49,6 +49,17 @@ export default function ScanScreen() {
       }
       holdWatchedAddress(address);
       router.back();
+      return;
+    }
+    // From onboarding (no wallet yet): only Honey for Chrome's "Send wallet to phone" code.
+    if (purpose === 'pair') {
+      if (offerDirection(data) !== 'toPhone') {
+        showToast('In Honey for Chrome, open Settings › Send wallet to phone');
+        handled.current = false;
+        return;
+      }
+      holdScannedOffer(data);
+      router.replace({ pathname: '/pair-extension', params: { onboarding: '1' } });
       return;
     }
     if (isWalletConnectUri(data)) {
@@ -109,7 +120,11 @@ export default function ScanScreen() {
         <TextsReveal
           id="scan"
           align="center"
-          first={<Text style={styles.title}>Scan a QR code</Text>}
+          first={
+            <Text style={styles.title}>
+              {purpose === 'pair' ? 'Scan the code in Honey for Chrome' : 'Scan a QR code'}
+            </Text>
+          }
         />
         <View style={styles.frame}>
           {(['tl', 'tr', 'bl', 'br'] as const).map((corner) => (
@@ -143,17 +158,20 @@ export default function ScanScreen() {
       </View>
 
       <View style={[styles.bottom, { paddingBottom: insets.bottom + SCREEN.footerBottom }]}>
-        <PressableScale
-          onPress={() => {
-            tap();
-            // From the scanner, My QR offers a way back to scanning.
-            router.replace({ pathname: '/my-qr', params: { from: 'scan' } });
-          }}
-          style={styles.myQr}
-        >
-          <Icon name="qr" size={18} color={c.text} />
-          <Text style={styles.myQrLabel}>Show my QR code</Text>
-        </PressableScale>
+        {/* No wallet yet while onboarding, so no QR code of yours to show. */}
+        {purpose === 'pair' ? null : (
+          <PressableScale
+            onPress={() => {
+              tap();
+              // From the scanner, My QR offers a way back to scanning.
+              router.replace({ pathname: '/my-qr', params: { from: 'scan' } });
+            }}
+            style={styles.myQr}
+          >
+            <Icon name="qr" size={18} color={c.text} />
+            <Text style={styles.myQrLabel}>Show my QR code</Text>
+          </PressableScale>
+        )}
       </View>
     </View>
   );

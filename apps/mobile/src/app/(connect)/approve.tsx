@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatEther, type Hex } from 'viem';
 import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from '@/components/Icon';
+import { Checkbox } from '@/components/motion/Checkbox';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetRow, StatRow } from '@/components/sheets/Sheet';
@@ -179,6 +180,9 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A site flagged as a scam needs this ticked first, so one tap can't approve it.
+  const scam = approval.verified === 'scam';
+  const [riskAccepted, setRiskAccepted] = useState(false);
   const site = approval.site;
   const signer = signers.find((s) => s.wallet.id === (site?.walletId ?? picked));
 
@@ -218,7 +222,7 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
             : wrongNetwork;
 
   const approve = async () => {
-    if (busy || blocked) return;
+    if (busy || blocked || (scam && !riskAccepted)) return;
     tap();
     setBusy(true);
     setError(null);
@@ -310,6 +314,13 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
             }
           />
         ) : null}
+        {scam ? (
+          <Checkbox
+            label="I understand the risk and want to continue"
+            checked={riskAccepted}
+            onChange={setRiskAccepted}
+          />
+        ) : null}
         {approval.kind === 'connect' ? (
           <Connect signers={eligible} picked={picked} onPick={setPicked} />
         ) : (
@@ -332,7 +343,7 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
         {blocked ? null : (
           <PillButton
             label={busy ? '…' : primary}
-            disabled={busy || (approval.kind === 'connect' && !picked)}
+            disabled={busy || (scam && !riskAccepted) || (approval.kind === 'connect' && !picked)}
             onPress={approve}
             style={styles.flex}
           />

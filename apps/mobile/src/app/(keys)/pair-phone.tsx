@@ -10,7 +10,7 @@ import { SheetScreen } from '@/components/sheets/Sheet';
 import { QRCode } from '@/components/wallet/QRCode';
 import { confirmOwner } from '@/lib/auth';
 import { failure, success, tap } from '@/lib/haptics';
-import { finishOnboarding } from '@/lib/onboarding';
+import { completeStep, finishOnboarding } from '@/lib/onboarding';
 import { receiveWallet, sendWallet, startPairing, waitForPhone } from '@/lib/pair-phone';
 import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
@@ -94,6 +94,7 @@ function PairPhone() {
     setState({ step: 'sending', session });
     try {
       await sendWallet(offer, session);
+      completeStep('phone');
       success();
       showToast('Sent to your phone');
       // Back to wherever it was opened from (Settings), not the start of the stack.
