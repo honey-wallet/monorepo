@@ -22,6 +22,7 @@ import {
   reasonOf,
   siweDomain,
   solanaSummary,
+  TYPED_ROW_LIMIT,
   typedRows,
 } from '@/lib/dapp-sign';
 import { failure, success, tap } from '@/lib/haptics';
@@ -464,13 +465,18 @@ function TypedData({ approval, json }: { approval: Approval; json: string }) {
   };
   const chainId = domain.chainId === undefined ? undefined : Number(domain.chainId);
   const wrongChain = chainId !== undefined && approval.site && chainId !== approval.site.chainId;
-  const rows = typedRows(
+  const { rows, complete } = typedRows(
     typed.types as unknown as Record<string, { name: string; type: string }[]>,
     String(typed.primaryType),
     typed.message as Record<string, unknown>,
   );
   return (
     <>
+      {complete ? null : (
+        <Warning
+          text={`This request is too large to show in full (over ${TYPED_ROW_LIMIT} fields). Honey won’t sign it.`}
+        />
+      )}
       {isPermit(typed.primaryType as string) ? (
         <Warning text="This lets someone move your tokens without asking again. Only sign on sites you trust." />
       ) : null}

@@ -1,6 +1,7 @@
 import type { Answer, Approval } from '@honey-wallet/extension/protocol';
 import {
   evmNetwork,
+  parseTypedData,
   readSolanaTransaction,
   SOLANA_MAINNET,
   signEvmMessage,
@@ -179,8 +180,18 @@ export async function performApproval(approval: Approval, walletId: string): Pro
     switch (approval.kind) {
       case 'evmSign':
         return { id, result: await signEvmMessage(key, params.message as string) };
-      case 'evmTypedData':
+      case 'evmTypedData': {
+        // Only what could be shown in full is signed.
+        const typed = parseTypedData(params.data as string);
+        const shown = typedRows(
+          typed.types as unknown as Record<string, TypedField[]>,
+          String(typed.primaryType),
+          typed.message as Record<string, unknown>,
+        );
+        if (!shown.complete)
+          throw new Error('This request is too large to show, so Honey won’t sign it');
         return { id, result: await signEvmTypedData(key, params.data as string) };
+      }
       case 'evmSend': {
         const chainId = params.chainId as number;
         const { client } = clientFor(chainId);
@@ -222,15 +233,22 @@ type TypedField = { name: string; type: string };
  * type, so what's shown is exactly what's signed (keys a site adds outside the types are
  * ignored by the signature, and so they aren't shown either).
  */
+/** The most rows a typed-data request may expand to; past it, Honey won't show or sign it. */
+export const TYPED_ROW_LIMIT = 300;
+
 export function typedRows(
   types: Record<string, readonly TypedField[]>,
   primaryType: string,
   message: Record<string, unknown>,
-): [string, string][] {
+): { rows: [string, string][]; complete: boolean } {
   const rows: [string, string][] = [];
+  // One budget for the whole walk: types that refer to each other can't make it explode.
+  let visits = 0;
+  let complete = true;
   const walk = (type: string, value: unknown, path: string, depth: number) => {
-    if (depth > 8) {
-      rows.push([path, '(too deeply nested to show)']);
+    if (!complete) return;
+    if (++visits > TYPED_ROW_LIMIT * 2 || rows.length >= TYPED_ROW_LIMIT || depth > 8) {
+      complete = false;
       return;
     }
     const array = /^(.*)\[(\d*)\]$/.exec(type);
@@ -242,11 +260,16 @@ export function typedRows(
       }
       return;
     }
-    const fields = types[type];
-    if (fields) {
-      const record = (value ?? {}) as Record<string, unknown>;
-      for (const f of fields)
+    const fields = Object.hasOwn(types, type) ? types[type] : undefined;
+    if (Array.isArray(fields)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        rows.push([path, '(missing)']);
+        return;
+      }
+      const record = value as Record<string, unknown>;
+      for (const f of fields) {
         walk(f.type, record[f.name], path ? `${path}.${f.name}` : f.name, depth + 1);
+      }
       return;
     }
     rows.push([
@@ -259,5 +282,5 @@ export function typedRows(
     ]);
   };
   walk(primaryType, message, '', 0);
-  return rows;
+  return { rows, complete };
 }
