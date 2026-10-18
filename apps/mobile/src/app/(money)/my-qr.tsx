@@ -168,8 +168,10 @@ const useStyles = makeStyles((c) => ({
   top: {
     alignItems: 'center',
   },
+  // review: extra space above the list; the same gap as Receive's.
   picker: {
-    marginTop: 16,
+    // marginTop: 16,
+    marginTop: 8,
   },
   handle: {
     color: c.text,

@@ -78,7 +78,9 @@ const useStyles = makeStyles((c) => ({
     paddingVertical: 4,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: c.card,
+    // review: in dark a card is the sheet's own colour, so its padding read as a gap.
+    // backgroundColor: c.card,
+    backgroundColor: c.card === c.sheet ? c.raised : c.card,
   },
   row: {
     flexDirection: 'row',
