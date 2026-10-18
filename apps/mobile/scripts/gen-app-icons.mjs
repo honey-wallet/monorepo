@@ -36,9 +36,13 @@ const honey = { background: '#FFFFFF', mark: '#FEBE2B', eye: '#4B2817' };
 const honeyDark = { background: '#000000', mark: '#FEBE2B', eye: '#4B2817' };
 const midnight = { background: '#17140F', mark: '#FEBE2B' };
 const graphite = { background: '#292929', mark: '#FFFFFF' };
+// Dark by default (review): the black icon on every home screen; white is the Light pick.
 for (const [file, colors] of Object.entries({
-  'icon.png': honey,
-  'ios-light.png': honey,
+  // 'icon.png': honey,
+  // 'ios-light.png': honey,
+  'icon.png': honeyDark,
+  'ios-light.png': honeyDark,
+  'icon-light.png': honey,
   'ios-dark.png': honeyDark,
   'ios-tinted.png': { background: '#202020', mark: '#FFFFFF' },
   'icon-midnight.png': midnight,
@@ -64,4 +68,4 @@ await render('android-icon-graphite.png', {
 });
 await render('android-icon-monochrome.png', { mark: '#FFFFFF', width: 600 });
 await render('favicon.png', { ...honey, size: 64 });
-console.log('Generated Honey, Midnight and Graphite app icons.');
+console.log('Generated Honey, Light, Midnight and Graphite app icons.');

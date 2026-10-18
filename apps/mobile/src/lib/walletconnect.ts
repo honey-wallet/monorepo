@@ -121,7 +121,8 @@ async function start(): Promise<IWalletKit | null> {
   const walletkit = await WalletKit.init({
     core,
     metadata: {
-      name: 'Honey',
+      // name: 'Honey',
+      name: 'Honey Wallet',
       description: 'All your crypto, one wallet.',
       url: 'https://honeywallet.app',
       icons: ['https://honeywallet.app/icon.png'],

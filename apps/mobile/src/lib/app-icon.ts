@@ -1,6 +1,6 @@
 import { requireOptionalNativeModule } from 'expo';
 
-export type AppIconName = 'Midnight' | 'Graphite' | null;
+export type AppIconName = 'Light' | 'Midnight' | 'Graphite' | null;
 
 // Optional so Expo Go and web can still open the wallet without this native module.
 const native = requireOptionalNativeModule<{
@@ -13,7 +13,7 @@ export const supportsAppIcons = native?.supportsAlternateIcons === true;
 
 export function getAppIcon(): AppIconName {
   const name = native?.getAppIconName();
-  return name === 'Midnight' || name === 'Graphite' ? name : null;
+  return name === 'Light' || name === 'Midnight' || name === 'Graphite' ? name : null;
 }
 
 /** The OS persists the choice; never claim success before the native call completes. */

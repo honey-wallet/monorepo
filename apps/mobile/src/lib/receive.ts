@@ -25,7 +25,9 @@ const FAMILIES: Record<ChainFamily, Omit<ReceiveAddress, 'family' | 'address' | 
 
 // XRP isn't offered for receiving (review: not needed); its address still derives.
 // const ORDER: ChainFamily[] = ['evm', 'bitcoin', 'solana', 'tron', 'xrp'];
-const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin', 'tron'];
+// Tron is out for now (review): EVM, Solana and Bitcoin only.
+// const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin', 'tron'];
+const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin'];
 
 /** Networks the one EVM address works on, shown as logos. */
 export const EVM_LOGOS = [

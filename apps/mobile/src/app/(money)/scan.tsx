@@ -128,10 +128,21 @@ export default function ScanScreen() {
           align="center"
           first={
             <Text style={styles.title}>
-              {purpose === 'pair' || purpose === 'extension'
+              {/* {purpose === 'pair' || purpose === 'extension'
                 ? 'Scan the code in the browser extension'
+                : 'Scan a QR code'} */}
+              {purpose === 'pair' || purpose === 'extension'
+                ? 'Scan the extension’s code'
                 : 'Scan a QR code'}
             </Text>
+          }
+          // One short line under it, centred, instead of a two-line title (review).
+          second={
+            purpose === 'pair' || purpose === 'extension' ? (
+              <Text style={styles.hint}>
+                It’s in Honey in your browser, under Pair with your phone.
+              </Text>
+            ) : undefined
           }
         />
         <View style={styles.frame}>
@@ -162,6 +173,7 @@ export default function ScanScreen() {
           style={styles.photo}
         >
           <Icon name="photo" size={18} color="#FFFFFF" />
+          <Text style={styles.photoLabel}>Choose from photos</Text>
         </PressableScale>
       </View>
 
@@ -212,9 +224,19 @@ const useStyles = makeStyles((c) => ({
     gap: 28,
   },
   title: {
+    paddingHorizontal: 32,
     color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '600',
+    textAlign: 'center',
+  },
+  hint: {
+    marginTop: 8,
+    paddingHorizontal: 40,
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 15,
+    lineHeight: 21,
+    textAlign: 'center',
   },
   frame: {
     width: FRAME,
@@ -251,13 +273,21 @@ const useStyles = makeStyles((c) => ({
   permissionButton: {
     paddingHorizontal: 22,
   },
+  // A labelled pill, so it says what it does (review: cleaner scanner).
   photo: {
-    width: 44,
+    flexDirection: 'row',
+    gap: 8,
     height: 44,
+    paddingHorizontal: 18,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  photoLabel: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
   },
   bottom: {
     alignItems: 'center',

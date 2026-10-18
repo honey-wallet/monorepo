@@ -9,7 +9,8 @@ const accountsOf = (payload: PairPayload) =>
   payload.accounts.length ? payload.accounts : [{ index: 0, label: 'Wallet' }];
 
 /**
- * What a pairing brought, before it's added: each wallet's name and address. The
+ * A pairing's wallets by name and address: what arrived, before it's added, or what's
+ * about to leave (the sending phone's confirm step). The
  * receiving device never adds a wallet on its own. Someone who saw the QR could answer
  * before your own device does, so you check these are yours (your other device just
  * took the code) and tap to add them.

@@ -8,7 +8,9 @@ import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 
 const OPTIONS = [
+  // Honey is the dark icon, the default; Light is the white one.
   { name: null, label: 'Honey', image: require('../../../assets/images/icon.png') },
+  { name: 'Light', label: 'Light', image: require('../../../assets/images/icon-light.png') },
   {
     name: 'Midnight',
     label: 'Midnight',

@@ -90,15 +90,14 @@ function PredictOrderSheet() {
     <FlowTray>
       <SheetScreen size="fill">
         <View style={styles.flex}>
-          {/* Back, and Buy or Sell as a small pill toggle */}
-          {/* Buying is the sheet; selling happens from a position, so no Buy/Sell
-              toggle here. */}
+          {/* Back, and Buy or Sell as a small pill toggle (review: bring the toggle back). */}
+          {/*
           <OrderBar>
             <Text style={styles.orderTitle}>{`Buy ${side}`}</Text>
           </OrderBar>
-          {/*
+          */}
           <OrderBar>
-            <View style={styles.modes}>
+            <View style={styles.modes} accessibilityRole="radiogroup">
               {(['Buy', 'Sell'] as const).map((m) => (
                 <PressableScale
                   key={m}
@@ -115,7 +114,6 @@ function PredictOrderSheet() {
               ))}
             </View>
           </OrderBar>
-          */}
 
           {/* The market and the answer you're backing */}
           <View style={styles.market}>
@@ -130,9 +128,11 @@ function PredictOrderSheet() {
               </Text>
             </View>
           </View>
-          {/* What "Buy" means here, in one line (review: "why Buy?"). */}
+          {/* What Buy (or Sell) means here, in one line (review: "why Buy?"). */}
           <Text style={styles.explain}>
-            {`You buy ${side} shares at ${formatShare(price, predictPrice)} each. Each pays $1 if ${side} is right; sell any time before it closes.`}
+            {mode === 'Buy'
+              ? `You buy ${side} shares at ${formatShare(price, predictPrice)} each. Each pays $1 if ${side} is right; sell any time before it closes.`
+              : `You sell ${side} shares you hold at ${formatShare(price, predictPrice)} each, any time before the market closes.`}
           </Text>
 
           {mode === 'Sell' ? (

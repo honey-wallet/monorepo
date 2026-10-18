@@ -10,7 +10,9 @@ import { FROM_CONTENT, FROM_PAGE, type Namespace, type PageReply } from './proto
 
 declare const __HONEY_ICON__: string;
 const ICON = __HONEY_ICON__ as `data:image/png;base64,${string}`;
-const NAME = 'Honey';
+// const NAME = 'Honey';
+// The app's name everywhere (review): sites list the wallet as Honey Wallet.
+const NAME = 'Honey Wallet';
 /** EIP-6963's reverse-DNS id for this wallet. */
 const RDNS = 'app.honeywallet';
 

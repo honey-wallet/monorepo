@@ -117,4 +117,4 @@ for (const name of ['background', 'content', 'inpage']) {
     },
   });
 }
-console.log(`\nHoney for Chrome built in ${out}`);
+console.log(`\nHoney Wallet extension built in ${out}`);

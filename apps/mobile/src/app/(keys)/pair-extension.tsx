@@ -31,6 +31,7 @@ type State =
   | { step: 'intro'; uri: string }
   | { step: 'connecting' }
   | { step: 'compare'; session: PairSession; pair: PairChannel }
+  | { step: 'confirm'; session: PairSession; pair: PairChannel; payload: PairPayload }
   | { step: 'sending' }
   | { step: 'receiving'; code: string }
   | { step: 'review'; payload: PairPayload }
@@ -111,13 +112,25 @@ export default function PairExtensionSheet() {
     }
   };
 
-  const send = async (session: PairSession, pair: PairChannel) => {
-    if (!(await confirmOwner('Send your wallet to this browser'))) return;
-    setState({ step: 'sending' });
+  /** The code matched: say what leaves and that Face ID comes next, before the system asks. */
+  const matched = async (session: PairSession, pair: PairChannel) => {
     try {
       const wallet = await readPrimaryWallet();
       if (!wallet) throw new Error('Create or import a wallet first.');
-      const data = sealPayload(session.key, { v: 1, ...wallet }, getRandomBytes);
+      success();
+      setState({ step: 'confirm', session, pair, payload: { v: 1, ...wallet } });
+    } catch (error) {
+      setState({ step: 'error', message: messageOf(error) });
+    }
+  };
+
+  // Cancelling Face ID (or the passcode) leaves you on the confirm step to try again.
+  const send = async (session: PairSession, pair: PairChannel, payload: PairPayload) => {
+    tap();
+    if (!(await confirmOwner('Send your wallet to this browser'))) return;
+    setState({ step: 'sending' });
+    try {
+      const data = sealPayload(session.key, payload, getRandomBytes);
       await api.pairSend(pair, 'payload', { data });
       completeStep('browser');
       success();
@@ -178,6 +191,51 @@ export default function PairExtensionSheet() {
           this phone.
         </Text>
         <ActivityIndicator style={styles.waiting} color={c.textSecondary} />
+      </SheetScreen>
+    );
+  }
+
+  // Honey's own step before the system's Face ID or passcode prompt, so it isn't a surprise.
+  if (state.step === 'confirm') {
+    return (
+      <SheetScreen
+        size="fill"
+        footer={
+          <View style={styles.buttons}>
+            <PillButton
+              label="Cancel"
+              variant="secondary"
+              onPress={() => {
+                close();
+                showToast('Nothing was sent');
+              }}
+              style={styles.flex}
+            />
+            <PillButton
+              label="Send"
+              onPress={() => send(state.session, state.pair, state.payload)}
+              style={styles.flex}
+            />
+          </View>
+        }
+      >
+        <View style={styles.hero}>
+          <View style={styles.well}>
+            <Icon name="faceId" size={24} color={c.accentText} />
+          </View>
+          <TextsReveal
+            id="confirm"
+            align="center"
+            first={<Text style={styles.title}>Code matches</Text>}
+            second={
+              <Text style={styles.subtitle}>
+                This wallet goes to your browser, encrypted for it alone. Next, confirm it’s you
+                with Face ID or your passcode.
+              </Text>
+            }
+          />
+        </View>
+        <ArrivedWallets payload={state.payload} />
       </SheetScreen>
     );
   }
@@ -310,7 +368,7 @@ export default function PairExtensionSheet() {
       ) : state.step === 'compare' ? (
         <CodeEntry
           code={state.session.code}
-          onMatch={() => send(state.session, state.pair)}
+          onMatch={() => matched(state.session, state.pair)}
           onGiveUp={() => {
             abort.current.abort();
             setState({
