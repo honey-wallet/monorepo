@@ -37,6 +37,17 @@ export const disconnectSite = (origin: string) =>
 
 export const forgetSites = () => send<boolean>({ type: 'honey:forget' }, false);
 
+/** The toolbar popup (boot.js marks it), as opposed to Honey's own window or a tab. */
+export const inPopup =
+  typeof document !== 'undefined' && document.documentElement.classList.contains('popup');
+
+/** From the popup: the same screen in Honey's phone-sized window, then the popup closes. */
+export async function expandView() {
+  const route = `${location.pathname.replace(/^\/+/, '')}${location.search}`;
+  await send<boolean>({ type: 'honey:expand', route }, false);
+  window.close();
+}
+
 /** Chrome stops an idle worker after ~30s; an open approval pings it so nothing is lost. */
 export function keepWorkerAwake() {
   const timer = setInterval(() => void send({ type: 'honey:ping' }, null), 20_000);

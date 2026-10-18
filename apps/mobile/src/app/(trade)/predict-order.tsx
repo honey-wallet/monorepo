@@ -144,7 +144,10 @@ function PredictOrderSheet() {
                 action={{ label: `Buy ${side}`, onPress: () => setMode('Buy') }}
               />
             </View>
-          ) : cash <= 0 ? (
+          ) : (
+            // No cash still shows the form, so you can try it out (review); its
+            // button then says Add money.
+            /* ) : cash <= 0 ? (
             <View style={styles.flex}>
               <EmptyState
                 icon="wallet"
@@ -157,7 +160,7 @@ function PredictOrderSheet() {
                 }}
               />
             </View>
-          ) : (
+            */
             <>
               <View style={styles.amountArea}>
                 <TypedAmount value={amount} prefix="$" size={56} />
@@ -231,16 +234,26 @@ function PredictOrderSheet() {
               </View>
 
               <Keypad keyHeight={54} onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
-              <PillButton
-                label={!value ? 'Enter an amount' : tooMuch ? 'Not enough cash' : `Buy ${side}`}
-                disabled={!value || tooMuch}
-                onPress={() => {
-                  if (result.attempt()) return;
-                  success();
-                  setBought(true);
-                }}
-                style={styles.cta}
-              />
+              {cash <= 0 ? (
+                <PillButton
+                  label="Add money"
+                  onPress={() =>
+                    router.replace({ pathname: '/buy-cash', params: { symbol: 'USDC' } })
+                  }
+                  style={styles.cta}
+                />
+              ) : (
+                <PillButton
+                  label={!value ? 'Enter an amount' : tooMuch ? 'Not enough cash' : `Buy ${side}`}
+                  disabled={!value || tooMuch}
+                  onPress={() => {
+                    if (result.attempt()) return;
+                    success();
+                    setBought(true);
+                  }}
+                  style={styles.cta}
+                />
+              )}
             </>
           )}
         </View>
@@ -346,6 +359,8 @@ const useStyles = makeStyles((c) => ({
   },
   amountArea: {
     flex: 1,
+    // The amount keeps its room in a short window (the 600px popup).
+    minHeight: 88,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,

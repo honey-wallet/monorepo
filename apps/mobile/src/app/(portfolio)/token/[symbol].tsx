@@ -2,14 +2,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Pressable, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PriceChart } from '@/components/charts/PriceChart';
 import { Icon, type IconName } from '@/components/Icon';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ActionMenu } from '@/components/motion/ActionMenu';
 import { LikeButton } from '@/components/motion/LikeButton';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
-import { PopoverMenu } from '@/components/motion/PopoverMenu';
+// import { PopoverMenu } from '@/components/motion/PopoverMenu';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { RESIZE } from '@/components/motion/resize';
 import { SegmentedTabs } from '@/components/motion/SegmentedTabs';
@@ -20,7 +20,8 @@ import {
   useFirstLoad,
 } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
-import { ACTION_FOOTER_HEIGHT, ActionFooter } from '@/components/sheets/ActionFooter';
+// import { ACTION_FOOTER_HEIGHT, ActionFooter } from '@/components/sheets/ActionFooter';
+import { ActionFooter } from '@/components/sheets/ActionFooter';
 import { Description } from '@/components/sheets/Description';
 import { StatRow } from '@/components/sheets/Sheet';
 import { Change, EmptyState, PushedScreen, TokenIcon } from '@/components/wallet/parts';
@@ -50,7 +51,7 @@ const CHART_HEIGHT = 230;
 
 export default function TokenScreen() {
   const { symbol = 'ETH' } = useLocalSearchParams<{ symbol: string }>();
-  const insets = useSafeAreaInsets();
+  // const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const styles = useStyles();
   const c = useTheme();
@@ -67,7 +68,7 @@ export default function TokenScreen() {
   const [scrub, setScrub] = useState<number | null>(null);
   const loading = useFirstLoad(LOADS.token(symbol));
   const [showBreakdown, setShowBreakdown] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
+  // const [menuOpen, setMenuOpen] = useState(false);
 
   if (!market) {
     return (
@@ -109,6 +110,7 @@ export default function TokenScreen() {
           <ActionMenu
             bare
             actions={[
+              { label: 'Receive', icon: 'qr', onPress: () => router.push('/receive') },
               {
                 label: 'Share',
                 icon: 'link',
@@ -133,6 +135,9 @@ export default function TokenScreen() {
           <LikeButton liked={favorites.includes(symbol)} onToggle={() => toggleFavorite(symbol)} />
         </>
       }
+      // The footer's square is Send now (review); Receive is in the ⋯ menu above, and the
+      // grid's other items repeated Buy and Sell.
+      /*
       // More actions open above the grid button; the frame draws the overlay under
       // the footer, so the button stays on top and can swap to ✕.
       overlay={
@@ -157,6 +162,7 @@ export default function TokenScreen() {
           ]}
         />
       }
+      */
       footer={
         <ActionFooter
           actions={[
@@ -171,7 +177,8 @@ export default function TokenScreen() {
               onPress: () => router.push({ pathname: '/buy', params: { symbol, mode: 'sell' } }),
             },
           ]}
-          menu={{ open: menuOpen, onToggle: () => setMenuOpen((o) => !o) }}
+          // menu={{ open: menuOpen, onToggle: () => setMenuOpen((o) => !o) }}
+          send={() => router.push('/send')}
         />
       }
     >

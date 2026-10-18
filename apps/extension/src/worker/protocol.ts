@@ -95,7 +95,9 @@ export type AppMessage =
   /** Sign out or reset: disconnect every site. */
   | { type: 'honey:forget' }
   /** Keeps the worker awake while the approval window is open. */
-  | { type: 'honey:ping' };
+  | { type: 'honey:ping' }
+  /** The popup's Expand view: open Honey's phone-sized window at this route. */
+  | { type: 'honey:expand'; route: string };
 
 export const STORAGE = {
   sites: 'honey.sites',

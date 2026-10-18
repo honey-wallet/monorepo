@@ -3,8 +3,8 @@ import { tap } from '@/lib/haptics';
 
 /**
  * A toast on screen. Each show() gets a fresh id. `top` when a tray was open as it
- * showed: trays rise from the bottom, where the toast would cover the tray's title, and
- * it keeps that place while the tray closes rather than jumping.
+ * showed (the name is older than the behaviour): it then sits above the tray's footer
+ * buttons, and keeps that place while the tray closes rather than jumping.
  */
 export type Toast = { id: number; message: string; top: boolean };
 

@@ -18,6 +18,16 @@ export function useTradeModes(): TradeMode[] {
   return shown.length ? shown : ['Swap'];
 }
 
+/**
+ * Trade's tabs: your chosen tabs on every wallet. On a shared wallet the ones it can't
+ * use still show and say why (review: tabs that vanished looked broken).
+ */
+export function useTradeTabs(): TradeMode[] {
+  const { tradeTabs } = useSettings();
+  const shown = tradeTabs.filter((m) => AVAILABLE_TRADE_MODES.includes(m));
+  return shown.length ? shown : ['Swap'];
+}
+
 /** Whether the wallet in use can open a product (shared wallets can only swap). */
 export function useTradeModeAllowed(mode: TradeMode) {
   const multisig = useActiveMultisig();

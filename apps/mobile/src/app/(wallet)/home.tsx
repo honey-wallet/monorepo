@@ -54,6 +54,7 @@ import {
 } from '@/components/wallet/parts';
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useCopy } from '@/lib/copy';
+import { expandView, inPopup } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib/mock-wallet';
@@ -530,6 +531,14 @@ export default function HomeScreen() {
                 </View>
               </View>
               <View style={styles.shortcuts}>
+                {/* In the toolbar popup: open the same screen in Honey's phone-sized window. */}
+                {inPopup ? (
+                  <HeaderShortcut
+                    icon="expandView"
+                    label="Expand view"
+                    onPress={() => void expandView()}
+                  />
+                ) : null}
                 <HeaderShortcut
                   icon="bell"
                   label="Notifications"

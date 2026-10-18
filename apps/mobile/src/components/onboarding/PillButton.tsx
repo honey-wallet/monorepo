@@ -57,6 +57,9 @@ export function PillButton({ label, onPress, variant = 'primary', disabled, morp
 const useStyles = makeStyles((c) => ({
   button: {
     height: 50,
+    // Never squashed when a caller's flex: 1 lands it in a short column (a footer in a
+    // short window).
+    minHeight: 50,
     // Room either side, so a button sized to its label never crowds it. Less in the
     // browser's 380px popup, where two buttons share a row and labels would wrap.
     paddingHorizontal: isWeb ? 14 : 24,

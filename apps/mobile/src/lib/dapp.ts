@@ -33,6 +33,10 @@ export async function forgetSites() {
   await (await wc()).forgetApps();
 }
 
+/** Only the browser extension has a toolbar popup to expand. */
+export const inPopup = false;
+export async function expandView() {}
+
 /** While the approval screen is open, new requests queue in it instead of opening another. */
 export function keepWorkerAwake(): () => void {
   void wc().then((m) => m.setApprovalShowing(true));
