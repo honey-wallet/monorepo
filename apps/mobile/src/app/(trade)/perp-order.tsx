@@ -1,7 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
-import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
@@ -38,7 +37,7 @@ function PerpOrderSheet() {
   const params = useLocalSearchParams<{ symbol?: string; side?: string }>();
   const symbol = params.symbol ?? 'BTC';
   const market = perpMarket(symbol);
-  const [side, setSide] = useState<PerpSide>(params.side === 'Short' ? 'Short' : 'Long');
+  const [side] = useState<PerpSide>(params.side === 'Short' ? 'Short' : 'Long');
   const outcome = useFailure('perp');
   const [amount, setAmount] = useState('');
   const [opened, setOpened] = useState(false);
@@ -92,6 +91,14 @@ function PerpOrderSheet() {
       <SheetScreen size="fill">
         <View style={styles.flex}>
           {/* Back, and Long or Short as a compact pill; the market under them */}
+          {/* The side was picked on the market (Long or Short); a toggle here only
+              raised "why is this here". Shown as the sheet's title instead. */}
+          <OrderBar>
+            <Text style={[styles.orderTitle, { color: side === 'Long' ? c.success : c.error }]}>
+              {side}
+            </Text>
+          </OrderBar>
+          {/*
           <OrderBar>
             <View style={styles.sides}>
               {(['Long', 'Short'] as const).map((s) => {
@@ -114,6 +121,7 @@ function PerpOrderSheet() {
               })}
             </View>
           </OrderBar>
+          */}
           <View style={styles.market}>
             <MarketIcon market={market} size={40} />
             <View style={styles.flex}>
@@ -281,6 +289,10 @@ const useStyles = makeStyles((c) => ({
     padding: 3,
     borderRadius: 19,
     backgroundColor: c.card,
+  },
+  orderTitle: {
+    fontSize: 17,
+    fontWeight: '600',
   },
   side: {
     height: 32,

@@ -91,6 +91,12 @@ function PredictOrderSheet() {
       <SheetScreen size="fill">
         <View style={styles.flex}>
           {/* Back, and Buy or Sell as a small pill toggle */}
+          {/* Buying is the sheet; selling happens from a position, so no Buy/Sell
+              toggle here. */}
+          <OrderBar>
+            <Text style={styles.orderTitle}>Buy</Text>
+          </OrderBar>
+          {/*
           <OrderBar>
             <View style={styles.modes}>
               {(['Buy', 'Sell'] as const).map((m) => (
@@ -109,6 +115,7 @@ function PredictOrderSheet() {
               ))}
             </View>
           </OrderBar>
+          */}
 
           {/* The market and the answer you're backing */}
           <View style={styles.market}>
@@ -283,6 +290,11 @@ function PredictOrderSheet() {
 const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
+  },
+  orderTitle: {
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '600',
   },
   modes: {
     flexDirection: 'row',

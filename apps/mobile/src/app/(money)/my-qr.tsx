@@ -7,7 +7,8 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { TiltCard } from '@/components/motion/TiltCard';
-import { SheetScreen } from '@/components/sheets/Sheet';
+import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
+import { ChainPicker } from '@/components/wallet/ChainPicker';
 import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { TokenIcon } from '@/components/wallet/parts';
 import { QRCode } from '@/components/wallet/QRCode';
@@ -16,7 +17,7 @@ import { tap } from '@/lib/haptics';
 import { handleFor } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
-import { receiveAddresses } from '@/lib/receive';
+import { EVM_LOGOS, receiveAddresses } from '@/lib/receive';
 import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -24,7 +25,6 @@ const QR_SIZE = 240;
 
 // const EVM_CHAINS = CHAINS.filter((ch) => ch.name === 'Ethereum' || ch.name === 'Base');
 /** Every EVM network Honey supports: one address works on all of them. */
-const EVM_LOGOS = ['ETH', 'BASE', 'ARB', 'OP', 'POL', 'BNB', 'AVAX', 'GNO', 'LINEA', 'SCROLL'];
 
 /**
  * Your receive QR code, after Uniswap's: handle, dotted code, full address. Opened
@@ -49,6 +49,17 @@ export default function MyQRSheet() {
     return (
       <SheetScreen title="Demo wallet">
         <Text style={{ color: c.text }}>Create or import a wallet before receiving funds.</Text>
+      </SheetScreen>
+    );
+
+  // Opened without a network (from Home): ask which one first.
+  if (!chain && !multisig && list.length > 1)
+    return (
+      <SheetScreen title="Which network?">
+        <SheetText>Each network has its own address.</SheetText>
+        <View style={styles.picker}>
+          <ChainPicker entries={list} onPick={(family) => router.setParams({ chain: family })} />
+        </View>
       </SheetScreen>
     );
 
@@ -156,6 +167,9 @@ export default function MyQRSheet() {
 const useStyles = makeStyles((c) => ({
   top: {
     alignItems: 'center',
+  },
+  picker: {
+    marginTop: 16,
   },
   handle: {
     color: c.text,

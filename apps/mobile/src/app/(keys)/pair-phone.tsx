@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
-import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { ArrivedWallets } from '@/components/pairing/ArrivedWallets';
 import { CodeEntry } from '@/components/pairing/CodeEntry';
@@ -209,29 +208,28 @@ function PairPhone() {
     );
   }
 
-  if (state.step === 'receiving' || state.step === 'sending') {
+  if (state.step === 'sending') {
     return (
-      <SheetScreen
-        title={state.step === 'sending' ? 'Sending to your phone' : 'Type this code on your phone'}
-      >
-        <TextsReveal
-          id={state.step}
-          first={
-            <Text style={styles.body}>
-              {state.step === 'sending'
-                ? 'Encrypted for your phone only…'
-                : 'Honey on your phone asks for it before it sends your wallet here.'}
-            </Text>
-          }
-        />
-        {state.step === 'receiving' ? (
-          <Text
-            style={styles.code}
-            accessibilityLabel={`Code ${state.session.code.split('').join(' ')}`}
-          >
-            {`${state.session.code.slice(0, 3)} ${state.session.code.slice(3)}`}
-          </Text>
-        ) : null}
+      <SheetScreen title="Sending to your phone">
+        <Text style={styles.body}>Encrypted for your phone only…</Text>
+        <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
+      </SheetScreen>
+    );
+  }
+
+  // Receiving: what to do first (the title), the code, then what happens next.
+  if (state.step === 'receiving') {
+    return (
+      <SheetScreen title="Enter this code on your phone">
+        <Text
+          style={styles.code}
+          accessibilityLabel={`Code ${state.session.code.split('').join(' ')}`}
+        >
+          {`${state.session.code.slice(0, 3)} ${state.session.code.slice(3)}`}
+        </Text>
+        <Text style={[styles.body, styles.centered]}>
+          Your phone is asking for these 6 digits. Once you type them there, your wallet comes here.
+        </Text>
         <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
       </SheetScreen>
     );
@@ -285,6 +283,9 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
     flexDirection: 'row',
     gap: 10,
+  },
+  centered: {
+    textAlign: 'center',
   },
   body: {
     color: c.textSecondary,

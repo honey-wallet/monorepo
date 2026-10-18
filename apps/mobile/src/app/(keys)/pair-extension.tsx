@@ -216,8 +216,8 @@ export default function PairExtensionSheet() {
               : state.step === 'receiving'
                 ? {
                     icon: 'globe',
-                    title: 'Type this code in Honey for Chrome',
-                    body: 'Your browser asks for it, then its password, before it sends your wallet.',
+                    title: 'Enter this code in Honey for Chrome',
+                    body: 'Honey for Chrome is asking for these 6 digits. Once you type them there, the wallet comes to this phone.',
                   }
                 : {
                     icon: 'globe',

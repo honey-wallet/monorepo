@@ -99,7 +99,8 @@ export default function ProposalSheet() {
   const canVote = pending && !hasVoted(proposal, YOU);
   const left = approvalsLeft(multisig, proposal);
   const ids = receipt(multisig, proposal);
-  const completes = left === 1;
+  // Was the label's "Approve & execute" on the last approval; it wrapped beside Reject.
+  // const completes = left === 1;
 
   const onApprove = () => {
     // A signature that doesn't get through changes nothing: say so and stay on the
@@ -173,10 +174,10 @@ export default function ProposalSheet() {
   const actions = justSigned ? (
     finished
   ) : canVote ? (
-    // Full width, one above the other: side by side, "Approve & execute" wrapped.
-    <View style={styles.stacked}>
-      <PillButton label={completes ? 'Approve & execute' : 'Approve'} onPress={onApprove} />
-      <PillButton label="Reject" variant="secondary" onPress={onReject} />
+    // The app's pattern: secondary on the left, primary on the right, equal widths.
+    <View style={styles.buttons}>
+      <PillButton label="Reject" variant="secondary" onPress={onReject} style={styles.flex} />
+      <PillButton label="Approve" onPress={onApprove} style={styles.flex} />
     </View>
   ) : pending && mine ? (
     <PillButton label="Cancel proposal" variant="secondary" onPress={onCancel} />

@@ -57,8 +57,8 @@ export function Guide({
   const step = steps[index];
   const last = index === steps.length - 1;
   // The tallest step's text sets the text area's height, so the sheet keeps one size.
-  const [heights, setHeights] = useState<number[]>([]);
-  const textHeight = Math.max(0, ...heights);
+  // const [heights, setHeights] = useState<number[]>([]);
+  // const textHeight = Math.max(0, ...heights);
 
   return (
     // Sized to its content, so short steps don't leave a gap above the button.
@@ -76,12 +76,16 @@ export function Guide({
     >
       <ContentSwap id={String(index)} index={index}>
         <View style={styles.art}>{step.art}</View>
-        <View style={[styles.textArea, { minHeight: textHeight }]}>
+        {/* Each step's own height, the dots right under its text (a reserved height for
+            the tallest step left a gap under the shorter ones). */}
+        {/* <View style={[styles.textArea, { minHeight: textHeight }]}> */}
+        <View style={styles.textArea}>
           <StepText step={step} number={index + 1} />
         </View>
       </ContentSwap>
-      {/* Every step's text, measured invisibly; shorter steps sit at the top of the
-          area, right under the art, and any slack goes above the dots. */}
+      {/* No longer measured: each step keeps its own height.
+      {/ * Every step's text, measured invisibly; shorter steps sit at the top of the
+          area, right under the art, and any slack goes above the dots. * /}
       <View
         style={styles.measure}
         accessibilityElementsHidden
@@ -101,6 +105,7 @@ export function Guide({
           </View>
         ))}
       </View>
+      */}
       <View
         style={styles.dots}
         accessible

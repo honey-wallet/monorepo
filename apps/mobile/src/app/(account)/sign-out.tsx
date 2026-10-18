@@ -103,7 +103,8 @@ export default function SignOutSheet() {
             {accounts?.map((wallet) => (
               <Checkbox
                 key={wallet.id}
-                label={`${wallet.label} · ${wallet.source.kind === 'key' ? 'private key' : 'recovery phrase'}`}
+                // Said plainly: what you're confirming by ticking it.
+                label={`I’ve saved the ${wallet.source.kind === 'key' ? 'private key' : 'recovery phrase'} for ${wallet.label}`}
                 checked={confirmed.includes(wallet.id)}
                 onChange={(checked) =>
                   setConfirmed((prev) =>

@@ -37,7 +37,7 @@ export default function GetStartedSheet() {
   const [signingIn, setSigningIn] = useState<'apple' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Restore: pairing first; the phrase, key and backup ways one tap further.
-  const [otherWays, setOtherWays] = useState(false);
+  // const [otherWays, setOtherWays] = useState(false);
   const cancelled = useRef(false);
   const { shake, style: shaken } = useErrorShake();
 
@@ -142,6 +142,34 @@ export default function GetStartedSheet() {
               }}
             />
           )}
+          {/* One button each for a phrase and a key (review); the backup, rarer, a
+              link under them. Before: one "I have a recovery phrase or key" row. */}
+          <MoreRow
+            disabled={!!signingIn}
+            icon="phrase"
+            title="I have a recovery phrase"
+            onPress={() => go({ pathname: '/import-wallet', params: { onboarding: '1' } })}
+          />
+          <MoreRow
+            disabled={!!signingIn}
+            icon="privateKey"
+            title="I have a private key"
+            onPress={() =>
+              go({ pathname: '/import-wallet', params: { onboarding: '1', kind: 'key' } })
+            }
+          />
+          <Text
+            accessibilityRole="button"
+            style={[styles.link, !!signingIn && styles.disabled]}
+            onPress={
+              signingIn
+                ? undefined
+                : () => go({ pathname: '/restore-backup', params: { onboarding: '1' } })
+            }
+          >
+            Restore from a backup
+          </Text>
+          {/*
           {otherWays ? (
             <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.otherWays}>
               <MoreRow
@@ -176,6 +204,8 @@ export default function GetStartedSheet() {
               }}
             />
           )}
+
+          */}
         </View>
       ) : (
         <View style={styles.buttons}>
@@ -301,6 +331,16 @@ const useStyles = makeStyles((c) => ({
   },
   otherWays: {
     gap: 10,
+  },
+  link: {
+    marginTop: 6,
+    alignSelf: 'center',
+    color: c.accentText,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  disabled: {
+    opacity: 0.5,
   },
   error: {
     marginTop: 12,
