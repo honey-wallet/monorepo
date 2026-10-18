@@ -46,7 +46,8 @@ export default function WalletsSheet() {
   // Add wallet). The wallet in use is always one of the two.
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const group = (key: string, list: AddedWallet[]) => {
-    if (list.length <= 2 || expanded[key]) return list.map(row);
+    // "+1 more" would take a row to hide one wallet: fold only from four.
+    if (list.length <= 3 || expanded[key]) return list.map(row);
     const ordered = [
       ...list.filter((w) => w.id === active.id),
       ...list.filter((w) => w.id !== active.id),
