@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { formatEther, type Hex } from 'viem';
 import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from '@/components/Icon';
-import { Checkbox } from '@/components/motion/Checkbox';
+import { CHECKBOX_SIZE, Checkbox } from '@/components/motion/Checkbox';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetRow, StatRow } from '@/components/sheets/Sheet';
@@ -332,9 +332,14 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
       </ScrollView>
       {scam ? (
         <View style={styles.scamAlert}>
+          {/* The icon in a box the checkbox's size, so both lines' text starts together. */}
           <View style={styles.scamLine}>
-            <Icon name="warning" size={16} color={c.error} />
-            <Text style={styles.alertText}>WalletConnect flags this site as a scam.</Text>
+            <View style={styles.scamIcon}>
+              <Icon name="warning" size={18} color={c.error} />
+            </View>
+            <Text style={[styles.alertText, styles.scamText]}>
+              WalletConnect flags this site as a scam.
+            </Text>
           </View>
           <Checkbox
             label="I understand the risk"
@@ -754,7 +759,17 @@ const useStyles = makeStyles((c) => ({
   },
   scamLine: {
     flexDirection: 'row',
-    gap: 10,
+    alignItems: 'center',
+    gap: 12,
+  },
+  // The checkbox label's size, so the two lines read as one block.
+  scamText: {
+    fontSize: 16,
+    lineHeight: 21,
+  },
+  scamIcon: {
+    width: CHECKBOX_SIZE,
+    alignItems: 'center',
   },
   alertText: {
     flex: 1,
