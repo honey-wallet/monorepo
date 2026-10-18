@@ -73,7 +73,7 @@ export default function SetupSheet() {
                 tap();
                 // DEMO: the step counts as done once opened. With real settings it
                 // completes when the backup, Face ID or notifications actually turn on.
-                if (step.id !== 'backup' && step.id !== 'faceId' && step.id !== 'phone') {
+                if (!['backup', 'faceId', 'phone', 'browser'].includes(step.id)) {
                   completeStep(step.id);
                 }
                 router.push(step.href as Href);

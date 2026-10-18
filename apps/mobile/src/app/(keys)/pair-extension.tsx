@@ -12,7 +12,7 @@ import { SuccessPage } from '@/components/sheets/SuccessPage';
 import { api } from '@/lib/api';
 import { confirmOwner } from '@/lib/auth';
 import { success, tap } from '@/lib/haptics';
-import { finishOnboarding } from '@/lib/onboarding';
+import { completeStep, finishOnboarding } from '@/lib/onboarding';
 import {
   offerDirection,
   phoneHandshake,
@@ -105,6 +105,7 @@ export default function PairExtensionSheet() {
       if (!wallet) throw new Error('Create or import a wallet first.');
       const data = sealPayload(session.key, { v: 1, ...wallet }, getRandomBytes);
       await api.pairSend(pair, 'payload', { data });
+      completeStep('browser');
       success();
       setState({ step: 'done' });
     } catch (error) {

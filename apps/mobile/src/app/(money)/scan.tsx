@@ -62,6 +62,12 @@ export default function ScanScreen() {
       router.replace({ pathname: '/pair-extension', params: { onboarding: '1' } });
       return;
     }
+    // From the setup checklist: only Honey for Chrome's "Pair with your phone" code.
+    if (purpose === 'extension' && offerDirection(data) !== 'toBrowser') {
+      showToast('In Honey for Chrome, choose I already have a wallet › Pair with your phone');
+      handled.current = false;
+      return;
+    }
     if (isWalletConnectUri(data)) {
       router.back();
       showToast('Connecting to the site…');
@@ -122,7 +128,9 @@ export default function ScanScreen() {
           align="center"
           first={
             <Text style={styles.title}>
-              {purpose === 'pair' ? 'Scan the code in Honey for Chrome' : 'Scan a QR code'}
+              {purpose === 'pair' || purpose === 'extension'
+                ? 'Scan the code in Honey for Chrome'
+                : 'Scan a QR code'}
             </Text>
           }
         />
