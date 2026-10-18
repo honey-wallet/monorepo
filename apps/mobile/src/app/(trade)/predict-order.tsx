@@ -94,7 +94,7 @@ function PredictOrderSheet() {
           {/* Buying is the sheet; selling happens from a position, so no Buy/Sell
               toggle here. */}
           <OrderBar>
-            <Text style={styles.orderTitle}>Buy</Text>
+            <Text style={styles.orderTitle}>{`Buy ${side}`}</Text>
           </OrderBar>
           {/*
           <OrderBar>
@@ -130,6 +130,10 @@ function PredictOrderSheet() {
               </Text>
             </View>
           </View>
+          {/* What "Buy" means here, in one line (review: "why Buy?"). */}
+          <Text style={styles.explain}>
+            {`You buy ${side} shares at ${formatShare(price, predictPrice)} each. Each pays $1 if ${side} is right; sell any time before it closes.`}
+          </Text>
 
           {mode === 'Sell' ? (
             <View style={styles.flex}>
@@ -290,6 +294,12 @@ function PredictOrderSheet() {
 const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
+  },
+  explain: {
+    marginTop: 10,
+    color: c.textSecondary,
+    fontSize: 14,
+    lineHeight: 19,
   },
   orderTitle: {
     color: c.text,

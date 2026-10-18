@@ -222,12 +222,12 @@ function PairPhone() {
     return (
       <SheetScreen title="Enter this code on your phone">
         <Text
-          style={styles.code}
+          style={[styles.code, styles.codeUnderTitle]}
           accessibilityLabel={`Code ${state.session.code.split('').join(' ')}`}
         >
           {`${state.session.code.slice(0, 3)} ${state.session.code.slice(3)}`}
         </Text>
-        <Text style={[styles.body, styles.centered]}>
+        <Text style={[styles.body, styles.centered, styles.underCode]}>
           Your phone is asking for these 6 digits. Once you type them there, your wallet comes here.
         </Text>
         <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
@@ -310,6 +310,13 @@ const useStyles = makeStyles((c) => ({
     letterSpacing: 6,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
+  },
+  // Right under the title (it says what to do with it), the line after it close by.
+  codeUnderTitle: {
+    marginTop: 8,
+  },
+  underCode: {
+    marginTop: 12,
   },
   spinner: {
     marginTop: 28,
