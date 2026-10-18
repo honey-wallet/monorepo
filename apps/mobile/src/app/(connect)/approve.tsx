@@ -199,22 +199,23 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
   };
 
   // What this request needs before it can be approved, and why it can't be.
+  // A site WalletConnect flags as a scam isn't blocked: you're warned and decide (testnet
+  // or not), as with an unverified one.
+  // Was: approval.verified === 'scam' ? 'WalletConnect flags this site as a known scam. Honey won’t continue.' :
   const blocked =
-    approval.verified === 'scam'
-      ? 'WalletConnect flags this site as a known scam. Honey won’t continue.'
-      : approval.kind === 'switchChain'
-        ? null
-        : approval.kind === 'connect'
-          ? eligible.length
-            ? null
-            : namespace === 'evm'
-              ? 'Add a wallet to Honey first.'
-              : 'None of your wallets has a Solana address.'
-          : !signer
-            ? 'The wallet this site connected to isn’t in Honey anymore.'
-            : signer.shared && approval.kind !== 'evmSend'
-              ? 'Shared wallets can only send transactions to sites for now, not sign messages.'
-              : wrongNetwork;
+    approval.kind === 'switchChain'
+      ? null
+      : approval.kind === 'connect'
+        ? eligible.length
+          ? null
+          : namespace === 'evm'
+            ? 'Add a wallet to Honey first.'
+            : 'None of your wallets has a Solana address.'
+        : !signer
+          ? 'The wallet this site connected to isn’t in Honey anymore.'
+          : signer.shared && approval.kind !== 'evmSend'
+            ? 'Shared wallets can only send transactions to sites for now, not sign messages.'
+            : wrongNetwork;
 
   const approve = async () => {
     if (busy || blocked) return;
@@ -298,12 +299,14 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           align="center"
           first={<Text style={styles.title}>{TITLES[approval.kind]}</Text>}
         />
-        {approval.verified && approval.verified !== 'valid' && approval.verified !== 'scam' ? (
+        {approval.verified && approval.verified !== 'valid' ? (
           <Warning
             text={
-              approval.verified === 'invalid'
-                ? 'This site isn’t the one it claims to be: its domain check failed.'
-                : 'WalletConnect couldn’t confirm this site’s address. Make sure it’s the site you meant.'
+              approval.verified === 'scam'
+                ? 'WalletConnect flags this site as a known scam. Only continue if you’re sure, for example testing on a test network.'
+                : approval.verified === 'invalid'
+                  ? 'This site isn’t the one it claims to be: its domain check failed.'
+                  : 'WalletConnect couldn’t confirm this site’s address. Make sure it’s the site you meant.'
             }
           />
         ) : null}
