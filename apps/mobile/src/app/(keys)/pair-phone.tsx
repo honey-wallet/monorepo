@@ -1,4 +1,4 @@
-import type { PairOffer, PairSession } from '@honey-wallet/keyring';
+import type { PairOffer, PairPayload, PairSession } from '@honey-wallet/keyring';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { ArrivedWallets } from '@/components/pairing/ArrivedWallets';
 import { CodeEntry } from '@/components/pairing/CodeEntry';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { QRCode } from '@/components/wallet/QRCode';
@@ -24,6 +25,7 @@ type State =
   | { step: 'compare'; session: PairSession }
   | { step: 'receiving'; session: PairSession }
   | { step: 'sending'; session: PairSession }
+  | { step: 'review'; payload: PairPayload }
   | { step: 'error'; message: string };
 
 /** Dark dots on white whatever the theme, so every phone camera reads it. */
@@ -115,6 +117,19 @@ function PairPhone() {
     setState({ step: 'receiving', session });
     try {
       const payload = await receiveWallet(offer, session, controller.signal);
+      // Nothing is added until you've checked these are yours (ArrivedWallets).
+      tap();
+      setState({ step: 'review', payload });
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      failure();
+      setState({ step: 'error', message: messageOf(error) });
+    }
+  };
+
+  const add = async (payload: PairPayload) => {
+    tap();
+    try {
       const added = await importPairedWallet(payload);
       for (const account of added) addVaultWallet(account);
       // Open on the phone's first wallet, not whichever came across last.
@@ -127,11 +142,38 @@ function PairPhone() {
       showToast(added.length ? 'Paired with your phone' : 'Already paired');
       router.dismissAll();
     } catch (error) {
-      if (controller.signal.aborted) return;
       failure();
       setState({ step: 'error', message: messageOf(error) });
     }
   };
+
+  if (state.step === 'review') {
+    return (
+      <SheetScreen
+        title="Add these wallets?"
+        footer={
+          <View style={styles.buttons}>
+            <PillButton
+              label="Not mine"
+              variant="secondary"
+              onPress={() => {
+                tap();
+                showToast('Nothing was added');
+                router.back();
+              }}
+              style={styles.flex}
+            />
+            <PillButton label="Add" onPress={() => add(state.payload)} style={styles.flex} />
+          </View>
+        }
+      >
+        <Text style={styles.body}>
+          From the phone that took your code. Only add them if your phone just said it sent them.
+        </Text>
+        <ArrivedWallets payload={state.payload} />
+      </SheetScreen>
+    );
+  }
 
   if (state.step === 'compare') {
     return (

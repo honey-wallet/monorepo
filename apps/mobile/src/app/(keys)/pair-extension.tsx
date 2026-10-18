@@ -1,5 +1,5 @@
 import type { PairChannel } from '@honey-wallet/api-client';
-import { type PairSession, sealPayload } from '@honey-wallet/keyring';
+import { type PairPayload, type PairSession, sealPayload } from '@honey-wallet/keyring';
 import { getRandomBytes } from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -7,6 +7,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { ArrivedWallets } from '@/components/pairing/ArrivedWallets';
 import { CodeEntry } from '@/components/pairing/CodeEntry';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { SuccessPage } from '@/components/sheets/SuccessPage';
@@ -32,6 +33,7 @@ type State =
   | { step: 'compare'; session: PairSession; pair: PairChannel }
   | { step: 'sending' }
   | { step: 'receiving'; code: string }
+  | { step: 'review'; payload: PairPayload }
   | { step: 'done' }
   | { step: 'error'; message: string };
 
@@ -84,6 +86,17 @@ export default function PairExtensionSheet() {
     setState({ step: 'receiving', code: session.code });
     try {
       const payload = await receiveFromBrowser(pair, session, abort.current.signal);
+      // Nothing is added until you've checked it's yours (ArrivedWallets).
+      tap();
+      setState({ step: 'review', payload });
+    } catch (error) {
+      if (!abort.current.signal.aborted) setState({ step: 'error', message: messageOf(error) });
+    }
+  };
+
+  const add = async (payload: PairPayload) => {
+    tap();
+    try {
       const added = await importPairedWallet(payload);
       for (const account of added) addVaultWallet(account);
       if (added[0]) setActiveWallet(added[0].id);
@@ -94,7 +107,7 @@ export default function PairExtensionSheet() {
       }
       setState({ step: 'done' });
     } catch (error) {
-      if (!abort.current.signal.aborted) setState({ step: 'error', message: messageOf(error) });
+      setState({ step: 'error', message: messageOf(error) });
     }
   };
 
@@ -132,6 +145,43 @@ export default function PairExtensionSheet() {
           }
           onDone={close}
         />
+      </SheetScreen>
+    );
+  }
+
+  if (state.step === 'review') {
+    return (
+      <SheetScreen
+        size="fill"
+        footer={
+          <View style={styles.buttons}>
+            <PillButton
+              label="Not mine"
+              variant="secondary"
+              onPress={() => {
+                close();
+                showToast('Nothing was added');
+              }}
+              style={styles.flex}
+            />
+            <PillButton label="Add" onPress={() => add(state.payload)} style={styles.flex} />
+          </View>
+        }
+      >
+        <View style={styles.hero}>
+          <TextsReveal
+            id="review"
+            align="center"
+            first={<Text style={styles.title}>Add this wallet?</Text>}
+            second={
+              <Text style={styles.subtitle}>
+                From the browser that took your code. Only add it if Honey for Chrome just said it
+                sent it.
+              </Text>
+            }
+          />
+        </View>
+        <ArrivedWallets payload={state.payload} />
       </SheetScreen>
     );
   }
