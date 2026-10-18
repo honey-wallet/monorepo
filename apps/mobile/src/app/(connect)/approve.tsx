@@ -303,22 +303,14 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           align="center"
           first={<Text style={styles.title}>{TITLES[approval.kind]}</Text>}
         />
-        {approval.verified && approval.verified !== 'valid' ? (
+        {/* A scam flag is one red alert with its tick, at the bottom (scamAlert below). */}
+        {approval.verified && approval.verified !== 'valid' && !scam ? (
           <Warning
             text={
-              approval.verified === 'scam'
-                ? 'WalletConnect flags this site as a scam.'
-                : approval.verified === 'invalid'
-                  ? 'This site isn’t the one it claims to be: its domain check failed.'
-                  : 'WalletConnect couldn’t confirm this site’s address. Make sure it’s the site you meant.'
+              approval.verified === 'invalid'
+                ? 'This site isn’t the one it claims to be: its domain check failed.'
+                : 'WalletConnect couldn’t confirm this site’s address. Make sure it’s the site you meant.'
             }
-          />
-        ) : null}
-        {scam ? (
-          <Checkbox
-            label="I understand the risk"
-            checked={riskAccepted}
-            onChange={setRiskAccepted}
           />
         ) : null}
         {approval.kind === 'connect' ? (
@@ -338,6 +330,19 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           </View>
         ) : null}
       </ScrollView>
+      {scam ? (
+        <View style={styles.scamAlert}>
+          <View style={styles.scamLine}>
+            <Icon name="warning" size={16} color={c.error} />
+            <Text style={styles.alertText}>WalletConnect flags this site as a scam.</Text>
+          </View>
+          <Checkbox
+            label="I understand the risk"
+            checked={riskAccepted}
+            onChange={setRiskAccepted}
+          />
+        </View>
+      ) : null}
       <View style={styles.buttons}>
         <PillButton label="Cancel" variant="secondary" onPress={cancel} style={styles.flex} />
         {blocked ? null : (
@@ -739,6 +744,17 @@ const useStyles = makeStyles((c) => ({
     padding: 12,
     borderRadius: 14,
     backgroundColor: `${c.error}18`,
+  },
+  scamAlert: {
+    marginBottom: 12,
+    padding: 12,
+    gap: 12,
+    borderRadius: 14,
+    backgroundColor: `${c.error}18`,
+  },
+  scamLine: {
+    flexDirection: 'row',
+    gap: 10,
   },
   alertText: {
     flex: 1,

@@ -158,17 +158,13 @@ export default function GetStartedSheet() {
               go({ pathname: '/import-wallet', params: { onboarding: '1', kind: 'key' } })
             }
           />
-          <Text
-            accessibilityRole="button"
-            style={[styles.link, !!signingIn && styles.disabled]}
-            onPress={
-              signingIn
-                ? undefined
-                : () => go({ pathname: '/restore-backup', params: { onboarding: '1' } })
-            }
-          >
-            Restore from a backup
-          </Text>
+          {/* A button like the others (review), not a link. */}
+          <MoreRow
+            disabled={!!signingIn}
+            icon="cloud"
+            title="Restore from a backup"
+            onPress={() => go({ pathname: '/restore-backup', params: { onboarding: '1' } })}
+          />
           {/*
           {otherWays ? (
             <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.otherWays}>
