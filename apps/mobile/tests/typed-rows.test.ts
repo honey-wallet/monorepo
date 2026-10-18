@@ -60,12 +60,18 @@ describe('typed data shown before signing', () => {
     expect(Date.now() - started).toBeLessThan(500);
   });
 
-  it('doesn’t treat inherited names as types or walk into non-objects', () => {
-    expect(typedRows(MAIL, 'Mail', { from: 'oops', to: null, contents: 1 }).rows).toEqual([
+  it('refuses anything missing or the wrong shape, and ignores inherited names', () => {
+    const bad = typedRows(MAIL, 'Mail', { from: 'oops', to: null, contents: 1 });
+    expect(bad.complete).toBe(false);
+    expect(bad.rows).toEqual([
       ['from', '(missing)'],
       ['to', '(missing)'],
       ['contents', '1'],
     ]);
+    const partial = { from: { name: 'Cow' }, to: { name: 'B', wallet: '0x1' }, contents: 'x' };
+    expect(typedRows(MAIL, 'Mail', partial).complete).toBe(false);
+    const list = { L: [{ name: 'xs', type: 'uint256[]' }] };
+    expect(typedRows(list, 'L', { xs: 'nope' }).complete).toBe(false);
     expect(typedRows({ X: [{ name: 'p', type: 'constructor' }] }, 'X', { p: 'v' }).rows).toEqual([
       ['p', 'v'],
     ]);

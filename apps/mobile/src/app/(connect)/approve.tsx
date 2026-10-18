@@ -474,7 +474,7 @@ function TypedData({ approval, json }: { approval: Approval; json: string }) {
     <>
       {complete ? null : (
         <Warning
-          text={`This request is too large to show in full (over ${TYPED_ROW_LIMIT} fields). Honey won’t sign it.`}
+          text={`This request has missing or malformed fields, or more than ${TYPED_ROW_LIMIT}. Honey won’t sign it.`}
         />
       )}
       {isPermit(typed.primaryType as string) ? (

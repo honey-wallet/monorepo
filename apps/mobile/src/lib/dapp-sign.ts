@@ -189,7 +189,7 @@ export async function performApproval(approval: Approval, walletId: string): Pro
           typed.message as Record<string, unknown>,
         );
         if (!shown.complete)
-          throw new Error('This request is too large to show, so Honey won’t sign it');
+          throw new Error('This request can’t be shown exactly as it would be signed');
         return { id, result: await signEvmTypedData(key, params.data as string) };
       }
       case 'evmSend': {
@@ -243,17 +243,26 @@ export function typedRows(
 ): { rows: [string, string][]; complete: boolean } {
   const rows: [string, string][] = [];
   // One budget for the whole walk: types that refer to each other can't make it explode.
+  // `complete` is false when anything couldn't be shown exactly as it would be signed (too
+  // big, a missing field, the wrong shape); Honey then refuses to sign.
   let visits = 0;
-  let complete = true;
+  let truncated = false;
+  let malformed = false;
   const walk = (type: string, value: unknown, path: string, depth: number) => {
-    if (!complete) return;
+    if (truncated) return;
     if (++visits > TYPED_ROW_LIMIT * 2 || rows.length >= TYPED_ROW_LIMIT || depth > 8) {
-      complete = false;
+      truncated = true;
       return;
     }
     const array = /^(.*)\[(\d*)\]$/.exec(type);
     if (array) {
-      const items = Array.isArray(value) ? value : [];
+      if (!Array.isArray(value)) {
+        // Not a list where the types say one: what would be signed isn't what's shown.
+        rows.push([path, '(not a list)']);
+        malformed = true;
+        return;
+      }
+      const items = value;
       if (!items.length) rows.push([path, '(empty list)']);
       for (const [i, item] of items.entries()) {
         walk(array[1] as string, item, `${path}[${i}]`, depth + 1);
@@ -264,6 +273,7 @@ export function typedRows(
     if (Array.isArray(fields)) {
       if (!value || typeof value !== 'object' || Array.isArray(value)) {
         rows.push([path, '(missing)']);
+        malformed = true;
         return;
       }
       const record = value as Record<string, unknown>;
@@ -272,15 +282,13 @@ export function typedRows(
       }
       return;
     }
-    rows.push([
-      path,
-      value === undefined
-        ? '(missing)'
-        : typeof value === 'object'
-          ? JSON.stringify(value)
-          : String(value),
-    ]);
+    if (value === undefined || value === null) {
+      rows.push([path, '(missing)']);
+      malformed = true;
+      return;
+    }
+    rows.push([path, typeof value === 'object' ? JSON.stringify(value) : String(value)]);
   };
   walk(primaryType, message, '', 0);
-  return { rows, complete };
+  return { rows, complete: !truncated && !malformed };
 }
