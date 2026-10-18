@@ -1,4 +1,5 @@
-import { Redirect, router, useLocalSearchParams } from 'expo-router';
+// import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Keyboard, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -67,9 +68,11 @@ import { makeStyles, useTheme } from '@/theme';
  * Each product is one short form; nothing executes yet, so final actions confirm with
  * a demo toast.
  */
-/** No trading in the browser extension (review): a link to Trade lands on Home. */
+/** In the browser extension Trade is Swap alone (AVAILABLE_TRADE_MODES). */
 export default function TradeRoute() {
-  return isWeb ? <Redirect href="/home" /> : <TradeScreen />;
+  // review: Swap is back in the extension, so no redirect to Home.
+  // return isWeb ? <Redirect href="/home" /> : <TradeScreen />;
+  return <TradeScreen />;
 }
 
 function TradeScreen() {

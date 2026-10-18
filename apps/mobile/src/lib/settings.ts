@@ -18,8 +18,11 @@ export type TradeMode = (typeof TRADE_MODES)[number];
  */
 // The browser extension is for connecting to websites: no trading there for now (review).
 // export const AVAILABLE_TRADE_MODES: readonly TradeMode[] = ['Swap', 'Perps', 'Predict'];
+// export const AVAILABLE_TRADE_MODES: readonly TradeMode[] =
+//   Platform.OS === 'web' ? [] : ['Swap', 'Perps', 'Predict'];
+// review: Swap is back in the extension; Perps and Predict stay phone-only.
 export const AVAILABLE_TRADE_MODES: readonly TradeMode[] =
-  Platform.OS === 'web' ? [] : ['Swap', 'Perps', 'Predict'];
+  Platform.OS === 'web' ? ['Swap'] : ['Swap', 'Perps', 'Predict'];
 // export const AVAILABLE_TRADE_MODES: readonly TradeMode[] = TRADE_MODES;
 
 /** Each Trade product's symbol and one-line description (Trade's tabs and the tabs editor). */

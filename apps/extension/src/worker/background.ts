@@ -30,11 +30,17 @@ const toError = (error: unknown): ProviderError =>
  * window to that inner size once it knows the frame (public/boot.js).
  */
 export const PHONE = { width: 393, height: 852 } as const;
+/**
+ * Website approvals open at the popup's size instead (review: a phone-tall window didn't
+ * read as the extension), like other wallets' approval windows.
+ */
+export const POPUP = { width: 393, height: 600 } as const;
+type WindowSize = { width: number; height: number };
 /** A first guess at the title bar, corrected by the page. */
 const FRAME = 28;
 
-/** Focuses the window kept under `key`, or opens a phone-sized one at `route`. */
-async function openWindow(key: string, route: string) {
+/** Focuses the window kept under `key`, or opens one `inner` in size at `route`. */
+async function openWindow(key: string, route: string, inner: WindowSize = PHONE) {
   const { [key]: open } = await chrome.storage.session.get(key);
   if (typeof open === 'number') {
     try {
@@ -46,11 +52,14 @@ async function openWindow(key: string, route: string) {
   }
   const last = await chrome.windows.getLastFocused().catch(() => undefined);
   const size = {
-    url: chrome.runtime.getURL(`index.html?window&route=${encodeURIComponent(route)}`),
+    // boot.js trims the window to `h` inside, whatever the title bar takes.
+    url: chrome.runtime.getURL(
+      `index.html?window&h=${inner.height}&route=${encodeURIComponent(route)}`,
+    ),
     type: 'popup' as const,
-    width: PHONE.width,
+    width: inner.width,
     // On a short display, as tall as the browser window instead.
-    height: Math.min(PHONE.height + FRAME, last?.height ?? Number.POSITIVE_INFINITY),
+    height: Math.min(inner.height + FRAME, last?.height ?? Number.POSITIVE_INFINITY),
     focused: true,
   };
   // Beside the browser's top-right corner; Chrome refuses a spot that's mostly off-screen
@@ -68,7 +77,8 @@ async function openWindow(key: string, route: string) {
   await chrome.storage.session.set({ [key]: created?.id });
 }
 
-const openApprovals = () => openWindow(STORAGE.window, 'approve');
+// const openApprovals = () => openWindow(STORAGE.window, 'approve');
+const openApprovals = () => openWindow(STORAGE.window, 'approve', POPUP);
 
 // The toolbar button opens the popup under it, like other wallets (manifest
 // default_popup); Expand view there opens Honey's own window ('honey:expand').

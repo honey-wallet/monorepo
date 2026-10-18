@@ -38,7 +38,8 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Which chains are supported?',
-    a: 'Honey supports Bitcoin, Ethereum, Solana, Tron and the XRP Ledger, with more on the way. Switch networks from the network picker on the home screen.',
+    // a: 'Honey supports Bitcoin, Ethereum, Solana, Tron and the XRP Ledger, with more on the way. Switch networks from the network picker on the home screen.',
+    a: 'Honey supports Bitcoin, Solana, and Ethereum, Base and other EVM networks, with more on the way. Switch networks from the network picker on the home screen.',
   },
   {
     q: 'How do I contact support?',

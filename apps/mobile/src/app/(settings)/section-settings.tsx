@@ -9,6 +9,7 @@ import {
   WalletSettingsRow,
 } from '@/components/sheets/Sheet';
 import { OptionChips } from '@/components/trade/TradeForm';
+import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { CHAINS } from '@/lib/mock-wallet';
 import { isWeb } from '@/lib/platform';
@@ -83,6 +84,8 @@ export default function SectionSettingsSheet() {
           <SheetField label="Network" hint="Search starts filtered to this network.">
             <OptionChips
               options={NETWORKS}
+              // review: each network's logo beside its symbol.
+              icon={(symbol) => (symbol === 'All' ? null : <TokenIcon symbol={symbol} size={14} />)}
               value={CHAINS.find((chain) => chain.name === prefs.searchNetwork)?.symbol ?? 'All'}
               onChange={(symbol) =>
                 updateSectionPrefs({

@@ -139,8 +139,9 @@ export function TabBar({ state, navigation }: TabBarProps) {
             </Pressable>
           ))}
         </View>
-        {/* No trading in the browser extension (review): no Trade button there. */}
-        {isWeb ? null : (
+        {/* review: Swap is back in the extension, so the Trade button is too.
+        {isWeb ? null : ( */}
+        {
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel="Trade"
@@ -150,7 +151,7 @@ export function TabBar({ state, navigation }: TabBarProps) {
           >
             <Icon name="trade" size={30} color={c.onPrimary} />
           </PressableScale>
-        )}
+        }
       </View>
     </>
   );

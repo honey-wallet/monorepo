@@ -52,8 +52,9 @@ export const CHAINS: { name: Chain; symbol: string }[] = [
   { name: 'Ethereum', symbol: 'ETH' },
   { name: 'Base', symbol: 'BASE' },
   { name: 'Solana', symbol: 'SOL' },
-  { name: 'Tron', symbol: 'TRX' },
-  { name: 'XRP Ledger', symbol: 'XRP' },
+  // review: Tron and the XRP Ledger aren't supported for now (receive.ts ORDER).
+  // { name: 'Tron', symbol: 'TRX' },
+  // { name: 'XRP Ledger', symbol: 'XRP' },
 ];
 
 export type MarketToken = {
@@ -468,8 +469,19 @@ export const TOKEN_INFO: Record<string, TokenInfo> = {
   },
 };
 
+/** Every chain's logo, the unsupported ones too: old holdings and activity still name them. */
+const CHAIN_SYMBOLS: Record<Chain, string> = {
+  Bitcoin: 'BTC',
+  Ethereum: 'ETH',
+  Base: 'BASE',
+  Solana: 'SOL',
+  Tron: 'TRX',
+  'XRP Ledger': 'XRP',
+};
+
 export function chainSymbol(chain: Chain) {
-  return CHAINS.find((c) => c.name === chain)?.symbol ?? 'GENERIC';
+  // return CHAINS.find((c) => c.name === chain)?.symbol ?? 'GENERIC';
+  return CHAIN_SYMBOLS[chain] ?? 'GENERIC';
 }
 
 /** Market data for a token, by symbol. */

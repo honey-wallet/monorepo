@@ -82,7 +82,7 @@ export default function GetStartedSheet() {
       <Text style={[styles.title, compact && styles.titleCompact]}>
         {restore ? 'Use an existing wallet' : 'Create a new wallet'}
       </Text>
-      <SheetText>
+      <SheetText center>
         {restore ? 'Sign in the way you created it.' : 'No password or phrase to remember.'}
       </SheetText>
 

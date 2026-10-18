@@ -104,7 +104,7 @@ export default function SetupSheet() {
         })}
       </View>
 
-      <SheetText>
+      <SheetText center>
         Up to ${SETUP_REWARD_USD} in network fees on Honey, applied automatically within 30 days of
         finishing. One per person.{' '}
         <Text

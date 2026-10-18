@@ -119,10 +119,13 @@ export function OptionChips<T extends string>({
   options,
   value,
   onChange,
+  icon,
 }: {
   options: readonly T[];
   value: T;
   onChange: (value: T) => void;
+  /** Drawn before an option's label, e.g. a network's logo. */
+  icon?: (option: T) => ReactNode;
 }) {
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
@@ -160,8 +163,9 @@ export function OptionChips<T extends string>({
               tap();
               onChange(option);
             }}
-            style={styles.chip}
+            style={[styles.chip, icon && styles.chipWithIcon]}
           >
+            {icon?.(option)}
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
@@ -312,6 +316,10 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+  },
+  chipWithIcon: {
+    flexDirection: 'row',
+    gap: 4,
   },
   chipLabel: {
     color: c.textSecondary,

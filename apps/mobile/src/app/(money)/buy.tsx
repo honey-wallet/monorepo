@@ -5,7 +5,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
-import { isWeb } from '@/lib/platform';
+// import { isWeb } from '@/lib/platform';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Buy (or sell) sheet: with cash, or by swapping what you already hold. */
@@ -37,7 +37,9 @@ export default function BuySheet() {
     },
   ];
   // review: no trading in the extension, so Swap (a link into /trade) is phone-only.
-  const options = isWeb ? allOptions.filter((o) => o.icon !== 'trade') : allOptions;
+  // review: Swap is back in the extension.
+  // const options = isWeb ? allOptions.filter((o) => o.icon !== 'trade') : allOptions;
+  const options = allOptions;
 
   return (
     <SheetScreen title={selling ? `Sell ${what}` : `Buy ${what}`}>
