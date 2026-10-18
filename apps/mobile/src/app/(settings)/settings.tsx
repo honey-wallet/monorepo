@@ -183,14 +183,13 @@ export default function SettingsScreen() {
             accessory="chevron"
           />
         ) : null}
-        {isWeb ? (
-          <SheetRow
-            icon="globe"
-            title="Connected sites"
-            onPress={open('/connected-sites')}
-            accessory="chevron"
-          />
-        ) : null}
+        {/* The browser's own sites, or on the phone the ones connected by WalletConnect. */}
+        <SheetRow
+          icon="globe"
+          title="Connected sites"
+          onPress={open('/connected-sites')}
+          accessory="chevron"
+        />
         {isWeb ? (
           <SheetRow
             icon="lock"

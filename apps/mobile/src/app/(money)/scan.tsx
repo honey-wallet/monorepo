@@ -14,6 +14,7 @@ import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
 import { holdScannedOffer } from '@/lib/pair-offer';
 import { showToast } from '@/lib/toast';
+import { isWalletConnectUri, pairWalletConnect } from '@/lib/walletconnect';
 import { isEvmAddress } from '@/lib/wallets';
 import { holdWatchedAddress } from '@/lib/watch-scan';
 import { makeStyles, useTheme } from '@/theme';
@@ -31,7 +32,8 @@ export default function ScanScreen() {
   const handled = useRef(false);
 
   /**
-   * A code from the camera or a photo: a browser's pairing code opens pairing;
+   * A code from the camera or a photo: a browser's pairing code opens pairing; a
+   * WalletConnect code connects that site (it then asks in the approval screen);
    * anything else is an address, so go straight to sending to it.
    */
   const onCode = (data: string) => {
@@ -47,6 +49,14 @@ export default function ScanScreen() {
       }
       holdWatchedAddress(address);
       router.back();
+      return;
+    }
+    if (isWalletConnectUri(data)) {
+      router.back();
+      showToast('Connecting to the site…');
+      pairWalletConnect(data.trim()).catch(() =>
+        showToast('That code expired. Get a new one from the site'),
+      );
       return;
     }
     if (parsePairUri(data)) {

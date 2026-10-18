@@ -9,6 +9,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetRow, StatRow } from '@/components/sheets/Sheet';
+import { confirmOwner } from '@/lib/auth';
 import { answerApproval, hasWorker, keepWorkerAwake, nextApproval } from '@/lib/dapp';
 import {
   callName,
@@ -28,6 +29,8 @@ import {
 import { failure, success, tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { hostOf, multisigOf, propose, useMultisigState } from '@/lib/multisig';
+import { goBackOr } from '@/lib/navigation';
+import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { type AddedWallet, allWallets, useWallets } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
@@ -45,7 +48,11 @@ export default function ApproveScreen() {
   const loadNext = async () => {
     const next = await nextApproval();
     setApproval(next);
-    if (!next && hasWorker) globalThis.close?.();
+    // Done: the extension closes its window; the phone goes back to where it was.
+    if (!next) {
+      if (hasWorker) globalThis.close?.();
+      else if (!isWeb) goBackOr('/home');
+    }
   };
   // biome-ignore lint/correctness/useExhaustiveDependencies: once, on open
   useEffect(() => {
@@ -114,6 +121,9 @@ function SiteChip({ approval }: { approval: Approval }) {
         {hostOf(approval.origin)}
       </Text>
       {secure ? null : <Icon name="warning" size={14} color={c.error} />}
+      {approval.verified === 'valid' ? (
+        <Icon name="verified" size={14} color={c.accentText} />
+      ) : null}
     </View>
   );
 }
@@ -190,19 +200,21 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
 
   // What this request needs before it can be approved, and why it can't be.
   const blocked =
-    approval.kind === 'switchChain'
-      ? null
-      : approval.kind === 'connect'
-        ? eligible.length
-          ? null
-          : namespace === 'evm'
-            ? 'Add a wallet to Honey first.'
-            : 'None of your wallets has a Solana address.'
-        : !signer
-          ? 'The wallet this site connected to isn’t in Honey anymore.'
-          : signer.shared && approval.kind !== 'evmSend'
-            ? 'Shared wallets can only send transactions to sites for now, not sign messages.'
-            : wrongNetwork;
+    approval.verified === 'scam'
+      ? 'WalletConnect flags this site as a known scam. Honey won’t continue.'
+      : approval.kind === 'switchChain'
+        ? null
+        : approval.kind === 'connect'
+          ? eligible.length
+            ? null
+            : namespace === 'evm'
+              ? 'Add a wallet to Honey first.'
+              : 'None of your wallets has a Solana address.'
+          : !signer
+            ? 'The wallet this site connected to isn’t in Honey anymore.'
+            : signer.shared && approval.kind !== 'evmSend'
+              ? 'Shared wallets can only send transactions to sites for now, not sign messages.'
+              : wrongNetwork;
 
   const approve = async () => {
     if (busy || blocked) return;
@@ -246,6 +258,16 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           },
         });
       } else {
+        // On the phone, Face ID before anything is signed (the browser's vault is already
+        // unlocked by its password).
+        if (
+          !isWeb &&
+          approval.kind !== 'switchChain' &&
+          !(await confirmOwner(`Approve for ${hostOf(approval.origin)}`))
+        ) {
+          setBusy(false);
+          return;
+        }
         await send(await performApproval(approval, signer?.wallet.id ?? ''));
       }
       success();
@@ -276,6 +298,15 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           align="center"
           first={<Text style={styles.title}>{TITLES[approval.kind]}</Text>}
         />
+        {approval.verified && approval.verified !== 'valid' && approval.verified !== 'scam' ? (
+          <Warning
+            text={
+              approval.verified === 'invalid'
+                ? 'This site isn’t the one it claims to be: its domain check failed.'
+                : 'WalletConnect couldn’t confirm this site’s address. Make sure it’s the site you meant.'
+            }
+          />
+        ) : null}
         {approval.kind === 'connect' ? (
           <Connect signers={eligible} picked={picked} onPick={setPicked} />
         ) : (

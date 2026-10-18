@@ -67,6 +67,11 @@ export type Approval = {
   origin: string;
   /** The tab's icon, to show beside the origin. */
   icon?: string;
+  /**
+   * WalletConnect only: whether its Verify service confirmed the site owns the domain it
+   * claims. A browser site's origin comes from Chrome, so it has none.
+   */
+  verified?: 'valid' | 'invalid' | 'unknown' | 'scam';
   /** The site's connection, for everything but `connect`. */
   site?: Site;
   /** For `switchChain` the chain id; otherwise the call's own params (see approve.tsx). */

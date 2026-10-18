@@ -1,16 +1,23 @@
 import type { Site } from '@honey-wallet/extension/protocol';
 import { evmNetwork } from '@honey-wallet/keyring';
+import * as Clipboard from 'expo-clipboard';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetRow, SheetRowSkeletons, SheetScreen } from '@/components/sheets/Sheet';
 import { connectedSites, disconnectSite } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { hostOf } from '@/lib/multisig';
+import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
+import { isWalletConnectUri, pairWalletConnect } from '@/lib/walletconnect';
 import { makeStyles } from '@/theme';
 
-/** Honey for Chrome: the websites that can see a wallet, and a way to cut them off. */
+/**
+ * The websites that can see a wallet, and a way to cut them off: Honey for Chrome's, or on
+ * the phone the ones connected by WalletConnect (scan a site's code, or paste its link).
+ */
 export default function ConnectedSitesSheet() {
   const styles = useStyles();
   const [sites, setSites] = useState<Site[] | null>(null);
@@ -27,13 +34,36 @@ export default function ConnectedSitesSheet() {
     showToast(`Disconnected ${hostOf(site.origin)}`);
   };
 
+  // A desktop site's WalletConnect link, copied ("Copy link" under its QR code).
+  const pasteLink = async () => {
+    tap();
+    const text = (await Clipboard.getStringAsync()).trim();
+    if (!isWalletConnectUri(text)) {
+      showToast('Copy the site’s WalletConnect link first');
+      return;
+    }
+    showToast('Connecting to the site…');
+    pairWalletConnect(text).catch(() =>
+      showToast('That link expired. Get a new one from the site'),
+    );
+  };
+
   return (
-    <SheetScreen title="Connected sites">
+    <SheetScreen
+      title="Connected sites"
+      footer={
+        isWeb ? undefined : (
+          <PillButton label="Paste a WalletConnect link" variant="secondary" onPress={pasteLink} />
+        )
+      }
+    >
       {sites === null ? (
         <SheetRowSkeletons count={3} icon={22} />
       ) : sites.length === 0 ? (
         <Text style={styles.empty}>
-          No sites yet. When you connect Honey to one, it shows here.
+          {isWeb
+            ? 'No sites yet. When you connect Honey to one, it shows here.'
+            : 'No sites yet. Scan a site’s WalletConnect code with Honey’s scanner to connect.'}
         </Text>
       ) : (
         sites.map((site) => (

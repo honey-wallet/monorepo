@@ -80,6 +80,9 @@ export function isReadableText(data: string) {
 
 type Pending = { approval: Approval; settle: (answer: Answer) => void };
 
+/** Who's asking: the tab's icon, and for WalletConnect, its check of the site's domain. */
+export type Caller = { icon?: string; verified?: Approval['verified'] };
+
 export function createRouter(deps: RouterDeps) {
   const pending = new Map<string, Pending>();
   let waiting = 0;
@@ -139,7 +142,7 @@ export function createRouter(deps: RouterDeps) {
   function ask(
     kind: ApprovalKind,
     origin: string,
-    icon: string | undefined,
+    caller: Caller,
     site: Site | undefined,
     params: unknown,
   ): Promise<Answer> {
@@ -150,7 +153,8 @@ export function createRouter(deps: RouterDeps) {
       id: deps.newId(),
       kind,
       origin,
-      icon,
+      icon: caller.icon,
+      verified: caller.verified,
       site,
       params,
       createdAt: deps.now(),
@@ -169,8 +173,8 @@ export function createRouter(deps: RouterDeps) {
     return answer;
   }
 
-  async function connect(origin: string, icon: string | undefined, namespace: 'evm' | 'solana') {
-    const answer = await askFor('connect', origin, icon, undefined, { namespace });
+  async function connect(origin: string, caller: Caller, namespace: 'evm' | 'solana') {
+    const answer = await askFor('connect', origin, caller, undefined, { namespace });
     if (!('connect' in answer)) return fail(ERR.internal);
     const picked = answer.connect;
     if (!(namespace === 'evm' ? picked.evm : picked.solana)) fail(ERR.unauthorized);
@@ -189,7 +193,7 @@ export function createRouter(deps: RouterDeps) {
 
   // EVM (EIP-1193)
 
-  async function evm(origin: string, icon: string | undefined, method: string, params: unknown) {
+  async function evm(origin: string, caller: Caller, method: string, params: unknown) {
     const args = Array.isArray(params) ? params : [];
     const site = await siteOf(origin);
     const connected = site?.evm ? site : undefined;
@@ -211,11 +215,11 @@ export function createRouter(deps: RouterDeps) {
         return connected?.evm ? [connected.evm] : [];
       case 'eth_requestAccounts': {
         if (connected?.evm) return [connected.evm];
-        const added = await connect(origin, icon, 'evm');
+        const added = await connect(origin, caller, 'evm');
         return [added.evm];
       }
       case 'wallet_requestPermissions': {
-        if (!connected?.evm) await connect(origin, icon, 'evm');
+        if (!connected?.evm) await connect(origin, caller, 'evm');
         return [{ parentCapability: 'eth_accounts' }];
       }
       case 'wallet_getPermissions':
@@ -237,7 +241,7 @@ export function createRouter(deps: RouterDeps) {
         const chainId = Number.parseInt(wanted, 16);
         if (!evmNetwork(chainId)) return fail(ERR.unknownChain);
         if (chainId === (await chainOf(origin))) return null;
-        await askFor('switchChain', origin, icon, site, chainId);
+        await askFor('switchChain', origin, caller, site, chainId);
         await setChain(origin, chainId);
         return null;
       }
@@ -247,7 +251,7 @@ export function createRouter(deps: RouterDeps) {
         if (isAddress(message) && !isAddress(address)) [message, address] = [address, message];
         if (typeof message !== 'string') return fail(ERR.invalid);
         const from = authorized(address);
-        return resultOf(await askFor('evmSign', origin, icon, from, { message }));
+        return resultOf(await askFor('evmSign', origin, caller, from, { message }));
       }
       case 'eth_signTypedData_v4':
       case 'eth_signTypedData_v3': {
@@ -255,7 +259,7 @@ export function createRouter(deps: RouterDeps) {
         const from = authorized(address);
         const json = typeof data === 'string' ? data : JSON.stringify(data);
         if (!json) return fail(ERR.invalid);
-        return resultOf(await askFor('evmTypedData', origin, icon, from, { data: json }));
+        return resultOf(await askFor('evmTypedData', origin, caller, from, { data: json }));
       }
       case 'eth_sendTransaction': {
         const tx = args[0] as Record<string, unknown> | undefined;
@@ -276,7 +280,7 @@ export function createRouter(deps: RouterDeps) {
           data: ((tx.data ?? tx.input) as string | undefined) ?? '0x',
           gas: tx.gas as string | undefined,
         };
-        return resultOf(await askFor('evmSend', origin, icon, from, { tx: clean, chainId }));
+        return resultOf(await askFor('evmSend', origin, caller, from, { tx: clean, chainId }));
       }
       case 'eth_sign':
         // Signs any hash, including a transaction's: phishing's favourite. Never.
@@ -291,7 +295,7 @@ export function createRouter(deps: RouterDeps) {
 
   // Solana (Wallet Standard)
 
-  async function solana(origin: string, icon: string | undefined, method: string, params: unknown) {
+  async function solana(origin: string, caller: Caller, method: string, params: unknown) {
     const input = (params ?? {}) as Record<string, unknown>;
     const site = await siteOf(origin);
     const connected = site?.solana ? site : undefined;
@@ -311,7 +315,7 @@ export function createRouter(deps: RouterDeps) {
       case 'connect': {
         if (connected?.solana) return { address: connected.solana };
         if (input.silent) return { address: null };
-        return { address: (await connect(origin, icon, 'solana')).solana };
+        return { address: (await connect(origin, caller, 'solana')).solana };
       }
       case 'disconnect':
         await disconnect(origin);
@@ -323,14 +327,14 @@ export function createRouter(deps: RouterDeps) {
         if (!isReadableText(message)) {
           fail(ERR.unsupported, 'Honey only signs readable text messages on Solana.');
         }
-        return resultOf(await askFor('solanaSignMessage', origin, icon, from, { message }));
+        return resultOf(await askFor('solanaSignMessage', origin, caller, from, { message }));
       }
       case 'signTransaction':
       case 'signAndSendTransaction': {
         const from = authorized();
         const transaction = base64(input.transaction);
         const kind = method === 'signTransaction' ? 'solanaSignTransaction' : 'solanaSend';
-        return resultOf(await askFor(kind, origin, icon, from, { transaction }));
+        return resultOf(await askFor(kind, origin, caller, from, { transaction }));
       }
       default:
         return fail(ERR.unsupported);
@@ -339,11 +343,12 @@ export function createRouter(deps: RouterDeps) {
 
   return {
     /** A website's call; resolves with its result or rejects with a ProviderError. */
-    async fromPage(origin: string, icon: string | undefined, request: PageRequest) {
+    async fromPage(origin: string, from: string | undefined | Caller, request: PageRequest) {
       if (typeof request.method !== 'string') return fail(ERR.invalid);
+      const caller: Caller = typeof from === 'object' ? from : { icon: from };
       return request.namespace === 'solana'
-        ? solana(origin, icon, request.method, request.params)
-        : evm(origin, icon, request.method, request.params);
+        ? solana(origin, caller, request.method, request.params)
+        : evm(origin, caller, request.method, request.params);
     },
 
     /** The oldest request still waiting, for the approval window. */
@@ -370,6 +375,15 @@ export function createRouter(deps: RouterDeps) {
     },
 
     sites: async () => Object.values(await sites()),
+
+    /**
+     * WalletConnect: the site names the chain on every request, among those the session
+     * already allows, so it's set without asking (a browser site asks to switch instead).
+     */
+    async pinChain(origin: string, chainId: number) {
+      if (!evmNetwork(chainId)) return fail(ERR.unknownChain);
+      if ((await chainOf(origin)) !== chainId) await setChain(origin, chainId);
+    },
     disconnect,
 
     /** Sign out or reset: no site stays connected to wallets that are gone. */

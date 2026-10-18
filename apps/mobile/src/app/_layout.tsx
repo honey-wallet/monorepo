@@ -1,3 +1,5 @@
+// Must come first: WalletConnect's polyfills (a no-op in the browser).
+import '@/lib/walletconnect-compat';
 import * as Notifications from 'expo-notifications';
 import { DarkTheme, DefaultTheme, router, Stack, type Theme, ThemeProvider } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -10,6 +12,7 @@ import { appLock } from '@/lib/app-lock';
 import { createMultisig, reject, startDemoRequests } from '@/lib/multisig';
 import { ACTION_REJECT, setUpNotifications } from '@/lib/push';
 import { showToast } from '@/lib/toast';
+import { walletConnect } from '@/lib/walletconnect';
 import { useTheme } from '@/theme';
 
 /**
@@ -51,6 +54,14 @@ function useNotificationResponses() {
 
 function NotificationResponses() {
   useNotificationResponses();
+  return null;
+}
+
+/** Websites by WalletConnect (the phone only): reconnects saved sessions at launch. */
+function WalletConnectSessions() {
+  useEffect(() => {
+    void walletConnect().catch((error) => console.warn('WalletConnect didn’t start', error));
+  }, []);
   return null;
 }
 
@@ -107,6 +118,7 @@ export default function RootLayout() {
       <ThemeProvider value={navigationTheme}>
         <AppGate>
           <NotificationResponses />
+          <WalletConnectSessions />
           <Stack
             screenOptions={{ headerShown: false }}
             screenLayout={({ options, navigation, route, children }) =>
@@ -163,6 +175,7 @@ export default function RootLayout() {
             <Stack.Screen name="(keys)/pair-phone" options={tray()} />
             {/* Honey for Chrome: websites' requests, in their own window */}
             <Stack.Screen name="(connect)/approve" />
+            <Stack.Screen name="(connect)/wc" />
             <Stack.Screen name="(settings)/connected-sites" options={tray()} />
             <Stack.Screen name="(keys)/restore-backup" options={tray()} />
             <Stack.Screen name="(keys)/watch-wallet" options={tray()} />

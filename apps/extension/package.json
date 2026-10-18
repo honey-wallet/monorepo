@@ -6,7 +6,8 @@
   "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "exports": {
-    "./protocol": "./src/worker/protocol.ts"
+    "./protocol": "./src/worker/protocol.ts",
+    "./router": "./src/worker/router.ts"
   },
   "scripts": {
     "dev": "pnpm --filter @honey-wallet/mobile exec expo start --web",

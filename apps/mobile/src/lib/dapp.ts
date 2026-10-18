@@ -1,35 +1,43 @@
 import type { Answer, Approval, Site } from '@honey-wallet/extension/protocol';
 
 /**
- * Talking to Honey for Chrome's background worker (websites, connected sites, the
- * toolbar badge). Only the browser build has one; on a phone these do nothing.
+ * Websites' requests on the phone, which arrive by WalletConnect (lib/walletconnect.ts);
+ * the browser build talks to the extension's worker instead (dapp.web.ts). Loaded lazily:
+ * WalletConnect starts only when something here is used.
  */
 
-/** Whether this page can talk to the extension's worker. */
+const wc = () => import('@/lib/walletconnect');
+
+/** Whether this page is Honey for Chrome's (it closes its window when done). */
 export const hasWorker = false;
 
 /** The oldest website request waiting for an answer, or null. */
 export async function nextApproval(): Promise<Approval | null> {
-  return null;
+  return (await wc()).wcRouter.next();
 }
 
-export async function answerApproval(_answer: Answer): Promise<boolean> {
-  return false;
+export async function answerApproval(answer: Answer): Promise<boolean> {
+  return (await wc()).wcRouter.answer(answer);
 }
 
 export async function connectedSites(): Promise<Site[]> {
-  return [];
+  return (await wc()).wcRouter.sites();
 }
 
-export async function disconnectSite(_origin: string) {}
+export async function disconnectSite(origin: string) {
+  await (await wc()).disconnectApp(origin);
+}
 
-/** Sign out or reset: no site stays connected to wallets that are gone. */
-export async function forgetSites() {}
+/** Sign out: no site stays connected to wallets that are gone. */
+export async function forgetSites() {
+  await (await wc()).forgetApps();
+}
 
-/** Keeps the worker awake while an approval is open. */
+/** While the approval screen is open, new requests queue in it instead of opening another. */
 export function keepWorkerAwake(): () => void {
-  return () => {};
+  void wc().then((m) => m.setApprovalShowing(true));
+  return () => void wc().then((m) => m.setApprovalShowing(false));
 }
 
-/** Shared-wallet proposals waiting for you, for the toolbar badge. */
+/** Shared-wallet proposals waiting for you: the extension's badge only. */
 export function publishWaiting(_count: number) {}
