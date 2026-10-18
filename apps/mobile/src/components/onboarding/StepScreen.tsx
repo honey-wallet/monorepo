@@ -6,6 +6,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
+import { isWeb } from '@/lib/platform';
 import { makeStyles, useTheme } from '@/theme';
 import { BackIcon, CloseIcon, HelpIcon } from './icons';
 
@@ -89,7 +90,8 @@ export const useStepStyles = makeStyles((c) => ({
   },
   footerRow: {
     flexDirection: 'row',
-    gap: 17,
+    // review: tighter in the 393px popup, where "Choose Photo" wrapped onto two lines.
+    gap: isWeb ? 12 : 17,
   },
   footerButton: {
     flex: 1,
@@ -129,6 +131,7 @@ const useStyles = makeStyles((c) => ({
     letterSpacing: -0.3,
   },
   footer: {
-    paddingHorizontal: 40,
+    // Wider in the popup, so two buttons in a row keep their labels on one line.
+    paddingHorizontal: isWeb ? 24 : 40,
   },
 }));

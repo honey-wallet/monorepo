@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
+import { isWeb } from '@/lib/platform';
 import { EVM_LOGOS, type ReceiveAddress } from '@/lib/receive';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -40,7 +41,7 @@ export function ChainPicker({
               tap();
               onPick(entry.family);
             }}
-            style={styles.row}
+            style={[styles.row, isWeb && styles.rowWeb]}
           >
             {evm ? (
               // One address for all of them: a few of their logos, overlapped.
@@ -82,6 +83,10 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 12,
+  },
+  // review: shorter rows in the 600px-tall extension popup, so Receive's exchange steps fit.
+  rowWeb: {
+    paddingVertical: 8,
   },
   flex: {
     flex: 1,

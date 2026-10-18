@@ -137,15 +137,18 @@ export function TabBar({ state, navigation }: TabBarProps) {
             </Pressable>
           ))}
         </View>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Trade"
-          onPress={() => go('trade')}
-          scaleTo={0.97}
-          style={styles.fab}
-        >
-          <Icon name="trade" size={30} color={c.onPrimary} />
-        </PressableScale>
+        {/* No trading in the browser extension (review): no Trade button there. */}
+        {isWeb ? null : (
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Trade"
+            onPress={() => go('trade')}
+            scaleTo={0.97}
+            style={styles.fab}
+          >
+            <Icon name="trade" size={30} color={c.onPrimary} />
+          </PressableScale>
+        )}
       </View>
     </>
   );

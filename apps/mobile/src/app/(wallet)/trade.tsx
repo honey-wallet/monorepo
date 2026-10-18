@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Keyboard, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -67,7 +67,12 @@ import { makeStyles, useTheme } from '@/theme';
  * Each product is one short form; nothing executes yet, so final actions confirm with
  * a demo toast.
  */
-export default function TradeScreen() {
+/** No trading in the browser extension (review): a link to Trade lands on Home. */
+export default function TradeRoute() {
+  return isWeb ? <Redirect href="/home" /> : <TradeScreen />;
+}
+
+function TradeScreen() {
   const styles = useStyles();
   // `?mode=Perps` opens a specific product, e.g. from a deep link.
   const params = useLocalSearchParams<{ mode?: TradeMode }>();

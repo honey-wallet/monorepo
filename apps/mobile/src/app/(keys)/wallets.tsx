@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
+import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -78,6 +79,17 @@ export default function WalletsSheet() {
     router.push(path);
   };
 
+  const settingsLabel = shared.multisigs[active.id] ? 'Shared wallet settings' : 'Wallet settings';
+  const openSettings = () => {
+    tap();
+    // A shared wallet's settings are its own page: members and rules.
+    if (shared.multisigs[active.id]) {
+      leaveSheetTo({ pathname: '/multisig/[id]', params: { id: active.id } });
+    } else {
+      leaveSheetTo('/settings');
+    }
+  };
+
   const row = (w: AddedWallet) => {
     // Shared wallets show their live rule and how much is waiting for you.
     const m = shared.multisigs[w.id];
@@ -110,29 +122,52 @@ export default function WalletsSheet() {
       >
         <Icon name="close" size={14} color={c.textSecondary} />
       </PressableScale> */}
-      <View style={styles.current}>
-        <WalletAvatar wallet={active} profile={profile} size={64} />
-        <TextSwap text={active.label} style={styles.name} />
-        <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
-          <Text style={styles.address}>{shortAddress(active.address, 8, 6)}</Text>
-          <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
-        </Pressable>
-      </View>
+      {isWeb ? (
+        // review: in the 600px popup the centred header and full-width settings button
+        // pushed Add wallet below the fold. One row instead: face, name, address and a
+        // small Settings pill, clear of the tray's close button.
+        <View style={styles.currentRow}>
+          <WalletAvatar wallet={active} profile={profile} size={48} />
+          <View style={styles.currentText}>
+            {/* One line beside the Settings pill: a long name ends in "…" rather than wrapping. */}
+            <Text numberOfLines={1} style={styles.nameRow}>
+              {active.label}
+            </Text>
+            <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRowWeb}>
+              <Text style={styles.address}>{shortAddress(active.address, 6, 4)}</Text>
+              <IconSwap name={copied ? 'check' : 'copy'} size={13} color={c.textSecondary} />
+            </Pressable>
+          </View>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={settingsLabel}
+            scaleTo={0.96}
+            onPress={openSettings}
+            style={styles.settingsPill}
+          >
+            <Icon name="settings" size={14} color={c.text} />
+            <Text style={styles.settingsPillLabel}>Settings</Text>
+          </PressableScale>
+        </View>
+      ) : (
+        <>
+          <View style={styles.current}>
+            <WalletAvatar wallet={active} profile={profile} size={64} />
+            <TextSwap text={active.label} style={styles.name} />
+            <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
+              <Text style={styles.address}>{shortAddress(active.address, 8, 6)}</Text>
+              <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
+            </Pressable>
+          </View>
 
-      <PillButton
-        label={shared.multisigs[active.id] ? 'Shared wallet settings' : 'Wallet settings'}
-        variant="secondary"
-        onPress={() => {
-          tap();
-          // A shared wallet's settings are its own page: members and rules.
-          if (shared.multisigs[active.id]) {
-            leaveSheetTo({ pathname: '/multisig/[id]', params: { id: active.id } });
-          } else {
-            leaveSheetTo('/settings');
-          }
-        }}
-        style={styles.settingsButton}
-      />
+          <PillButton
+            label={settingsLabel}
+            variant="secondary"
+            onPress={openSettings}
+            style={styles.settingsButton}
+          />
+        </>
+      )}
 
       <SheetSection title="Wallets" />
       {/* {wallets.filter((w) => w.kind === 'wallet').map(row)} */}
@@ -348,6 +383,44 @@ const useStyles = makeStyles((c) => ({
   },
   settingsButton: {
     marginTop: 20,
+  },
+  // Browser: the current wallet as one row (see the render).
+  currentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    // Clear of the tray's close button, top right.
+    paddingRight: 40,
+    marginBottom: 4,
+  },
+  currentText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  nameRow: {
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  addressRowWeb: {
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  settingsPill: {
+    height: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    borderRadius: 17,
+    backgroundColor: c.raised,
+  },
+  settingsPillLabel: {
+    color: c.text,
+    fontSize: 14,
+    fontWeight: '600',
   },
   // Wallet rows match SheetRow's metrics but keep their own accessibility label.
   badge: {

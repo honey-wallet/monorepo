@@ -1,4 +1,4 @@
-import { Appearance } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 import type { IconName } from '@/components/Icon';
 import { createStore } from '@/lib/store';
 
@@ -16,7 +16,10 @@ export type TradeMode = (typeof TRADE_MODES)[number];
  * The products that can be shown for now. Futures and Options are switched off until
  * they're built out; add them back here to bring them back (their screens stay in place).
  */
-export const AVAILABLE_TRADE_MODES: readonly TradeMode[] = ['Swap', 'Perps', 'Predict'];
+// The browser extension is for connecting to websites: no trading there for now (review).
+// export const AVAILABLE_TRADE_MODES: readonly TradeMode[] = ['Swap', 'Perps', 'Predict'];
+export const AVAILABLE_TRADE_MODES: readonly TradeMode[] =
+  Platform.OS === 'web' ? [] : ['Swap', 'Perps', 'Predict'];
 // export const AVAILABLE_TRADE_MODES: readonly TradeMode[] = TRADE_MODES;
 
 /** Each Trade product's symbol and one-line description (Trade's tabs and the tabs editor). */

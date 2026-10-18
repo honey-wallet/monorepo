@@ -11,7 +11,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { finishOnboarding } from '@/lib/onboarding';
-import { HERE } from '@/lib/platform';
+import { HERE, isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { importMnemonic, importPrivateKey, isValidMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
@@ -112,16 +112,29 @@ export default function ImportWalletSheet() {
     }
   };
 
-  const half = target / 2;
+  // const half = target / 2;
   // Two columns read top to bottom (1–6, then 7–12), the way it's written on paper.
+  // review: in the 600px popup 24 words in two columns ran 12 rows deep, far below the
+  // fold; there they go in three shorter columns (1–8, 9–16, 17–24) instead.
+  const dense = isWeb && target === 24;
+  const columns = dense ? 3 : 2;
+  const half = target / columns;
   const column = (start: number) => (
-    <View style={styles.column}>
+    <View key={start} style={[styles.column, isWeb && styles.columnWeb]}>
       {Array.from({ length: half }, (_, k) => {
         const i = start + k;
         const word = slots[i];
         return (
-          <View key={i} style={[styles.cell, word && badWord(word) && styles.cellError]}>
-            <Text style={styles.cellNumber}>{i + 1}</Text>
+          <View
+            key={i}
+            style={[
+              styles.cell,
+              isWeb && styles.cellWeb,
+              dense && styles.cellDense,
+              word && badWord(word) && styles.cellError,
+            ]}
+          >
+            <Text style={[styles.cellNumber, dense && styles.cellNumberDense]}>{i + 1}</Text>
             <TextInput
               ref={(el) => {
                 cells.current[i] = el;
@@ -140,7 +153,7 @@ export default function ImportWalletSheet() {
               autoCorrect={false}
               autoComplete="off"
               spellCheck={false}
-              style={styles.cellInput}
+              style={[styles.cellInput, dense && styles.cellInputDense]}
             />
           </View>
         );
@@ -186,13 +199,16 @@ export default function ImportWalletSheet() {
     // The button stays inline under the field rather than pinned as a footer, so
     // it sits above the keyboard while typing.
     <SheetScreen>
-      <View style={styles.glyph}>
-        {isKey ? (
-          <KeyGlyph color={c.accentText} size={22} />
-        ) : (
-          <PhraseGlyph color={c.accentText} size={22} />
-        )}
-      </View>
+      {/* review: the popup has no room to spare above the words; the title says it. */}
+      {isWeb ? null : (
+        <View style={styles.glyph}>
+          {isKey ? (
+            <KeyGlyph color={c.accentText} size={22} />
+          ) : (
+            <PhraseGlyph color={c.accentText} size={22} />
+          )}
+        </View>
+      )}
       <TextsReveal
         id={`import-${isKey ? 'key' : 'phrase'}`}
         first={<Text style={styles.title}>{copy.title}</Text>}
@@ -237,16 +253,17 @@ export default function ImportWalletSheet() {
               {pasteButton}
             </View>
           </View>
-          <View style={styles.grid}>
-            {column(0)}
-            {column(half)}
+          <View style={[styles.grid, isWeb && styles.gridWeb]}>
+            {/* {column(0)}
+            {column(half)} */}
+            {Array.from({ length: columns }, (_, n) => column(n * half))}
           </View>
         </>
       )}
       {/* Only when something's wrong. */}
       {copy.hint ? <Text style={[styles.hint, styles.hintError]}>{copy.hint}</Text> : null}
 
-      <View style={styles.rule}>
+      <View style={[styles.rule, isWeb && styles.ruleWeb]}>
         <Icon name="warning" size={15} color={c.textSecondary} />
         <Text style={styles.ruleText}>Never share it. Anyone with it can take your funds.</Text>
       </View>
@@ -255,7 +272,7 @@ export default function ImportWalletSheet() {
         label={busy ? 'Importing…' : copy.cta}
         disabled={!complete || badChecksum || busy}
         onPress={submit}
-        style={styles.cta}
+        style={[styles.cta, isWeb && styles.ctaWeb]}
       />
     </SheetScreen>
   );
@@ -354,6 +371,31 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
     gap: 8,
   },
+  // Browser: shorter cells so the phrase and Import fit the popup (see the render).
+  gridWeb: {
+    gap: 8,
+  },
+  columnWeb: {
+    gap: 6,
+  },
+  cellWeb: {
+    height: 40,
+    borderRadius: 14,
+  },
+  cellDense: {
+    height: 34,
+    gap: 4,
+    paddingLeft: 10,
+    borderRadius: 12,
+  },
+  cellNumberDense: {
+    width: 18,
+    fontSize: 12,
+  },
+  cellInputDense: {
+    paddingRight: 6,
+    fontSize: 15,
+  },
   cell: {
     height: 46,
     flexDirection: 'row',
@@ -407,5 +449,11 @@ const useStyles = makeStyles((c) => ({
   },
   cta: {
     marginTop: 20,
+  },
+  ruleWeb: {
+    marginTop: 12,
+  },
+  ctaWeb: {
+    marginTop: 14,
   },
 }));

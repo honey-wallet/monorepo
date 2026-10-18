@@ -25,6 +25,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { Copyable } from '@/components/sheets/Details';
 import { closeSheet, SheetScreen, StatRow } from '@/components/sheets/Sheet';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
+import { MoreDetails } from '@/components/wallet/MoreDetails';
 import { MemberAvatar, NetworkBadge } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { failure, success, tap } from '@/lib/haptics';
@@ -50,6 +51,7 @@ import {
   YOU,
 } from '@/lib/multisig';
 import { demoOutcome } from '@/lib/outcomes';
+import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
@@ -206,6 +208,61 @@ export default function ProposalSheet() {
     </ContentSwap>
   );
 
+  // The cost (or, once sent, when it went through): a decision input while it's waiting.
+  const costRow = (
+    <StatRow
+      label={executed ? 'Executed' : 'Network cost'}
+      value={
+        loading ? (
+          <SkeletonBar width={64} height={12} />
+        ) : (
+          <TextSwap
+            text={
+              executed && proposal.doneAt
+                ? `${when(proposal.doneAt)} · ${ids.fee}`
+                : pending
+                  ? `About ${ids.fee}`
+                  : 'Not sent'
+            }
+            style={styles.statValue}
+          />
+        )
+      }
+    />
+  );
+  // Both ids together: the multisig's, then the chain's once it's sent.
+  const idRows = (
+    <>
+      <StatRow
+        label={multisig.protocol === 'safe' ? 'Safe tx hash' : 'Squads proposal'}
+        value={<Copyable value={ids.proposalHash} toast="Proposal ID copied" />}
+      />
+      {/* Slides open when the last signature sends it. */}
+      <Accordion open={executed}>
+        <StatRow
+          label="Transaction hash"
+          value={
+            <View style={styles.inline}>
+              <Copyable value={ids.hash} toast="Transaction ID copied" />
+              <PressableScale
+                accessibilityRole="link"
+                accessibilityLabel={`View on ${ids.explorer.name}`}
+                hitSlop={10}
+                onPress={() => {
+                  tap();
+                  Linking.openURL(ids.explorer.url).catch(() => {});
+                }}
+              >
+                <Icon name="link" size={14} color={c.textSecondary} />
+              </PressableScale>
+            </View>
+          }
+        />
+      </Accordion>
+    </>
+  );
+  const protocolRow = <StatRow label="Protocol" value={protocolName(multisig.protocol)} />;
+
   return (
     <SheetScreen
       title={`Proposal #${proposal.nonce}`}
@@ -213,16 +270,27 @@ export default function ProposalSheet() {
       footer={footer}
     >
       <View>
-        <View style={styles.summary}>
-          {info.symbol ? <TokenIcon symbol={info.symbol} size={40} /> : null}
-          <Text style={styles.title}>{info.title}</Text>
+        <View style={[styles.summary, isWeb && styles.summaryWeb]}>
+          {/* In the popup the token sits beside the title, a row shorter (review). */}
+          {isWeb ? (
+            <View style={styles.titleRow}>
+              {info.symbol ? <TokenIcon symbol={info.symbol} size={26} /> : null}
+              <Text style={[styles.title, styles.titleWeb]}>{info.title}</Text>
+            </View>
+          ) : (
+            <>
+              {info.symbol ? <TokenIcon symbol={info.symbol} size={40} /> : null}
+              <Text style={styles.title}>{info.title}</Text>
+            </>
+          )}
           {'usd' in proposal.action && proposal.action.type !== 'swap' && proposal.action.usd ? (
             <Text style={styles.usd}>{formatUsd(proposal.action.usd)}</Text>
           ) : null}
           <StatusPill multisig={multisig} proposal={proposal} left={left} />
         </View>
 
-        {/* What it does, and where */}
+        {/* What it does, and where. In the popup the cost joins these (it's what you
+            decide on); the protocol and ids fold under Details (review). */}
         <View style={styles.group}>
           <ActionRows action={proposal.action} multisig={multisig} />
           <StatRow
@@ -234,11 +302,11 @@ export default function ProposalSheet() {
               </View>
             }
           />
-          <StatRow label="Protocol" value={protocolName(multisig.protocol)} />
+          {isWeb ? (pending ? costRow : null) : protocolRow}
         </View>
 
         {/* Who signs, side by side: a tick on each who has */}
-        <View style={styles.groupHead}>
+        <View style={[styles.groupHead, isWeb && styles.groupHeadWeb]}>
           <Text style={styles.groupTitle}>{PURPOSES[multisig.purpose].signers}</Text>
           <Text style={styles.groupCount}>
             {proposal.approvals.length} of {multisig.members.length} signed
@@ -271,7 +339,7 @@ export default function ProposalSheet() {
                   style={[styles.signer, idle && styles.signerIdle]}
                 >
                   <View>
-                    <MemberAvatar member={m} size={40} />
+                    <MemberAvatar member={m} size={isWeb ? 34 : 40} />
                     {yes || no ? (
                       <Animated.View
                         entering={mounted ? badgeIn() : undefined}
@@ -298,55 +366,48 @@ export default function ProposalSheet() {
           </View>
         </View>
 
-        {/* Both ids together: the multisig's, then the chain's once it's sent */}
+        {isWeb ? (
+          // The popup is short: protocol, ids and (once sent) when it went through
+          // fold under Details, the hidden-tokens pattern, so Approve / Reject stay in
+          // view without scrolling (review).
+          <View style={styles.detailsWeb}>
+            <MoreDetails>
+              <View style={styles.group}>
+                {protocolRow}
+                {proposal.action.type === 'swap' && proposal.action.withApproval ? (
+                  <StatRow
+                    label="Includes"
+                    value={`${proposal.action.from.symbol} approval, in one go`}
+                  />
+                ) : null}
+                {idRows}
+                {pending ? null : costRow}
+              </View>
+            </MoreDetails>
+          </View>
+        ) : (
+          <>
+            <Text style={[styles.groupTitle, styles.groupGap]}>Transaction</Text>
+            <View style={styles.group}>
+              {idRows}
+              {costRow}
+            </View>
+          </>
+        )}
+        {/* review: the Transaction group moved into `idRows` / `costRow` above, so the
+            popup can fold it under Details; the phone renders the same rows as before.
         <Text style={[styles.groupTitle, styles.groupGap]}>Transaction</Text>
         <View style={styles.group}>
           <StatRow
             label={multisig.protocol === 'safe' ? 'Safe tx hash' : 'Squads proposal'}
             value={<Copyable value={ids.proposalHash} toast="Proposal ID copied" />}
           />
-          {/* Slides open when the last signature sends it. */}
           <Accordion open={executed}>
-            <StatRow
-              label="Transaction hash"
-              value={
-                <View style={styles.inline}>
-                  <Copyable value={ids.hash} toast="Transaction ID copied" />
-                  <PressableScale
-                    accessibilityRole="link"
-                    accessibilityLabel={`View on ${ids.explorer.name}`}
-                    hitSlop={10}
-                    onPress={() => {
-                      tap();
-                      Linking.openURL(ids.explorer.url).catch(() => {});
-                    }}
-                  >
-                    <Icon name="link" size={14} color={c.textSecondary} />
-                  </PressableScale>
-                </View>
-              }
-            />
+            <StatRow label="Transaction hash" value={…} />
           </Accordion>
-          <StatRow
-            label={executed ? 'Executed' : 'Network cost'}
-            value={
-              loading ? (
-                <SkeletonBar width={64} height={12} />
-              ) : (
-                <TextSwap
-                  text={
-                    executed && proposal.doneAt
-                      ? `${when(proposal.doneAt)} · ${ids.fee}`
-                      : pending
-                        ? `About ${ids.fee}`
-                        : 'Not sent'
-                  }
-                  style={styles.statValue}
-                />
-              )
-            }
-          />
+          <StatRow label={executed ? 'Executed' : 'Network cost'} value={…} />
         </View>
+        */}
       </View>
     </SheetScreen>
   );
@@ -474,7 +535,8 @@ function ActionRows({ action, multisig }: { action: ProposalAction; multisig: Mu
             value={`${action.from.amount} ${action.from.symbol} · ${formatUsd(action.usd)}`}
           />
           <StatRow label="You get" value={`≈ ${action.to.amount} ${action.to.symbol}`} />
-          {action.withApproval ? (
+          {/* A route detail: in the popup it's under Details instead (review). */}
+          {action.withApproval && !isWeb ? (
             <StatRow label="Includes" value={`${action.from.symbol} approval, in one go`} />
           ) : null}
         </>
@@ -563,6 +625,20 @@ const useStyles = makeStyles((c) => ({
     fontWeight: '600',
     textAlign: 'center',
   },
+  // The popup's shorter window: a tighter top block (review).
+  summaryWeb: {
+    gap: 6,
+    paddingBottom: 12,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  titleWeb: {
+    marginTop: 0,
+    flexShrink: 1,
+  },
   usd: {
     marginTop: -4,
     color: c.textSecondary,
@@ -596,6 +672,13 @@ const useStyles = makeStyles((c) => ({
     marginHorizontal: 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  groupHeadWeb: {
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  detailsWeb: {
+    marginTop: -4,
   },
   groupTitle: {
     marginLeft: 2,

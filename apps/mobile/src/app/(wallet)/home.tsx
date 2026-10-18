@@ -115,7 +115,9 @@ export default function HomeScreen() {
   // A new wallet that hasn't had its first deposit yet.
   const empty = !!view.empty;
   // A new wallet has no trades yet, whatever the demo data says.
-  const sections = SECTIONS.filter((s) => s !== 'Trades' || (hasTrades && !empty));
+  // const sections = SECTIONS.filter((s) => s !== 'Trades' || (hasTrades && !empty));
+  // review: no trading in the extension, so the browser never shows the Trades tab.
+  const sections = SECTIONS.filter((s) => s !== 'Trades' || (!isWeb && hasTrades && !empty));
   // Switching to a shared wallet (which can't trade) hides Trades; fall back to Tokens.
   const shownSection = sections.includes(section) ? section : 'Tokens';
   // The promo lists Honey Jar rates, which come with Savings' Earn rates.
@@ -465,7 +467,9 @@ export default function HomeScreen() {
                 ) : (
                   <NftGallery />
                 ))}
-              {shownSection === 'Trades' && <TradesList />}
+              {/* {shownSection === 'Trades' && <TradesList />} */}
+              {/* review: no trading in the extension. */}
+              {shownSection === 'Trades' && !isWeb && <TradesList />}
             </View>
           </ContentSwap>
         </Animated.ScrollView>

@@ -219,6 +219,8 @@ const useStyles = makeStyles((c) => ({
   networksText: {
     color: c.text,
     fontSize: 15,
+    // A two-line warning (Bitcoin, Solana…) stays centred under the code.
+    textAlign: 'center',
   },
   networksRow: {
     marginTop: 16,

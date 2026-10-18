@@ -42,6 +42,7 @@ import { POSITIONS, type Position, TRADES, type TradePosition } from '@/lib/coll
 import { success, tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { EARN, formatUsd, TOKENS } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { useTradeModes } from '@/lib/trade-modes';
 import { useWalletView } from '@/lib/wallet-view';
@@ -226,7 +227,11 @@ export function TradesList() {
         icon="trade"
         title="No open trades"
         hint="Perps and predictions you open show up here."
-        action={{ label: 'Explore markets', onPress: () => router.navigate('/trade') }}
+        // action={{ label: 'Explore markets', onPress: () => router.navigate('/trade') }}
+        // review: no trading in the extension, so no way into the markets from the browser.
+        action={
+          isWeb ? undefined : { label: 'Explore markets', onPress: () => router.navigate('/trade') }
+        }
       />
     );
   }

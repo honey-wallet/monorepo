@@ -183,6 +183,9 @@ const useStyles = makeStyles((c) => ({
     padding: 20,
     borderRadius: 24,
     backgroundColor: c.card,
+    // In dark mode the card matched the sheet behind it; a hairline gives it an edge.
+    borderWidth: 1,
+    borderColor: c.divider,
   },
   cardHead: {
     flexDirection: 'row',

@@ -279,7 +279,8 @@ export function WalletSettingsRow({ tradeTabs = false }: { tradeTabs?: boolean }
     <View style={styles.walletSettings}>
       {/* On Trade's settings: add, hide or reorder the product tabs. */}
       {/* Not on a shared wallet: it only ever has Swap. */}
-      {tradeTabs && !multisig && (
+      {/* No Trade tabs to pick in the browser (no trading there). */}
+      {tradeTabs && !multisig && AVAILABLE_TRADE_MODES.length > 0 && (
         <SheetRow
           icon="trade"
           title="Trade tabs"
