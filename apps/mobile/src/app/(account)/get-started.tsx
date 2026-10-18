@@ -133,7 +133,7 @@ export default function GetStartedSheet() {
             <MoreRow
               disabled={!!signingIn}
               icon="qr"
-              title="Scan from Honey for Chrome"
+              title="Scan from the browser extension"
               onPress={() => {
                 tap();
                 // Over this sheet, like Pair with your phone in the browser: leaving the

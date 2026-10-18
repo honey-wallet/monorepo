@@ -61,8 +61,8 @@ const ALL_STEPS: { id: SetupStep; title: string; hint: string; href: string }[] 
   },
   {
     id: 'browser',
-    title: 'Use Honey in Chrome',
-    hint: 'Scan the code in Honey for Chrome',
+    title: 'Use Honey in your browser',
+    hint: 'Scan the code in the browser extension',
     href: '/scan?purpose=extension',
   },
   {

@@ -54,7 +54,7 @@ export default function ScanScreen() {
     // From onboarding (no wallet yet): only Honey for Chrome's "Send wallet to phone" code.
     if (purpose === 'pair') {
       if (offerDirection(data) !== 'toPhone') {
-        showToast('In Honey for Chrome, open Settings › Send wallet to phone');
+        showToast('In the browser extension, open Settings › Send wallet to phone');
         handled.current = false;
         return;
       }
@@ -64,7 +64,7 @@ export default function ScanScreen() {
     }
     // From the setup checklist: only Honey for Chrome's "Pair with your phone" code.
     if (purpose === 'extension' && offerDirection(data) !== 'toBrowser') {
-      showToast('In Honey for Chrome, choose I already have a wallet › Pair with your phone');
+      showToast('In the browser extension, choose I already have a wallet › Pair with your phone');
       handled.current = false;
       return;
     }
@@ -129,7 +129,7 @@ export default function ScanScreen() {
           first={
             <Text style={styles.title}>
               {purpose === 'pair' || purpose === 'extension'
-                ? 'Scan the code in Honey for Chrome'
+                ? 'Scan the code in the browser extension'
                 : 'Scan a QR code'}
             </Text>
           }

@@ -149,6 +149,39 @@ export default function PairExtensionSheet() {
     );
   }
 
+  // Receiving: what to do (the title), the code right under it, then what happens next.
+  // Sized to its content like the browser's, not a full sheet with an icon (review).
+  if (state.step === 'receiving') {
+    return (
+      <SheetScreen
+        title="Enter this code in the extension"
+        footer={
+          <PillButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => {
+              close();
+              showToast('Pairing cancelled');
+            }}
+            style={styles.flex}
+          />
+        }
+      >
+        <Text
+          style={[styles.code, styles.codeUnderTitle]}
+          accessibilityLabel={`Code ${state.code.split('').join(' ')}`}
+        >
+          {`${state.code.slice(0, 3)} ${state.code.slice(3)}`}
+        </Text>
+        <Text style={styles.subtitle}>
+          The extension is asking for these 6 digits. Once you type them there, the wallet comes to
+          this phone.
+        </Text>
+        <ActivityIndicator style={styles.waiting} color={c.textSecondary} />
+      </SheetScreen>
+    );
+  }
+
   if (state.step === 'review') {
     return (
       <SheetScreen
@@ -175,8 +208,8 @@ export default function PairExtensionSheet() {
             first={<Text style={styles.title}>Add this wallet?</Text>}
             second={
               <Text style={styles.subtitle}>
-                From the browser that took your code. Only add it if Honey for Chrome just said it
-                sent it.
+                From the browser that took your code. Only add it if the extension just said it sent
+                it.
               </Text>
             }
           />
@@ -191,7 +224,7 @@ export default function PairExtensionSheet() {
       ? {
           icon: 'scan',
           title: 'Scan from Honey',
-          body: 'To pair a browser, open Honey’s scanner and point it at the code in Honey for Chrome.',
+          body: 'To pair a browser, open Honey’s scanner and point it at the code in the browser extension.',
         }
       : state.step === 'error'
         ? { icon: 'warning', title: 'Couldn’t pair', body: state.message }
@@ -211,22 +244,16 @@ export default function PairExtensionSheet() {
               ? {
                   icon: 'globe',
                   title: 'Enter the code',
-                  body: 'Type the 6 digits Honey for Chrome shows, so your wallet only goes to your browser.',
+                  body: 'Type the 6 digits the browser extension shows, so your wallet only goes to your browser.',
                 }
-              : state.step === 'receiving'
-                ? {
-                    icon: 'globe',
-                    title: 'Enter this code in Honey for Chrome',
-                    body: 'Honey for Chrome is asking for these 6 digits. Once you type them there, the wallet comes to this phone.',
-                  }
-                : {
-                    icon: 'globe',
-                    title: 'Pair Honey for Chrome',
-                    body:
-                      state.step === 'sending'
-                        ? 'Sending your wallet, encrypted for that browser only…'
-                        : 'Connecting to your browser…',
-                  };
+              : {
+                  icon: 'globe',
+                  title: 'Pair the browser extension',
+                  body:
+                    state.step === 'sending'
+                      ? 'Sending your wallet, encrypted for that browser only…'
+                      : 'Connecting to your browser…',
+                };
   const danger = state.step === 'intro' || state.step === 'error';
 
   return (
@@ -238,7 +265,7 @@ export default function PairExtensionSheet() {
             <PillButton label="Cancel" variant="secondary" onPress={close} style={styles.flex} />
             <PillButton label="Continue" onPress={() => start(state.uri)} style={styles.flex} />
           </View>
-        ) : state.step === 'compare' || state.step === 'receiving' ? (
+        ) : state.step === 'compare' ? (
           <PillButton
             label="Cancel"
             variant="secondary"
@@ -289,17 +316,10 @@ export default function PairExtensionSheet() {
             setState({
               step: 'error',
               message:
-                'The codes didn’t match, so nothing was sent. Someone may be in between. Start again from Honey for Chrome.',
+                'The codes didn’t match, so nothing was sent. Someone may be in between. Start again from the browser extension.',
             });
           }}
         />
-      ) : state.step === 'receiving' ? (
-        <>
-          <Text style={styles.code} accessibilityLabel={`Code ${state.code.split('').join(' ')}`}>
-            {`${state.code.slice(0, 3)} ${state.code.slice(3)}`}
-          </Text>
-          <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
-        </>
       ) : state.step === 'connecting' || state.step === 'sending' ? (
         <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
       ) : null}
@@ -372,6 +392,13 @@ const useStyles = makeStyles((c) => ({
     letterSpacing: 6,
     textAlign: 'center',
     fontVariant: ['tabular-nums'],
+  },
+  codeUnderTitle: {
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  waiting: {
+    marginTop: 20,
   },
   spinner: {
     marginTop: 48,

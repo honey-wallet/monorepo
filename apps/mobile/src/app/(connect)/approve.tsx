@@ -307,7 +307,7 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           <Warning
             text={
               approval.verified === 'scam'
-                ? 'WalletConnect flags this site as a known scam. Only continue if you’re sure, for example testing on a test network.'
+                ? 'WalletConnect flags this site as a scam.'
                 : approval.verified === 'invalid'
                   ? 'This site isn’t the one it claims to be: its domain check failed.'
                   : 'WalletConnect couldn’t confirm this site’s address. Make sure it’s the site you meant.'
@@ -316,7 +316,7 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
         ) : null}
         {scam ? (
           <Checkbox
-            label="I understand the risk and want to continue"
+            label="I understand the risk"
             checked={riskAccepted}
             onChange={setRiskAccepted}
           />
