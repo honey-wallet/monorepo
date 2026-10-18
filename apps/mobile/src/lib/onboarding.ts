@@ -1,5 +1,7 @@
 import { router } from 'expo-router';
 import { randomAvatarSeed } from '@/components/Avatar';
+import { forgetSites } from '@/lib/dapp';
+import { isWeb } from '@/lib/platform';
 import { setProfile } from '@/lib/profile';
 import { createStore } from '@/lib/store';
 import { showToast } from '@/lib/toast';
@@ -23,14 +25,21 @@ import { wallets } from '@/lib/wallets';
  */
 export type SignInMethod = 'apple' | 'google' | 'email' | 'phrase' | 'import';
 
-export type SetupStep = 'wallet' | 'backup' | 'faceId' | 'notifications' | 'profile';
+export type SetupStep =
+  | 'wallet'
+  | 'backup'
+  | 'phone'
+  | 'browser'
+  | 'faceId'
+  | 'notifications'
+  | 'profile';
 
 /**
  * The steps that earn the fee credit, in the order the checklist shows them. The first
  * is already done when the list appears: a head start makes people likelier to finish
  * (endowed progress: 34% vs 19% completion in Nunes & Drèze's loyalty-card study).
  */
-export const SETUP_STEPS: { id: SetupStep; title: string; hint: string; href: string }[] = [
+const ALL_STEPS: { id: SetupStep; title: string; hint: string; href: string }[] = [
   {
     id: 'wallet',
     title: 'Create your wallet',
@@ -40,8 +49,21 @@ export const SETUP_STEPS: { id: SetupStep; title: string; hint: string; href: st
   {
     id: 'backup',
     title: 'Back up your wallet',
-    hint: 'So you can get back in on a new phone',
-    href: '/icloud-backup',
+    hint: 'So you can get back in on a new device',
+    // No iCloud or Google Drive in a browser: writing the phrase down is the backup.
+    href: isWeb ? '/recovery-phrase' : '/icloud-backup',
+  },
+  {
+    id: 'phone',
+    title: 'Get Honey on your phone',
+    hint: 'Scan a code with the Honey app',
+    href: '/pair-phone?send=1',
+  },
+  {
+    id: 'browser',
+    title: 'Use Honey in your browser',
+    hint: 'Scan the code in the browser extension',
+    href: '/scan?purpose=extension',
   },
   {
     id: 'faceId',
@@ -63,6 +85,28 @@ export const SETUP_STEPS: { id: SetupStep; title: string; hint: string; href: st
   },
 ];
 
+// Face ID and notifications are phone features, so the browser's checklist skips them
+// and can still be finished. Its backup is writing the phrase down, so a wallet with no
+// phrase on this device (signed in with Apple, Google or email) has no backup step there.
+const PHONE_ONLY: SetupStep[] = ['faceId', 'notifications', 'browser'];
+// Sending the wallet across is each side's own step, and needs a phrase to send.
+const BROWSER_ONLY: SetupStep[] = ['phone'];
+const NO_PHRASE: (SignInMethod | null)[] = ['apple', 'google', 'email'];
+
+/** The checklist for how this wallet was set up, on this platform. */
+export function setupSteps(method: SignInMethod | null) {
+  if (!isWeb) {
+    return ALL_STEPS.filter(
+      (s) => !BROWSER_ONLY.includes(s.id) && !(s.id === 'browser' && NO_PHRASE.includes(method)),
+    );
+  }
+  return ALL_STEPS.filter(
+    (s) =>
+      !PHONE_ONLY.includes(s.id) &&
+      !((s.id === 'backup' || s.id === 'phone') && NO_PHRASE.includes(method)),
+  );
+}
+
 /** The reward for finishing setup: credit against network fees. */
 export const SETUP_REWARD_USD = 5;
 
@@ -75,17 +119,25 @@ type Onboarding = {
   credit: number;
 };
 
-const onboarding = createStore<Onboarding>({
-  method: null,
-  funded: true,
-  done: [...SETUP_STEPS.map((s) => s.id)],
-  credit: 0,
-});
+const onboarding = createStore<Onboarding>(
+  {
+    method: null,
+    funded: true,
+    done: [...ALL_STEPS.map((s) => s.id)],
+    credit: 0,
+  },
+  { persist: 'onboarding' },
+);
 
 export const useOnboarding = onboarding.useValue;
 
 /** True once every setup step is done. */
-export const setupComplete = (state: Onboarding) => state.done.length === SETUP_STEPS.length;
+/** How many of this platform's steps are done (a browser has no Face ID step to count). */
+export const doneCount = (state: Pick<Onboarding, 'method' | 'done'>) =>
+  setupSteps(state.method).filter((s) => state.done.includes(s.id)).length;
+
+export const setupComplete = (state: Onboarding) =>
+  doneCount(state) === setupSteps(state.method).length;
 
 /**
  * Ends onboarding and opens the wallet. A new wallet starts empty; a restored one
@@ -126,7 +178,7 @@ export function completeStep(step: SetupStep) {
   const state = onboarding.get();
   if (state.done.includes(step)) return;
   const done = [...state.done, step];
-  const finished = done.length === SETUP_STEPS.length;
+  const finished = doneCount({ method: state.method, done }) === setupSteps(state.method).length;
   onboarding.set({ ...state, done, credit: finished ? SETUP_REWARD_USD : state.credit });
   if (finished) showToast(`$${SETUP_REWARD_USD} off network fees unlocked`);
 }
@@ -152,6 +204,8 @@ export function simulateDemoDeposit() {
  */
 export async function signOut(confirmedAccountIds: readonly string[]) {
   await eraseVault(confirmedAccountIds);
+  // Honey for Chrome: no website stays connected to wallets that just left.
+  await forgetSites();
   onboarding.set({ method: null, funded: false, done: [], credit: 0 });
   wallets.set({ activeId: 'main', added: [] });
   setProfile({ name: 'Honey', photo: null, avatarSeed: randomAvatarSeed() });

@@ -9,13 +9,15 @@ const OPTIONS: { value: Mode; label: string; hint: string; recommended?: boolean
   {
     value: 'auto',
     label: 'Auto',
-    hint: 'Network costs automatically calculated and optimized for fast, reliable transactions.',
+    // hint: 'Network costs automatically calculated and optimized for fast, reliable transactions.',
+    hint: 'Fast and reliable',
     recommended: true,
   },
   {
     value: 'custom',
     label: 'Custom',
-    hint: 'Fine-tune exact network costs for transactions.',
+    // hint: 'Fine-tune exact network costs for transactions.',
+    hint: 'Set your own for each transaction',
   },
 ];
 

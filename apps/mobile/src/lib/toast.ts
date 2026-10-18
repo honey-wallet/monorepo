@@ -1,14 +1,27 @@
 import { useSyncExternalStore } from 'react';
 import { tap } from '@/lib/haptics';
 
-/** A toast on screen. Each show() gets a fresh id. */
-export type Toast = { id: number; message: string };
+/**
+ * A toast on screen. Each show() gets a fresh id. `top` when a tray was open as it
+ * showed: trays rise from the bottom, where the toast would cover the tray's title, and
+ * it keeps that place while the tray closes rather than jumping.
+ */
+export type Toast = { id: number; message: string; top: boolean };
 
 /** Newest first. Up to three stay visible, stacked; a fourth sends the oldest out. */
 const MAX_STACK = 3;
 
 let toasts: Toast[] = [];
 let nextId = 1;
+let traysOpen = 0;
+
+/** A tray opened (components/sheets/Tray.tsx); call the returned function when it closes. */
+export function trayOpened() {
+  traysOpen++;
+  return () => {
+    traysOpen--;
+  };
+}
 const listeners = new Set<() => void>();
 
 function set(next: Toast[]) {
@@ -19,7 +32,7 @@ function set(next: Toast[]) {
 /** Shows a short confirmation, e.g. "Address copied", then hides it. */
 export function showToast(message: string, ms = 1800) {
   const id = nextId++;
-  set([{ id, message }, ...toasts].slice(0, MAX_STACK));
+  set([{ id, message, top: traysOpen > 0 }, ...toasts].slice(0, MAX_STACK));
   setTimeout(() => set(toasts.filter((t) => t.id !== id)), ms);
 }
 

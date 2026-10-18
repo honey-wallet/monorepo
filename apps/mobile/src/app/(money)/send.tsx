@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { RECENT_RECIPIENTS, shortAddress } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { isEvmAddress } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -50,17 +51,19 @@ export default function SendSheet() {
           autoCorrect={false}
           style={styles.input}
         />
-        <PressableScale
-          accessibilityLabel="Scan a QR code"
-          hitSlop={8}
-          scaleTo={0.97}
-          onPress={() => {
-            tap();
-            router.push('/scan');
-          }}
-        >
-          <Icon name="scan" size={19} color={c.textSecondary} />
-        </PressableScale>
+        {isWeb ? null : (
+          <PressableScale
+            accessibilityLabel="Scan a QR code"
+            hitSlop={8}
+            scaleTo={0.97}
+            onPress={() => {
+              tap();
+              router.push('/scan');
+            }}
+          >
+            <Icon name="scan" size={19} color={c.textSecondary} />
+          </PressableScale>
+        )}
       </View>
 
       <ContentSwap id={direct ? 'direct' : 'none'}>

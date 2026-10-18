@@ -17,10 +17,13 @@ export type AddedWallet = Wallet & {
 };
 
 /** The wallet the app is showing, and any wallets added this session. */
-export const wallets = createStore<{ activeId: string; added: AddedWallet[] }>({
-  activeId: 'main',
-  added: [],
-});
+export const wallets = createStore<{ activeId: string; added: AddedWallet[] }>(
+  {
+    activeId: 'main',
+    added: [],
+  },
+  { persist: 'wallets' },
+);
 
 export const useWallets = wallets.useValue;
 

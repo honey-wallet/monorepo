@@ -28,6 +28,8 @@ const FADE = {
 } as const;
 
 const SIZE = 22;
+/** The box's size, for lining other rows up with a checkbox's label. */
+export const CHECKBOX_SIZE = SIZE;
 /** Length of the check's stroke below; the dash hides exactly this much. */
 const CHECK_LENGTH = 16.2;
 

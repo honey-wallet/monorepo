@@ -7,6 +7,7 @@ import { closeSheet, SheetHeader, SheetRow, SheetScreen } from '@/components/she
 import { CLOUD_NAMES } from '@/lib/cloud-backup';
 import { tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
+import { HERE, isWeb } from '@/lib/platform';
 import { getProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import { createAccount } from '@/lib/vault';
@@ -47,7 +48,7 @@ export default function AddWalletSheet() {
         {
           icon: 'plus',
           title: 'Create new wallet',
-          hint: 'A new wallet on this device',
+          hint: `A new wallet on ${HERE}`,
           onPress: create,
         },
         {
@@ -74,12 +75,26 @@ export default function AddWalletSheet() {
           hint: 'Follow any wallet without spending from it',
           onPress: open('/watch-wallet'),
         },
-        {
-          icon: 'hardware',
-          title: 'Connect hardware wallet',
-          hint: 'Ledger or Keystone',
-          onPress: go('hardware'),
-        },
+        // Ledger connects over Bluetooth and Keystone by camera: phone only for now.
+        // A browser pairs with the phone instead.
+        ...(isWeb
+          ? [
+              {
+                // A phone, not the dense QR glyph, so it reads like the other rows' icons.
+                icon: 'phone' as const,
+                title: 'Pair with your phone',
+                hint: 'Bring over the wallets on your phone',
+                onPress: open('/pair-phone'),
+              },
+            ]
+          : [
+              {
+                icon: 'hardware' as const,
+                title: 'Connect hardware wallet',
+                hint: 'Ledger or Keystone',
+                onPress: go('hardware'),
+              },
+            ]),
       ],
     },
     import: {

@@ -23,7 +23,25 @@ const FAMILIES: Record<ChainFamily, Omit<ReceiveAddress, 'family' | 'address' | 
   xrp: { title: 'XRP Ledger', name: 'XRP Ledger', symbol: 'XRP' },
 };
 
-const ORDER: ChainFamily[] = ['evm', 'bitcoin', 'solana', 'tron', 'xrp'];
+// XRP isn't offered for receiving (review: not needed); its address still derives.
+// const ORDER: ChainFamily[] = ['evm', 'bitcoin', 'solana', 'tron', 'xrp'];
+// Tron is out for now (review): EVM, Solana and Bitcoin only.
+// const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin', 'tron'];
+const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin'];
+
+/** Networks the one EVM address works on, shown as logos. */
+export const EVM_LOGOS = [
+  'ETH',
+  'BASE',
+  'ARB',
+  'OP',
+  'POL',
+  'BNB',
+  'AVAX',
+  'GNO',
+  'LINEA',
+  'SCROLL',
+];
 
 // BIP-21, EIP-681 and Solana Pay prefixes; Tron and XRP wallets scan the bare address.
 const uriFor = (family: ChainFamily, address: string) =>

@@ -7,22 +7,24 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { TiltCard } from '@/components/motion/TiltCard';
-import { SheetScreen } from '@/components/sheets/Sheet';
+import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
+import { ChainPicker } from '@/components/wallet/ChainPicker';
 import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { TokenIcon } from '@/components/wallet/parts';
 import { QRCode } from '@/components/wallet/QRCode';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import { CHAINS, handleFor } from '@/lib/mock-wallet';
+import { handleFor } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
-import { receiveAddresses } from '@/lib/receive';
+import { EVM_LOGOS, receiveAddresses } from '@/lib/receive';
 import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 const QR_SIZE = 240;
 
-const EVM_CHAINS = CHAINS.filter((ch) => ch.name === 'Ethereum' || ch.name === 'Base');
+// const EVM_CHAINS = CHAINS.filter((ch) => ch.name === 'Ethereum' || ch.name === 'Base');
+/** Every EVM network Honey supports: one address works on all of them. */
 
 /**
  * Your receive QR code, after Uniswap's: handle, dotted code, full address. Opened
@@ -47,6 +49,17 @@ export default function MyQRSheet() {
     return (
       <SheetScreen title="Demo wallet">
         <Text style={{ color: c.text }}>Create or import a wallet before receiving funds.</Text>
+      </SheetScreen>
+    );
+
+  // Opened without a network (from Home): ask which one first.
+  if (!chain && !multisig && list.length > 1)
+    return (
+      <SheetScreen title="Which network?">
+        <SheetText>Each network has its own address.</SheetText>
+        <View style={styles.picker}>
+          <ChainPicker entries={list} onPick={(family) => router.setParams({ chain: family })} />
+        </View>
       </SheetScreen>
     );
 
@@ -138,17 +151,12 @@ export default function MyQRSheet() {
         </View>
       ) : (
         // The EVM address works on every EVM network, but not on Bitcoin, Solana and the rest.
-        <View style={styles.networks}>
-          <Text style={styles.networksText}>Use this address to receive tokens on</Text>
-          <View style={styles.networksRow}>
-            <View style={styles.chainStack}>
-              {EVM_CHAINS.map((ch, i) => (
-                <View key={ch.name} style={i > 0 && styles.chainOverlap}>
-                  <TokenIcon symbol={ch.symbol} size={16} />
-                </View>
-              ))}
-            </View>
-            <Text style={styles.networksCount}>Ethereum, Base and other EVM networks</Text>
+        <View style={styles.networksRow}>
+          <Text style={styles.networksText}>Available on</Text>
+          <View style={styles.chainStack}>
+            {EVM_LOGOS.map((symbol) => (
+              <TokenIcon key={symbol} symbol={symbol} size={20} />
+            ))}
           </View>
         </View>
       )}
@@ -159,6 +167,9 @@ export default function MyQRSheet() {
 const useStyles = makeStyles((c) => ({
   top: {
     alignItems: 'center',
+  },
+  picker: {
+    marginTop: 16,
   },
   handle: {
     color: c.text,
@@ -210,12 +221,15 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
   },
   networksRow: {
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 8,
   },
   chainStack: {
     flexDirection: 'row',
+    gap: 4,
   },
   chainOverlap: {
     marginLeft: -5,

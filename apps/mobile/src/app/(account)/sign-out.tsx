@@ -9,6 +9,7 @@ import { confirmOwner } from '@/lib/auth';
 import { failure, tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 import { signOut } from '@/lib/onboarding';
+import { HERE } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { loadAccounts, type VaultAccount } from '@/lib/vault';
 import { makeStyles, useTheme } from '@/theme';
@@ -17,6 +18,9 @@ import { makeStyles, useTheme } from '@/theme';
  * Two steps in one tray: what signing out does, then a tick for each wallet's phrase or
  * key. Every stored wallet needs its own tick before its secrets are deleted.
  */
+/** Whether Show my phrase was used this session (it then gives way to Sign out alone). */
+let phraseShown = false;
+
 export default function SignOutSheet() {
   const styles = useStyles();
   const c = useTheme();
@@ -56,7 +60,8 @@ export default function SignOutSheet() {
       variant="danger"
       disabled={!ready || busy}
       onPress={confirm}
-      style={styles.flex}
+      // Beside Cancel in a row, or full width under Show my phrase.
+      style={step === 'about' ? styles.flex : undefined}
     />
   );
 
@@ -69,7 +74,7 @@ export default function SignOutSheet() {
           </View>
           <Text style={styles.title}>Sign out?</Text>
           <Text style={styles.body}>
-            Your wallets leave this phone. You’ll need your recovery phrase to get back in.
+            Your wallets leave {HERE}. You’ll need your recovery phrase to get back in.
           </Text>
           <View style={styles.buttons}>
             <PillButton
@@ -98,7 +103,8 @@ export default function SignOutSheet() {
             {accounts?.map((wallet) => (
               <Checkbox
                 key={wallet.id}
-                label={`${wallet.label} · ${wallet.source.kind === 'key' ? 'private key' : 'recovery phrase'}`}
+                // Said plainly: what you're confirming by ticking it.
+                label={`I’ve saved the ${wallet.source.kind === 'key' ? 'private key' : 'recovery phrase'} for ${wallet.label}`}
                 checked={confirmed.includes(wallet.id)}
                 onChange={(checked) =>
                   setConfirmed((prev) =>
@@ -108,17 +114,21 @@ export default function SignOutSheet() {
               />
             ))}
           </View>
-          <Text
-            accessibilityRole="button"
-            style={styles.link}
-            onPress={() => {
-              tap();
-              leaveSheetTo('/recovery-phrase');
-            }}
-          >
-            Show my phrase
-          </Text>
-          <View style={styles.buttons}>{signOutButton}</View>
+          {/* A button like Sign out, until the phrase has been shown once. */}
+          <View style={styles.stack}>
+            {phraseShown ? null : (
+              <PillButton
+                label="Show my phrase"
+                variant="secondary"
+                onPress={() => {
+                  tap();
+                  phraseShown = true;
+                  leaveSheetTo('/recovery-phrase');
+                }}
+              />
+            )}
+            {signOutButton}
+          </View>
         </SheetScreen>
       )}
     </ContentSwap>
@@ -151,12 +161,8 @@ const useStyles = makeStyles((c) => ({
     lineHeight: 20,
   },
   check: {
-    marginTop: 4,
-    padding: 14,
-    gap: 14,
-    borderRadius: 18,
-    // Raised: a card-coloured block disappears on the tray in dark mode.
-    backgroundColor: c.raised,
+    marginTop: 8,
+    gap: 16,
   },
   link: {
     marginTop: 14,
@@ -167,6 +173,10 @@ const useStyles = makeStyles((c) => ({
   buttons: {
     marginTop: 24,
     flexDirection: 'row',
+    gap: 10,
+  },
+  stack: {
+    marginTop: 24,
     gap: 10,
   },
 }));

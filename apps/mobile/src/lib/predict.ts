@@ -183,14 +183,14 @@ export function yesPrice(market: PredictMarket, outcomeId?: string) {
 }
 
 /** Hearted markets, shown as a Saved filter; in memory, so it resets on restart. */
-const saved = createStore<string[]>([]);
+const saved = createStore<string[]>([], { persist: 'predict.saved' });
 export const useSavedMarkets = saved.useValue;
 export function toggleSaved(id: string) {
   saved.set((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
 }
 
 /** Predict intro banner; in memory, so it shows again after a restart. */
-const predictUi = createStore({ introDismissed: false });
+const predictUi = createStore({ introDismissed: false }, { persist: 'predict.ui' });
 export const usePredictUi = predictUi.useValue;
 export function dismissPredictIntro() {
   predictUi.set((s) => ({ ...s, introDismissed: true }));

@@ -220,9 +220,10 @@ export function Sparkline({
     const min = Math.min(...data);
     const max = Math.max(...data);
     const span = max - min || 1;
+    // A flat day (an empty wallet) runs through the middle rather than along the floor.
     const points = data.map((v, i) => [
       (i / (data.length - 1)) * width,
-      3 + (1 - (v - min) / span) * (height - 6),
+      max === min ? height / 2 : 3 + (1 - (v - min) / span) * (height - 6),
     ]);
     let len = 0;
     for (let i = 1; i < points.length; i++) {
@@ -252,6 +253,22 @@ export function Sparkline({
   const glowProps = useAnimatedProps(() => ({
     opacity: reduceMotion ? drawn.value : Math.max(0, drawn.value * 2 - 1),
   }));
+
+  // A flat day (an empty wallet): a plain dashed line you can see, not a faded one.
+  if (Math.min(...data) === Math.max(...data)) {
+    return (
+      <Svg width={width} height={height}>
+        <Path
+          d={`M0 ${height / 2} L${width} ${height / 2}`}
+          stroke={c.textSecondary}
+          strokeOpacity={0.5}
+          strokeWidth={1.5}
+          strokeDasharray={[4, 4]}
+          strokeLinecap="round"
+        />
+      </Svg>
+    );
+  }
 
   return (
     <Svg width={width} height={height}>

@@ -6,6 +6,7 @@ import { HoneyMascot } from '@/components/logo/HoneyMascot';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { tap } from '@/lib/haptics';
+import { DEVICE } from '@/lib/platform';
 import { makeStyles, useTheme } from '@/theme';
 
 /**
@@ -51,7 +52,7 @@ export default function WelcomeScreen() {
             }
             second={
               <Text style={styles.subtitle}>
-                Bitcoin, Ethereum, Solana and more,{'\n'}safe on your phone.
+                Bitcoin, Ethereum, Solana and more,{'\n'}safe on {DEVICE}.
               </Text>
             }
           />

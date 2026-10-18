@@ -60,6 +60,7 @@ import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib
 import { useMultisig, useNeedsMyApproval } from '@/lib/multisig';
 import { useUnreadNotifications } from '@/lib/notifications';
 import { setupComplete, useOnboarding } from '@/lib/onboarding';
+import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { HIDDEN_AMOUNT, updateSettings, useSettings } from '@/lib/settings';
 import { useTabReselect } from '@/lib/tab-reselect';
@@ -76,6 +77,9 @@ const ACTIONS: { label: string; icon: IconName; href: Href }[] = [
 ];
 
 const SECTIONS = ['Tokens', 'NFTs', 'Trades'] as const;
+
+/** An empty wallet's day: a flat line where the balance chart goes. */
+const FLAT_DAY = [0, 0];
 
 /** The tokens a Honey Jar earns on, best rate first. */
 const EARN_BY_RATE = [...EARN].sort((a, b) => b.apy - a.apy);
@@ -219,35 +223,32 @@ export default function HomeScreen() {
                 <View style={styles.flex}>
                   {/* Tap the balance to hide or show it. */}
                   <BalanceAmount style={styles.balance} fractionStyle={styles.cents} />
-                  {/* A brand-new wallet has no day to compare with yet. */}
-                  {empty ? null : (
-                    <PressableScale
-                      style={styles.changeRow}
-                      hitSlop={6}
-                      scaleTo={0.98}
-                      onPress={() => openPortfolio()}
-                    >
-                      <Icon name={view.change < 0 ? 'down' : 'up'} size={9} color={changeColor} />
-                      <Text style={styles.changeText}>
-                        <Text style={styles.changeAmount}>
-                          {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(view.change))} (
-                          {Math.abs(changePct).toFixed(2)}%)
-                        </Text>{' '}
-                        today
-                      </Text>
-                      <Icon name="chevronRight" size={11} color={c.textSecondary} />
-                    </PressableScale>
-                  )}
-                </View>
-                {empty ? null : (
+                  {/* A brand-new wallet shows a flat day, as the phone does, so the
+                      layout is the same from the first launch. */}
                   <PressableScale
-                    accessibilityLabel="Portfolio"
-                    scaleTo={0.97}
+                    style={styles.changeRow}
+                    hitSlop={6}
+                    scaleTo={0.98}
                     onPress={() => openPortfolio()}
                   >
-                    <Sparkline data={BALANCE_HISTORY} width={116} height={60} />
+                    <Icon name={view.change < 0 ? 'down' : 'up'} size={9} color={changeColor} />
+                    <Text style={styles.changeText}>
+                      <Text style={styles.changeAmount}>
+                        {hideBalance ? HIDDEN_AMOUNT : formatUsd(Math.abs(view.change))} (
+                        {Math.abs(changePct).toFixed(2)}%)
+                      </Text>{' '}
+                      today
+                    </Text>
+                    <Icon name="chevronRight" size={11} color={c.textSecondary} />
                   </PressableScale>
-                )}
+                </View>
+                <PressableScale
+                  accessibilityLabel="Portfolio"
+                  scaleTo={0.97}
+                  onPress={() => openPortfolio()}
+                >
+                  <Sparkline data={empty ? FLAT_DAY : BALANCE_HISTORY} width={116} height={60} />
+                </PressableScale>
               </View>
             </SkeletonReveal>
           </Rise>
@@ -535,7 +536,9 @@ export default function HomeScreen() {
                   badge={unread || needsMe.length > 0}
                   onPress={() => router.push('/notifications')}
                 />
-                <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
+                {isWeb ? null : (
+                  <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
+                )}
                 <HeaderShortcut
                   icon="settings"
                   label="Settings"

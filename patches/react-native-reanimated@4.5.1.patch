@@ -1,0 +1,32 @@
+diff --git a/lib/module/layoutReanimation/web/componentUtils.js b/lib/module/layoutReanimation/web/componentUtils.js
+index 3185240948eab99f4f7524d3b76bcf60455f8709..c52bd44d9a49f002ce9700779ebac2b9c4d96a27 100644
+--- a/lib/module/layoutReanimation/web/componentUtils.js
++++ b/lib/module/layoutReanimation/web/componentUtils.js
+@@ -190,9 +190,8 @@ export function setElementAnimation(element, animationConfig, shouldSavePosition
+   };
+   if (!(animationName in Animations)) {
+     scheduleAnimationCleanup(animationName, duration + delay, () => {
+-      if (shouldSavePosition) {
+-        setElementPosition(element, getSnapshotForElement(element));
+-      }
++      // Honey patch: an entering element has already finished in place; pinning it to
++      // its snapshot with position: absolute takes it out of the layout for good.
+       maybeRunCleanup();
+       maybeCallCallback(false);
+     });
+diff --git a/src/layoutReanimation/web/componentUtils.ts b/src/layoutReanimation/web/componentUtils.ts
+index 5de550a3bf3b8d211d987d26531e99fc4745261b..34b094910b9c4e459ebf1a9ef7d93fa299c15d5f 100644
+--- a/src/layoutReanimation/web/componentUtils.ts
++++ b/src/layoutReanimation/web/componentUtils.ts
+@@ -279,9 +279,8 @@ export function setElementAnimation(
+ 
+   if (!(animationName in Animations)) {
+     scheduleAnimationCleanup(animationName, duration + delay, () => {
+-      if (shouldSavePosition) {
+-        setElementPosition(element, getSnapshotForElement(element));
+-      }
++      // Honey patch: an entering element has already finished in place; pinning it to
++      // its snapshot with position: absolute takes it out of the layout for good.
+ 
+       maybeRunCleanup();
+       maybeCallCallback(false);

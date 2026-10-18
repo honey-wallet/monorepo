@@ -671,7 +671,7 @@ const useStyles = makeStyles((c) => ({
     gap: 6,
   },
   how: {
-    marginTop: 28,
+    marginTop: 16,
     padding: 16,
     gap: 16,
     borderRadius: 20,

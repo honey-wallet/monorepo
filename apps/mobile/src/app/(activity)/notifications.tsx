@@ -266,9 +266,10 @@ const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
   },
+  // Sections sit close: a row's own padding already spaces it from the next label.
   group: {
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 4,
+    marginBottom: 4,
   },
   // Matches Activity's month labels.
   section: {

@@ -134,8 +134,11 @@ const useStyles = makeStyles((c) => ({
   tokenLabelActive: {
     color: c.text,
   },
+  // Room around the goal even in a tray, where the sheet fits its content.
   amountArea: {
     flex: 1,
+    minHeight: 160,
+    paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,

@@ -24,3 +24,6 @@ patchedDependencies:
   decode-uri-component@0.5.0: patches/decode-uri-component@0.5.0.patch
   expo-alternate-app-icons@8.0.0: patches/expo-alternate-app-icons@8.0.0.patch
   node-forge@1.4.0: patches/node-forge@1.4.0.patch
+  # The web build (Honey for Chrome): Keyframe entrances were left pinned with
+  # position:absolute after they finished, shifting text (see the patch).
+  react-native-reanimated@4.5.1: patches/react-native-reanimated@4.5.1.patch

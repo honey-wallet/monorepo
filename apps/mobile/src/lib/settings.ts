@@ -51,24 +51,27 @@ export type Settings = {
   simulateFailures: boolean;
 };
 
-export const settings = createStore<Settings>({
-  theme: 'auto',
-  currency: 'USD',
-  language: 'English',
-  hideSmallBalances: true,
-  hideUnknownTokens: true,
-  hideReportedActivity: true,
-  testnet: false,
-  networkCost: 'auto',
-  faceIdAppAccess: false,
-  faceIdTransactions: true,
-  analytics: true,
-  backedUp: false,
-  hideBalance: false,
-  tradeTabs: [...AVAILABLE_TRADE_MODES],
-  earnPromo: true,
-  simulateFailures: false,
-});
+export const settings = createStore<Settings>(
+  {
+    theme: 'auto',
+    currency: 'USD',
+    language: 'English',
+    hideSmallBalances: true,
+    hideUnknownTokens: true,
+    hideReportedActivity: true,
+    testnet: false,
+    networkCost: 'auto',
+    faceIdAppAccess: false,
+    faceIdTransactions: true,
+    analytics: true,
+    backedUp: false,
+    hideBalance: false,
+    tradeTabs: [...AVAILABLE_TRADE_MODES],
+    earnPromo: true,
+    simulateFailures: false,
+  },
+  { persist: 'settings' },
+);
 
 export const useSettings = settings.useValue;
 

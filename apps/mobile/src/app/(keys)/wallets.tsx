@@ -14,6 +14,7 @@ import { formatUsd, shortAddress } from '@/lib/mock-wallet';
 import { hasVoted, useMultisigState, YOU } from '@/lib/multisig';
 import { leaveSheetTo } from '@/lib/navigation';
 import { useOnboarding } from '@/lib/onboarding';
+import { isWeb } from '@/lib/platform';
 import { type Profile, useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import {
@@ -125,17 +126,22 @@ export default function WalletsSheet() {
         }}
       />
 
-      <SheetSection title="Hardware wallets" />
-      {hardware.map(row)}
-      <SheetRow
-        leading={
-          <View style={styles.iconCircle}>
-            <Icon name="hardware" size={17} color={c.textSecondary} />
-          </View>
-        }
-        title="Connect a hardware wallet"
-        onPress={() => open('/hardware-wallet')}
-      />
+      {/* Hardware wallets connect over Bluetooth or the camera: phone only for now. */}
+      {isWeb ? null : (
+        <>
+          <SheetSection title="Hardware wallets" />
+          {hardware.map(row)}
+          <SheetRow
+            leading={
+              <View style={styles.iconCircle}>
+                <Icon name="hardware" size={17} color={c.textSecondary} />
+              </View>
+            }
+            title="Connect a hardware wallet"
+            onPress={() => open('/hardware-wallet')}
+          />
+        </>
+      )}
 
       <View style={styles.addRow}>
         <SheetRow
@@ -223,7 +229,8 @@ function WalletRow({
         </View>
       }
       title={wallet.label}
-      subtitle={`${kind}${shortAddress(wallet.address, 8, 6)}`}
+      // Shorter beside a prefix, so every row stays on one line and the list evenly spaced.
+      subtitle={`${kind}${shortAddress(wallet.address, kind ? 4 : 8, kind ? 4 : 6)}`}
       value={loading ? undefined : formatUsd(usd)}
       accessory={
         <View style={styles.accessory}>
@@ -316,7 +323,7 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.primary,
   },
   addRow: {
-    marginTop: 14,
+    marginTop: 0,
   },
   addCircle: {
     backgroundColor: 'transparent',

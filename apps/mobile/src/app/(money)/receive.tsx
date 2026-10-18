@@ -9,6 +9,7 @@ import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
+import { ChainPicker } from '@/components/wallet/ChainPicker';
 import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { LabeledRule, TokenIcon } from '@/components/wallet/parts';
 import { useCopy } from '@/lib/copy';
@@ -53,15 +54,18 @@ export default function ReceiveSheet() {
         {multisig
           ? `Only send tokens on ${multisig.network.name} to this shared wallet. Tokens sent on another network can't be recovered.`
           : perChain
-            ? 'Each network has its own address. Use the one that matches the network you send on.'
+            ? 'Which network are you sending on? Each one has its own address.'
             : 'Fund your wallet by transferring crypto from another wallet or account'}
       </SheetText>
 
       {perChain ? (
-        <View style={[styles.list, styles.firstCard]}>
-          {list.map((entry) => (
-            <AddressRow key={entry.family} entry={entry} />
-          ))}
+        // The network first, then its address and QR code (My QR), so the address you
+        // copy is the right one. Before: every chain's address listed here (AddressRow).
+        <View style={styles.firstCard}>
+          <ChainPicker
+            entries={list}
+            onPick={(chain) => router.push({ pathname: '/my-qr', params: { chain } })}
+          />
         </View>
       ) : (
         <View style={[styles.card, styles.firstCard]}>
@@ -102,25 +106,28 @@ export default function ReceiveSheet() {
       )}
 
       <LabeledRule label="From an account" />
-      <PressableRow
-        accessibilityState={{ expanded: showExchange }}
-        onPress={() => {
-          tap();
-          setShowExchange((v) => !v);
-        }}
-        style={styles.card}
-      >
-        <View style={styles.exchange}>
-          <Icon name="bank" size={18} color={c.accentText} />
-        </View>
-        <Text style={[styles.name, styles.flex]}>From an exchange</Text>
-        <AccordionChevron open={showExchange} size={13} color={c.textSecondary} />
-      </PressableRow>
+      {/* The card holds the fill: PressableRow paints its own pressed background. */}
+      <View style={styles.exchangeCard}>
+        <PressableRow
+          accessibilityState={{ expanded: showExchange }}
+          onPress={() => {
+            tap();
+            setShowExchange((v) => !v);
+          }}
+          style={styles.exchangeRow}
+        >
+          <View style={styles.exchange}>
+            <Icon name="bank" size={18} color={c.accentText} />
+          </View>
+          <Text style={[styles.name, styles.flex]}>From an exchange</Text>
+          <AccordionChevron open={showExchange} size={13} color={c.textSecondary} />
+        </PressableRow>
+      </View>
       <Accordion open={showExchange}>
         <View style={styles.steps}>
           {[
             perChain
-              ? 'Copy the address above for the network you’ll withdraw on.'
+              ? 'Pick the network you’ll withdraw on above, then copy its address.'
               : 'Copy your Honey address.',
             'In your exchange, choose Withdraw and paste it as the destination.',
             'Pick the matching network, then confirm. Funds usually arrive in minutes.',
@@ -144,6 +151,7 @@ export default function ReceiveSheet() {
 }
 
 /** One chain's address: logo, name, short address, copy and QR. */
+// biome-ignore lint/correctness/noUnusedVariables: the per-chain list's row, before the network picker
 function AddressRow({ entry }: { entry: ReceiveAddress }) {
   const styles = useStyles();
   const c = useTheme();
@@ -248,6 +256,17 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 15,
     lineHeight: 21,
+  },
+  exchangeCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: c.card,
+  },
+  exchangeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
   },
   exchange: {
     width: 40,

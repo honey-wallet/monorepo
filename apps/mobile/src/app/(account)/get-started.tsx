@@ -13,6 +13,7 @@ import { LabeledRule } from '@/components/wallet/parts';
 import { failure, tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 import { finishOnboarding } from '@/lib/onboarding';
+import { isWeb } from '@/lib/platform';
 import { settings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
@@ -35,6 +36,8 @@ export default function GetStartedSheet() {
   const c = useTheme();
   const [signingIn, setSigningIn] = useState<'apple' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Restore: pairing first; the phrase, key and backup ways one tap further.
+  // const [otherWays, setOtherWays] = useState(false);
   const cancelled = useRef(false);
   const { shake, style: shaken } = useErrorShake();
 
@@ -114,26 +117,91 @@ export default function GetStartedSheet() {
 
       {restore ? (
         <View style={styles.buttons}>
+          {/* In a browser, the easiest way in is the wallet already on the phone. */}
+          {isWeb ? (
+            <MoreRow
+              disabled={!!signingIn}
+              icon="qr"
+              title="Pair with your phone"
+              onPress={() => {
+                tap();
+                router.push({ pathname: '/pair-phone', params: { onboarding: '1' } });
+              }}
+            />
+          ) : (
+            // On the phone, the wallet you made in Honey for Chrome, by its QR code.
+            <MoreRow
+              disabled={!!signingIn}
+              icon="qr"
+              title="Scan from the browser extension"
+              onPress={() => {
+                tap();
+                // Over this sheet, like Pair with your phone in the browser: leaving the
+                // sheet first could undo the scanner's push while the sheet closed.
+                router.push({ pathname: '/scan', params: { purpose: 'pair' } });
+              }}
+            />
+          )}
+          {/* One button each for a phrase and a key (review); the backup, rarer, a
+              link under them. Before: one "I have a recovery phrase or key" row. */}
           <MoreRow
             disabled={!!signingIn}
             icon="phrase"
-            title="Import a recovery phrase"
+            title="I have a recovery phrase"
             onPress={() => go({ pathname: '/import-wallet', params: { onboarding: '1' } })}
           />
+          <MoreRow
+            disabled={!!signingIn}
+            icon="privateKey"
+            title="I have a private key"
+            onPress={() =>
+              go({ pathname: '/import-wallet', params: { onboarding: '1', kind: 'key' } })
+            }
+          />
+          {/* A button like the others (review), not a link. */}
           <MoreRow
             disabled={!!signingIn}
             icon="cloud"
             title="Restore from a backup"
             onPress={() => go({ pathname: '/restore-backup', params: { onboarding: '1' } })}
           />
-          <MoreRow
-            disabled={!!signingIn}
-            icon="privateKey"
-            title="Import a private key"
-            onPress={() =>
-              go({ pathname: '/import-wallet', params: { onboarding: '1', kind: 'key' } })
-            }
-          />
+          {/*
+          {otherWays ? (
+            <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.otherWays}>
+              <MoreRow
+                disabled={!!signingIn}
+                icon="phrase"
+                title="Import a recovery phrase"
+                onPress={() => go({ pathname: '/import-wallet', params: { onboarding: '1' } })}
+              />
+              <MoreRow
+                disabled={!!signingIn}
+                icon="cloud"
+                title="Restore from a backup"
+                onPress={() => go({ pathname: '/restore-backup', params: { onboarding: '1' } })}
+              />
+              <MoreRow
+                disabled={!!signingIn}
+                icon="privateKey"
+                title="Import a private key"
+                onPress={() =>
+                  go({ pathname: '/import-wallet', params: { onboarding: '1', kind: 'key' } })
+                }
+              />
+            </Animated.View>
+          ) : (
+            <MoreRow
+              disabled={!!signingIn}
+              icon="phrase"
+              title="I have a recovery phrase or key"
+              onPress={() => {
+                tap();
+                setOtherWays(true);
+              }}
+            />
+          )}
+
+          */}
         </View>
       ) : (
         <View style={styles.buttons}>
@@ -256,6 +324,19 @@ const useStyles = makeStyles((c) => ({
   buttons: {
     marginTop: 20,
     gap: 10,
+  },
+  otherWays: {
+    gap: 10,
+  },
+  link: {
+    marginTop: 6,
+    alignSelf: 'center',
+    color: c.accentText,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  disabled: {
+    opacity: 0.5,
   },
   error: {
     marginTop: 12,

@@ -23,6 +23,11 @@ import { isValidMnemonic, normalizeMnemonic } from './index';
  *      keys and both nonces. The user checks the two screens match and confirms on both.
  *   5. Phone → `payload`: the wallet, encrypted for the extension alone.
  *
+ * The same handshake also moves a wallet the other way, from the browser to the phone
+ * (`d=p` in the code): the browser still shows the code and the phone still scans and
+ * commits, but in step 5 the browser sends. The direction is bound into the key and the
+ * six digits, so a code made for one direction can't be answered as the other.
+ *
  * Someone in the middle can't make the codes match: they'd have to commit to a key
  * before seeing the extension's nonce, and the code changes completely with it, so they
  * get one blind guess in a million. Without the extension's secret key they also can't
@@ -31,6 +36,9 @@ import { isValidMnemonic, normalizeMnemonic } from './index';
  */
 
 const SCHEME = 'honey-pair:2';
+
+/** Which way the wallet goes. The browser always shows the code; the phone always scans. */
+export type PairDirection = 'toBrowser' | 'toPhone';
 const NONCE_BYTES = 16;
 
 const b64 = base64urlnopad;
@@ -54,6 +62,7 @@ export type PairOffer = {
   secretKey: Uint8Array;
   publicKey: Uint8Array;
   nonce: Uint8Array;
+  direction: PairDirection;
   uri: string;
 };
 
@@ -81,7 +90,10 @@ export type PairSession = {
 };
 
 /** Starts a pairing on the extension. `random` must be cryptographically secure. */
-export function createPairOffer(random: (bytes: number) => Uint8Array): PairOffer {
+export function createPairOffer(
+  random: (bytes: number) => Uint8Array,
+  direction: PairDirection = 'toBrowser',
+): PairOffer {
   const secretKey = random(32);
   const publicKey = x25519.getPublicKey(secretKey);
   const token = bytesToHex(random(16));
@@ -91,22 +103,27 @@ export function createPairOffer(random: (bytes: number) => Uint8Array): PairOffe
     secretKey,
     publicKey,
     nonce: random(NONCE_BYTES),
-    uri: `${SCHEME}?t=${token}&k=${b64.encode(publicKey)}`,
+    direction,
+    uri: `${SCHEME}?t=${token}&k=${b64.encode(publicKey)}${direction === 'toPhone' ? '&d=p' : ''}`,
   };
 }
 
 /** Reads a scanned QR code. Null if it isn't a (current) Honey pairing code. */
 export function parsePairUri(
   uri: string,
-): { token: string; channel: string; publicKey: Uint8Array } | null {
+): { token: string; channel: string; publicKey: Uint8Array; direction: PairDirection } | null {
   if (!uri.startsWith(`${SCHEME}?`)) return null;
   const params = new URLSearchParams(uri.slice(SCHEME.length + 1));
   const token = params.get('t');
   const key = params.get('k');
-  if (!token || !/^[0-9a-f]{32}$/.test(token) || !key) return null;
+  const d = params.get('d');
+  if (!token || !/^[0-9a-f]{32}$/.test(token) || !key || (d !== null && d !== 'p')) return null;
+  const direction: PairDirection = d === 'p' ? 'toPhone' : 'toBrowser';
   try {
     const publicKey = b64.decode(key);
-    return publicKey.length === 32 ? { token, channel: channelFor(token), publicKey } : null;
+    return publicKey.length === 32
+      ? { token, channel: channelFor(token), publicKey, direction }
+      : null;
   } catch {
     return null;
   }
@@ -165,6 +182,8 @@ export function pairSession(
     phoneKey: Uint8Array;
     extensionNonce: Uint8Array;
     phoneNonce: Uint8Array;
+    /** Defaults to the original direction, phone to browser. */
+    direction?: PairDirection;
   },
 ): PairSession {
   // Throws on low-order keys (an all-zero shared secret).
@@ -175,11 +194,13 @@ export function pairSession(
     transcript.extensionNonce,
     transcript.phoneNonce,
   );
+  // Browser-to-phone gets its own labels; phone-to-browser keeps the original ones.
+  const prefix = transcript.direction === 'toPhone' ? 'honey-pair-v2 to-phone' : 'honey-pair-v2';
   const derive = (label: string, length: number) =>
     hkdf(sha256, shared, hexToBytes(transcript.channel), concat(utf8ToBytes(label), bound), length);
-  const n = new DataView(derive('honey-pair-v2 code', 4).buffer).getUint32(0);
+  const n = new DataView(derive(`${prefix} code`, 4).buffer).getUint32(0);
   return {
-    key: derive('honey-pair-v2 key', 32),
+    key: derive(`${prefix} key`, 32),
     code: String(n % 1_000_000).padStart(6, '0'),
   };
 }

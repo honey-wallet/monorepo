@@ -42,10 +42,13 @@ export const AVAILABLE: CloudProvider[] = Platform.OS === 'ios' ? ['icloud', 'gd
 export const CLOUD_NAMES = AVAILABLE.map((p) => PROVIDERS[p].name).join(' or ');
 
 /** The provider picked for the next backup, and where the last one went. */
-export const backupPrefs = createStore<{ provider: CloudProvider; savedTo: CloudProvider | null }>({
-  provider: AVAILABLE[0] ?? 'gdrive',
-  savedTo: null,
-});
+export const backupPrefs = createStore<{ provider: CloudProvider; savedTo: CloudProvider | null }>(
+  {
+    provider: AVAILABLE[0] ?? 'gdrive',
+    savedTo: null,
+  },
+  { persist: 'cloud-backup' },
+);
 export const useBackupPrefs = backupPrefs.useValue;
 
 export const setBackupProvider = (provider: CloudProvider) =>

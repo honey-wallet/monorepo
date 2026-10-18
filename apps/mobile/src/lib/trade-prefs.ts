@@ -26,16 +26,19 @@ type TradePrefs = {
   optionsExpiry: Expiry;
 };
 
-const prefs = createStore<TradePrefs>({
-  perpLeverage: 5,
-  marginMode: 'Cross',
-  perpSlippage: '0.5%',
-  predictPrice: 'Cents',
-  predictAlerts: true,
-  futuresExpiry: 'Dec 26',
-  futuresSlippage: '0.5%',
-  optionsExpiry: 'Dec 26',
-});
+const prefs = createStore<TradePrefs>(
+  {
+    perpLeverage: 5,
+    marginMode: 'Cross',
+    perpSlippage: '0.5%',
+    predictPrice: 'Cents',
+    predictAlerts: true,
+    futuresExpiry: 'Dec 26',
+    futuresSlippage: '0.5%',
+    optionsExpiry: 'Dec 26',
+  },
+  { persist: 'trade-prefs' },
+);
 
 export const useTradePrefs = prefs.useValue;
 

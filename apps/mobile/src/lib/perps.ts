@@ -197,13 +197,13 @@ export function candles(market: PerpMarket, range: Range, count = 36): Candle[] 
 
 /** Perps intro banner state; resets when the app restarts. */
 /** Hearted perps markets, shown as a Saved filter; in memory, so it resets on restart. */
-const savedPerps = createStore<string[]>([]);
+const savedPerps = createStore<string[]>([], { persist: 'perps.saved' });
 export const useSavedPerps = savedPerps.useValue;
 export function toggleSavedPerp(symbol: string) {
   savedPerps.set((s) => (s.includes(symbol) ? s.filter((x) => x !== symbol) : [...s, symbol]));
 }
 
-const perpsUi = createStore({ introDismissed: false });
+const perpsUi = createStore({ introDismissed: false }, { persist: 'perps.ui' });
 export const usePerpsUi = perpsUi.useValue;
 export function dismissPerpsIntro() {
   perpsUi.set((s) => ({ ...s, introDismissed: true }));
@@ -270,16 +270,19 @@ export type PerpPosition = {
  * Open positions; in memory, so they reset when the app restarts. Starts with one
  * demo position so the position card has something to show.
  */
-const positions = createStore<PerpPosition[]>([
-  {
-    id: 'demo-eth',
-    symbol: 'ETH',
-    side: 'Long',
-    leverage: 5,
-    margin: 100,
-    entry: (perpMarket('ETH')?.price ?? 2400) * 0.972,
-  },
-]);
+const positions = createStore<PerpPosition[]>(
+  [
+    {
+      id: 'demo-eth',
+      symbol: 'ETH',
+      side: 'Long',
+      leverage: 5,
+      margin: 100,
+      entry: (perpMarket('ETH')?.price ?? 2400) * 0.972,
+    },
+  ],
+  { persist: 'perps.positions' },
+);
 export const usePerpPositions = positions.useValue;
 
 export function openPosition(position: Omit<PerpPosition, 'id'>) {

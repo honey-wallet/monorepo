@@ -34,6 +34,7 @@ import {
   cancel,
   describe,
   hasVoted,
+  hostOf,
   type Multisig,
   memberName,
   type Proposal,
@@ -98,7 +99,8 @@ export default function ProposalSheet() {
   const canVote = pending && !hasVoted(proposal, YOU);
   const left = approvalsLeft(multisig, proposal);
   const ids = receipt(multisig, proposal);
-  const completes = left === 1;
+  // Was the label's "Approve & execute" on the last approval; it wrapped beside Reject.
+  // const completes = left === 1;
 
   const onApprove = () => {
     // A signature that doesn't get through changes nothing: say so and stay on the
@@ -172,13 +174,10 @@ export default function ProposalSheet() {
   const actions = justSigned ? (
     finished
   ) : canVote ? (
+    // The app's pattern: secondary on the left, primary on the right, equal widths.
     <View style={styles.buttons}>
       <PillButton label="Reject" variant="secondary" onPress={onReject} style={styles.flex} />
-      <PillButton
-        label={completes ? 'Approve & execute' : 'Approve'}
-        onPress={onApprove}
-        style={styles.grow}
-      />
+      <PillButton label="Approve" onPress={onApprove} style={styles.flex} />
     </View>
   ) : pending && mine ? (
     <PillButton label="Cancel proposal" variant="secondary" onPress={onCancel} />
@@ -500,6 +499,18 @@ function ActionRows({ action, multisig }: { action: ProposalAction; multisig: Mu
           value={`${multisig.threshold} → ${action.threshold} of ${multisig.members.length}`}
         />
       );
+    case 'appCall':
+      return (
+        <>
+          <StatRow label="Site" value={hostOf(action.site)} />
+          <StatRow label="Network" value={action.network} />
+          {action.to ? <StatRow label="Contract" value={shortAddress(action.to)} /> : null}
+          <StatRow
+            label="Call"
+            value={action.data.length > 2 ? `Data · ${action.data.slice(0, 10)}` : 'None'}
+          />
+        </>
+      );
     case 'setDailyLimit':
       return (
         <StatRow
@@ -521,6 +532,9 @@ const useStyles = makeStyles((c) => ({
   },
   buttons: {
     flexDirection: 'row',
+    gap: 10,
+  },
+  stacked: {
     gap: 10,
   },
   summary: {
