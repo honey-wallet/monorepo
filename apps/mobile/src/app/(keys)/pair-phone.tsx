@@ -3,7 +3,7 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
-import { HoneyLogo } from '@/components/logo/HoneyLogo';
+import { HoneyMascot } from '@/components/logo/HoneyMascot';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { ArrivedWallets } from '@/components/pairing/ArrivedWallets';
 import { CodeEntry } from '@/components/pairing/CodeEntry';
@@ -252,7 +252,8 @@ function PairPhone() {
           value={offer.uri}
           size={QR_SIZE}
           color="#111111"
-          center={<HoneyLogo variant="mark" height={28} />}
+          // The welcome screen's honey, glancing and blinking: the code is alive while it waits.
+          center={<HoneyMascot width={32} />}
         />
       </View>
       {state.step === 'error' ? (

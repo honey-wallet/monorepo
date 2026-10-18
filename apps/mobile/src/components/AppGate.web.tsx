@@ -1,7 +1,7 @@
 import { MIN_PASSWORD_LENGTH } from '@honey-wallet/keyring';
 import { type ReactNode, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { HoneyLogo } from '@/components/logo/HoneyLogo';
+import { HoneyMascot } from '@/components/logo/HoneyMascot';
 import { PasswordField } from '@/components/onboarding/PasswordField';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetScreen } from '@/components/sheets/Sheet';
@@ -52,7 +52,8 @@ function Lockup({ title, body }: { title: string; body: string }) {
   const styles = useStyles();
   return (
     <>
-      <HoneyLogo variant="mark" height={40} />
+      {/* The welcome screen's honey, glancing and blinking. */}
+      <HoneyMascot width={46} />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.body}>{body}</Text>
     </>
