@@ -4,9 +4,22 @@ import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetScreen } from '@/components/sheets/Sheet';
 import { Chip } from '@/components/wallet/Chip';
-import { TokenIcon } from '@/components/wallet/parts';
-import { CHAINS } from '@/lib/mock-wallet';
+import { NetworkGrid, TokenIcon } from '@/components/wallet/parts';
+// import { CHAINS } from '@/lib/mock-wallet';
 import { makeStyles, useTheme } from '@/theme';
+
+/** Every EVM chain shares the Ethereum address (lib/receive.ts), so these all work. */
+const NETWORKS = [
+  { name: 'Bitcoin', symbol: 'BTC' },
+  { name: 'Solana', symbol: 'SOL' },
+  { name: 'Ethereum', symbol: 'ETH' },
+  { name: 'Base', symbol: 'BASE' },
+  { name: 'Arbitrum', symbol: 'ARB' },
+  { name: 'Optimism', symbol: 'OP' },
+  { name: 'Polygon', symbol: 'POL' },
+  { name: 'BNB Chain', symbol: 'BNB' },
+  { name: 'Avalanche', symbol: 'AVAX' },
+];
 
 export default function NetworksSheet() {
   const styles = useStyles();
@@ -24,11 +37,18 @@ export default function NetworksSheet() {
         align="center"
         first={<Text style={styles.title}>Supported networks</Text>}
         second={
-          <Text style={styles.subtitle}>One Honey wallet holds addresses on each of these.</Text>
+          // <Text style={styles.subtitle}>One Honey wallet holds addresses on each of these.</Text>
+          <Text style={styles.subtitle}>
+            Bitcoin, Solana and 200+ EVM chains, all in one Honey wallet.
+          </Text>
         }
       />
       <View style={styles.chips}>
+        {/* review: the chains people know by name, then the rest of the EVM ones.
         {CHAINS.map((ch) => (
+          <Chip key={ch.name} label={ch.name} variant="filled" leading={<TokenIcon symbol={ch.symbol} size={22} />} />
+        ))} */}
+        {NETWORKS.map((ch) => (
           <Chip
             key={ch.name}
             label={ch.name}
@@ -36,6 +56,7 @@ export default function NetworksSheet() {
             leading={<TokenIcon symbol={ch.symbol} size={22} />}
           />
         ))}
+        <Chip label="200+ more EVM chains" variant="filled" leading={<NetworkGrid size={22} />} />
       </View>
     </SheetScreen>
   );

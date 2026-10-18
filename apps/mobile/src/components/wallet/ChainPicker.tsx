@@ -60,7 +60,9 @@ export function ChainPicker({
             <View style={styles.flex}>
               <Text style={styles.title}>{evm ? 'EVM networks' : entry.title}</Text>
               <Text style={styles.subtitle}>
-                {evm ? 'Ethereum, Base and more' : SUBTITLES[entry.family]}
+                {/* review: say how many EVM chains the one address covers. */}
+                {/* {evm ? 'Ethereum, Base and more' : SUBTITLES[entry.family]} */}
+                {evm ? 'Ethereum, Base and 200+ more' : SUBTITLES[entry.family]}
               </Text>
             </View>
             <Icon name="chevronRight" size={14} color={c.textSecondary} />

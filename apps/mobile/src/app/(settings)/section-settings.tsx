@@ -1,4 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
+import { View } from 'react-native';
 import { Toggle } from '@/components/motion/Toggle';
 import { PillButton } from '@/components/onboarding/PillButton';
 import {
@@ -9,7 +10,8 @@ import {
   WalletSettingsRow,
 } from '@/components/sheets/Sheet';
 import { OptionChips } from '@/components/trade/TradeForm';
-import { TokenIcon } from '@/components/wallet/parts';
+import { Chip } from '@/components/wallet/Chip';
+import { NetworkGrid, TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { CHAINS } from '@/lib/mock-wallet';
 import { isWeb } from '@/lib/platform';
@@ -36,7 +38,9 @@ const SORTS: { value: SearchSort; label: string }[] = [
 ];
 
 /** Networks as their coin symbols, so six fit on one row. */
-const NETWORKS = ['All', ...CHAINS.map((chain) => chain.symbol)];
+// const NETWORKS = ['All', ...CHAINS.map((chain) => chain.symbol)];
+/** Network chips wrap onto a second line rather than scroll sideways in a tray. */
+const NETWORK_CHIPS = { flexDirection: 'row', flexWrap: 'wrap', gap: 8 } as const;
 
 /**
  * Settings for one tab (Search, Savings or Activity), opened from its gear. Each
@@ -82,9 +86,9 @@ export default function SectionSettingsSheet() {
             />
           </SheetField>
           <SheetField label="Network" hint="Search starts filtered to this network.">
+            {/* review: the same network chips as Search itself, logo and name.
             <OptionChips
               options={NETWORKS}
-              // review: each network's logo beside its symbol.
               icon={(symbol) => (symbol === 'All' ? null : <TokenIcon symbol={symbol} size={14} />)}
               value={CHAINS.find((chain) => chain.name === prefs.searchNetwork)?.symbol ?? 'All'}
               onChange={(symbol) =>
@@ -92,7 +96,26 @@ export default function SectionSettingsSheet() {
                   searchNetwork: CHAINS.find((chain) => chain.symbol === symbol)?.name ?? null,
                 })
               }
-            />
+            /> */}
+            <View style={NETWORK_CHIPS}>
+              <Chip
+                label="All"
+                accessibilityRole="radio"
+                leading={<NetworkGrid size={22} />}
+                selected={!prefs.searchNetwork}
+                onPress={() => updateSectionPrefs({ searchNetwork: null })}
+              />
+              {CHAINS.map((chain) => (
+                <Chip
+                  key={chain.name}
+                  label={chain.name}
+                  accessibilityRole="radio"
+                  leading={<TokenIcon symbol={chain.symbol} size={22} />}
+                  selected={prefs.searchNetwork === chain.name}
+                  onPress={() => updateSectionPrefs({ searchNetwork: chain.name })}
+                />
+              ))}
+            </View>
           </SheetField>
           {toggle(
             'Favorite tokens',
