@@ -231,9 +231,10 @@ export default function PairExtensionSheet() {
             align="center"
             first={<Text style={styles.title}>Code matches</Text>}
             second={
+              // review: too much text. Before: This wallet goes to your browser, encrypted for
+              // it alone. Next, confirm it’s you with Face ID or your passcode.
               <Text style={styles.subtitle}>
-                This wallet goes to your browser, encrypted for it alone. Next, confirm it’s you
-                with Face ID or your passcode.
+                It goes to your browser. Face ID or passcode next.
               </Text>
             }
           />
@@ -295,7 +296,8 @@ export default function PairExtensionSheet() {
           ? {
               icon: 'warning',
               title: 'Get a wallet from your browser?',
-              body: 'The browser that showed this code sends its recovery phrase to this phone. Only add a wallet that’s yours.',
+              // body: 'The browser that showed this code sends its recovery phrase to this phone. Only add a wallet that’s yours.',
+              body: 'Its recovery phrase comes to this phone. Only add a wallet that’s yours.',
             }
           : state.step === 'intro'
             ? {
@@ -409,8 +411,9 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     gap: 12,
   },
+  // review: the tray already has its top space; this doubled it above the icon.
   hero: {
-    marginTop: 24,
+    // marginTop: 24,
     alignItems: 'center',
   },
   well: {
@@ -437,11 +440,14 @@ const useStyles = makeStyles((c) => ({
     textAlign: 'center',
   },
   card: {
-    marginTop: 28,
+    // marginTop: 28,
+    marginTop: 20,
     gap: 14,
     padding: 16,
     borderRadius: 20,
-    backgroundColor: c.card,
+    // review: in dark a card is the sheet's own colour; raise it so it shows.
+    // backgroundColor: c.card,
+    backgroundColor: c.card === c.sheet ? c.raised : c.card,
   },
   rule: {
     flexDirection: 'row',
