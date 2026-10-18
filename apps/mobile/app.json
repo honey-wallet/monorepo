@@ -18,7 +18,7 @@
     "android": {
       "package": "com.honeywallet.app",
       "adaptiveIcon": {
-        "backgroundColor": "#FEBE2B",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },

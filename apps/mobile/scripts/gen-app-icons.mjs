@@ -30,13 +30,16 @@ async function render(file, { background, mark, eye = background, width = 680, s
   await writeFile(new URL(file, assets), await image.png().toBuffer());
 }
 
-const honey = { background: '#FEBE2B', mark: '#4B2817' };
+// The launch animation's look: the yellow mark with full brown eyes, on white (or black).
+// const honey = { background: '#FEBE2B', mark: '#4B2817' };
+const honey = { background: '#FFFFFF', mark: '#FEBE2B', eye: '#4B2817' };
+const honeyDark = { background: '#000000', mark: '#FEBE2B', eye: '#4B2817' };
 const midnight = { background: '#17140F', mark: '#FEBE2B' };
 const graphite = { background: '#292929', mark: '#FFFFFF' };
 for (const [file, colors] of Object.entries({
   'icon.png': honey,
   'ios-light.png': honey,
-  'ios-dark.png': honey,
+  'ios-dark.png': honeyDark,
   'ios-tinted.png': { background: '#202020', mark: '#FFFFFF' },
   'icon-midnight.png': midnight,
   'icon-graphite.png': graphite,
@@ -46,7 +49,7 @@ for (const [file, colors] of Object.entries({
 // Adaptive icons keep the entire mark inside Android's central safe area.
 await render('android-icon-foreground.png', {
   mark: honey.mark,
-  eye: honey.background,
+  eye: honey.eye,
   width: 600,
 });
 await render('android-icon-midnight.png', {
