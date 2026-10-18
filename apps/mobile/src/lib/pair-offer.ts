@@ -3,6 +3,8 @@ import {
   createPairAnswer,
   decodeNonce,
   encodeReveal,
+  openPayload,
+  type PairSession,
   pairSession,
   parsePairUri,
 } from '@honey-wallet/keyring';
@@ -64,6 +66,29 @@ export async function phoneHandshake(uri: string, signal: AbortSignal) {
     phoneKey: answer.publicKey,
     extensionNonce: decodeNonce(nonce),
     phoneNonce: answer.nonce,
+    direction: offer.direction,
   });
-  return { pair, session };
+  return { pair, session, direction: offer.direction };
+}
+
+/** Which way a scanned code moves the wallet, or null if it isn't a pairing code. */
+export const offerDirection = (uri: string) => parsePairUri(uri)?.direction ?? null;
+
+/**
+ * Browser to phone, after "Codes match": waits for the browser to send its wallet (it
+ * asks for its password first) and opens it with this session's key.
+ */
+export async function receiveFromBrowser(
+  pair: PairChannel,
+  session: PairSession,
+  signal: AbortSignal,
+) {
+  const deadline = Date.now() + TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    signal.throwIfAborted();
+    const message = await api.pairReceive(pair, 'payload', { signal });
+    if (message) return openPayload(session.key, message.data);
+    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+  }
+  throw new Error('Your browser didn’t send the wallet. Scan a new code.');
 }

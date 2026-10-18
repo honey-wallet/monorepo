@@ -1,15 +1,44 @@
 {
   "manifest_version": 3,
   "name": "Honey Wallet",
-  "description": "All your crypto, one wallet. Pair with the Honey app on your phone.",
+  "description": "All your crypto, one wallet. Connect to apps, approve shared wallets, pair with the Honey app on your phone.",
   "version": "0.1.0",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
     "default_title": "Honey Wallet",
-    "default_popup": "index.html"
+    "default_popup": "index.html?popup",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
   },
   "permissions": ["storage"],
   "host_permissions": ["http://localhost:8080/*"],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["inpage.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": false
+    },
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+  "minimum_chrome_version": "116"
 }

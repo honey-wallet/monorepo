@@ -13,6 +13,7 @@ import { LabeledRule } from '@/components/wallet/parts';
 import { failure, tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 import { finishOnboarding } from '@/lib/onboarding';
+import { isWeb } from '@/lib/platform';
 import { settings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
@@ -114,6 +115,18 @@ export default function GetStartedSheet() {
 
       {restore ? (
         <View style={styles.buttons}>
+          {/* In a browser, the easiest way in is the wallet already on the phone. */}
+          {isWeb ? (
+            <MoreRow
+              disabled={!!signingIn}
+              icon="qr"
+              title="Pair with your phone"
+              onPress={() => {
+                tap();
+                router.push({ pathname: '/pair-phone', params: { onboarding: '1' } });
+              }}
+            />
+          ) : null}
           <MoreRow
             disabled={!!signingIn}
             icon="phrase"

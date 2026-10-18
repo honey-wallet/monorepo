@@ -1,5 +1,4 @@
 import { useLocalSearchParams } from 'expo-router';
-import { usePreventScreenCapture } from 'expo-screen-capture';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, Text, View } from 'react-native';
 import Animated, {
@@ -21,9 +20,11 @@ import { InlineTray } from '@/components/sheets/Tray';
 import { PushedScreen } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
-import { finishOnboarding } from '@/lib/onboarding';
+import { completeStep, finishOnboarding } from '@/lib/onboarding';
 import { createPhraseAccess } from '@/lib/phrase-access';
+import { isWeb } from '@/lib/platform';
 import { getProfile } from '@/lib/profile';
+import { usePreventScreenCapture } from '@/lib/screen-capture';
 import { showToast } from '@/lib/toast';
 import { startWithMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
@@ -214,7 +215,8 @@ export default function RecoveryPhraseScreen() {
           />
         ) : undefined
       }
-      scroll={false}
+      // Fits a phone as is; the browser's 600px popup may need to scroll (step 2's quiz).
+      scroll={isWeb}
       contentStyle={styles.content}
       // The privacy warning rises in a tray (Family's pattern): one line, then Close or View.
       overlay={
@@ -297,11 +299,15 @@ export default function RecoveryPhraseScreen() {
 
           {revealed ? (
             <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.below}>
-              {onboarding ? (
+              {/* In a browser, ticking this later is how the setup checklist's backup gets done. */}
+              {onboarding || isWeb ? (
                 <Checkbox
                   label="I’ve written it down somewhere safe"
                   checked={writtenDown}
-                  onChange={setWrittenDown}
+                  onChange={(checked) => {
+                    setWrittenDown(checked);
+                    if (checked && !onboarding) completeStep('backup');
+                  }}
                 />
               ) : (
                 <View />
@@ -334,7 +340,7 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
   },
   hero: {
-    marginBottom: 24,
+    marginBottom: isWeb ? 16 : 24,
   },
   title: {
     color: c.text,
@@ -357,7 +363,7 @@ const useStyles = makeStyles((c) => ({
     gap: 10,
   },
   tile: {
-    height: 50,
+    height: isWeb ? 44 : 50,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

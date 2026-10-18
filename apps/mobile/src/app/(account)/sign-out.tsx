@@ -9,6 +9,7 @@ import { confirmOwner } from '@/lib/auth';
 import { failure, tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 import { signOut } from '@/lib/onboarding';
+import { HERE } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { loadAccounts, type VaultAccount } from '@/lib/vault';
 import { makeStyles, useTheme } from '@/theme';
@@ -69,7 +70,7 @@ export default function SignOutSheet() {
           </View>
           <Text style={styles.title}>Sign out?</Text>
           <Text style={styles.body}>
-            Your wallets leave this phone. You’ll need your recovery phrase to get back in.
+            Your wallets leave {HERE}. You’ll need your recovery phrase to get back in.
           </Text>
           <View style={styles.buttons}>
             <PillButton
@@ -151,12 +152,8 @@ const useStyles = makeStyles((c) => ({
     lineHeight: 20,
   },
   check: {
-    marginTop: 4,
-    padding: 14,
-    gap: 14,
-    borderRadius: 18,
-    // Raised: a card-coloured block disappears on the tray in dark mode.
-    backgroundColor: c.raised,
+    marginTop: 8,
+    gap: 16,
   },
   link: {
     marginTop: 14,

@@ -6,14 +6,17 @@ import {
   isValidMnemonic,
   mnemonicToSeed,
   normalizeMnemonic,
+  privateKeyFor,
 } from '@honey-wallet/keyring';
 import { getRandomBytes } from 'expo-crypto';
-import * as SecureStore from 'expo-secure-store';
+import { hexToBytes } from 'viem';
+import * as SecureStore from '@/lib/secure-store';
 
 /**
  * The device's secrets: recovery phrases and imported private keys, kept in the
- * iOS Keychain / Android Keystore. They never leave the device and aren't included
- * in iCloud or Google backups (THIS_DEVICE_ONLY); the backup step covers that.
+ * iOS Keychain / Android Keystore, or a password-locked vault in a browser (see
+ * secure-store). They never leave the device and aren't included in iCloud or Google
+ * backups (THIS_DEVICE_ONLY); the backup step covers that.
  *
  * One phrase is the primary one: "Create new wallet" adds the next account under it
  * (like MetaMask). Imported phrases and keys are stored alongside it and need
@@ -29,10 +32,6 @@ export type VaultAccount = {
   addresses: Partial<Addresses> & { evm: string };
 };
 
-const OPTIONS: SecureStore.SecureStoreOptions = {
-  keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-};
-
 const KEY = {
   accounts: 'honey.accounts',
   primary: 'honey.primary-seed',
@@ -40,8 +39,8 @@ const KEY = {
   privateKey: (id: string) => `honey.key.${id}`,
 };
 
-const read = (key: string) => SecureStore.getItemAsync(key, OPTIONS);
-const write = (key: string, value: string) => SecureStore.setItemAsync(key, value, OPTIONS);
+const read = (key: string) => SecureStore.getItemAsync(key);
+const write = (key: string, value: string) => SecureStore.setItemAsync(key, value);
 
 // Account changes run one at a time, so a double tap can't derive the same index twice.
 let queue: Promise<unknown> = Promise.resolve();
@@ -132,6 +131,62 @@ export const importMnemonic = serial(
   },
 );
 
+/**
+ * Brings in the wallet a phone sent when pairing: its phrase and every account the user
+ * made from it, under the same names. Pairing again only adds accounts that are missing.
+ */
+export const importPairedWallet = serial(
+  async (payload: {
+    mnemonic: string;
+    accounts: { index: number; label: string }[];
+  }): Promise<VaultAccount[]> => {
+    if (!isValidMnemonic(payload.mnemonic)) throw new Error('That recovery phrase isn’t valid');
+    const phrase = normalizeMnemonic(payload.mnemonic);
+    const existing = await loadAccounts();
+    let seedId: string | null = null;
+    for (const account of existing) {
+      if (account.source.kind !== 'phrase') continue;
+      if ((await read(KEY.seed(account.source.seedId))) === phrase) {
+        seedId = account.source.seedId;
+        break;
+      }
+    }
+    seedId ??= await saveSeed(phrase);
+    const have = new Set(
+      existing.flatMap((a) =>
+        a.source.kind === 'phrase' && a.source.seedId === seedId ? [a.source.index] : [],
+      ),
+    );
+    const wanted = payload.accounts.length ? payload.accounts : [{ index: 0, label: 'Wallet' }];
+    const added: VaultAccount[] = [];
+    for (const { index, label } of wanted) {
+      if (!Number.isInteger(index) || index < 0 || have.has(index)) continue;
+      have.add(index);
+      added.push(await deriveAccount(seedId, index, label.slice(0, 40) || 'Wallet'));
+    }
+    return added;
+  },
+);
+
+/**
+ * The private key behind one of this device's wallets on one chain, for signing what a
+ * website asked for after the user approved it. Never stored or kept: callers use it
+ * and drop it. An imported private key only has an EVM side.
+ */
+export async function privateKeyOf(accountId: string, chain: 'evm' | 'solana') {
+  const account = (await loadAccounts()).find((a) => a.id === accountId);
+  if (!account) throw new Error('That wallet isn’t on this device');
+  if (account.source.kind === 'key') {
+    if (chain !== 'evm') throw new Error('This wallet only works on EVM networks');
+    const hex = await read(KEY.privateKey(account.id));
+    if (!hex) throw new Error('This wallet’s key is missing');
+    return hexToBytes(`0x${hex}`);
+  }
+  const phrase = await read(KEY.seed(account.source.seedId));
+  if (!phrase) throw new Error('Recovery phrase missing from this device');
+  return privateKeyFor(await mnemonicToSeed(phrase), chain, account.source.index);
+}
+
 /** Imports a single EVM private key. */
 export const importPrivateKey = serial(
   async (hex: string, label: string): Promise<VaultAccount> => {
@@ -166,7 +221,7 @@ export async function readPrimaryWallet(): Promise<{
  * accounts. Used by Sign out, so nothing sensitive stays on the phone afterwards.
  */
 export const eraseVault = serial(async (confirmedAccountIds: readonly string[]) => {
-  const remove = (key: string) => SecureStore.deleteItemAsync(key, OPTIONS);
+  const remove = (key: string) => SecureStore.deleteItemAsync(key);
   const accounts = await loadAccounts();
   if (accounts.some((account) => !confirmedAccountIds.includes(account.id))) {
     throw new Error('Confirm recovery for every wallet before signing out');

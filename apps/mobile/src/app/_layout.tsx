@@ -7,7 +7,7 @@ import { LaunchAnimation } from '@/components/LaunchAnimation';
 import { ToastHost } from '@/components/motion/ToastHost';
 import { Tray } from '@/components/sheets/Tray';
 import { appLock } from '@/lib/app-lock';
-import { reject, startDemoRequests } from '@/lib/multisig';
+import { createMultisig, reject, startDemoRequests } from '@/lib/multisig';
 import { ACTION_REJECT, setUpNotifications } from '@/lib/push';
 import { showToast } from '@/lib/toast';
 import { useTheme } from '@/theme';
@@ -52,6 +52,15 @@ function useNotificationResponses() {
 function NotificationResponses() {
   useNotificationResponses();
   return null;
+}
+
+// Screenshot runs of the extension (EXPO_PUBLIC_E2E=1 builds only) open screens the way
+// a tap would, over Home, instead of reloading the page at a deep link.
+if (process.env.EXPO_PUBLIC_E2E === '1') {
+  (globalThis as { __honeyRouter?: typeof router }).__honeyRouter = router;
+  // And a shared wallet without the setup screens, for the website-approval runs.
+  (globalThis as { __honeyCreateMultisig?: typeof createMultisig }).__honeyCreateMultisig =
+    createMultisig;
 }
 
 /** Follows the system light/dark setting; navigation chrome uses the Honey palette. */
@@ -151,6 +160,10 @@ export default function RootLayout() {
             <Stack.Screen name="(keys)/burner-wallet" options={tray()} />
             <Stack.Screen name="(keys)/import-wallet" options={tray()} />
             <Stack.Screen name="(keys)/pair-extension" options={tray()} />
+            <Stack.Screen name="(keys)/pair-phone" options={tray()} />
+            {/* Honey for Chrome: websites' requests, in their own window */}
+            <Stack.Screen name="(connect)/approve" />
+            <Stack.Screen name="(settings)/connected-sites" options={tray()} />
             <Stack.Screen name="(keys)/restore-backup" options={tray()} />
             <Stack.Screen name="(keys)/watch-wallet" options={tray()} />
             <Stack.Screen name="(keys)/hardware-wallet" options={tray()} />

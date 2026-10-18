@@ -22,16 +22,19 @@ type SectionPrefs = {
   activityHideApprovals: boolean;
 };
 
-const prefs = createStore<SectionPrefs>({
-  searchSort: 'volume',
-  searchNetwork: null,
-  searchShowFavorites: true,
-  searchShowEarn: true,
-  savingsJarToken: 'USDC',
-  savingsShowEarn: true,
-  activityFilter: 'All',
-  activityHideApprovals: false,
-});
+const prefs = createStore<SectionPrefs>(
+  {
+    searchSort: 'volume',
+    searchNetwork: null,
+    searchShowFavorites: true,
+    searchShowEarn: true,
+    savingsJarToken: 'USDC',
+    savingsShowEarn: true,
+    activityFilter: 'All',
+    activityHideApprovals: false,
+  },
+  { persist: 'section-prefs' },
+);
 
 export const useSectionPrefs = prefs.useValue;
 

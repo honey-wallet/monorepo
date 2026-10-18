@@ -9,9 +9,10 @@ import { SuccessPage } from '@/components/sheets/SuccessPage';
 import { tap } from '@/lib/haptics';
 import {
   completeStep,
+  doneCount,
   SETUP_REWARD_USD,
-  SETUP_STEPS,
   setupComplete,
+  setupSteps,
   useOnboarding,
 } from '@/lib/onboarding';
 import { makeStyles, useTheme } from '@/theme';
@@ -25,7 +26,8 @@ export default function SetupSheet() {
   const styles = useStyles();
   const c = useTheme();
   const state = useOnboarding();
-  const total = SETUP_STEPS.length;
+  const steps = setupSteps(state.method);
+  const total = steps.length;
 
   // A sheet over Home only; opened on its own (a reloaded deep link), show Home.
   if (!router.canGoBack()) return <Redirect href="/home" />;
@@ -49,17 +51,17 @@ export default function SetupSheet() {
   return (
     <SheetScreen title="Finish setting up">
       <View style={styles.head}>
-        <Progress done={state.done.length} total={total} size={48} />
+        <Progress done={doneCount(state)} total={total} size={48} />
         <View style={styles.flex}>
           <Text style={styles.reward}>Get ${SETUP_REWARD_USD} off network fees</Text>
           <Text style={styles.meta}>
-            {state.done.length} of {total} done · about 2 minutes
+            {doneCount(state)} of {total} done · about 2 minutes
           </Text>
         </View>
       </View>
 
       <View style={styles.steps}>
-        {SETUP_STEPS.map((step) => {
+        {steps.map((step) => {
           const done = state.done.includes(step.id);
           return (
             <PressableRow

@@ -1,8 +1,8 @@
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js';
-import { scryptAsync } from '@noble/hashes/scrypt.js';
 import { utf8ToBytes } from '@noble/hashes/utils.js';
 import { base64 } from '@scure/base';
 import { isValidMnemonic, normalizeMnemonic } from './index';
+import { passwordKey as keyFor } from './kdf';
 
 /**
  * A recovery phrase encrypted with a password the user picks, for saving to iCloud
@@ -31,13 +31,6 @@ export const MIN_PASSWORD_LENGTH = 8;
 
 /** Bound to the format so a backup can't be relabelled as another one and still open. */
 const AAD = utf8ToBytes('honey-backup-v1');
-
-const keyFor = (password: string, salt: Uint8Array, kdf: { N: number; r: number; p: number }) =>
-  scryptAsync(utf8ToBytes(password.normalize('NFKC')), salt, {
-    ...kdf,
-    dkLen: 32,
-    maxmem: 72 * 1024 * 1024,
-  });
 
 export async function encryptBackup(
   phrase: string,

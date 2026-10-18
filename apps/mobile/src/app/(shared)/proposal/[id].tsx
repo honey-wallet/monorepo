@@ -34,6 +34,7 @@ import {
   cancel,
   describe,
   hasVoted,
+  hostOf,
   type Multisig,
   memberName,
   type Proposal,
@@ -499,6 +500,18 @@ function ActionRows({ action, multisig }: { action: ProposalAction; multisig: Mu
           label="Rule"
           value={`${multisig.threshold} → ${action.threshold} of ${multisig.members.length}`}
         />
+      );
+    case 'appCall':
+      return (
+        <>
+          <StatRow label="Site" value={hostOf(action.site)} />
+          <StatRow label="Network" value={action.network} />
+          {action.to ? <StatRow label="Contract" value={shortAddress(action.to)} /> : null}
+          <StatRow
+            label="Call"
+            value={action.data.length > 2 ? `Data · ${action.data.slice(0, 10)}` : 'None'}
+          />
+        </>
       );
     case 'setDailyLimit':
       return (

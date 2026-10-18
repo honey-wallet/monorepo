@@ -12,9 +12,15 @@ import { SuccessPage } from '@/components/sheets/SuccessPage';
 import { api } from '@/lib/api';
 import { confirmOwner } from '@/lib/auth';
 import { success, tap } from '@/lib/haptics';
-import { phoneHandshake, takeScannedOffer } from '@/lib/pair-offer';
+import {
+  offerDirection,
+  phoneHandshake,
+  receiveFromBrowser,
+  takeScannedOffer,
+} from '@/lib/pair-offer';
 import { showToast } from '@/lib/toast';
-import { readPrimaryWallet } from '@/lib/vault';
+import { importPairedWallet, readPrimaryWallet } from '@/lib/vault';
+import { addVaultWallet, setActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 type State =
@@ -23,11 +29,16 @@ type State =
   | { step: 'connecting' }
   | { step: 'compare'; session: PairSession; pair: PairChannel }
   | { step: 'sending' }
+  | { step: 'receiving' }
   | { step: 'done' }
   | { step: 'error'; message: string };
 
 /**
- * Pairing Honey for Chrome, reached only from the in-app scanner (the code is handed
+ * Pairing Honey for Chrome. The code says which way the wallet goes: this phone's wallet
+ * to the browser (the usual), or the browser's wallet to this phone (Settings › Send
+ * wallet to phone, in the browser; the browser asks for its password before sending).
+ *
+ * Reached only from the in-app scanner (the code is handed
  * over in memory; see lib/pair-offer.ts). Nothing goes to the server until the user has
  * read what pairing means and tapped Continue. Then the handshake runs, both screens show
  * a six-digit code, and only after "Codes match" and Face ID does the wallet go across,
@@ -40,6 +51,10 @@ export default function PairExtensionSheet() {
     const uri = takeScannedOffer();
     return uri ? { step: 'intro', uri } : { step: 'missing' };
   });
+  // Fixed for this screen: the code it was opened with.
+  const [toPhone] = useState(
+    () => state.step === 'intro' && offerDirection(state.uri) === 'toPhone',
+  );
   const abort = useRef(new AbortController());
   useEffect(() => () => abort.current.abort(), []);
 
@@ -47,7 +62,9 @@ export default function PairExtensionSheet() {
     tap();
     setState({ step: 'connecting' });
     try {
-      if (!(await readPrimaryWallet())) throw new Error('Create or import a wallet first.');
+      if (!toPhone && !(await readPrimaryWallet())) {
+        throw new Error('Create or import a wallet first.');
+      }
       const { pair, session } = await phoneHandshake(uri, abort.current.signal);
       setState({ step: 'compare', session, pair });
     } catch (error) {
@@ -55,7 +72,24 @@ export default function PairExtensionSheet() {
     }
   };
 
+  /** Browser to phone: wait for the browser to send (after its password), then add it. */
+  const receive = async (session: PairSession, pair: PairChannel) => {
+    tap();
+    setState({ step: 'receiving' });
+    try {
+      const payload = await receiveFromBrowser(pair, session, abort.current.signal);
+      const added = await importPairedWallet(payload);
+      for (const account of added) addVaultWallet(account);
+      if (added[0]) setActiveWallet(added[0].id);
+      success();
+      setState({ step: 'done' });
+    } catch (error) {
+      if (!abort.current.signal.aborted) setState({ step: 'error', message: messageOf(error) });
+    }
+  };
+
   const send = async (session: PairSession, pair: PairChannel) => {
+    if (toPhone) return receive(session, pair);
     tap();
     if (!(await confirmOwner('Send your wallet to this browser'))) return;
     setState({ step: 'sending' });
@@ -81,8 +115,12 @@ export default function PairExtensionSheet() {
     return (
       <SheetScreen size="fill">
         <SuccessPage
-          title="Paired"
-          detail="Your wallet is in your browser now. Set a password there to finish."
+          title={toPhone ? 'Wallet added' : 'Paired'}
+          detail={
+            toPhone
+              ? 'Your browser’s wallet is on this phone now, next to your others.'
+              : 'Your wallet is in your browser now.'
+          }
           onDone={close}
         />
       </SheetScreen>
@@ -98,26 +136,34 @@ export default function PairExtensionSheet() {
         }
       : state.step === 'error'
         ? { icon: 'warning', title: 'Couldn’t pair', body: state.message }
-        : state.step === 'intro'
+        : state.step === 'intro' && toPhone
           ? {
               icon: 'warning',
-              title: 'Send your wallet to a browser?',
-              body: 'Pairing copies your recovery phrase to the browser that showed this code. Whoever controls that browser can move your funds.',
+              title: 'Get a wallet from your browser?',
+              body: 'The browser that showed this code sends its recovery phrase to this phone. Only add a wallet that’s yours.',
             }
-          : state.step === 'compare'
+          : state.step === 'intro'
             ? {
-                icon: 'globe',
-                title: 'Check the code',
-                body: 'It should match the code in your browser exactly. Confirm on both.',
+                icon: 'warning',
+                title: 'Send your wallet to a browser?',
+                body: 'Pairing copies your recovery phrase to the browser that showed this code. Whoever controls that browser can move your funds.',
               }
-            : {
-                icon: 'globe',
-                title: 'Pair Honey for Chrome',
-                body:
-                  state.step === 'sending'
-                    ? 'Sending your wallet, encrypted for that browser only…'
-                    : 'Connecting to your browser…',
-              };
+            : state.step === 'compare'
+              ? {
+                  icon: 'globe',
+                  title: 'Check the code',
+                  body: 'It should match the code in your browser exactly. Confirm on both.',
+                }
+              : {
+                  icon: 'globe',
+                  title: 'Pair Honey for Chrome',
+                  body:
+                    state.step === 'sending'
+                      ? 'Sending your wallet, encrypted for that browser only…'
+                      : state.step === 'receiving'
+                        ? 'Waiting for your browser. Enter your password there to send.'
+                        : 'Connecting to your browser…',
+                };
   const danger = state.step === 'intro' || state.step === 'error';
 
   return (
@@ -168,7 +214,9 @@ export default function PairExtensionSheet() {
           {[
             'Only pair a browser on your own computer, open in front of you.',
             'Never scan a pairing code that a website, message or another person sent you.',
-            'Honey will never ask you to pair to fix a problem or claim a reward.',
+            toPhone
+              ? 'Someone else’s wallet can look like yours. Only send money to one you made.'
+              : 'Honey will never ask you to pair to fix a problem or claim a reward.',
           ].map((line) => (
             <View key={line} style={styles.rule}>
               <Icon name="check" size={16} color={c.textSecondary} />
@@ -191,7 +239,7 @@ export default function PairExtensionSheet() {
             </Text>
           </View>
         </>
-      ) : state.step === 'connecting' || state.step === 'sending' ? (
+      ) : state.step === 'connecting' || state.step === 'sending' || state.step === 'receiving' ? (
         <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
       ) : null}
     </SheetScreen>

@@ -1,4 +1,11 @@
-import { Pressable, type StyleProp, Text, View, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  type StyleProp,
+  Text,
+  useWindowDimensions,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { keypress, tap } from '@/lib/haptics';
@@ -82,13 +89,17 @@ export function applyKey(value: string, key: Key, maxDecimals = 8): string {
  */
 export function Keypad({
   onKey,
-  keyHeight = 64,
+  keyHeight: fixed,
 }: {
   onKey: (key: Key) => void;
   keyHeight?: number;
 }) {
   const styles = useStyles();
   const c = useTheme();
+  // Short windows (the extension's 600px popup, small phones) get shorter keys, so the
+  // amount above keeps its room.
+  const { height } = useWindowDimensions();
+  const keyHeight = fixed ?? (height < 700 ? 46 : 64);
   return (
     <View style={styles.pad}>
       {KEYS.map((key) => (

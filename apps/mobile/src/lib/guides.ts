@@ -10,7 +10,10 @@ const ROUTES: Record<GuideName, Href> = {
 };
 
 /** Guides already shown; in memory, so they show again after a restart. */
-const seen = createStore<Record<GuideName, boolean>>({ predict: false, perps: false });
+const seen = createStore<Record<GuideName, boolean>>(
+  { predict: false, perps: false },
+  { persist: 'guides.seen' },
+);
 
 /** Opens a product's how-to guide. */
 export function openGuide(name: GuideName) {

@@ -1,0 +1,22 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+/* Chrome sizes the toolbar popup to its page, up to 800 × 600. A phone-shaped window
+   keeps every screen laid out as on the phone. Opened in a tab, the app fills it. */
+html.popup,
+html.popup body {
+  width: 380px;
+  height: 600px;
+}
+/* A browser input keeps a ~20-character minimum width; in a row it should shrink. */
+input,
+textarea {
+  min-width: 0;
+}
+/* Fields draw their own focus (caret, raised surface); drop the browser's ring. */
+input:focus,
+textarea:focus {
+  outline: none;
+}

@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { tap } from '@/lib/haptics';
-import { SETUP_REWARD_USD, SETUP_STEPS, useOnboarding } from '@/lib/onboarding';
+import { doneCount, SETUP_REWARD_USD, setupSteps, useOnboarding } from '@/lib/onboarding';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Quick amounts for a first purchase; each goes straight to the review. */
@@ -77,12 +77,13 @@ export function FundWalletCard() {
 export function FinishSetupCard() {
   const styles = useStyles();
   const c = useTheme();
-  const { done } = useOnboarding();
-  const total = SETUP_STEPS.length;
+  const state = useOnboarding();
+  const done = doneCount(state);
+  const total = setupSteps(state.method).length;
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={`Finish setting up, ${done.length} of ${total} done. Get $${SETUP_REWARD_USD} off network fees`}
+      accessibilityLabel={`Finish setting up, ${done} of ${total} done. Get $${SETUP_REWARD_USD} off network fees`}
       scaleTo={0.98}
       onPress={() => {
         tap();
@@ -90,13 +91,13 @@ export function FinishSetupCard() {
       }}
       style={[styles.card, styles.setup]}
     >
-      <Progress done={done.length} total={total} />
+      <Progress done={done} total={total} />
       <View style={styles.flex}>
         <Text style={styles.setupTitle}>Finish setting up</Text>
         <Text style={styles.reward}>Get ${SETUP_REWARD_USD} off network fees</Text>
       </View>
       <Text style={styles.count}>
-        {done.length}/{total}
+        {done}/{total}
       </Text>
       <Icon name="chevronRight" size={12} color={c.textSecondary} />
     </PressableScale>

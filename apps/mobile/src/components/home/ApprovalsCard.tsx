@@ -92,7 +92,7 @@ export function SharedWalletCard({ multisig }: { multisig: Multisig }) {
  * On any other wallet: a nudge when proposals in your shared wallets are waiting
  * for you. Tapping opens the first one.
  */
-const dismissedNudge = createStore<string[]>([]);
+const dismissedNudge = createStore<string[]>([], { persist: 'approvals.dismissed' });
 
 /**
  * Whether the nudge is showing: something waits for you that you haven't closed.

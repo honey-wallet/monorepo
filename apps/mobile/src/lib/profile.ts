@@ -1,11 +1,11 @@
-import { useSyncExternalStore } from 'react';
 import { randomAvatarSeed } from '@/components/Avatar';
+import { createStore } from '@/lib/store';
 
 /**
  * The signed-in user's profile, set at the end of onboarding.
  *
- * In memory only for now: nothing is persisted or sent to the server, so it
- * resets when the app restarts.
+ * Not sent to the server. On the phone it lives in memory and resets when the app
+ * restarts; in the browser extension it's saved so the popup remembers it.
  */
 export type Profile = {
   name: string;
@@ -15,26 +15,22 @@ export type Profile = {
   haptics: boolean;
 };
 
-let profile: Profile = {
-  name: 'Honey',
-  photo: null,
-  avatarSeed: randomAvatarSeed(),
-  haptics: true,
-};
-const listeners = new Set<() => void>();
+const profile = createStore<Profile>(
+  {
+    name: 'Honey',
+    photo: null,
+    avatarSeed: randomAvatarSeed(),
+    haptics: true,
+  },
+  { persist: 'profile' },
+);
 
 export function setProfile(update: Partial<Profile>) {
-  profile = { ...profile, ...update };
-  for (const listener of listeners) listener();
+  profile.set((p) => ({ ...p, ...update }));
 }
 
 export function getProfile(): Profile {
-  return profile;
+  return profile.get();
 }
 
-export function useProfile(): Profile {
-  return useSyncExternalStore((listener) => {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  }, getProfile);
-}
+export const useProfile = profile.useValue;

@@ -22,6 +22,7 @@
     "@expo/metro-runtime": "~57.0.17",
     "@expo/ui": "~57.0.25",
     "@honey-wallet/api-client": "workspace:*",
+    "@honey-wallet/extension": "workspace:*",
     "@honey-wallet/keyring": "workspace:*",
     "expo": "~57.0.30",
     "expo-alternate-app-icons": "^8.0.0",
@@ -56,7 +57,8 @@
     "react-native-svg": "15.15.4",
     "react-native-view-shot": "5.1.0",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.1",
+    "viem": "2.57.2"
   },
   "devDependencies": {
     "@iconify-json/cryptocurrency-color": "^1.2.4",

@@ -12,8 +12,10 @@ import { Toggle } from '@/components/motion/Toggle';
 import { SheetRow, SheetSection } from '@/components/sheets/Sheet';
 import { PushedScreen } from '@/components/wallet/parts';
 import { api } from '@/lib/api';
+import { lockNow } from '@/lib/app-lock';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { setProfile, useProfile } from '@/lib/profile';
 import { useSettings } from '@/lib/settings';
 import { useActiveWallet } from '@/lib/wallets';
@@ -92,12 +94,14 @@ export default function SettingsScreen() {
 
       <View style={styles.gutter}>
         <SheetSection title="Preferences" />
-        <SheetRow
-          icon="grid"
-          title="App icon"
-          onPress={open('/settings-app-icon')}
-          accessory="chevron"
-        />
+        {isWeb ? null : (
+          <SheetRow
+            icon="grid"
+            title="App icon"
+            onPress={open('/settings-app-icon')}
+            accessory="chevron"
+          />
+        )}
         <SheetRow
           icon="theme"
           title="Theme"
@@ -119,32 +123,36 @@ export default function SettingsScreen() {
           onPress={open('/settings-language')}
           accessory="chevron"
         />
-        <SheetRow
-          icon="bell"
-          title="Notifications"
-          onPress={open('/settings-notifications')}
-          accessory="chevron"
-        />
+        {isWeb ? null : (
+          <SheetRow
+            icon="bell"
+            title="Notifications"
+            onPress={open('/settings-notifications')}
+            accessory="chevron"
+          />
+        )}
         <SheetRow
           icon="chart"
           title="Balances and activity"
           onPress={open('/settings-balances')}
           accessory="chevron"
         />
-        <SheetRow
-          icon="haptics"
-          title="Haptic touch"
-          accessory={
-            <Toggle
-              accessibilityLabel="Haptic touch"
-              value={profile.haptics}
-              onValueChange={(haptics) => {
-                setProfile({ haptics });
-                tap();
-              }}
-            />
-          }
-        />
+        {isWeb ? null : (
+          <SheetRow
+            icon="haptics"
+            title="Haptic touch"
+            accessory={
+              <Toggle
+                accessibilityLabel="Haptic touch"
+                value={profile.haptics}
+                onValueChange={(haptics) => {
+                  setProfile({ haptics });
+                  tap();
+                }}
+              />
+            }
+          />
+        )}
         <SheetRow
           icon="advanced"
           title="Advanced"
@@ -153,24 +161,54 @@ export default function SettingsScreen() {
         />
 
         <SheetSection title="Privacy and security" />
-        <SheetRow
-          icon="faceId"
-          title="Face ID"
-          onPress={open('/settings-face-id')}
-          accessory="chevron"
-        />
+        {isWeb ? null : (
+          <SheetRow
+            icon="faceId"
+            title="Face ID"
+            onPress={open('/settings-face-id')}
+            accessory="chevron"
+          />
+        )}
         <SheetRow
           icon="recovery"
           title="Recovery phrase"
           onPress={open('/recovery-phrase')}
           accessory="chevron"
         />
-        <SheetRow
-          icon="cloud"
-          title="Cloud backup"
-          onPress={open('/icloud-backup')}
-          accessory="chevron"
-        />
+        {isWeb ? (
+          <SheetRow
+            icon="qr"
+            title="Send wallet to phone"
+            onPress={open({ pathname: '/pair-phone', params: { send: '1' } })}
+            accessory="chevron"
+          />
+        ) : null}
+        {isWeb ? (
+          <SheetRow
+            icon="globe"
+            title="Connected sites"
+            onPress={open('/connected-sites')}
+            accessory="chevron"
+          />
+        ) : null}
+        {isWeb ? (
+          <SheetRow
+            icon="lock"
+            title="Lock Honey"
+            onPress={() => {
+              tap();
+              void lockNow();
+            }}
+          />
+        ) : null}
+        {isWeb ? null : (
+          <SheetRow
+            icon="cloud"
+            title="Cloud backup"
+            onPress={open('/icloud-backup')}
+            accessory="chevron"
+          />
+        )}
         <SheetRow
           icon="permissions"
           title="Permissions"

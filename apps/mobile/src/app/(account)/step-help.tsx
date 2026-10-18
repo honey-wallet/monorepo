@@ -3,6 +3,7 @@ import type { IconName } from '@/components/Icon';
 import { PillButton } from '@/components/onboarding/PillButton';
 import type { HelpTopic } from '@/components/onboarding/StepScreen';
 import { closeSheet, SheetRow, SheetScreen, SheetText } from '@/components/sheets/Sheet';
+import { HERE } from '@/lib/platform';
 
 type Help = { title: string; intro?: string; points: [IconName, string, string][] };
 
@@ -11,7 +12,7 @@ const contact = (thing: 'email' | 'phone number'): Help => ({
   points: [
     ['checkCircle', 'Sign in', 'We send you a one-time code.'],
     ['bell', 'Security alerts', 'Only about your wallet. No spam.'],
-    ['lock', "Can't move your money", 'Your keys stay on this phone.'],
+    ['lock', "Can't move your money", `Your keys stay on ${HERE}.`],
   ],
 });
 

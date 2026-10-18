@@ -11,6 +11,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { finishOnboarding } from '@/lib/onboarding';
+import { HERE } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { importMnemonic, importPrivateKey, isValidMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
@@ -55,7 +56,7 @@ export default function ImportWalletSheet() {
   const copy = isKey
     ? {
         title: 'Enter your private key',
-        subtitle: 'It stays on this phone.',
+        subtitle: `It stays on ${HERE}.`,
         placeholder: '0x…',
         count: `${key.length}/64`,
         cta: complete ? 'Import' : 'Enter your key',
@@ -63,7 +64,7 @@ export default function ImportWalletSheet() {
       }
     : {
         title: 'Enter your recovery phrase',
-        subtitle: 'It stays on this phone.',
+        subtitle: `It stays on ${HERE}.`,
         placeholder: '',
         count: `${words.length}/${target}`,
         cta: complete ? 'Import' : `Enter ${target} words`,
@@ -376,6 +377,8 @@ const useStyles = makeStyles((c) => ({
   },
   cellInput: {
     flex: 1,
+    // A browser input keeps a ~20-character minimum width unless told otherwise.
+    minWidth: 0,
     height: '100%',
     paddingRight: 12,
     color: c.text,

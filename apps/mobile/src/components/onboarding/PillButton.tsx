@@ -2,6 +2,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextMorph } from '@/components/motion/TextMorph';
 import { TextSwap } from '@/components/motion/TextSwap';
+import { isWeb } from '@/lib/platform';
 import { makeStyles } from '@/theme';
 
 type Props = {
@@ -56,8 +57,9 @@ export function PillButton({ label, onPress, variant = 'primary', disabled, morp
 const useStyles = makeStyles((c) => ({
   button: {
     height: 50,
-    // Room either side, so a button sized to its label never crowds it.
-    paddingHorizontal: 24,
+    // Room either side, so a button sized to its label never crowds it. Less in the
+    // browser's 380px popup, where two buttons share a row and labels would wrap.
+    paddingHorizontal: isWeb ? 14 : 24,
     borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',

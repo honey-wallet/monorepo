@@ -12,9 +12,10 @@ export type Jar = {
   demo?: boolean;
 };
 
-export const jars = createStore<Jar[]>([
-  { id: 'trip', name: 'Japan trip', symbol: 'USDC', goal: 1500, saved: 420, demo: true },
-]);
+export const jars = createStore<Jar[]>(
+  [{ id: 'trip', name: 'Japan trip', symbol: 'USDC', goal: 1500, saved: 420, demo: true }],
+  { persist: 'jars' },
+);
 
 export const useJars = jars.useValue;
 

@@ -11,6 +11,7 @@ import { SheetScreen } from '@/components/sheets/Sheet';
 import { useHandleLookup } from '@/lib/handles';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { addWallet, demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
 import { takeWatchedAddress } from '@/lib/watch-scan';
@@ -90,17 +91,19 @@ export default function WatchWalletSheet() {
           spellCheck={false}
           style={styles.input}
         />
-        <PressableScale
-          accessibilityLabel="Scan a QR code"
-          hitSlop={8}
-          scaleTo={0.97}
-          onPress={() => {
-            tap();
-            router.push({ pathname: '/scan', params: { purpose: 'watch' } });
-          }}
-        >
-          <Icon name="scan" size={19} color={c.textSecondary} />
-        </PressableScale>
+        {isWeb ? null : (
+          <PressableScale
+            accessibilityLabel="Scan a QR code"
+            hitSlop={8}
+            scaleTo={0.97}
+            onPress={() => {
+              tap();
+              router.push({ pathname: '/scan', params: { purpose: 'watch' } });
+            }}
+          >
+            <Icon name="scan" size={19} color={c.textSecondary} />
+          </PressableScale>
+        )}
       </View>
       <View style={styles.hintRow}>
         <IconSwap

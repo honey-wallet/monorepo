@@ -111,4 +111,37 @@ describe('pairing', () => {
     expect(parsePairUri('honey-pair:1?c=q2v8Zp0rWm4Tn6Yc1Lk3Hg&k=AAAA')).toBeNull();
     expect(parsePairUri('honey-pair:2?t=nothex&k=AAAA')).toBeNull();
   });
+
+  it('marks a browser-to-phone code and binds the direction into the code and key', () => {
+    const offer = createPairOffer(random, 'toPhone');
+    expect(offer.uri).toMatch(/&d=p$/);
+    const scanned = parsePairUri(offer.uri);
+    expect(scanned?.direction).toBe('toPhone');
+    expect(parsePairUri(createPairOffer(random).uri)?.direction).toBe('toBrowser');
+    expect(parsePairUri(`${offer.uri.replace('&d=p', '')}&d=x`)).toBeNull();
+
+    const phone = createPairAnswer(random);
+    const transcript = {
+      channel: offer.channel,
+      extensionKey: offer.publicKey,
+      phoneKey: phone.publicKey,
+      extensionNonce: offer.nonce,
+      phoneNonce: phone.nonce,
+    };
+    const phoneSide = pairSession(phone.secretKey, offer.publicKey, {
+      ...transcript,
+      direction: 'toPhone',
+    });
+    const browserSide = pairSession(offer.secretKey, phone.publicKey, {
+      ...transcript,
+      direction: 'toPhone',
+    });
+    expect(browserSide).toEqual(phoneSide);
+    // The other direction's session can't read it.
+    const other = pairSession(offer.secretKey, phone.publicKey, transcript);
+    expect(other.key).not.toEqual(phoneSide.key);
+    const sealed = sealPayload(browserSide.key, { v: 1, mnemonic: PHRASE, accounts: [] }, random);
+    expect(openPayload(phoneSide.key, sealed).mnemonic).toBe(PHRASE);
+    expect(() => openPayload(other.key, sealed)).toThrow();
+  });
 });

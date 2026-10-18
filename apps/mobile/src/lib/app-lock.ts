@@ -65,3 +65,9 @@ export async function setAppLock(enabled: boolean) {
     appLock.set((s) => ({ ...s, busy: false }));
   }
 }
+
+/** Locks now. The phone locks when it goes to the background; the browser has a button. */
+export async function lockNow() {
+  generation++;
+  if (appLock.get().enabled) appLock.set((s) => ({ ...s, unlocked: false }));
+}

@@ -60,6 +60,7 @@ import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib
 import { useMultisig, useNeedsMyApproval } from '@/lib/multisig';
 import { useUnreadNotifications } from '@/lib/notifications';
 import { setupComplete, useOnboarding } from '@/lib/onboarding';
+import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { HIDDEN_AMOUNT, updateSettings, useSettings } from '@/lib/settings';
 import { useTabReselect } from '@/lib/tab-reselect';
@@ -535,7 +536,9 @@ export default function HomeScreen() {
                   badge={unread || needsMe.length > 0}
                   onPress={() => router.push('/notifications')}
                 />
-                <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
+                {isWeb ? null : (
+                  <HeaderShortcut icon="scan" label="Scan" onPress={() => router.push('/scan')} />
+                )}
                 <HeaderShortcut
                   icon="settings"
                   label="Settings"
