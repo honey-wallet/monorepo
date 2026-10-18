@@ -1,5 +1,5 @@
 import type { Href } from 'expo-router';
-import { type ReactNode, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useId, useMemo } from 'react';
 import {
   Pressable,
   type StyleProp,
@@ -216,6 +216,9 @@ export function Sparkline({
   const c = useTheme();
   const reduceMotion = useReducedMotion();
   const { play, revealed } = useEntrancePlaying();
+  // Gradient and mask ids unique to this chart: on the web every SVG shares one page,
+  // and a fixed id picked up another chart's mask (the share card's line vanished).
+  const uid = `spark${useId().replace(/[^\w]/g, '')}`;
   const { line, length } = useMemo(() => {
     const min = Math.min(...data);
     const max = Math.max(...data);
@@ -274,31 +277,31 @@ export function Sparkline({
     <Svg width={width} height={height}>
       <Defs>
         {/* Horizontal fade shared by the line and the glow. */}
-        <LinearGradient id="sparkFadeIn" x1="0" y1="0" x2="1" y2="0">
+        <LinearGradient id={`${uid}-fadeIn`} x1="0" y1="0" x2="1" y2="0">
           <Stop offset="0" stopColor={color} stopOpacity={0.15} />
           <Stop offset="0.4" stopColor={color} stopOpacity={1} />
         </LinearGradient>
-        <LinearGradient id="sparkGlow" x1="0" y1="0" x2="0" y2="1">
+        <LinearGradient id={`${uid}-glow`} x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0" stopColor={color} stopOpacity={0.14} />
           <Stop offset="1" stopColor={color} stopOpacity={0} />
         </LinearGradient>
-        <LinearGradient id="sparkMaskFade" x1="0" y1="0" x2="1" y2="0">
+        <LinearGradient id={`${uid}-maskFade`} x1="0" y1="0" x2="1" y2="0">
           <Stop offset="0" stopColor="#fff" stopOpacity={0} />
           <Stop offset="0.6" stopColor="#fff" stopOpacity={1} />
         </LinearGradient>
-        <Mask id="sparkMask">
-          <Rect width={width} height={height} fill="url(#sparkMaskFade)" />
+        <Mask id={`${uid}-mask`}>
+          <Rect width={width} height={height} fill={`url(#${uid}-maskFade)`} />
         </Mask>
       </Defs>
       <AnimatedPath
         d={`${line} L${width} ${height} L0 ${height} Z`}
-        fill="url(#sparkGlow)"
-        mask="url(#sparkMask)"
+        fill={`url(#${uid}-glow)`}
+        mask={`url(#${uid}-mask)`}
         animatedProps={glowProps}
       />
       <AnimatedPath
         d={line}
-        stroke="url(#sparkFadeIn)"
+        stroke={`url(#${uid}-fadeIn)`}
         strokeWidth={1.5}
         fill="none"
         strokeLinejoin="round"

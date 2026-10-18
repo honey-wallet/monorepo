@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
@@ -39,6 +40,31 @@ export default function WalletsSheet() {
   const hardware = wallets.filter((w) => w.kind === 'hardware');
   // Wallets are on the device; their balances come from the network.
   const loading = useFirstLoad(LOADS.walletTotals);
+
+  // Each group shows two wallets, then "+N more" (review: in the popup a long list hid
+  // Add wallet). The wallet in use is always one of the two.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const group = (key: string, list: AddedWallet[]) => {
+    if (list.length <= 2 || expanded[key]) return list.map(row);
+    const ordered = [
+      ...list.filter((w) => w.id === active.id),
+      ...list.filter((w) => w.id !== active.id),
+    ];
+    const rest = ordered.slice(2);
+    return (
+      <>
+        {ordered.slice(0, 2).map(row)}
+        <MoreWallets
+          wallets={rest}
+          profile={profile}
+          onPress={() => {
+            tap();
+            setExpanded((e) => ({ ...e, [key]: true }));
+          }}
+        />
+      </>
+    );
+  };
 
   const select = (wallet: AddedWallet) => {
     tap();
@@ -109,10 +135,18 @@ export default function WalletsSheet() {
       />
 
       <SheetSection title="Wallets" />
-      {wallets.filter((w) => w.kind === 'wallet').map(row)}
+      {/* {wallets.filter((w) => w.kind === 'wallet').map(row)} */}
+      {group(
+        'wallets',
+        wallets.filter((w) => w.kind === 'wallet'),
+      )}
 
       <SheetSection title="Multisig wallets" />
-      {wallets.filter((w) => w.kind === 'multisig').map(row)}
+      {/* {wallets.filter((w) => w.kind === 'multisig').map(row)} */}
+      {group(
+        'multisig',
+        wallets.filter((w) => w.kind === 'multisig'),
+      )}
       <SheetRow
         leading={
           <View style={styles.iconCircle}>
@@ -130,7 +164,8 @@ export default function WalletsSheet() {
       {isWeb ? null : (
         <>
           <SheetSection title="Hardware wallets" />
-          {hardware.map(row)}
+          {/* {hardware.map(row)} */}
+          {group('hardware', hardware)}
           <SheetRow
             leading={
               <View style={styles.iconCircle}>
@@ -155,6 +190,37 @@ export default function WalletsSheet() {
         />
       </View>
     </SheetScreen>
+  );
+}
+
+/** "+N more": the hidden wallets' faces, overlapped, and a count. Tap to show them. */
+function MoreWallets({
+  wallets,
+  profile,
+  onPress,
+}: {
+  wallets: AddedWallet[];
+  profile: Profile;
+  onPress: () => void;
+}) {
+  const styles = useStyles();
+  const c = useTheme();
+  return (
+    <SheetRow
+      leading={
+        <View style={styles.moreFaces}>
+          {wallets.slice(0, 3).map((w, i) => (
+            <View key={w.id} style={[styles.moreFace, i > 0 && styles.moreOverlap]}>
+              <WalletAvatar wallet={w} profile={profile} size={22} />
+            </View>
+          ))}
+        </View>
+      }
+      title={`+${wallets.length} more`}
+      accessibilityLabel={`Show ${wallets.length} more wallets`}
+      accessory={<Icon name="chevronDown" size={14} color={c.textSecondary} />}
+      onPress={onPress}
+    />
   );
 }
 
@@ -296,6 +362,20 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.raised,
     borderWidth: 2,
     borderColor: c.card,
+  },
+  // The faces in "+N more", overlapped, as wide as a wallet's avatar.
+  moreFaces: {
+    width: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  moreFace: {
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: c.sheet,
+  },
+  moreOverlap: {
+    marginLeft: -12,
   },
   iconCircle: {
     width: 40,

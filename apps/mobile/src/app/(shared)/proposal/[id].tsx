@@ -1,7 +1,9 @@
-import { createURL } from 'expo-linking';
+import * as Clipboard from 'expo-clipboard';
+// import { createURL } from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Share, Text, View } from 'react-native';
+// import { Linking, Share, Text, View } from 'react-native';
+import { Linking, Text, View } from 'react-native';
 import Animated, {
   interpolateColor,
   Keyframe,
@@ -131,14 +133,23 @@ export default function ProposalSheet() {
   const executed = proposal.status === 'executed';
   // Proposals get passed around: the link opens this sheet for the next signer, and
   // once it has gone through, the explorer link shows it landed.
+  // const share = () => {
+  //   const link = createURL(`/proposal/${proposal.id}`);
+  //   const message = executed
+  //     ? `${info.title}: done.\n${ids.explorer.url}`
+  //     : pending
+  //       ? `Can you approve proposal #${proposal.nonce}? ${info.title} (${proposal.approvals.length} of ${multisig.threshold} signed)\n${link}`
+  //       : `Proposal #${proposal.nonce}: ${info.title}\n${link}`;
+  //   Share.share({ message }).catch(() => {});
+  // };
   const share = () => {
-    const link = createURL(`/proposal/${proposal.id}`);
-    const message = executed
-      ? `${info.title}: done.\n${ids.explorer.url}`
-      : pending
-        ? `Can you approve proposal #${proposal.nonce}? ${info.title} (${proposal.approvals.length} of ${multisig.threshold} signed)\n${link}`
-        : `Proposal #${proposal.nonce}: ${info.title}\n${link}`;
-    Share.share({ message }).catch(() => {});
+    // Share copies the hash (review): the chain's once it has gone through, else the
+    // proposal's own. The browser has no share sheet.
+    tap();
+    const hash = executed ? ids.hash : ids.proposalHash;
+    void Clipboard.setStringAsync(hash).then(() =>
+      showToast(executed ? 'Transaction hash copied' : 'Proposal hash copied'),
+    );
   };
 
   // Once you've signed, the usual next step is passing it on (or the receipt): Share

@@ -4,6 +4,7 @@ import { Keyboard, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { useErrorShake } from '@/components/motion/ErrorShake';
 import { MatrixLoader } from '@/components/motion/MatrixLoader';
@@ -51,6 +52,7 @@ import {
 } from '@/lib/mock-wallet';
 import { type Multisig, useActiveMultisig, useSigner } from '@/lib/multisig';
 import { goBackOr } from '@/lib/navigation';
+import { isWeb } from '@/lib/platform';
 import type { TradeMode } from '@/lib/settings';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
 import { showDemoToast } from '@/lib/toast';
@@ -235,6 +237,8 @@ function SwapForm() {
   const route = bridging ? 'Across + Uniswap' : 'Uniswap';
   const networkCost = bridging ? '$1.20' : '$0.42';
   const [reviewing, setReviewing] = useState(false);
+  // In the browser the quote's details fold into one line, so the button stays in view.
+  const [detailsOpen, setDetailsOpen] = useState(false);
   // The form lives in the tab's scroll view, so nothing squeezes it: when the cards,
   // the quote details and the keypad don't fit above the home indicator, the keys
   // shrink by the overflow (to a floor), and grow back into any spare room.
@@ -437,16 +441,52 @@ function SwapForm() {
       </View>
 
       <PanelReveal open={quoted} style={styles.details}>
-        <DetailRow label="Route" value={route} />
-        <DetailRow label="Network cost" value={networkCost} />
-        <DetailRow label="Max slippage" value="Auto · 5.5%" />
-        <DetailRow label="Price impact" value="<0.01%" />
+        {isWeb ? (
+          // One line, the route and its cost; tap for the rest (review: in the popup the
+          // full panel pushed Review swap off the bottom).
+          <>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityState={{ expanded: detailsOpen }}
+              accessibilityLabel="Swap details"
+              scaleTo={1}
+              onPress={() => {
+                tap();
+                setDetailsOpen((v) => !v);
+              }}
+              style={styles.detailRow}
+            >
+              <Text style={styles.meta}>{route}</Text>
+              <View style={styles.detailSummary}>
+                <Text style={styles.detailValue}>{networkCost}</Text>
+                <AccordionChevron open={detailsOpen} size={11} color={c.textSecondary} />
+              </View>
+            </PressableScale>
+            <Accordion open={detailsOpen}>
+              <View style={styles.detailMore}>
+                <DetailRow label="Network cost" value={networkCost} />
+                <DetailRow label="Max slippage" value="Auto · 5.5%" />
+                <DetailRow label="Price impact" value="<0.01%" />
+              </View>
+            </Accordion>
+          </>
+        ) : (
+          <>
+            <DetailRow label="Route" value={route} />
+            <DetailRow label="Network cost" value={networkCost} />
+            <DetailRow label="Max slippage" value="Auto · 5.5%" />
+            <DetailRow label="Price impact" value="<0.01%" />
+          </>
+        )}
       </PanelReveal>
 
       {/* As in Uniswap: cards at the top, keypad and button at the bottom, open space
           between. When the quote details open there's less room, so the keys shrink to
           fit (down to a floor) rather than pushing the button off the bottom. */}
-      <View style={styles.flex} onLayout={(e) => setSpare(e.nativeEvent.layout.height)} />
+      {/* No open space in the browser: with no keypad there, it was just a gap (review). */}
+      {isWeb ? null : (
+        <View style={styles.flex} onLayout={(e) => setSpare(e.nativeEvent.layout.height)} />
+      )}
       <PercentChips
         balance={unit === 'usd' ? balance * price : balance}
         decimals={unit === 'usd' ? 2 : 8}
@@ -702,6 +742,15 @@ const useStyles = makeStyles((c) => ({
     gap: 6,
     borderRadius: 20,
     backgroundColor: c.card,
+  },
+  detailSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  detailMore: {
+    paddingTop: 6,
+    gap: 6,
   },
   detailRow: {
     flexDirection: 'row',
