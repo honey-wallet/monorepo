@@ -7,6 +7,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { CodeEntry } from '@/components/pairing/CodeEntry';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { SuccessPage } from '@/components/sheets/SuccessPage';
 import { api } from '@/lib/api';
@@ -30,7 +31,7 @@ type State =
   | { step: 'connecting' }
   | { step: 'compare'; session: PairSession; pair: PairChannel }
   | { step: 'sending' }
-  | { step: 'receiving' }
+  | { step: 'receiving'; code: string }
   | { step: 'done' }
   | { step: 'error'; message: string };
 
@@ -41,9 +42,10 @@ type State =
  *
  * Reached only from the in-app scanner (the code is handed
  * over in memory; see lib/pair-offer.ts). Nothing goes to the server until the user has
- * read what pairing means and tapped Continue. Then the handshake runs, both screens show
- * a six-digit code, and only after "Codes match" and Face ID does the wallet go across,
- * encrypted for that browser alone.
+ * read what pairing means and tapped Continue. Then the handshake runs and both sides
+ * work out the same six-digit code: the receiving device shows it, and the sending one
+ * asks you to type it. Only the right code (and Face ID, or the browser's password) lets
+ * the wallet go across, encrypted for that device alone.
  */
 export default function PairExtensionSheet() {
   const styles = useStyles();
@@ -69,7 +71,9 @@ export default function PairExtensionSheet() {
         throw new Error('Create or import a wallet first.');
       }
       const { pair, session } = await phoneHandshake(uri, abort.current.signal);
-      setState({ step: 'compare', session, pair });
+      // The device the wallet leaves checks the code: the browser here, so show it.
+      if (toPhone) await receive(session, pair);
+      else setState({ step: 'compare', session, pair });
     } catch (error) {
       if (!abort.current.signal.aborted) setState({ step: 'error', message: messageOf(error) });
     }
@@ -77,8 +81,7 @@ export default function PairExtensionSheet() {
 
   /** Browser to phone: wait for the browser to send (after its password), then add it. */
   const receive = async (session: PairSession, pair: PairChannel) => {
-    tap();
-    setState({ step: 'receiving' });
+    setState({ step: 'receiving', code: session.code });
     try {
       const payload = await receiveFromBrowser(pair, session, abort.current.signal);
       const added = await importPairedWallet(payload);
@@ -96,8 +99,6 @@ export default function PairExtensionSheet() {
   };
 
   const send = async (session: PairSession, pair: PairChannel) => {
-    if (toPhone) return receive(session, pair);
-    tap();
     if (!(await confirmOwner('Send your wallet to this browser'))) return;
     setState({ step: 'sending' });
     try {
@@ -159,19 +160,23 @@ export default function PairExtensionSheet() {
             : state.step === 'compare'
               ? {
                   icon: 'globe',
-                  title: 'Check the code',
-                  body: 'It should match the code in your browser exactly. Confirm on both.',
+                  title: 'Enter the code',
+                  body: 'Type the 6 digits Honey for Chrome shows, so your wallet only goes to your browser.',
                 }
-              : {
-                  icon: 'globe',
-                  title: 'Pair Honey for Chrome',
-                  body:
-                    state.step === 'sending'
-                      ? 'Sending your wallet, encrypted for that browser only…'
-                      : state.step === 'receiving'
-                        ? 'Waiting for your browser. Enter your password there to send.'
+              : state.step === 'receiving'
+                ? {
+                    icon: 'globe',
+                    title: 'Type this code in Honey for Chrome',
+                    body: 'Your browser asks for it, then its password, before it sends your wallet.',
+                  }
+                : {
+                    icon: 'globe',
+                    title: 'Pair Honey for Chrome',
+                    body:
+                      state.step === 'sending'
+                        ? 'Sending your wallet, encrypted for that browser only…'
                         : 'Connecting to your browser…',
-                };
+                  };
   const danger = state.step === 'intro' || state.step === 'error';
 
   return (
@@ -183,23 +188,16 @@ export default function PairExtensionSheet() {
             <PillButton label="Cancel" variant="secondary" onPress={close} style={styles.flex} />
             <PillButton label="Continue" onPress={() => start(state.uri)} style={styles.flex} />
           </View>
-        ) : state.step === 'compare' ? (
-          <View style={styles.buttons}>
-            <PillButton
-              label="They don’t match"
-              variant="secondary"
-              onPress={() => {
-                close();
-                showToast('Pairing cancelled');
-              }}
-              style={styles.flex}
-            />
-            <PillButton
-              label="Codes match"
-              onPress={() => send(state.session, state.pair)}
-              style={styles.flex}
-            />
-          </View>
+        ) : state.step === 'compare' || state.step === 'receiving' ? (
+          <PillButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => {
+              close();
+              showToast('Pairing cancelled');
+            }}
+            style={styles.flex}
+          />
         ) : state.step === 'error' || state.step === 'missing' ? (
           <PillButton label="Close" variant="secondary" onPress={close} style={styles.flex} />
         ) : undefined
@@ -233,21 +231,26 @@ export default function PairExtensionSheet() {
           ))}
         </View>
       ) : state.step === 'compare' ? (
+        <CodeEntry
+          code={state.session.code}
+          onMatch={() => send(state.session, state.pair)}
+          onGiveUp={() => {
+            abort.current.abort();
+            setState({
+              step: 'error',
+              message:
+                'The codes didn’t match, so nothing was sent. Someone may be in between. Start again from Honey for Chrome.',
+            });
+          }}
+        />
+      ) : state.step === 'receiving' ? (
         <>
-          <Text
-            style={styles.code}
-            accessibilityLabel={`Code ${state.session.code.split('').join(' ')}`}
-          >
-            {`${state.session.code.slice(0, 3)} ${state.session.code.slice(3)}`}
+          <Text style={styles.code} accessibilityLabel={`Code ${state.code.split('').join(' ')}`}>
+            {`${state.code.slice(0, 3)} ${state.code.slice(3)}`}
           </Text>
-          <View style={styles.note}>
-            <Icon name="warning" size={16} color={c.textSecondary} />
-            <Text style={styles.noteText}>
-              Different codes mean someone may be in between. Tap “They don’t match”.
-            </Text>
-          </View>
+          <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
         </>
-      ) : state.step === 'connecting' || state.step === 'sending' || state.step === 'receiving' ? (
+      ) : state.step === 'connecting' || state.step === 'sending' ? (
         <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
       ) : null}
     </SheetScreen>

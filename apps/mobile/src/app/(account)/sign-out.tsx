@@ -18,6 +18,9 @@ import { makeStyles, useTheme } from '@/theme';
  * Two steps in one tray: what signing out does, then a tick for each wallet's phrase or
  * key. Every stored wallet needs its own tick before its secrets are deleted.
  */
+/** Whether Show my phrase was used this session (it then gives way to Sign out alone). */
+let phraseShown = false;
+
 export default function SignOutSheet() {
   const styles = useStyles();
   const c = useTheme();
@@ -57,7 +60,8 @@ export default function SignOutSheet() {
       variant="danger"
       disabled={!ready || busy}
       onPress={confirm}
-      style={styles.flex}
+      // Beside Cancel in a row, or full width under Show my phrase.
+      style={step === 'about' ? styles.flex : undefined}
     />
   );
 
@@ -109,17 +113,21 @@ export default function SignOutSheet() {
               />
             ))}
           </View>
-          <Text
-            accessibilityRole="button"
-            style={styles.link}
-            onPress={() => {
-              tap();
-              leaveSheetTo('/recovery-phrase');
-            }}
-          >
-            Show my phrase
-          </Text>
-          <View style={styles.buttons}>{signOutButton}</View>
+          {/* A button like Sign out, until the phrase has been shown once. */}
+          <View style={styles.stack}>
+            {phraseShown ? null : (
+              <PillButton
+                label="Show my phrase"
+                variant="secondary"
+                onPress={() => {
+                  tap();
+                  phraseShown = true;
+                  leaveSheetTo('/recovery-phrase');
+                }}
+              />
+            )}
+            {signOutButton}
+          </View>
         </SheetScreen>
       )}
     </ContentSwap>
@@ -164,6 +172,10 @@ const useStyles = makeStyles((c) => ({
   buttons: {
     marginTop: 24,
     flexDirection: 'row',
+    gap: 10,
+  },
+  stack: {
+    marginTop: 24,
     gap: 10,
   },
 }));

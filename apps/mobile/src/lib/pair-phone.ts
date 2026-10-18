@@ -35,7 +35,8 @@ async function waitFor(pair: PairChannel, slot: PairSlot, signal: AbortSignal): 
   const deadline = Date.now() + PAIR_TIMEOUT_MS;
   let offlineSince: number | null = null;
   while (Date.now() < deadline) {
-    signal.throwIfAborted();
+    // Not signal.throwIfAborted(): React Native's AbortSignal doesn't have it.
+    if (signal.aborted) throw new Error('Pairing stopped');
     try {
       const message = await api.pairReceive(pair, slot, { signal });
       offlineSince = null;

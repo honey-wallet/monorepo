@@ -53,7 +53,8 @@ export async function phoneHandshake(uri: string, signal: AbortSignal) {
   const deadline = Date.now() + TIMEOUT_MS;
   let nonce: string | null = null;
   while (!nonce) {
-    signal.throwIfAborted();
+    // Not signal.throwIfAborted(): React Native's AbortSignal doesn't have it.
+    if (signal.aborted) throw new Error('Pairing stopped');
     if (Date.now() > deadline) throw new Error('Your browser didn’t answer. Scan a new code.');
     nonce = (await api.pairReceive(pair, 'nonce', { signal }))?.data ?? null;
     if (!nonce) await new Promise((resolve) => setTimeout(resolve, POLL_MS));
@@ -85,7 +86,8 @@ export async function receiveFromBrowser(
 ) {
   const deadline = Date.now() + TIMEOUT_MS;
   while (Date.now() < deadline) {
-    signal.throwIfAborted();
+    // Not signal.throwIfAborted(): React Native's AbortSignal doesn't have it.
+    if (signal.aborted) throw new Error('Pairing stopped');
     const message = await api.pairReceive(pair, 'payload', { signal });
     if (message) return openPayload(session.key, message.data);
     await new Promise((resolve) => setTimeout(resolve, POLL_MS));

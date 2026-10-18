@@ -376,7 +376,8 @@ function Connect({
   return (
     <>
       <Text style={styles.body}>Pick the wallet this site can see.</Text>
-      <View style={styles.list}>
+      {/* A card like the app's other lists, the note lined up under it. */}
+      <View style={styles.card}>
         {signers.map((s) => (
           <SheetRow
             key={s.wallet.id}
@@ -392,7 +393,7 @@ function Connect({
           />
         ))}
       </View>
-      <View style={styles.note}>
+      <View style={[styles.note, styles.connectNote]}>
         <Icon name="eye" size={16} color={c.textSecondary} />
         <Text style={styles.noteText}>
           It sees the address and balance. It asks before moving money.
@@ -677,6 +678,9 @@ const useStyles = makeStyles((c) => ({
   },
   list: {
     marginTop: -4,
+  },
+  connectNote: {
+    paddingHorizontal: 16,
   },
   card: {
     paddingHorizontal: 16,

@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { CodeEntry } from '@/components/pairing/CodeEntry';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { QRCode } from '@/components/wallet/QRCode';
 import { confirmOwner } from '@/lib/auth';
@@ -30,8 +31,9 @@ const QR_SIZE = 200;
 
 /**
  * Honey in a browser, paired with Honey on a phone: this screen shows a one-time QR code,
- * the phone scans it, both show a six-digit code, and after "Codes match" on both the
- * wallet moves, encrypted for the other side alone (lib/pair-phone.ts). By default the
+ * the phone scans it, and both work out the same six-digit code. The device the wallet
+ * leaves asks you to type the code the other one shows; only then does the wallet move,
+ * encrypted for the other side alone (lib/pair-phone.ts). By default the
  * phone sends its wallet here; with `send=1` this browser sends its wallet to the phone,
  * after the password.
  */
@@ -67,6 +69,7 @@ function PairPhone() {
   }, [toPhone]);
 
   // Wait for the phone to scan this code; a new code starts the wait again.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a new code restarts the wait
   useEffect(() => {
     const controller = new AbortController();
     abort.current = controller;
@@ -74,7 +77,10 @@ function PairPhone() {
     waitForPhone(offer, controller.signal)
       .then((session) => {
         tap();
-        setState({ step: 'compare', session });
+        // The device the wallet leaves checks the code: here when sending, so type it;
+        // when receiving, show it and wait for the phone.
+        if (toPhone) setState({ step: 'compare', session });
+        else void confirm(session, controller);
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) setState({ step: 'error', message: messageOf(error) });
@@ -105,11 +111,7 @@ function PairPhone() {
     }
   };
 
-  const confirm = async (session: PairSession) => {
-    if (toPhone) return give(session);
-    tap();
-    const controller = abort.current;
-    if (!controller) return;
+  const confirm = async (session: PairSession, controller: AbortController) => {
     setState({ step: 'receiving', session });
     try {
       const payload = await receiveWallet(offer, session, controller.signal);
@@ -131,58 +133,64 @@ function PairPhone() {
     }
   };
 
-  if (state.step === 'compare' || state.step === 'receiving' || state.step === 'sending') {
-    const receiving = state.step !== 'compare';
+  if (state.step === 'compare') {
     return (
       <SheetScreen
-        title="Check the code"
+        title="Enter the code"
         footer={
-          receiving ? undefined : (
-            <View style={styles.buttons}>
-              <PillButton
-                label="No match"
-                variant="secondary"
-                onPress={() => {
-                  showToast('Pairing cancelled');
-                  restart();
-                }}
-                style={styles.flex}
-              />
-              <PillButton
-                label="Match"
-                onPress={() => confirm(state.session)}
-                style={styles.flex}
-              />
-            </View>
-          )
+          <PillButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => {
+              showToast('Pairing cancelled');
+              restart();
+            }}
+          />
         }
+      >
+        <Text style={styles.body}>
+          Type the 6 digits your phone shows, so your wallet only goes to your phone.
+        </Text>
+        <CodeEntry
+          code={state.session.code}
+          onMatch={() => give(state.session)}
+          onGiveUp={() => {
+            abort.current?.abort();
+            setState({
+              step: 'error',
+              message:
+                'The codes didn’t match, so nothing was sent. Someone may be in between. Show a new code to try again.',
+            });
+          }}
+        />
+      </SheetScreen>
+    );
+  }
+
+  if (state.step === 'receiving' || state.step === 'sending') {
+    return (
+      <SheetScreen
+        title={state.step === 'sending' ? 'Sending to your phone' : 'Type this code on your phone'}
       >
         <TextsReveal
           id={state.step}
           first={
             <Text style={styles.body}>
               {state.step === 'sending'
-                ? 'Sending, encrypted for your phone only…'
-                : receiving
-                  ? 'Now tap “Codes match” on your phone too.'
-                  : 'Your phone shows a code too. They should be the same.'}
+                ? 'Encrypted for your phone only…'
+                : 'Honey on your phone asks for it before it sends your wallet here.'}
             </Text>
           }
         />
-        <Text
-          style={styles.code}
-          accessibilityLabel={`Code ${state.session.code.split('').join(' ')}`}
-        >
-          {`${state.session.code.slice(0, 3)} ${state.session.code.slice(3)}`}
-        </Text>
-        {receiving ? (
-          <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
-        ) : (
-          <View style={styles.note}>
-            <Icon name="warning" size={16} color={c.textSecondary} />
-            <Text style={styles.noteText}>Different codes? Someone may be in between.</Text>
-          </View>
-        )}
+        {state.step === 'receiving' ? (
+          <Text
+            style={styles.code}
+            accessibilityLabel={`Code ${state.session.code.split('').join(' ')}`}
+          >
+            {`${state.session.code.slice(0, 3)} ${state.session.code.slice(3)}`}
+          </Text>
+        ) : null}
+        <ActivityIndicator style={styles.spinner} color={c.textSecondary} />
       </SheetScreen>
     );
   }

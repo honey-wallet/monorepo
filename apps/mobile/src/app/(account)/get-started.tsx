@@ -36,6 +36,8 @@ export default function GetStartedSheet() {
   const c = useTheme();
   const [signingIn, setSigningIn] = useState<'apple' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Restore: pairing first; the phrase, key and backup ways one tap further.
+  const [otherWays, setOtherWays] = useState(false);
   const cancelled = useRef(false);
   const { shake, style: shaken } = useErrorShake();
 
@@ -132,29 +134,48 @@ export default function GetStartedSheet() {
               disabled={!!signingIn}
               icon="qr"
               title="Scan from Honey for Chrome"
-              onPress={() => go({ pathname: '/scan', params: { purpose: 'pair' } })}
+              onPress={() => {
+                tap();
+                // Over this sheet, like Pair with your phone in the browser: leaving the
+                // sheet first could undo the scanner's push while the sheet closed.
+                router.push({ pathname: '/scan', params: { purpose: 'pair' } });
+              }}
             />
           )}
-          <MoreRow
-            disabled={!!signingIn}
-            icon="phrase"
-            title="Import a recovery phrase"
-            onPress={() => go({ pathname: '/import-wallet', params: { onboarding: '1' } })}
-          />
-          <MoreRow
-            disabled={!!signingIn}
-            icon="cloud"
-            title="Restore from a backup"
-            onPress={() => go({ pathname: '/restore-backup', params: { onboarding: '1' } })}
-          />
-          <MoreRow
-            disabled={!!signingIn}
-            icon="privateKey"
-            title="Import a private key"
-            onPress={() =>
-              go({ pathname: '/import-wallet', params: { onboarding: '1', kind: 'key' } })
-            }
-          />
+          {otherWays ? (
+            <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.otherWays}>
+              <MoreRow
+                disabled={!!signingIn}
+                icon="phrase"
+                title="Import a recovery phrase"
+                onPress={() => go({ pathname: '/import-wallet', params: { onboarding: '1' } })}
+              />
+              <MoreRow
+                disabled={!!signingIn}
+                icon="cloud"
+                title="Restore from a backup"
+                onPress={() => go({ pathname: '/restore-backup', params: { onboarding: '1' } })}
+              />
+              <MoreRow
+                disabled={!!signingIn}
+                icon="privateKey"
+                title="Import a private key"
+                onPress={() =>
+                  go({ pathname: '/import-wallet', params: { onboarding: '1', kind: 'key' } })
+                }
+              />
+            </Animated.View>
+          ) : (
+            <MoreRow
+              disabled={!!signingIn}
+              icon="phrase"
+              title="I have a recovery phrase or key"
+              onPress={() => {
+                tap();
+                setOtherWays(true);
+              }}
+            />
+          )}
         </View>
       ) : (
         <View style={styles.buttons}>
@@ -276,6 +297,9 @@ const useStyles = makeStyles((c) => ({
   },
   buttons: {
     marginTop: 20,
+    gap: 10,
+  },
+  otherWays: {
     gap: 10,
   },
   error: {

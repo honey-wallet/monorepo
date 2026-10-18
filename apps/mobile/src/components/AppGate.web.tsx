@@ -172,8 +172,7 @@ function Unlock() {
         {resetting ? (
           <SheetScreen title="Reset Honey here?">
             <Text style={styles.trayBody}>
-              Your wallets leave this browser. Bring them back with your recovery phrase or by
-              pairing your phone.
+              Your wallets leave this browser. Pair your phone or use your phrase to get them back.
             </Text>
             <View style={styles.buttons}>
               <PillButton
