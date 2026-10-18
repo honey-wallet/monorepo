@@ -136,7 +136,9 @@ export default function HomeScreen() {
     [
       (multisig || nudgeShown) && 'approvals',
       !loading && (empty || (isMain && !setupComplete(onboarding))) && 'activation',
-      earnPromo && !loading && !ratesLoading && !empty && 'earn',
+      // review: no Savings in the extension, so no Earn promo there.
+      // earnPromo && !loading && !ratesLoading && !empty && 'earn',
+      earnPromo && !isWeb && !loading && !ratesLoading && !empty && 'earn',
     ] as const
   )
     .filter((card): card is 'approvals' | 'activation' | 'earn' => !!card)

@@ -11,6 +11,7 @@ import {
 import { OptionChips } from '@/components/trade/TradeForm';
 import { tap } from '@/lib/haptics';
 import { CHAINS } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import {
   type ActivityFilter,
   type SearchSort,
@@ -96,9 +97,15 @@ export default function SectionSettingsSheet() {
             prefs.searchShowFavorites,
             (searchShowFavorites) => updateSectionPrefs({ searchShowFavorites }),
           )}
-          {toggle('Start earning', 'Show earning options', prefs.searchShowEarn, (searchShowEarn) =>
-            updateSectionPrefs({ searchShowEarn }),
-          )}
+          {/* review: no Savings in the extension, so nothing to toggle there. */}
+          {isWeb
+            ? null
+            : toggle(
+                'Start earning',
+                'Show earning options',
+                prefs.searchShowEarn,
+                (searchShowEarn) => updateSectionPrefs({ searchShowEarn }),
+              )}
         </>
       )}
 

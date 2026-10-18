@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
@@ -8,7 +8,8 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { closeSheet, SheetRow, SheetScreen, SheetSection } from '@/components/sheets/Sheet';
+import { closeSheet, SHEET, SheetRow, SheetScreen, SheetSection } from '@/components/sheets/Sheet';
+import { TRAY_CLOSE } from '@/components/sheets/Tray';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
@@ -80,6 +81,9 @@ export default function WalletsSheet() {
     router.push(path);
   };
 
+  // review: in the popup the tray stopped halfway with Home showing above it. Fill the
+  // popup instead (the tray caps itself at this height and scrolls past it).
+  const { height: screen } = useWindowDimensions();
   const settingsLabel = shared.multisigs[active.id] ? 'Shared wallet settings' : 'Wallet settings';
   const openSettings = () => {
     tap();
@@ -111,7 +115,7 @@ export default function WalletsSheet() {
   };
 
   return (
-    <SheetScreen scroll>
+    <SheetScreen scroll contentStyle={isWeb ? { minHeight: screen - 24 } : undefined}>
       {/* The tray draws its own close button now.
       <PressableScale
         accessibilityRole="button"
@@ -146,8 +150,10 @@ export default function WalletsSheet() {
             onPress={openSettings}
             style={styles.settingsPill}
           >
+            {/* review: the gear says it; no "Settings" label.
             <Icon name="settings" size={14} color={c.text} />
-            <Text style={styles.settingsPillLabel}>Settings</Text>
+            <Text style={styles.settingsPillLabel}>Settings</Text> */}
+            <Icon name="settings" size={16} color={c.textSecondary} />
           </PressableScale>
         </View>
       ) : (
@@ -409,14 +415,19 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 5,
   },
+  // review: icon only, the same round button as the tray's close, beside it.
+  // settingsPill: { height: 34, flexDirection: 'row', alignItems: 'center', gap: 6,
+  //   paddingHorizontal: 12, borderRadius: 17, backgroundColor: c.raised },
   settingsPill: {
-    height: 34,
-    flexDirection: 'row',
+    width: 32,
+    height: 32,
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    borderRadius: 17,
+    justifyContent: 'center',
+    borderRadius: 16,
     backgroundColor: c.raised,
+    // Level with the tray's close button, not centred on the face beside it.
+    alignSelf: 'flex-start',
+    marginTop: TRAY_CLOSE.top + TRAY_CLOSE.size / 2 - 16 - SHEET.top,
   },
   settingsPillLabel: {
     color: c.text,

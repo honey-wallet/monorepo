@@ -7,6 +7,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetScreen, SheetText } from '@/components/sheets/Sheet';
 import { SuccessPage } from '@/components/sheets/SuccessPage';
 import { tap } from '@/lib/haptics';
+import { leaveSheetTo } from '@/lib/navigation';
 import {
   completeStep,
   doneCount,
@@ -15,6 +16,7 @@ import {
   setupSteps,
   useOnboarding,
 } from '@/lib/onboarding';
+import { isWeb } from '@/lib/platform';
 import { makeStyles, useTheme } from '@/theme';
 
 /**
@@ -76,7 +78,11 @@ export default function SetupSheet() {
                 if (!['backup', 'faceId', 'phone', 'browser'].includes(step.id)) {
                   completeStep(step.id);
                 }
-                router.push(step.href as Href);
+                // review: in the popup the step opened on top of this tray, and its own
+                // prompts on top of that. Close the checklist first there.
+                // router.push(step.href as Href);
+                if (isWeb) leaveSheetTo(step.href as Href);
+                else router.push(step.href as Href);
               }}
               style={styles.step}
             >
