@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useId } from 'react';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 import type { Nft } from '@/lib/collectibles';
 
@@ -22,7 +22,10 @@ const PALETTES: Record<string, string[][]> = {
 export const NftArt = memo(function NftArt({ nft, size }: { nft: Nft; size: number }) {
   const set = PALETTES[nft.collection] ?? PALETTES['Based Blobs'];
   const [top, bottom, ink, light] = set[nft.seed % set.length];
-  const id = `g-${nft.id}`;
+  // review: a fixed id per NFT collides on the web, where every SVG shares one page and
+  // the gallery draws the same NFT twice (tile + lifted copy); useId is unique per instance.
+  // const id = `g-${nft.id}`;
+  const id = `g${nft.id.replace(/[^\w]/g, '')}${useId().replace(/[^\w]/g, '')}`;
   return (
     <Svg width={size} height={size} viewBox="0 0 100 100">
       <Defs>

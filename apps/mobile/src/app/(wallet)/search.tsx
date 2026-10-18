@@ -30,6 +30,7 @@ import {
   MARKET,
   type MarketToken,
 } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { type SearchSort, useSectionPrefs } from '@/lib/section-prefs';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
@@ -247,7 +248,8 @@ export default function SearchScreen() {
               </>
             )}
 
-            {prefs.searchShowEarn && (
+            {/* review: no Savings in the extension. {prefs.searchShowEarn && ( */}
+            {prefs.searchShowEarn && !isWeb && (
               <>
                 <Text style={[styles.heading, styles.section]}>
                   {POSITIONS.length && !empty ? 'Earn more' : 'Start earning'}

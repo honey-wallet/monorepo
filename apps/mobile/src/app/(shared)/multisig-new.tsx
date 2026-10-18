@@ -1,6 +1,14 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Keyboard, ScrollView, Share, Text, TextInput, View } from 'react-native';
+import {
+  Keyboard,
+  ScrollView,
+  Share,
+  Text,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { Icon, type IconName } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PressableRow } from '@/components/motion/PressableRow';
@@ -10,6 +18,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetScreen, SheetSection, StatRow } from '@/components/sheets/Sheet';
 import { SuccessPage } from '@/components/sheets/SuccessPage';
+import { MoreDetails } from '@/components/wallet/MoreDetails';
 import {
   MEMBER_KIND_LABEL,
   MemberAvatar,
@@ -36,6 +45,7 @@ import {
   yourKey,
 } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { askForNotifications } from '@/lib/push';
 import { demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
@@ -89,6 +99,9 @@ const KEY_OPTIONS: { kind: Exclude<MemberKind, 'you' | 'person'>; icon: IconName
     { kind: 'recovery', icon: 'recovery', hint: 'Encrypted in iCloud, for emergencies' },
   ];
 
+/** In the popup: the tray's top gap, title row, Continue and its gaps, above and below the members list. */
+const MEMBERS_CHROME = 190;
+
 /** A full Solana address (base58, 32 to 44 characters). */
 const isSolanaAddress = (v: string) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v.trim());
 
@@ -102,6 +115,10 @@ export default function NewMultisigSheet() {
   const c = useTheme();
   const profile = useProfile();
   const [page, setPage] = useState<Page>('name');
+  // The popup's tray sizes to its content (no full height to flex into), so the
+  // members list gets a cap there: what's left after the title and Continue (review).
+  const { height: windowHeight } = useWindowDimensions();
+  const listCap = isWeb ? { maxHeight: Math.max(240, windowHeight - MEMBERS_CHROME) } : null;
 
   const [name, setName] = useState(NAME_IDEAS[0].name);
   const [network, setNetwork] = useState<MultisigNetwork>(POPULAR_EVM[0]);
@@ -245,18 +262,24 @@ export default function NewMultisigSheet() {
                     );
                   })}
                 </View>
-                <View style={styles.how}>
-                  {HOW_IT_WORKS.map((step) => (
-                    <View key={step.title} style={styles.howRow}>
-                      <View style={styles.howIcon}>
-                        <Icon name={step.icon} size={18} color={c.accentText} />
-                      </View>
-                      <View style={styles.flex}>
-                        <Text style={styles.howTitle}>{step.title}</Text>
-                        <Text style={styles.howBody}>{step.body}</Text>
-                      </View>
+                {/* The explainer is long for the popup: there it folds under "How it
+                    works" so Continue stays in view (review). The phone shows it as before. */}
+                <View style={isWeb && styles.howFold}>
+                  <MoreDetails label="How it works">
+                    <View style={styles.how}>
+                      {HOW_IT_WORKS.map((step) => (
+                        <View key={step.title} style={styles.howRow}>
+                          <View style={styles.howIcon}>
+                            <Icon name={step.icon} size={18} color={c.accentText} />
+                          </View>
+                          <View style={styles.flex}>
+                            <Text style={styles.howTitle}>{step.title}</Text>
+                            <Text style={styles.howBody}>{step.body}</Text>
+                          </View>
+                        </View>
+                      ))}
                     </View>
-                  ))}
+                  </MoreDetails>
                 </View>
                 <View style={styles.flex} />
                 <PillButton
@@ -294,7 +317,7 @@ export default function NewMultisigSheet() {
             {page === 'members' && (
               <>
                 <ScrollView
-                  style={styles.flex}
+                  style={[styles.flex, listCap]}
                   alwaysBounceVertical={false}
                   keyboardShouldPersistTaps="handled"
                   showsVerticalScrollIndicator={false}
@@ -669,6 +692,10 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  // In the popup the rule above it carries the gap (review).
+  howFold: {
+    marginTop: 8,
   },
   how: {
     marginTop: 16,

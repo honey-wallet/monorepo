@@ -1,8 +1,10 @@
 import { useLocalSearchParams } from 'expo-router';
 import { type ReactNode, useState } from 'react';
 import { Text, View } from 'react-native';
-import Animated, { FadeInDown, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+// import Animated, { FadeInDown, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 import { ContentSwap } from '@/components/motion/ContentSwap';
+import { Dot } from '@/components/motion/PageDots';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
@@ -133,16 +135,17 @@ function StepText({ step, number }: { step: GuideStep; number: number }) {
   );
 }
 
-/** A page dot that widens into a short bar when active. */
-function Dot({ active }: { active: boolean }) {
-  const styles = useStyles();
-  const style = useAnimatedStyle(() => ({
-    // The dot reshapes in place, so ease-in-out.
-    width: withTiming(active ? 18 : 6, { duration: DURATION.fast, easing: EASE.inOut }),
-    opacity: withTiming(active ? 1 : 0.35, { duration: DURATION.fast, easing: EASE.ease }),
-  }));
-  return <Animated.View style={[styles.dot, style]} />;
-}
+// Moved to components/motion/PageDots.tsx, shared with Perps' Featured row:
+// /** A page dot that widens into a short bar when active. */
+// function Dot({ active }: { active: boolean }) {
+//   const styles = useStyles();
+//   const style = useAnimatedStyle(() => ({
+//     // The dot reshapes in place, so ease-in-out.
+//     width: withTiming(active ? 18 : 6, { duration: DURATION.fast, easing: EASE.inOut }),
+//     opacity: withTiming(active ? 1 : 0.35, { duration: DURATION.fast, easing: EASE.ease }),
+//   }));
+//   return <Animated.View style={[styles.dot, style]} />;
+// }
 
 const useStyles = makeStyles((c) => ({
   art: {

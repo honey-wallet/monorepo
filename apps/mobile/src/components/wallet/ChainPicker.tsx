@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
+import { isWeb } from '@/lib/platform';
 import { EVM_LOGOS, type ReceiveAddress } from '@/lib/receive';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -40,7 +41,7 @@ export function ChainPicker({
               tap();
               onPick(entry.family);
             }}
-            style={styles.row}
+            style={[styles.row, isWeb && styles.rowWeb]}
           >
             {evm ? (
               // One address for all of them: a few of their logos, overlapped.
@@ -59,7 +60,9 @@ export function ChainPicker({
             <View style={styles.flex}>
               <Text style={styles.title}>{evm ? 'EVM networks' : entry.title}</Text>
               <Text style={styles.subtitle}>
-                {evm ? 'Ethereum, Base and more' : SUBTITLES[entry.family]}
+                {/* review: say how many EVM chains the one address covers. */}
+                {/* {evm ? 'Ethereum, Base and more' : SUBTITLES[entry.family]} */}
+                {evm ? 'Ethereum, Base and 200+ more' : SUBTITLES[entry.family]}
               </Text>
             </View>
             <Icon name="chevronRight" size={14} color={c.textSecondary} />
@@ -75,13 +78,19 @@ const useStyles = makeStyles((c) => ({
     paddingVertical: 4,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: c.card,
+    // review: in dark a card is the sheet's own colour, so its padding read as a gap.
+    // backgroundColor: c.card,
+    backgroundColor: c.card === c.sheet ? c.raised : c.card,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     paddingVertical: 12,
+  },
+  // review: shorter rows in the 600px-tall extension popup, so Receive's exchange steps fit.
+  rowWeb: {
+    paddingVertical: 8,
   },
   flex: {
     flex: 1,

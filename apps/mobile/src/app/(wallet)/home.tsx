@@ -54,7 +54,7 @@ import {
 } from '@/components/wallet/parts';
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useCopy } from '@/lib/copy';
-import { expandView, inPopup } from '@/lib/dapp';
+// import { expandView, inPopup } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib/mock-wallet';
@@ -115,7 +115,9 @@ export default function HomeScreen() {
   // A new wallet that hasn't had its first deposit yet.
   const empty = !!view.empty;
   // A new wallet has no trades yet, whatever the demo data says.
-  const sections = SECTIONS.filter((s) => s !== 'Trades' || (hasTrades && !empty));
+  // const sections = SECTIONS.filter((s) => s !== 'Trades' || (hasTrades && !empty));
+  // review: no trading in the extension, so the browser never shows the Trades tab.
+  const sections = SECTIONS.filter((s) => s !== 'Trades' || (!isWeb && hasTrades && !empty));
   // Switching to a shared wallet (which can't trade) hides Trades; fall back to Tokens.
   const shownSection = sections.includes(section) ? section : 'Tokens';
   // The promo lists Honey Jar rates, which come with Savings' Earn rates.
@@ -124,7 +126,8 @@ export default function HomeScreen() {
   const nudgeShown = useApprovalsNudgeShown();
   const changePct = view.usd ? (view.change / (view.usd - view.change)) * 100 : 0;
   const { hideBalance, earnPromo } = useSettings();
-  // Between the actions and the tabs, Home shows at most two cards, by priority:
+  // Between the actions and the tabs, Home shows at most two cards (one in the
+  // browser), by priority:
   // what needs you (approvals), then getting set up (add money / finish setup), then
   // the Earn promo. Anything past two waits until one above it is done or dismissed.
   // Activation and the promo wait for balances: until then it's unknown whether the
@@ -133,11 +136,15 @@ export default function HomeScreen() {
     [
       (multisig || nudgeShown) && 'approvals',
       !loading && (empty || (isMain && !setupComplete(onboarding))) && 'activation',
-      earnPromo && !loading && !ratesLoading && !empty && 'earn',
+      // review: no Savings in the extension, so no Earn promo there.
+      // earnPromo && !loading && !ratesLoading && !empty && 'earn',
+      earnPromo && !isWeb && !loading && !ratesLoading && !empty && 'earn',
     ] as const
   )
     .filter((card): card is 'approvals' | 'activation' | 'earn' => !!card)
-    .slice(0, 2);
+    // One at a time in the extension's short popup (review); two on the phone.
+    // .slice(0, 2);
+    .slice(0, isWeb ? 1 : 2);
   const changeColor = view.change < 0 ? c.error : c.success;
   const canvas = c.canvas;
   const divider = c.divider;
@@ -462,7 +469,9 @@ export default function HomeScreen() {
                 ) : (
                   <NftGallery />
                 ))}
-              {shownSection === 'Trades' && <TradesList />}
+              {/* {shownSection === 'Trades' && <TradesList />} */}
+              {/* review: no trading in the extension. */}
+              {shownSection === 'Trades' && !isWeb && <TradesList />}
             </View>
           </ContentSwap>
         </Animated.ScrollView>
@@ -531,14 +540,14 @@ export default function HomeScreen() {
                 </View>
               </View>
               <View style={styles.shortcuts}>
-                {/* In the toolbar popup: open the same screen in Honey's phone-sized window. */}
+                {/* Expand view lives in Settings only (review: not on Home's header).
                 {inPopup ? (
                   <HeaderShortcut
                     icon="expandView"
                     label="Expand view"
                     onPress={() => void expandView()}
                   />
-                ) : null}
+                ) : null} */}
                 <HeaderShortcut
                   icon="bell"
                   label="Notifications"

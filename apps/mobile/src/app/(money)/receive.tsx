@@ -17,6 +17,7 @@ import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { simulateDemoDeposit } from '@/lib/onboarding';
+import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { type ReceiveAddress, receiveAddresses } from '@/lib/receive';
 import { useActiveWallet } from '@/lib/wallets';
@@ -50,11 +51,14 @@ export default function ReceiveSheet() {
 
   return (
     <SheetScreen title="Receive crypto">
-      <SheetText>
+      <SheetText lead>
         {multisig
           ? `Only send tokens on ${multisig.network.name} to this shared wallet. Tokens sent on another network can't be recovered.`
           : perChain
-            ? 'Which network are you sending on? Each one has its own address.'
+            ? // review: shorter in the 600px-tall extension popup, so the exchange steps fit.
+              isWeb
+              ? 'Pick the network you’re sending on. Each has its own address.'
+              : 'Which network are you sending on? Each one has its own address.'
             : 'Fund your wallet by transferring crypto from another wallet or account'}
       </SheetText>
 
@@ -114,9 +118,9 @@ export default function ReceiveSheet() {
             tap();
             setShowExchange((v) => !v);
           }}
-          style={styles.exchangeRow}
+          style={[styles.exchangeRow, isWeb && styles.exchangeRowWeb]}
         >
-          <View style={styles.exchange}>
+          <View style={[styles.exchange, isWeb && styles.exchangeWeb]}>
             <Icon name="bank" size={18} color={c.accentText} />
           </View>
           <Text style={[styles.name, styles.flex]}>From an exchange</Text>
@@ -124,14 +128,25 @@ export default function ReceiveSheet() {
         </PressableRow>
       </View>
       <Accordion open={showExchange}>
-        <View style={styles.steps}>
-          {[
-            perChain
-              ? 'Pick the network you’ll withdraw on above, then copy its address.'
-              : 'Copy your Honey address.',
-            'In your exchange, choose Withdraw and paste it as the destination.',
-            'Pick the matching network, then confirm. Funds usually arrive in minutes.',
-          ].map((step, i) => (
+        <View style={[styles.steps, isWeb && styles.stepsWeb]}>
+          {(isWeb
+            ? // review: one line each in the 600px-tall extension popup, so the steps fit
+              // without scrolling; same meaning as the phone's.
+              [
+                perChain
+                  ? 'Pick a network above and copy its address.'
+                  : 'Copy your Honey address.',
+                'Withdraw to it from your exchange.',
+                'Pick the same network and confirm.',
+              ]
+            : [
+                perChain
+                  ? 'Pick the network you’ll withdraw on above, then copy its address.'
+                  : 'Copy your Honey address.',
+                'In your exchange, choose Withdraw and paste it as the destination.',
+                'Pick the matching network, then confirm. Funds usually arrive in minutes.',
+              ]
+          ).map((step, i) => (
             <View key={step} style={styles.step}>
               <Text style={styles.stepNumber}>{i + 1}</Text>
               <Text style={[styles.stepText, styles.flex]}>{step}</Text>
@@ -267,6 +282,19 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 14,
+  },
+  // review: a tighter exchange row and steps in the extension popup.
+  exchangeRowWeb: {
+    paddingVertical: 10,
+  },
+  exchangeWeb: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  stepsWeb: {
+    paddingTop: 10,
+    gap: 8,
   },
   exchange: {
     width: 40,

@@ -29,7 +29,7 @@ export default function ContactSheet() {
       title="Contact us"
       footer={<PillButton label="Send" disabled={!ready} onPress={send} />}
     >
-      <SheetText>
+      <SheetText lead>
         We usually reply within a day. Never share your recovery phrase — Honey will never ask for
         it.
       </SheetText>

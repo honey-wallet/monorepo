@@ -18,6 +18,7 @@ import { LOADS } from '@/lib/loads';
 import { formatUsd } from '@/lib/mock-wallet';
 import { leaveSheetTo } from '@/lib/navigation';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { isWeb } from '@/lib/platform';
 import { PREDICT_MARKETS, predictMarket, TRADING_CASH, yesPrice } from '@/lib/predict';
 import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
@@ -131,7 +132,10 @@ function PredictOrderSheet() {
           {/* What Buy (or Sell) means here, in one line (review: "why Buy?"). */}
           <Text style={styles.explain}>
             {mode === 'Buy'
-              ? `You buy ${side} shares at ${formatShare(price, predictPrice)} each. Each pays $1 if ${side} is right; sell any time before it closes.`
+              ? isWeb
+                ? // Shorter in the popup (review): the line that matters.
+                  `${formatShare(price, predictPrice)} a share, pays $1 if ${side} wins.`
+                : `You buy ${side} shares at ${formatShare(price, predictPrice)} each. Each pays $1 if ${side} is right; sell any time before it closes.`
               : `You sell ${side} shares you hold at ${formatShare(price, predictPrice)} each, any time before the market closes.`}
           </Text>
 
