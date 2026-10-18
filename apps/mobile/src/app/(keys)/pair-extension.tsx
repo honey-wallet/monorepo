@@ -233,8 +233,9 @@ export default function PairExtensionSheet() {
             second={
               // review: too much text. Before: This wallet goes to your browser, encrypted for
               // it alone. Next, confirm it’s you with Face ID or your passcode.
+              // Then: It goes to your browser. Face ID or passcode next.
               <Text style={styles.subtitle}>
-                It goes to your browser. Face ID or passcode next.
+                Use Face ID or your passcode to send this wallet to your browser.
               </Text>
             }
           />
