@@ -256,6 +256,10 @@ describe('Solana', () => {
     await expect(t.call('signMessage', { account: SOL, message: '%%' }, 'solana')).rejects.toEqual(
       ERR.invalid,
     );
+    // A transaction's bytes (0x80 = a v0 message) aren't text: refused before any window opens.
+    await expect(
+      t.call('signMessage', { account: SOL, message: btoa('\x80\x01\x00\x01') }, 'solana'),
+    ).rejects.toMatchObject({ code: 4200 });
     const sent = t.call('signAndSendTransaction', { account: SOL, transaction: 'AQID' }, 'solana');
     const approval = await t.nextApproval();
     expect(approval).toMatchObject({ kind: 'solanaSend', params: { transaction: 'AQID' } });

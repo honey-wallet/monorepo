@@ -189,7 +189,10 @@ export async function performApproval(approval: Approval, walletId: string): Pro
         return { id, result: await client.sendRawTransaction({ serializedTransaction: signed }) };
       }
       case 'solanaSignMessage': {
-        const signature = signSolanaMessage(key, fromBase64(params.message as string));
+        const bytes = fromBase64(params.message as string);
+        // The worker refuses non-text already; never sign bytes that could be a transaction.
+        if (!readableMessage(bytes).isText) throw new Error('Honey only signs readable text');
+        const signature = signSolanaMessage(key, bytes);
         return { id, result: { signature: toBase64(signature) } };
       }
       case 'solanaSignTransaction': {
@@ -210,4 +213,51 @@ export async function performApproval(approval: Approval, walletId: string): Pro
   } finally {
     key.fill(0);
   }
+}
+
+type TypedField = { name: string; type: string };
+
+/**
+ * Every field EIP-712 encodes, in order, by walking the declared types from the primary
+ * type, so what's shown is exactly what's signed (keys a site adds outside the types are
+ * ignored by the signature, and so they aren't shown either).
+ */
+export function typedRows(
+  types: Record<string, readonly TypedField[]>,
+  primaryType: string,
+  message: Record<string, unknown>,
+): [string, string][] {
+  const rows: [string, string][] = [];
+  const walk = (type: string, value: unknown, path: string, depth: number) => {
+    if (depth > 8) {
+      rows.push([path, '(too deeply nested to show)']);
+      return;
+    }
+    const array = /^(.*)\[(\d*)\]$/.exec(type);
+    if (array) {
+      const items = Array.isArray(value) ? value : [];
+      if (!items.length) rows.push([path, '(empty list)']);
+      for (const [i, item] of items.entries()) {
+        walk(array[1] as string, item, `${path}[${i}]`, depth + 1);
+      }
+      return;
+    }
+    const fields = types[type];
+    if (fields) {
+      const record = (value ?? {}) as Record<string, unknown>;
+      for (const f of fields)
+        walk(f.type, record[f.name], path ? `${path}.${f.name}` : f.name, depth + 1);
+      return;
+    }
+    rows.push([
+      path,
+      value === undefined
+        ? '(missing)'
+        : typeof value === 'object'
+          ? JSON.stringify(value)
+          : String(value),
+    ]);
+  };
+  walk(primaryType, message, '', 0);
+  return rows;
 }

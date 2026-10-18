@@ -66,6 +66,18 @@ const isHex = (value: unknown): value is string =>
 const sameAddress = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 const toHex = (n: number) => `0x${n.toString(16)}`;
 
+/** Base64 that decodes to UTF-8 text with no control characters (newlines and tabs allowed). */
+export function isReadableText(data: string) {
+  try {
+    const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: that's the check
+    return !/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text);
+  } catch {
+    return false;
+  }
+}
+
 type Pending = { approval: Approval; settle: (answer: Answer) => void };
 
 export function createRouter(deps: RouterDeps) {
@@ -307,6 +319,10 @@ export function createRouter(deps: RouterDeps) {
       case 'signMessage': {
         const from = authorized();
         const message = base64(input.message);
+        // Raw bytes could be a transaction's message in disguise: sign readable text only.
+        if (!isReadableText(message)) {
+          fail(ERR.unsupported, 'Honey only signs readable text messages on Solana.');
+        }
         return resultOf(await askFor('solanaSignMessage', origin, icon, from, { message }));
       }
       case 'signTransaction':

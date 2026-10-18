@@ -97,6 +97,7 @@ export const STORAGE = {
   chains: 'honey.site-chains',
   approvals: 'honey.approvals',
   window: 'honey.approval-window',
+  appWindow: 'honey.app-window',
   /** Shared-wallet proposals waiting for you; the app keeps it current for the badge. */
   waiting: 'honey.badge.waiting',
 } as const;

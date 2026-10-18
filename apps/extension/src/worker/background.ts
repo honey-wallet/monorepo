@@ -23,8 +23,19 @@ const toError = (error: unknown): ProviderError =>
     ? (error as ProviderError)
     : ERR.internal;
 
-async function openApprovals() {
-  const { [STORAGE.window]: open } = await chrome.storage.session.get(STORAGE.window);
+/**
+ * Honey runs in a phone-sized window (an iPhone's 393 × 852 points), the toolbar button's
+ * and approvals' alike, so every screen is laid out exactly as on the phone: one layout
+ * to maintain. Chrome's toolbar popup can't be that tall (it stops at 800 × 600). The
+ * page trims the window to that inner size once it knows the frame (public/boot.js).
+ */
+export const PHONE = { width: 393, height: 852 } as const;
+/** A first guess at the title bar, corrected by the page. */
+const FRAME = 28;
+
+/** Focuses the window kept under `key`, or opens a phone-sized one at `route`. */
+async function openWindow(key: string, route: string) {
+  const { [key]: open } = await chrome.storage.session.get(key);
   if (typeof open === 'number') {
     try {
       await chrome.windows.update(open, { focused: true });
@@ -35,10 +46,11 @@ async function openApprovals() {
   }
   const last = await chrome.windows.getLastFocused().catch(() => undefined);
   const size = {
-    url: chrome.runtime.getURL('index.html?route=approve'),
+    url: chrome.runtime.getURL(`index.html?window&route=${encodeURIComponent(route)}`),
     type: 'popup' as const,
-    width: 400,
-    height: 660,
+    width: PHONE.width,
+    // On a short display, as tall as the browser window instead.
+    height: Math.min(PHONE.height + FRAME, last?.height ?? Number.POSITIVE_INFINITY),
     focused: true,
   };
   // Beside the browser's top-right corner; Chrome refuses a spot that's mostly off-screen
@@ -50,11 +62,16 @@ async function openApprovals() {
         last?.left !== undefined && last.width
           ? last.left + last.width - size.width - 16
           : undefined,
-      top: last?.top !== undefined ? last.top + 72 : undefined,
+      top: last?.top !== undefined ? last.top + 24 : undefined,
     })
     .catch(() => chrome.windows.create(size));
-  await chrome.storage.session.set({ [STORAGE.window]: created?.id });
+  await chrome.storage.session.set({ [key]: created?.id });
 }
+
+const openApprovals = () => openWindow(STORAGE.window, 'approve');
+
+// The toolbar button opens (or brings back) Honey's own window.
+chrome.action.onClicked.addListener(() => void openWindow(STORAGE.appWindow, ''));
 
 async function rpc(url: string, method: string, params: unknown) {
   let body: { result?: unknown; error?: ProviderError };
@@ -171,7 +188,11 @@ chrome.runtime.onMessage.addListener((message: AppMessage, sender, respond) => {
 });
 
 chrome.windows.onRemoved.addListener(async (id) => {
-  const { [STORAGE.window]: open } = await chrome.storage.session.get(STORAGE.window);
+  const { [STORAGE.window]: open, [STORAGE.appWindow]: app } = await chrome.storage.session.get([
+    STORAGE.window,
+    STORAGE.appWindow,
+  ]);
+  if (id === app) await chrome.storage.session.remove(STORAGE.appWindow);
   if (id !== open) return;
   await chrome.storage.session.remove(STORAGE.window);
   router.rejectAll();

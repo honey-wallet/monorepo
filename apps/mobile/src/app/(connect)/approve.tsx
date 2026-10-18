@@ -22,6 +22,7 @@ import {
   reasonOf,
   siweDomain,
   solanaSummary,
+  typedRows,
 } from '@/lib/dapp-sign';
 import { failure, success, tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
@@ -446,16 +447,6 @@ function MessageBox({ approval, bytes }: { approval: Approval; bytes: Uint8Array
   );
 }
 
-/** Nested typed-data fields as "a.b.c: value" lines. */
-function flatten(value: unknown, prefix = ''): [string, string][] {
-  if (value && typeof value === 'object') {
-    return Object.entries(value as Record<string, unknown>).flatMap(([k, v]) =>
-      flatten(v, prefix ? `${prefix}.${k}` : k),
-    );
-  }
-  return [[prefix, String(value)]];
-}
-
 function TypedData({ approval, json }: { approval: Approval; json: string }) {
   const styles = useStyles();
   const typed = useMemo(() => {
@@ -473,7 +464,11 @@ function TypedData({ approval, json }: { approval: Approval; json: string }) {
   };
   const chainId = domain.chainId === undefined ? undefined : Number(domain.chainId);
   const wrongChain = chainId !== undefined && approval.site && chainId !== approval.site.chainId;
-  const rows = flatten(typed.message).slice(0, 40);
+  const rows = typedRows(
+    typed.types as unknown as Record<string, { name: string; type: string }[]>,
+    String(typed.primaryType),
+    typed.message as Record<string, unknown>,
+  );
   return (
     <>
       {isPermit(typed.primaryType as string) ? (
@@ -494,8 +489,7 @@ function TypedData({ approval, json }: { approval: Approval; json: string }) {
       <View style={styles.message}>
         {rows.map(([key, value]) => (
           <Text key={key} style={styles.field} selectable>
-            <Text style={styles.fieldKey}>{key}</Text>{' '}
-            {value.length > 66 ? `${value.slice(0, 66)}…` : value}
+            <Text style={styles.fieldKey}>{key}</Text> {value}
           </Text>
         ))}
       </View>
@@ -649,8 +643,8 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
     fontWeight: '500',
   },
+  // No height cap: the page scrolls, so nothing being signed is ever cut off.
   message: {
-    maxHeight: 220,
     padding: 14,
     gap: 6,
     borderRadius: 16,

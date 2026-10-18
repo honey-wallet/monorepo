@@ -3,11 +3,23 @@ body,
 #root {
   height: 100%;
 }
-/* Chrome sizes the toolbar popup to its page, up to 800 × 600. A phone-shaped window
-   keeps every screen laid out as on the phone. Opened in a tab, the app fills it. */
+/* Always phone-shaped, even opened in a full tab: one layout to design and maintain.
+   Wider pages get the app centred at 393px. */
+#root {
+  max-width: 393px;
+  margin: 0 auto;
+  box-shadow: 0 0 0 1px rgba(127, 127, 127, 0.18);
+}
+@media (max-width: 393px) {
+  #root {
+    box-shadow: none;
+  }
+}
+/* Opened with ?popup (older links), keep the phone's shape: 393 wide, as tall as Chrome
+   allows a toolbar popup. Honey's own windows and tabs simply fill the page. */
 html.popup,
 html.popup body {
-  width: 380px;
+  width: 393px;
   height: 600px;
 }
 /* A browser input keeps a ~20-character minimum width; in a row it should shrink. */
@@ -19,4 +31,13 @@ textarea {
 input:focus,
 textarea:focus {
   outline: none;
+}
+/* Around the centred app in a wide tab. */
+html {
+  background: #ececec;
+}
+@media (prefers-color-scheme: dark) {
+  html {
+    background: #050505;
+  }
 }
