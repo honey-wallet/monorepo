@@ -146,44 +146,46 @@ export default function BuyCashSheet() {
     <FlowTray>
       <SheetScreen title={verb} size="fill">
         <View style={styles.flex}>
-          <View style={styles.tokenBar}>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={`Token: ${symbol}. Change token`}
-              accessibilityState={{ expanded: picking }}
-              onPress={() => {
-                tap();
-                setPicking((v) => !v);
-              }}
-              style={styles.pill}
-            >
-              <TokenIcon symbol={symbol} size={26} />
-              <Text style={styles.pillLabel}>{symbol}</Text>
-              <AccordionChevron open={picking} size={12} color={c.textSecondary} />
-            </PressableScale>
-          </View>
-          <Accordion open={picking}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chooser}
-            >
-              {symbols.map((s) => (
-                <PressableScale
-                  key={s}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: s === symbol }}
-                  onPress={() => pick(s)}
-                  style={[styles.choice, s === symbol && styles.choiceActive]}
-                >
-                  <TokenIcon symbol={s} size={22} />
-                  <Text style={styles.choiceLabel}>{s}</Text>
-                </PressableScale>
-              ))}
-            </ScrollView>
-          </Accordion>
-
+          {/* One centred group: the token, the amount and the quick amounts. */}
           <View style={styles.amountArea}>
+            <View style={styles.tokenBar}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={`Token: ${symbol}. Change token`}
+                accessibilityState={{ expanded: picking }}
+                onPress={() => {
+                  tap();
+                  setPicking((v) => !v);
+                }}
+                style={styles.pill}
+              >
+                <TokenIcon symbol={symbol} size={26} />
+                <Text style={styles.pillLabel}>{symbol}</Text>
+                <AccordionChevron open={picking} size={12} color={c.textSecondary} />
+              </PressableScale>
+            </View>
+            <View style={styles.stretch}>
+              <Accordion open={picking}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chooser}
+                >
+                  {symbols.map((s) => (
+                    <PressableScale
+                      key={s}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: s === symbol }}
+                      onPress={() => pick(s)}
+                      style={[styles.choice, s === symbol && styles.choiceActive]}
+                    >
+                      <TokenIcon symbol={s} size={22} />
+                      <Text style={styles.choiceLabel}>{s}</Text>
+                    </PressableScale>
+                  ))}
+                </ScrollView>
+              </Accordion>
+            </View>
             <TypedAmount value={amount} prefix="$" size={amount.length > 8 ? 44 : 60} />
             {loading ? (
               <View style={styles.convertLine}>
@@ -201,22 +203,21 @@ export default function BuyCashSheet() {
                 You have {formatBalance(held.amount)} {symbol} ({formatUsd(heldUsd)})
               </Text>
             ) : null}
-          </View>
-
-          <View style={styles.quick}>
-            {quick.map((q) => (
-              <PressableScale
-                key={q.label}
-                accessibilityRole="button"
-                onPress={() => {
-                  tap();
-                  setAmount(q.value);
-                }}
-                style={[styles.chip, amount === q.value && styles.chipActive]}
-              >
-                <Text style={styles.chipLabel}>{q.label}</Text>
-              </PressableScale>
-            ))}
+            <View style={styles.quick}>
+              {quick.map((q) => (
+                <PressableScale
+                  key={q.label}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    tap();
+                    setAmount(q.value);
+                  }}
+                  style={[styles.chip, amount === q.value && styles.chipActive]}
+                >
+                  <Text style={styles.chipLabel}>{q.label}</Text>
+                </PressableScale>
+              ))}
+            </View>
           </View>
 
           <PressableRow
@@ -380,6 +381,11 @@ const useStyles = makeStyles((c) => ({
   tokenBar: {
     alignItems: 'center',
   },
+  // The token chooser scrolls across the whole width, not the centred group's.
+  stretch: {
+    alignSelf: 'stretch',
+    marginBottom: 16,
+  },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -440,6 +446,7 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
+    marginTop: 20,
   },
   chip: {
     minWidth: 72,

@@ -102,20 +102,23 @@ export default function ReceiveSheet() {
       )}
 
       <LabeledRule label="From an account" />
-      <PressableRow
-        accessibilityState={{ expanded: showExchange }}
-        onPress={() => {
-          tap();
-          setShowExchange((v) => !v);
-        }}
-        style={styles.card}
-      >
-        <View style={styles.exchange}>
-          <Icon name="bank" size={18} color={c.accentText} />
-        </View>
-        <Text style={[styles.name, styles.flex]}>From an exchange</Text>
-        <AccordionChevron open={showExchange} size={13} color={c.textSecondary} />
-      </PressableRow>
+      {/* The card holds the fill: PressableRow paints its own pressed background. */}
+      <View style={styles.exchangeCard}>
+        <PressableRow
+          accessibilityState={{ expanded: showExchange }}
+          onPress={() => {
+            tap();
+            setShowExchange((v) => !v);
+          }}
+          style={styles.exchangeRow}
+        >
+          <View style={styles.exchange}>
+            <Icon name="bank" size={18} color={c.accentText} />
+          </View>
+          <Text style={[styles.name, styles.flex]}>From an exchange</Text>
+          <AccordionChevron open={showExchange} size={13} color={c.textSecondary} />
+        </PressableRow>
+      </View>
       <Accordion open={showExchange}>
         <View style={styles.steps}>
           {[
@@ -248,6 +251,17 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 15,
     lineHeight: 21,
+  },
+  exchangeCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: c.card,
+  },
+  exchangeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
   },
   exchange: {
     width: 40,

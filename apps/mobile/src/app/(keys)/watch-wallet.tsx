@@ -5,9 +5,9 @@ import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { TextSwap } from '@/components/motion/TextSwap';
-import { TextsReveal } from '@/components/motion/TextsReveal';
+// import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { SheetScreen } from '@/components/sheets/Sheet';
+import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
 import { useHandleLookup } from '@/lib/handles';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
@@ -68,16 +68,14 @@ export default function WatchWalletSheet() {
     // The button stays inline under the fields rather than pinned as a footer, so
     // it sits above the keyboard while typing.
     <SheetScreen title="Watch an address" size="fill">
-      <TextsReveal
+      {/* One title, the sheet's: a second, bigger one under it read as two headings. */}
+      {/* <TextsReveal
         id="watch"
         align="center"
         first={<Text style={styles.title}>Follow any wallet</Text>}
-        second={
-          <Text style={styles.subtitle}>
-            See its balance and activity. You can't send from a watched wallet.
-          </Text>
-        }
-      />
+        second={...}
+      /> */}
+      <SheetText>See its balance and activity. You can't send from a watched wallet.</SheetText>
 
       <Text style={styles.label}>Address</Text>
       <View style={[styles.field, status === 'invalid' && styles.fieldError]}>

@@ -44,6 +44,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { trayOpened } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE, SPRING } from '@/theme/motion';
 
@@ -105,6 +106,9 @@ function TrayFrame({
     return Math.min(height.value, Math.max(1, maxHeight - lift));
   });
   const measured = useRef(false);
+
+  // Toasts shown while it's open go to the top, clear of its title.
+  useEffect(() => (open ? trayOpened() : undefined), [open]);
 
   const onContent = (e: LayoutChangeEvent) => {
     const natural = e.nativeEvent.layout.height;

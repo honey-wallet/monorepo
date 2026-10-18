@@ -80,7 +80,8 @@ export default function AddWalletSheet() {
         ...(isWeb
           ? [
               {
-                icon: 'qr' as const,
+                // A phone, not the dense QR glyph, so it reads like the other rows' icons.
+                icon: 'phone' as const,
                 title: 'Pair with your phone',
                 hint: 'Bring over the wallets on your phone',
                 onPress: open('/pair-phone'),

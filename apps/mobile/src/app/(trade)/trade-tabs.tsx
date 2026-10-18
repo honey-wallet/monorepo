@@ -9,7 +9,7 @@ import {
   SheetRow,
   SheetScreen,
   SheetSection,
-  SheetText,
+  // SheetText, (its description is commented out below)
 } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import {
@@ -60,7 +60,7 @@ export default function TradeTabsSheet() {
 
   return (
     <SheetScreen title="Trade tabs" footer={<PillButton label="Done" onPress={closeSheet} />}>
-      <SheetText>Choose what shows on Trade. Drag ⠿ to change the order.</SheetText>
+      {/* <SheetText>Choose what shows on Trade. Drag ⠿ to change the order.</SheetText> */}
       <ReorderList items={tradeTabs} rowHeight={ROW_HEIGHT} onReorder={set} renderRow={row} />
       {hidden.length > 0 && <SheetSection title="More" />}
       {hidden.map((mode) => (

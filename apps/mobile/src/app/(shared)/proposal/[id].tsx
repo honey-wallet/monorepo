@@ -173,13 +173,10 @@ export default function ProposalSheet() {
   const actions = justSigned ? (
     finished
   ) : canVote ? (
-    <View style={styles.buttons}>
-      <PillButton label="Reject" variant="secondary" onPress={onReject} style={styles.flex} />
-      <PillButton
-        label={completes ? 'Approve & execute' : 'Approve'}
-        onPress={onApprove}
-        style={styles.grow}
-      />
+    // Full width, one above the other: side by side, "Approve & execute" wrapped.
+    <View style={styles.stacked}>
+      <PillButton label={completes ? 'Approve & execute' : 'Approve'} onPress={onApprove} />
+      <PillButton label="Reject" variant="secondary" onPress={onReject} />
     </View>
   ) : pending && mine ? (
     <PillButton label="Cancel proposal" variant="secondary" onPress={onCancel} />
@@ -534,6 +531,9 @@ const useStyles = makeStyles((c) => ({
   },
   buttons: {
     flexDirection: 'row',
+    gap: 10,
+  },
+  stacked: {
     gap: 10,
   },
   summary: {

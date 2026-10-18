@@ -26,7 +26,9 @@ import { build } from 'vite';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const mobile = join(root, '..', 'mobile');
-const out = join(root, process.argv.includes('--e2e') ? 'dist-e2e' : 'dist');
+// `--out=<dir>` builds somewhere else, so several screenshot runs can build at once.
+const outArg = process.argv.find((a) => a.startsWith('--out='))?.slice('--out='.length);
+const out = outArg ?? join(root, process.argv.includes('--e2e') ? 'dist-e2e' : 'dist');
 
 rmSync(out, { recursive: true, force: true });
 const exported = spawnSync(

@@ -80,8 +80,8 @@ export function Guide({
           <StepText step={step} number={index + 1} />
         </View>
       </ContentSwap>
-      {/* Every step's text, measured invisibly; shorter steps sit at the bottom of the
-          area, so any slack goes under the art rather than above the dots. */}
+      {/* Every step's text, measured invisibly; shorter steps sit at the top of the
+          area, right under the art, and any slack goes above the dots. */}
       <View
         style={styles.measure}
         accessibilityElementsHidden
@@ -149,7 +149,7 @@ const useStyles = makeStyles((c) => ({
     overflow: 'hidden',
   },
   textArea: {
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
   measure: {
     position: 'absolute',

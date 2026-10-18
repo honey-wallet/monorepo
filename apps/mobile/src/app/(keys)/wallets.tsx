@@ -229,7 +229,8 @@ function WalletRow({
         </View>
       }
       title={wallet.label}
-      subtitle={`${kind}${shortAddress(wallet.address, 8, 6)}`}
+      // Shorter beside a prefix, so every row stays on one line and the list evenly spaced.
+      subtitle={`${kind}${shortAddress(wallet.address, kind ? 4 : 8, kind ? 4 : 6)}`}
       value={loading ? undefined : formatUsd(usd)}
       accessory={
         <View style={styles.accessory}>
@@ -322,7 +323,7 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.primary,
   },
   addRow: {
-    marginTop: 14,
+    marginTop: 0,
   },
   addCircle: {
     backgroundColor: 'transparent',

@@ -72,6 +72,7 @@ export function ToastHost() {
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
   const bottom = insets.bottom + TAB_BAR_HEIGHT + GAP_ABOVE_TAB_BAR;
+
   return (
     <>
       {toasts.map((toast, depth) => (
@@ -80,7 +81,11 @@ export function ToastHost() {
           exiting={reduceMotion ? fadeOut() : leave()}
           // Only the front toast takes touches (to swipe it away).
           pointerEvents={depth === 0 ? 'box-none' : 'none'}
-          style={[styles.slot, { bottom, zIndex: toasts.length - depth }]}
+          style={[
+            styles.slot,
+            toast.top ? { top: insets.top + 12 } : { bottom },
+            { zIndex: toasts.length - depth },
+          ]}
         >
           <StackedToast toast={toast} depth={depth} />
         </Animated.View>

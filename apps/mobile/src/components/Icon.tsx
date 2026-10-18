@@ -1,4 +1,5 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { Platform } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 /** SF Symbols on iOS, Material Symbols on Android and web. */
@@ -99,6 +100,7 @@ const ICONS = {
   text: { ios: 'text.alignleft', android: 'notes', web: 'notes' },
   share: { ios: 'square.and.arrow.up', android: 'share', web: 'share' },
   verified: { ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' },
+  phone: { ios: 'iphone', android: 'smartphone', web: 'smartphone' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof ICONS | 'piggyBank';
@@ -111,8 +113,30 @@ type Props = {
 
 export function Icon({ name, size = 22, color }: Props) {
   if (name === 'piggyBank') return <PiggyBankIcon size={size} color={color} />;
+  // Material Symbols only come outlined here, so Home's actions are drawn filled to
+  // match the phone's SF Symbols.
+  if (Platform.OS !== 'ios' && name in FILLED) {
+    return <FilledIcon d={FILLED[name as keyof typeof FILLED]} size={size} color={color} />;
+  }
   if (name === 'trade') return <TradeIcon size={size} color={color} />;
   return <SymbolView name={ICONS[name]} size={size} tintColor={color} />;
+}
+
+/** paperplane.fill, arrow.down.circle.fill, plus.circle.fill and minus.circle.fill. */
+const CIRCLE = 'M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20Z';
+const FILLED = {
+  send: 'M21.6 2.4 2.9 9.8c-.9.4-.8 1.6.1 1.9l7.3 2.2 2.2 7.3c.3.9 1.5 1 1.9.1Z',
+  receive: `${CIRCLE} M11 6.5h2v6.6l2.6-2.6 1.4 1.4-5 5-5-5 1.4-1.4 2.6 2.6Z`,
+  buy: `${CIRCLE} M11 7h2v4h4v2h-4v4h-2v-4H7v-2h4Z`,
+  sell: `${CIRCLE} M7 11h10v2H7Z`,
+};
+
+function FilledIcon({ d, size, color }: { d: string; size: number; color: string }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d={d} fill={color} fillRule="evenodd" />
+    </Svg>
+  );
 }
 
 /** Trade: two arrows chasing each other round a circle, drawn to match the outline icons. */

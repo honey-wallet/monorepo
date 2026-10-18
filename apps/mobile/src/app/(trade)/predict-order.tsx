@@ -8,6 +8,7 @@ import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetScreen } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
 import { FlowTray, InlineTray } from '@/components/sheets/Tray';
+import { OrderBar } from '@/components/trade/OrderBar';
 import { MarketIcon } from '@/components/trade/PredictFeed';
 import type { Side } from '@/components/trade/TradeForm';
 import { applyKey, Keypad, TypedAmount, trimNumber } from '@/components/wallet/Keypad';
@@ -89,23 +90,25 @@ function PredictOrderSheet() {
     <FlowTray>
       <SheetScreen size="fill">
         <View style={styles.flex}>
-          {/* Buy or Sell, as a small pill toggle */}
-          <View style={styles.modes}>
-            {(['Buy', 'Sell'] as const).map((m) => (
-              <PressableScale
-                key={m}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: mode === m }}
-                onPress={() => {
-                  tap();
-                  setMode(m);
-                }}
-                style={[styles.mode, mode === m && styles.modeActive]}
-              >
-                <Text style={[styles.modeLabel, mode === m && styles.modeLabelActive]}>{m}</Text>
-              </PressableScale>
-            ))}
-          </View>
+          {/* Back, and Buy or Sell as a small pill toggle */}
+          <OrderBar>
+            <View style={styles.modes}>
+              {(['Buy', 'Sell'] as const).map((m) => (
+                <PressableScale
+                  key={m}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: mode === m }}
+                  onPress={() => {
+                    tap();
+                    setMode(m);
+                  }}
+                  style={[styles.mode, mode === m && styles.modeActive]}
+                >
+                  <Text style={[styles.modeLabel, mode === m && styles.modeLabelActive]}>{m}</Text>
+                </PressableScale>
+              ))}
+            </View>
+          </OrderBar>
 
           {/* The market and the answer you're backing */}
           <View style={styles.market}>

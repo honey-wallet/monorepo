@@ -13,7 +13,7 @@ import { TokenIcon } from '@/components/wallet/parts';
 import { QRCode } from '@/components/wallet/QRCode';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import { CHAINS, handleFor } from '@/lib/mock-wallet';
+import { handleFor } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
 import { receiveAddresses } from '@/lib/receive';
@@ -22,7 +22,9 @@ import { makeStyles, useTheme } from '@/theme';
 
 const QR_SIZE = 240;
 
-const EVM_CHAINS = CHAINS.filter((ch) => ch.name === 'Ethereum' || ch.name === 'Base');
+// const EVM_CHAINS = CHAINS.filter((ch) => ch.name === 'Ethereum' || ch.name === 'Base');
+/** Every EVM network Honey supports: one address works on all of them. */
+const EVM_LOGOS = ['ETH', 'BASE', 'ARB', 'OP', 'POL', 'BNB', 'AVAX', 'GNO', 'LINEA', 'SCROLL'];
 
 /**
  * Your receive QR code, after Uniswap's: handle, dotted code, full address. Opened
@@ -138,17 +140,12 @@ export default function MyQRSheet() {
         </View>
       ) : (
         // The EVM address works on every EVM network, but not on Bitcoin, Solana and the rest.
-        <View style={styles.networks}>
-          <Text style={styles.networksText}>Use this address to receive tokens on</Text>
-          <View style={styles.networksRow}>
-            <View style={styles.chainStack}>
-              {EVM_CHAINS.map((ch, i) => (
-                <View key={ch.name} style={i > 0 && styles.chainOverlap}>
-                  <TokenIcon symbol={ch.symbol} size={16} />
-                </View>
-              ))}
-            </View>
-            <Text style={styles.networksCount}>Ethereum, Base and other EVM networks</Text>
+        <View style={styles.networksRow}>
+          <Text style={styles.networksText}>Available on</Text>
+          <View style={styles.chainStack}>
+            {EVM_LOGOS.map((symbol) => (
+              <TokenIcon key={symbol} symbol={symbol} size={20} />
+            ))}
           </View>
         </View>
       )}
@@ -210,12 +207,15 @@ const useStyles = makeStyles((c) => ({
     fontSize: 15,
   },
   networksRow: {
+    marginTop: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 8,
   },
   chainStack: {
     flexDirection: 'row',
+    gap: 4,
   },
   chainOverlap: {
     marginLeft: -5,

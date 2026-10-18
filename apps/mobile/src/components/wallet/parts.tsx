@@ -220,9 +220,10 @@ export function Sparkline({
     const min = Math.min(...data);
     const max = Math.max(...data);
     const span = max - min || 1;
+    // A flat day (an empty wallet) runs through the middle rather than along the floor.
     const points = data.map((v, i) => [
       (i / (data.length - 1)) * width,
-      3 + (1 - (v - min) / span) * (height - 6),
+      max === min ? height / 2 : 3 + (1 - (v - min) / span) * (height - 6),
     ]);
     let len = 0;
     for (let i = 1; i < points.length; i++) {

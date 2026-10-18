@@ -203,7 +203,7 @@ export function ProposalRow({
         </Text>
       </View>
       <Text style={styles.nonce}>#{proposal.nonce}</Text>
-      <Icon name="chevronRight" size={13} color={c.textSecondary} />
+      <Icon name="chevronRight" size={14} color={c.textSecondary} />
     </PressableRow>
   );
 }
@@ -411,7 +411,7 @@ const useStyles = makeStyles((c) => ({
   },
   nonce: {
     color: c.textSecondary,
-    fontSize: 13,
+    fontSize: 15,
     fontVariant: ['tabular-nums'],
   },
 }));

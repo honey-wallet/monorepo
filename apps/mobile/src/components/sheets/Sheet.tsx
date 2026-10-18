@@ -19,6 +19,7 @@ import { SkeletonRow } from '@/components/motion/Skeleton';
 import { TRAY_CLOSE, useInTray } from '@/components/sheets/Tray';
 import { useActiveMultisig } from '@/lib/multisig';
 import { goBackOr, leaveSheetTo } from '@/lib/navigation';
+import { isWeb } from '@/lib/platform';
 import { AVAILABLE_TRADE_MODES, useSettings } from '@/lib/settings';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -29,6 +30,8 @@ import { makeStyles, useTheme } from '@/theme';
  */
 /** In a tray, the header row's top: centres it on the close button. */
 const TRAY_HEADER_TOP = TRAY_CLOSE.top + TRAY_CLOSE.size / 2 - 22;
+/** In a tray with no title, a pinned search field's top: centres the field on the close button. */
+const TRAY_SEARCH_TOP = TRAY_CLOSE.top + TRAY_CLOSE.size / 2 - 24;
 const TRAY_BOTTOM = 20;
 
 export const SHEET = {
@@ -91,7 +94,13 @@ export function SheetScreen({
   const bottom = (fill || Platform.OS !== 'ios' ? insets.bottom : 0) + SHEET.bottom;
   // A tray floats above the home indicator and has no grabber: its header lines up
   // with the close button, and the footer gets the room a sheet's home indicator took.
-  const top = inTray ? (header ? TRAY_HEADER_TOP : SHEET.top) : SHEET.top + clear.top;
+  const top = inTray
+    ? header
+      ? TRAY_HEADER_TOP
+      : scroll && sticky
+        ? TRAY_SEARCH_TOP
+        : SHEET.top
+    : SHEET.top + clear.top;
 
   if (scroll && !inTray) {
     // The ScrollView must be the sheet's root: iOS form sheets lay a ScrollView out
@@ -207,16 +216,18 @@ export function SheetHeader({
       </View>
     );
   }
+  // In a browser a sheet opens as a page, with no grabber to pull it down: give it a way back.
+  const back = onBack ?? (isWeb ? closeSheet : undefined);
   return (
     <View style={styles.header}>
       <View style={styles.side}>
-        {onBack ? (
+        {back ? (
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel="Back"
             hitSlop={12}
             scaleTo={0.97}
-            onPress={onBack}
+            onPress={back}
           >
             <Icon name="chevronLeft" size={18} color={c.textSecondary} />
           </PressableScale>

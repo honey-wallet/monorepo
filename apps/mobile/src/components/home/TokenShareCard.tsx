@@ -1,16 +1,16 @@
-import { forwardRef, useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { forwardRef, useId, useMemo } from 'react';
+import { Text, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { TokenIcon } from '@/components/wallet/parts';
 import { formatPrice } from '@/lib/mock-wallet';
-import { palettes } from '@/theme';
+import { makeStyles, useTheme } from '@/theme';
 
-/** The card keeps Honey's dark look in either theme, so a shared image always reads the same. */
-const c = palettes.dark;
+// The card follows the theme: a light card with a hairline edge in light mode, a raised
+// one in dark, so it reads as an object in the tray rather than a hole in it.
 export const SHARE_CARD_WIDTH = 320;
-const CHART_HEIGHT = 170;
+const CHART_HEIGHT = 140;
 const PAD = 22;
 
 /** Evens out tick-to-tick noise: a 5-point moving average, thinned to about 48 points. */
@@ -71,16 +71,22 @@ export const TokenShareCard = forwardRef<View, Props>(function TokenShareCard(
   { symbol, name, price, change, range, data, holding },
   ref,
 ) {
+  const c = useTheme();
+  const styles = useStyles();
+  // React's ids contain colons, which an SVG url(#…) reference can't take.
+  const fade = `fade${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const down = change < 0;
   const tone = down ? c.error : c.success;
   const line = useMemo(() => smoothPath(data, SHARE_CARD_WIDTH, CHART_HEIGHT, 6), [data]);
+  // The same line closed along the bottom edge, for a soft wash of the move's colour.
+  const area = `${line} L${SHARE_CARD_WIDTH} ${CHART_HEIGHT} L0 ${CHART_HEIGHT} Z`;
   return (
     <View ref={ref} collapsable={false} style={styles.card}>
       <View style={styles.top}>
         <View style={styles.iconWell}>
           <TokenIcon symbol={symbol} size={40} />
         </View>
-        <HoneyLogo variant="lockup" height={20} scheme="dark" />
+        <HoneyLogo variant="lockup" height={20} />
       </View>
       <View style={styles.nameRow}>
         <Text style={styles.name} numberOfLines={1}>
@@ -97,10 +103,17 @@ export const TokenShareCard = forwardRef<View, Props>(function TokenShareCard(
       </View>
       <Text style={styles.range}>{range}</Text>
       <Svg width={SHARE_CARD_WIDTH} height={CHART_HEIGHT} style={styles.chart}>
+        <Defs>
+          <LinearGradient id={fade} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={tone} stopOpacity={0.22} />
+            <Stop offset="1" stopColor={tone} stopOpacity={0} />
+          </LinearGradient>
+        </Defs>
+        <Path d={area} fill={`url(#${fade})`} />
         <Path
           d={line}
-          stroke={c.text}
-          strokeWidth={4}
+          stroke={tone}
+          strokeWidth={3}
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
@@ -128,16 +141,20 @@ export const TokenShareCard = forwardRef<View, Props>(function TokenShareCard(
   );
 });
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((c) => ({
   card: {
     width: SHARE_CARD_WIDTH,
     alignSelf: 'center',
+    marginTop: 4,
     marginBottom: 12,
     overflow: 'hidden',
     paddingTop: PAD,
     paddingBottom: PAD,
     borderRadius: 28,
-    backgroundColor: c.raised,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    borderColor: c.divider,
+    backgroundColor: c.scheme === 'dark' ? c.raised : c.card,
   },
   top: {
     paddingHorizontal: PAD,
@@ -151,7 +168,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: c.canvas,
+    backgroundColor: c.sheet,
   },
   nameRow: {
     marginTop: 14,
@@ -197,7 +214,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chart: {
-    marginTop: 8,
+    marginTop: 10,
   },
   foot: {
     marginTop: 18,
@@ -232,9 +249,9 @@ const styles = StyleSheet.create({
     backgroundColor: c.divider,
   },
   tagline: {
-    marginTop: 14,
+    marginTop: 12,
     paddingHorizontal: PAD,
     color: c.textSecondary,
     fontSize: 13,
   },
-});
+}));
