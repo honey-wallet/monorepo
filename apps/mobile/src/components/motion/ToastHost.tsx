@@ -6,8 +6,8 @@
 // the others jump. Swipe the front toast down (the way it came in) to dismiss it: it
 // follows the finger, and a 40px pull or a flick sends it off at the finger's speed.
 // Leaving is quicker than arriving (200ms). Under Reduce Motion toasts only fade.
-import { useEffect } from 'react';
-import { Text } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Keyboard, Platform, Text } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
@@ -29,6 +29,29 @@ import { DURATION, EASE, lazy, SPRING } from '@/theme/motion';
 
 /** The toast floats this far above the tab bar, so it never covers it. */
 const GAP_ABOVE_TAB_BAR = 18;
+
+/** Over an open tray, the toast sits above the tray's footer buttons, not on them. */
+const ABOVE_TRAY_FOOTER = 92;
+/** Above the keyboard when it's up, never over it. */
+const GAP_ABOVE_KEYBOARD = 12;
+
+/** The on-screen keyboard's height, 0 while it's down (none on the web). */
+function useKeyboardHeight() {
+  const [height, setHeight] = useState(0);
+  useEffect(() => {
+    // iOS reports just before the keyboard moves; Android only after.
+    const show = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hide = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const subs = [
+      Keyboard.addListener(show, (e) => setHeight(e.endCoordinates.height)),
+      Keyboard.addListener(hide, () => setHeight(0)),
+    ];
+    return () => {
+      for (const sub of subs) sub.remove();
+    };
+  }, []);
+  return height;
+}
 
 /** Matches the toast's height: it enters from one full toast below (Sonner: translateY(100%)). */
 const TOAST_HEIGHT = 44;
@@ -71,7 +94,13 @@ export function ToastHost() {
   const insets = useSafeAreaInsets();
   const styles = useStyles();
   const reduceMotion = useReducedMotion();
+  const keyboard = useKeyboardHeight();
   const bottom = insets.bottom + TAB_BAR_HEIGHT + GAP_ABOVE_TAB_BAR;
+  // Always at the bottom (review: toasts at the top looked out of place).
+  const place = (overTray: boolean) => {
+    const base = overTray ? insets.bottom + ABOVE_TRAY_FOOTER : bottom;
+    return keyboard ? Math.max(base, keyboard + GAP_ABOVE_KEYBOARD) : base;
+  };
 
   return (
     <>
@@ -83,7 +112,8 @@ export function ToastHost() {
           pointerEvents={depth === 0 ? 'box-none' : 'none'}
           style={[
             styles.slot,
-            toast.top ? { top: insets.top + 12 } : { bottom },
+            // toast.top ? { top: insets.top + 12 } : { bottom },
+            { bottom: place(toast.top) },
             { zIndex: toasts.length - depth },
           ]}
         >

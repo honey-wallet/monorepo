@@ -1,6 +1,7 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
@@ -37,7 +38,7 @@ function PerpOrderSheet() {
   const params = useLocalSearchParams<{ symbol?: string; side?: string }>();
   const symbol = params.symbol ?? 'BTC';
   const market = perpMarket(symbol);
-  const [side] = useState<PerpSide>(params.side === 'Short' ? 'Short' : 'Long');
+  const [side, setSide] = useState<PerpSide>(params.side === 'Short' ? 'Short' : 'Long');
   const outcome = useFailure('perp');
   const [amount, setAmount] = useState('');
   const [opened, setOpened] = useState(false);
@@ -90,17 +91,17 @@ function PerpOrderSheet() {
     <FlowTray>
       <SheetScreen size="fill">
         <View style={styles.flex}>
-          {/* Back, and Long or Short as a compact pill; the market under them */}
-          {/* The side was picked on the market (Long or Short); a toggle here only
-              raised "why is this here". Shown as the sheet's title instead. */}
+          {/* Back, and Long or Short as a compact pill; the market under them (review:
+              bring the toggle back). */}
+          {/*
           <OrderBar>
             <Text style={[styles.orderTitle, { color: side === 'Long' ? c.success : c.error }]}>
               {side}
             </Text>
           </OrderBar>
-          {/*
+          */}
           <OrderBar>
-            <View style={styles.sides}>
+            <View style={styles.sides} accessibilityRole="radiogroup">
               {(['Long', 'Short'] as const).map((s) => {
                 const active = s === side;
                 const color = s === 'Long' ? c.success : c.error;
@@ -121,7 +122,6 @@ function PerpOrderSheet() {
               })}
             </View>
           </OrderBar>
-          */}
           <View style={styles.market}>
             <MarketIcon market={market} size={40} />
             <View style={styles.flex}>
@@ -139,7 +139,9 @@ function PerpOrderSheet() {
             </View>
           </View>
 
-          {/* No cash, no keypad: say how to get some. */}
+          {/* No cash still shows the form, so you can try it out (review); its button
+              then says Add money. */}
+          {/*
           {cash <= 0 ? (
             <View style={styles.flex}>
               <EmptyState
@@ -154,6 +156,8 @@ function PerpOrderSheet() {
               />
             </View>
           ) : (
+          */}
+          {
             <>
               {/* Your margin, and the position it opens */}
               <View style={styles.amountArea}>
@@ -182,20 +186,30 @@ function PerpOrderSheet() {
                 )}
                 <Text style={styles.meta}>Fee {formatUsd(size * FEE)}</Text>
               </View>
-              <PillButton
-                label={
-                  !value
-                    ? 'Enter an amount'
-                    : tooMuch
-                      ? 'Not enough cash'
-                      : `${long ? 'Long' : 'Short'} ${symbol} · ${multiple}x`
-                }
-                disabled={!value || tooMuch}
-                onPress={confirm}
-                style={styles.cta}
-              />
+              {cash <= 0 ? (
+                <PillButton
+                  label="Add money"
+                  onPress={() =>
+                    router.replace({ pathname: '/buy-cash', params: { symbol: 'USDC' } })
+                  }
+                  style={styles.cta}
+                />
+              ) : (
+                <PillButton
+                  label={
+                    !value
+                      ? 'Enter an amount'
+                      : tooMuch
+                        ? 'Not enough cash'
+                        : `${long ? 'Long' : 'Short'} ${symbol} · ${multiple}x`
+                  }
+                  disabled={!value || tooMuch}
+                  onPress={confirm}
+                  style={styles.cta}
+                />
+              )}
             </>
-          )}
+          }
         </View>
       </SheetScreen>
       {/* The result rises in a tray over the order (Family's pattern). */}
@@ -311,6 +325,8 @@ const useStyles = makeStyles((c) => ({
   },
   amountArea: {
     flex: 1,
+    // The amount keeps its room in a short window (the 600px popup).
+    minHeight: 96,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,

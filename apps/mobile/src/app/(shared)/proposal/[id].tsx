@@ -143,14 +143,16 @@ export default function ProposalSheet() {
 
   // Once you've signed, the usual next step is passing it on (or the receipt): Share
   // beside Done.
-  const done = (
+  // flex:1 only beside Share in a row; alone in the footer's column it squashed the
+  // button's height in a short window (review).
+  const done = (inRow: boolean) => (
     <PillButton
       label="Done"
       onPress={() => {
         tap();
         closeSheet();
       }}
-      style={styles.flex}
+      style={inRow ? styles.flex : undefined}
     />
   );
   // Nothing left for you to do (you've voted, or it's closed): Done, plus Share while
@@ -166,10 +168,10 @@ export default function ProposalSheet() {
         }}
         style={styles.flex}
       />
-      {done}
+      {done(true)}
     </View>
   ) : (
-    done
+    done(false)
   );
   const actions = justSigned ? (
     finished

@@ -1,4 +1,5 @@
 import { StyleSheet, useColorScheme } from 'react-native';
+import { useSettings } from '@/lib/settings';
 
 /** Honey design tokens. Base values come from the brand palette. */
 const light = {
@@ -87,8 +88,21 @@ const dark: Palette = {
 /** Both palettes, for the rare surface that keeps one look whatever the theme (a share card). */
 export const palettes: Record<'light' | 'dark', Palette> = { light, dark };
 
+/**
+ * Light or dark: Settings › Theme, else the system's. Read here rather than through
+ * Appearance.setColorScheme, which React Native Web doesn't implement, so the browser
+ * extension follows the setting too.
+ */
+export function useScheme(): 'light' | 'dark' {
+  const system = useColorScheme();
+  const { theme } = useSettings();
+  if (theme === 'light' || theme === 'dark') return theme;
+  return system === 'dark' ? 'dark' : 'light';
+}
+
 export function useTheme(): Palette {
-  return useColorScheme() === 'dark' ? palettes.dark : palettes.light;
+  // return useColorScheme() === 'dark' ? palettes.dark : palettes.light;
+  return palettes[useScheme()];
 }
 
 /**

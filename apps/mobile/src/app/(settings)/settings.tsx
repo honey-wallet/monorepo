@@ -13,6 +13,7 @@ import { SheetRow, SheetSection } from '@/components/sheets/Sheet';
 import { PushedScreen } from '@/components/wallet/parts';
 import { api } from '@/lib/api';
 import { lockNow } from '@/lib/app-lock';
+import { expandView, inPopup } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { isWeb } from '@/lib/platform';
@@ -190,6 +191,9 @@ export default function SettingsScreen() {
           onPress={open('/connected-sites')}
           accessory="chevron"
         />
+        {inPopup ? (
+          <SheetRow icon="expandView" title="Expand view" onPress={() => void expandView()} />
+        ) : null}
         {isWeb ? (
           <SheetRow
             icon="lock"
