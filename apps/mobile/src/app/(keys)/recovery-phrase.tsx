@@ -25,7 +25,7 @@ import { createPhraseAccess } from '@/lib/phrase-access';
 import { isWeb } from '@/lib/platform';
 import { getProfile } from '@/lib/profile';
 import { usePreventScreenCapture } from '@/lib/screen-capture';
-import { showToast } from '@/lib/toast';
+import { showErrorToast } from '@/lib/toast';
 import { startWithMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
@@ -110,7 +110,7 @@ export default function RecoveryPhraseScreen() {
     } catch (error) {
       console.warn('Couldn’t save the recovery phrase', error);
       setCreating(false);
-      showToast('Couldn’t create your wallet. Try again');
+      showErrorToast('Couldn’t create wallet');
     }
   };
 
@@ -130,7 +130,7 @@ export default function RecoveryPhraseScreen() {
       setWarning(false);
       setRevealed(!!value);
     } catch {
-      showToast('Couldn’t read your recovery phrase. Try again');
+      showErrorToast('Couldn’t read phrase');
     } finally {
       viewing.current = false;
     }

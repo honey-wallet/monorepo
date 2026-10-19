@@ -16,7 +16,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { type StyleProp, View, type ViewStyle } from 'react-native';
+import { Platform, type StyleProp, View, type ViewStyle } from 'react-native';
 import Animated, {
   type SharedValue,
   useAnimatedReaction,
@@ -63,6 +63,16 @@ export function StickyArea({
 
   const place = useCallback(
     (spot: Spot) => {
+      const same = spots.value.find((s) => s.id === spot.id);
+      if (
+        same &&
+        same.y === spot.y &&
+        same.x === spot.x &&
+        same.w === spot.w &&
+        same.h === spot.h
+      ) {
+        return;
+      }
       const others = spots.value.filter((s) => s.id !== spot.id);
       spots.value = [...others, spot].sort((a, b) => a.y - b.y);
     },
@@ -171,6 +181,17 @@ export function Sticky({
       area.place({ id, x, y: y + area.scrollY.value, w, h });
     });
   };
+
+  // On the web, onLayout fires only when this changes size, not when content above it
+  // grows (a card loading in) and moves it down; its stale spot pinned the copy while
+  // the original was still on screen (review: the tabs showed twice). Check again.
+  const measureRef = useRef(measure);
+  measureRef.current = measure;
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const timer = setInterval(() => measureRef.current(), 300);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <View ref={ref} onLayout={measure} collapsable={false} style={style}>

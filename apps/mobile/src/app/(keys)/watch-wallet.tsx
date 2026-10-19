@@ -75,7 +75,9 @@ export default function WatchWalletSheet() {
         first={<Text style={styles.title}>Follow any wallet</Text>}
         second={...}
       /> */}
-      <SheetText>See its balance and activity. You can't send from a watched wallet.</SheetText>
+      <SheetText lead>
+        See its balance and activity. You can't send from a watched wallet.
+      </SheetText>
 
       <Text style={styles.label}>Address</Text>
       <View style={[styles.field, status === 'invalid' && styles.fieldError]}>

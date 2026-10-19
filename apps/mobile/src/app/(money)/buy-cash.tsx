@@ -402,7 +402,9 @@ const useStyles = makeStyles((c) => ({
   // The token chooser scrolls across the whole width, not the centred group's.
   stretch: {
     alignSelf: 'stretch',
-    marginBottom: 16,
+    // review: this gap stayed with the chooser closed, leaving the token pill far
+    // above its amount. The space is inside the chooser now (`chooser`).
+    // marginBottom: 16,
   },
   pill: {
     flexDirection: 'row',
@@ -422,6 +424,7 @@ const useStyles = makeStyles((c) => ({
   chooser: {
     gap: 8,
     paddingTop: 10,
+    paddingBottom: 12,
   },
   choice: {
     flexDirection: 'row',
@@ -464,7 +467,8 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 20,
+    // marginTop: 20,
+    marginTop: 12,
   },
   chip: {
     minWidth: 72,

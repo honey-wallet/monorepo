@@ -1,12 +1,15 @@
 import { router } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
+import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { closeSheet, SheetRow, SheetScreen, SheetSection } from '@/components/sheets/Sheet';
+import { closeSheet, SHEET, SheetRow, SheetScreen, SheetSection } from '@/components/sheets/Sheet';
+import { TRAY_CLOSE } from '@/components/sheets/Tray';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
@@ -40,6 +43,32 @@ export default function WalletsSheet() {
   // Wallets are on the device; their balances come from the network.
   const loading = useFirstLoad(LOADS.walletTotals);
 
+  // Each group shows two wallets, then "+N more" (review: in the popup a long list hid
+  // Add wallet). The wallet in use is always one of the two.
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const group = (key: string, list: AddedWallet[]) => {
+    // "+1 more" would take a row to hide one wallet: fold only from four.
+    if (list.length <= 3 || expanded[key]) return list.map(row);
+    const ordered = [
+      ...list.filter((w) => w.id === active.id),
+      ...list.filter((w) => w.id !== active.id),
+    ];
+    const rest = ordered.slice(2);
+    return (
+      <>
+        {ordered.slice(0, 2).map(row)}
+        <MoreWallets
+          wallets={rest}
+          profile={profile}
+          onPress={() => {
+            tap();
+            setExpanded((e) => ({ ...e, [key]: true }));
+          }}
+        />
+      </>
+    );
+  };
+
   const select = (wallet: AddedWallet) => {
     tap();
     setActiveWallet(wallet.id);
@@ -50,6 +79,20 @@ export default function WalletsSheet() {
   const open = (path: '/add-wallet' | '/hardware-wallet') => {
     tap();
     router.push(path);
+  };
+
+  // review: in the popup the tray stopped halfway with Home showing above it. Fill the
+  // popup instead (the tray caps itself at this height and scrolls past it).
+  const { height: screen } = useWindowDimensions();
+  const settingsLabel = shared.multisigs[active.id] ? 'Shared wallet settings' : 'Wallet settings';
+  const openSettings = () => {
+    tap();
+    // A shared wallet's settings are its own page: members and rules.
+    if (shared.multisigs[active.id]) {
+      leaveSheetTo({ pathname: '/multisig/[id]', params: { id: active.id } });
+    } else {
+      leaveSheetTo('/settings');
+    }
   };
 
   const row = (w: AddedWallet) => {
@@ -72,7 +115,7 @@ export default function WalletsSheet() {
   };
 
   return (
-    <SheetScreen scroll>
+    <SheetScreen scroll contentStyle={isWeb ? { minHeight: screen - 24 } : undefined}>
       {/* The tray draws its own close button now.
       <PressableScale
         accessibilityRole="button"
@@ -84,35 +127,68 @@ export default function WalletsSheet() {
       >
         <Icon name="close" size={14} color={c.textSecondary} />
       </PressableScale> */}
-      <View style={styles.current}>
-        <WalletAvatar wallet={active} profile={profile} size={64} />
-        <TextSwap text={active.label} style={styles.name} />
-        <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
-          <Text style={styles.address}>{shortAddress(active.address, 8, 6)}</Text>
-          <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
-        </Pressable>
-      </View>
+      {isWeb ? (
+        // review: in the 600px popup the centred header and full-width settings button
+        // pushed Add wallet below the fold. One row instead: face, name, address and a
+        // small Settings pill, clear of the tray's close button.
+        <View style={styles.currentRow}>
+          <WalletAvatar wallet={active} profile={profile} size={48} />
+          <View style={styles.currentText}>
+            {/* One line beside the Settings pill: a long name ends in "…" rather than wrapping. */}
+            <Text numberOfLines={1} style={styles.nameRow}>
+              {active.label}
+            </Text>
+            <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRowWeb}>
+              <Text style={styles.address}>{shortAddress(active.address, 6, 4)}</Text>
+              <IconSwap name={copied ? 'check' : 'copy'} size={13} color={c.textSecondary} />
+            </Pressable>
+          </View>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={settingsLabel}
+            scaleTo={0.96}
+            onPress={openSettings}
+            style={styles.settingsPill}
+          >
+            {/* review: the gear says it; no "Settings" label.
+            <Icon name="settings" size={14} color={c.text} />
+            <Text style={styles.settingsPillLabel}>Settings</Text> */}
+            <Icon name="settings" size={16} color={c.textSecondary} />
+          </PressableScale>
+        </View>
+      ) : (
+        <>
+          <View style={styles.current}>
+            <WalletAvatar wallet={active} profile={profile} size={64} />
+            <TextSwap text={active.label} style={styles.name} />
+            <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
+              <Text style={styles.address}>{shortAddress(active.address, 8, 6)}</Text>
+              <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
+            </Pressable>
+          </View>
 
-      <PillButton
-        label={shared.multisigs[active.id] ? 'Shared wallet settings' : 'Wallet settings'}
-        variant="secondary"
-        onPress={() => {
-          tap();
-          // A shared wallet's settings are its own page: members and rules.
-          if (shared.multisigs[active.id]) {
-            leaveSheetTo({ pathname: '/multisig/[id]', params: { id: active.id } });
-          } else {
-            leaveSheetTo('/settings');
-          }
-        }}
-        style={styles.settingsButton}
-      />
+          <PillButton
+            label={settingsLabel}
+            variant="secondary"
+            onPress={openSettings}
+            style={styles.settingsButton}
+          />
+        </>
+      )}
 
       <SheetSection title="Wallets" />
-      {wallets.filter((w) => w.kind === 'wallet').map(row)}
+      {/* {wallets.filter((w) => w.kind === 'wallet').map(row)} */}
+      {group(
+        'wallets',
+        wallets.filter((w) => w.kind === 'wallet'),
+      )}
 
       <SheetSection title="Multisig wallets" />
-      {wallets.filter((w) => w.kind === 'multisig').map(row)}
+      {/* {wallets.filter((w) => w.kind === 'multisig').map(row)} */}
+      {group(
+        'multisig',
+        wallets.filter((w) => w.kind === 'multisig'),
+      )}
       <SheetRow
         leading={
           <View style={styles.iconCircle}>
@@ -130,7 +206,8 @@ export default function WalletsSheet() {
       {isWeb ? null : (
         <>
           <SheetSection title="Hardware wallets" />
-          {hardware.map(row)}
+          {/* {hardware.map(row)} */}
+          {group('hardware', hardware)}
           <SheetRow
             leading={
               <View style={styles.iconCircle}>
@@ -155,6 +232,37 @@ export default function WalletsSheet() {
         />
       </View>
     </SheetScreen>
+  );
+}
+
+/** "+N more": the hidden wallets' faces, overlapped, and a count. Tap to show them. */
+function MoreWallets({
+  wallets,
+  profile,
+  onPress,
+}: {
+  wallets: AddedWallet[];
+  profile: Profile;
+  onPress: () => void;
+}) {
+  const styles = useStyles();
+  const c = useTheme();
+  return (
+    <SheetRow
+      leading={
+        <View style={styles.moreFaces}>
+          {wallets.slice(0, 3).map((w, i) => (
+            <View key={w.id} style={[styles.moreFace, i > 0 && styles.moreOverlap]}>
+              <WalletAvatar wallet={w} profile={profile} size={22} />
+            </View>
+          ))}
+        </View>
+      }
+      title={`+${wallets.length} more`}
+      accessibilityLabel={`Show ${wallets.length} more wallets`}
+      accessory={<Icon name="chevronDown" size={14} color={c.textSecondary} />}
+      onPress={onPress}
+    />
   );
 }
 
@@ -283,6 +391,49 @@ const useStyles = makeStyles((c) => ({
   settingsButton: {
     marginTop: 20,
   },
+  // Browser: the current wallet as one row (see the render).
+  currentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    // Clear of the tray's close button, top right.
+    paddingRight: 40,
+    marginBottom: 4,
+  },
+  currentText: {
+    flex: 1,
+    minWidth: 0,
+  },
+  nameRow: {
+    color: c.text,
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  addressRowWeb: {
+    marginTop: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  // review: icon only, the same round button as the tray's close, beside it.
+  // settingsPill: { height: 34, flexDirection: 'row', alignItems: 'center', gap: 6,
+  //   paddingHorizontal: 12, borderRadius: 17, backgroundColor: c.raised },
+  settingsPill: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+    backgroundColor: c.raised,
+    // Level with the tray's close button, not centred on the face beside it.
+    alignSelf: 'flex-start',
+    marginTop: TRAY_CLOSE.top + TRAY_CLOSE.size / 2 - 16 - SHEET.top,
+  },
+  settingsPillLabel: {
+    color: c.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
   // Wallet rows match SheetRow's metrics but keep their own accessibility label.
   badge: {
     position: 'absolute',
@@ -296,6 +447,20 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.raised,
     borderWidth: 2,
     borderColor: c.card,
+  },
+  // The faces in "+N more", overlapped, as wide as a wallet's avatar.
+  moreFaces: {
+    width: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  moreFace: {
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: c.sheet,
+  },
+  moreOverlap: {
+    marginLeft: -12,
   },
   iconCircle: {
     width: 40,

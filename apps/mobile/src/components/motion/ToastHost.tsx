@@ -197,8 +197,16 @@ function StackedToast({ toast, depth }: { toast: Toast; depth: number }) {
         importantForAccessibility={depth === 0 ? 'auto' : 'no-hide-descendants'}
         style={[styles.toast, style]}
       >
-        <Icon name="check" size={14} color={c.success} />
-        <Text style={styles.message}>{toast.message}</Text>
+        {/* <Icon name="check" size={14} color={c.success} /> */}
+        <Icon
+          name={toast.error ? 'warning' : 'check'}
+          size={14}
+          color={toast.error ? c.error : c.success}
+        />
+        {/* review: one line like "Address copied"; a long message used to wrap. */}
+        <Text numberOfLines={1} style={styles.message}>
+          {toast.message}
+        </Text>
       </Animated.View>
     </GestureDetector>
   );
@@ -216,6 +224,7 @@ const useStyles = makeStyles((c) => ({
     paddingHorizontal: 16,
     height: TOAST_HEIGHT,
     borderRadius: 22,
+    maxWidth: 340,
     backgroundColor: c.raised,
     borderWidth: 1,
     borderColor: c.divider,
@@ -223,6 +232,7 @@ const useStyles = makeStyles((c) => ({
     transformOrigin: 'center bottom',
   },
   message: {
+    flexShrink: 1,
     color: c.text,
     fontSize: 15,
     fontWeight: '500',

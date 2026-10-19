@@ -25,7 +25,9 @@ type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>
 
 const PILL_TABS: { name: string; icon: IconName; label: string }[] = [
   { name: 'home', icon: 'home', label: 'Home' },
-  { name: 'savings', icon: 'piggyBank', label: 'Savings' },
+  // review: no Savings in the extension, like trading; the phone keeps it.
+  // { name: 'savings', icon: 'piggyBank', label: 'Savings' },
+  ...(isWeb ? [] : [{ name: 'savings', icon: 'piggyBank' as IconName, label: 'Savings' }]),
   // On the phone it's the browser (review), so a globe; the extension's tab is just search.
   // { name: 'search', icon: 'search', label: 'Search' },
   isWeb
@@ -137,15 +139,19 @@ export function TabBar({ state, navigation }: TabBarProps) {
             </Pressable>
           ))}
         </View>
-        <PressableScale
-          accessibilityRole="button"
-          accessibilityLabel="Trade"
-          onPress={() => go('trade')}
-          scaleTo={0.97}
-          style={styles.fab}
-        >
-          <Icon name="trade" size={30} color={c.onPrimary} />
-        </PressableScale>
+        {/* review: Swap is back in the extension, so the Trade button is too.
+        {isWeb ? null : ( */}
+        {
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel="Trade"
+            onPress={() => go('trade')}
+            scaleTo={0.97}
+            style={styles.fab}
+          >
+            <Icon name="trade" size={30} color={c.onPrimary} />
+          </PressableScale>
+        }
       </View>
     </>
   );

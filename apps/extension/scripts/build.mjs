@@ -39,7 +39,9 @@ if (existsSync(extensionEnv)) loadEnvFile(extensionEnv);
 rmSync(out, { recursive: true, force: true });
 const exported = spawnSync(
   'pnpm',
-  ['exec', 'expo', 'export', '--platform', 'web', '--output-dir', out],
+  // --clear: EXPO_PUBLIC_* values are inlined into Metro's cached modules, so without it
+  // a --e2e build could ship in the next normal one (or lose its test hook).
+  ['exec', 'expo', 'export', '--platform', 'web', '--output-dir', out, '--clear'],
   {
     cwd: mobile,
     stdio: 'inherit',

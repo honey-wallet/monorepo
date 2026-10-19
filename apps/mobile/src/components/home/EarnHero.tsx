@@ -12,7 +12,7 @@
 // rises in under it. Under Reduce Motion the chart is drawn from the start and the
 // figure shows its value at once.
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -144,6 +144,9 @@ export function EarnHero({
 
   // The page hero gets a taller, edge-to-edge chart (Aave's), the tab version a short one.
   const H = large ? LARGE_HEIGHT : HEIGHT;
+  // review: a fixed gradient id collides on the web (every SVG shares one page), so Home's
+  // and Savings' heroes would point at each other's gradient; make it unique per instance.
+  const curveId = `earn${useId().replace(/[^\w]/g, '')}`;
   const bleed = large ? GUTTER : 0;
   const rate = apy / 100;
   // A deposit made this month still gets a sliver of past, so the curve has a start.
@@ -323,12 +326,14 @@ export function EarnHero({
             <>
               <Svg width={width} height={H}>
                 <Defs>
-                  <LinearGradient id="earn-curve" x1="0" y1="0" x2="0" y2="1">
+                  {/* <LinearGradient id="earn-curve" x1="0" y1="0" x2="0" y2="1"> */}
+                  <LinearGradient id={curveId} x1="0" y1="0" x2="0" y2="1">
                     <Stop offset="0" stopColor={c.primary} stopOpacity={0.22} />
                     <Stop offset="1" stopColor={c.primary} stopOpacity={0} />
                   </LinearGradient>
                 </Defs>
-                <Path d={pastArea} fill="url(#earn-curve)" />
+                {/* <Path d={pastArea} fill="url(#earn-curve)" /> */}
+                <Path d={pastArea} fill={`url(#${curveId})`} />
                 <AnimatedPath
                   d={futureLine}
                   stroke={c.primary}

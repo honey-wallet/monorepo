@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import {
   Pressable,
   type StyleProp,
@@ -9,6 +10,7 @@ import {
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { keypress, tap } from '@/lib/haptics';
+import { isWeb } from '@/lib/platform';
 import { makeStyles, useTheme } from '@/theme';
 import { PRESS_SCALE } from '@/theme/motion';
 
@@ -102,6 +104,10 @@ export function Keypad({
   // const keyHeight = fixed ?? (height < 700 ? 46 : 64);
   // A caller's fixed height too, or the perps order's amount slid under its price.
   const keyHeight = height < 700 ? Math.min(fixed ?? 42, 42) : (fixed ?? 64);
+  useComputerKeys(onKey);
+  // The browser has a real keyboard: no on-screen keys, just a line saying to type, so
+  // the form's button stays in view in the popup (review: Review swap was off-screen).
+  if (isWeb) return <Text style={styles.typeHint}>Type an amount</Text>;
   return (
     <View style={styles.pad}>
       {KEYS.map((key) => (
@@ -127,6 +133,43 @@ export function Keypad({
       ))}
     </View>
   );
+}
+
+/** Keypads on screen, newest last: only the newest (the screen in front) takes typing. */
+const typing: object[] = [];
+
+/** Digits, a point and Backspace from the computer's keyboard, in the browser only. */
+function useComputerKeys(onKey: (key: Key) => void) {
+  const latest = useRef(onKey);
+  latest.current = onKey;
+  useEffect(() => {
+    if (!isWeb) return;
+    const me = {};
+    typing.push(me);
+    const onDown = (e: KeyboardEvent) => {
+      if (typing[typing.length - 1] !== me) return;
+      // Not while a text field has focus (a search, an address), or with a shortcut.
+      const field = (e.target as HTMLElement | null)?.closest?.(
+        'input, textarea, [contenteditable]',
+      );
+      if (field || e.metaKey || e.ctrlKey || e.altKey) return;
+      const key: Key | null = /^[0-9]$/.test(e.key)
+        ? (e.key as Key)
+        : e.key === '.' || e.key === ','
+          ? '.'
+          : e.key === 'Backspace'
+            ? 'back'
+            : null;
+      if (!key) return;
+      e.preventDefault();
+      latest.current(key);
+    };
+    window.addEventListener('keydown', onDown);
+    return () => {
+      window.removeEventListener('keydown', onDown);
+      typing.splice(typing.indexOf(me), 1);
+    };
+  }, []);
 }
 
 /**
@@ -163,6 +206,12 @@ export function TypedAmount({
 }
 
 const useStyles = makeStyles((c) => ({
+  typeHint: {
+    marginTop: 10,
+    color: c.textSecondary,
+    fontSize: 13,
+    textAlign: 'center',
+  },
   chips: {
     flexDirection: 'row',
     gap: 8,

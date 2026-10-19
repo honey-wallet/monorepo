@@ -1,9 +1,11 @@
+// import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Keyboard, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { useErrorShake } from '@/components/motion/ErrorShake';
 import { MatrixLoader } from '@/components/motion/MatrixLoader';
@@ -52,6 +54,7 @@ import {
 } from '@/lib/mock-wallet';
 import { type Multisig, useActiveMultisig, useSigner } from '@/lib/multisig';
 import { goBackOr } from '@/lib/navigation';
+import { isWeb } from '@/lib/platform';
 import type { TradeMode } from '@/lib/settings';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
 import { showDemoToast } from '@/lib/toast';
@@ -66,15 +69,23 @@ import { makeStyles, useTheme } from '@/theme';
  * Each product is one short form; nothing executes yet, so final actions confirm with
  * a demo toast.
  */
-export default function TradeScreen() {
+/** In the browser extension Trade is Swap alone (AVAILABLE_TRADE_MODES). */
+export default function TradeRoute() {
+  // review: Swap is back in the extension, so no redirect to Home.
+  // return isWeb ? <Redirect href="/home" /> : <TradeScreen />;
+  return <TradeScreen />;
+}
+
+function TradeScreen() {
   const styles = useStyles();
-  const { wallet } = useWalletView();
   // `?mode=Perps` opens a specific product, e.g. from a deep link.
   const params = useLocalSearchParams<{ mode?: TradeMode }>();
+  // A shared wallet only swaps; products it can't use can't be opened, even by link.
   // Every chosen product has a tab; a shared wallet's Perps and Predict say it only swaps.
   // const tabs = useTradeModes();
   const tabs = useTradeTabs();
   const multisig = useActiveMultisig();
+  const { wallet } = useWalletView();
   const [picked, setPicked] = useState<TradeMode>(
     params.mode && tabs.includes(params.mode) ? params.mode : tabs[0],
   );
@@ -243,6 +254,8 @@ function SwapForm() {
   const route = bridging ? 'Across + Uniswap' : 'Uniswap';
   const networkCost = bridging ? '$1.20' : '$0.42';
   const [reviewing, setReviewing] = useState(false);
+  // In the browser the quote's details fold into one line, so the button stays in view.
+  const [detailsOpen, setDetailsOpen] = useState(false);
   // The form lives in the tab's scroll view, so nothing squeezes it: when the cards,
   // the quote details and the keypad don't fit above the home indicator, the keys
   // shrink by the overflow (to a floor), and grow back into any spare room.
@@ -315,8 +328,7 @@ function SwapForm() {
         }
       />
     );
-  }
-  */
+  }  */
 
   return (
     <View ref={root} style={styles.flex} onLayout={fit}>
@@ -446,16 +458,52 @@ function SwapForm() {
       </View>
 
       <PanelReveal open={quoted} style={styles.details}>
-        <DetailRow label="Route" value={route} />
-        <DetailRow label="Network cost" value={networkCost} />
-        <DetailRow label="Max slippage" value="Auto · 5.5%" />
-        <DetailRow label="Price impact" value="<0.01%" />
+        {isWeb ? (
+          // One line, the route and its cost; tap for the rest (review: in the popup the
+          // full panel pushed Review swap off the bottom).
+          <>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityState={{ expanded: detailsOpen }}
+              accessibilityLabel="Swap details"
+              scaleTo={1}
+              onPress={() => {
+                tap();
+                setDetailsOpen((v) => !v);
+              }}
+              style={styles.detailRow}
+            >
+              <Text style={styles.meta}>{route}</Text>
+              <View style={styles.detailSummary}>
+                <Text style={styles.detailValue}>{networkCost}</Text>
+                <AccordionChevron open={detailsOpen} size={11} color={c.textSecondary} />
+              </View>
+            </PressableScale>
+            <Accordion open={detailsOpen}>
+              <View style={styles.detailMore}>
+                <DetailRow label="Network cost" value={networkCost} />
+                <DetailRow label="Max slippage" value="Auto · 5.5%" />
+                <DetailRow label="Price impact" value="<0.01%" />
+              </View>
+            </Accordion>
+          </>
+        ) : (
+          <>
+            <DetailRow label="Route" value={route} />
+            <DetailRow label="Network cost" value={networkCost} />
+            <DetailRow label="Max slippage" value="Auto · 5.5%" />
+            <DetailRow label="Price impact" value="<0.01%" />
+          </>
+        )}
       </PanelReveal>
 
       {/* As in Uniswap: cards at the top, keypad and button at the bottom, open space
           between. When the quote details open there's less room, so the keys shrink to
           fit (down to a floor) rather than pushing the button off the bottom. */}
-      <View style={styles.flex} onLayout={(e) => setSpare(e.nativeEvent.layout.height)} />
+      {/* No open space in the browser: with no keypad there, it was just a gap (review). */}
+      {isWeb ? null : (
+        <View style={styles.flex} onLayout={(e) => setSpare(e.nativeEvent.layout.height)} />
+      )}
       <PercentChips
         balance={unit === 'usd' ? balance * price : balance}
         decimals={unit === 'usd' ? 2 : 8}
@@ -711,6 +759,15 @@ const useStyles = makeStyles((c) => ({
     gap: 6,
     borderRadius: 20,
     backgroundColor: c.card,
+  },
+  detailSummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  detailMore: {
+    paddingTop: 6,
+    gap: 6,
   },
   detailRow: {
     flexDirection: 'row',

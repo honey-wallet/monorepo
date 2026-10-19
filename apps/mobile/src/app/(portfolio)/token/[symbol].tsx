@@ -42,6 +42,7 @@ import {
   TOKEN_INFO,
   VAULTS,
 } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
@@ -128,7 +129,7 @@ export default function TokenScreen() {
               {
                 label: 'Hide token',
                 icon: 'eyeSlash',
-                onPress: () => showToast(`${symbol} hidden from your balance`),
+                onPress: () => showToast(`${symbol} hidden`),
               },
             ]}
           />
@@ -247,7 +248,8 @@ export default function TokenScreen() {
 
       {/* Earn banner */}
       {/* Glides with the Breakdown above as it opens and closes. */}
-      {vault && (
+      {/* review: no Savings in the extension. {vault && ( */}
+      {vault && !isWeb && (
         <Animated.View layout={RESIZE}>
           <PressableScale
             scaleTo={0.98}

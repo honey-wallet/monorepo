@@ -10,12 +10,14 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { HoneyMascot } from '@/components/logo/HoneyMascot';
+import { PasswordField } from '@/components/onboarding/PasswordField';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { ArrivedWallets } from '@/components/pairing/ArrivedWallets';
 import { CodeEntry } from '@/components/pairing/CodeEntry';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { QRCode } from '@/components/wallet/QRCode';
-import { confirmOwner } from '@/lib/auth';
+// import { confirmOwner } from '@/lib/auth';
+import { checkPassword } from '@/lib/auth';
 import { failure, success, tap } from '@/lib/haptics';
 import { completeStep, finishOnboarding } from '@/lib/onboarding';
 import { receiveWallet, sendWallet, startPairing, waitForPhone } from '@/lib/pair-phone';
@@ -29,6 +31,7 @@ type State =
   | { step: 'scan' }
   | { step: 'compare'; session: PairSession }
   | { step: 'receiving'; session: PairSession }
+  | { step: 'password'; session: PairSession }
   | { step: 'sending'; session: PairSession }
   | { step: 'review'; payload: PairPayload }
   | { step: 'error'; message: string };
@@ -117,12 +120,9 @@ function PairPhone() {
   /** Browser to phone: the password, then the wallet goes, encrypted for that phone. */
   const give = async (session: PairSession) => {
     tap();
-    if (!(await confirmOwner('Send your wallet to your phone'))) {
-      clearPairSession(session);
-      sessions.current.delete(session);
-      setOffer(startPairing(direction));
-      return;
-    }
+    // review: the password prompt opened as a second tray over this one. It's this
+    // tray's next step now (state 'password'), so `give` runs once it's checked.
+    // if (!(await confirmOwner('Send your wallet to your phone'))) return;
     setState({ step: 'sending', session });
     try {
       await sendWallet(offer, session);
@@ -225,7 +225,11 @@ function PairPhone() {
         </Text>
         <CodeEntry
           code={state.session.code}
-          onMatch={() => give(state.session)}
+          // onMatch={() => give(state.session)}
+          onMatch={() => {
+            tap();
+            setState({ step: 'password', session: state.session });
+          }}
           onGiveUp={() => {
             abort.current?.abort();
             clearPairSession(state.session);
@@ -239,6 +243,10 @@ function PairPhone() {
         />
       </SheetScreen>
     );
+  }
+
+  if (state.step === 'password') {
+    return <PasswordStep onConfirmed={() => give(state.session)} onCancel={restart} />;
   }
 
   if (state.step === 'sending') {
@@ -309,6 +317,62 @@ function messageOf(error: unknown) {
   return error instanceof Error ? error.message : 'Something went wrong. Try again.';
 }
 
+/** The code matched: the password, in the same tray, before the wallet leaves. */
+function PasswordStep({
+  onConfirmed,
+  onCancel,
+}: {
+  onConfirmed: () => void;
+  onCancel: () => void;
+}) {
+  const styles = useStyles();
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [wrong, setWrong] = useState(false);
+  const confirm = async () => {
+    if (!password || busy) return;
+    setBusy(true);
+    const ok = await checkPassword(password);
+    setBusy(false);
+    if (ok) onConfirmed();
+    else {
+      failure();
+      setWrong(true);
+    }
+  };
+  return (
+    <SheetScreen
+      title="Code matches"
+      footer={
+        <View style={styles.buttons}>
+          <PillButton label="Cancel" variant="secondary" onPress={onCancel} style={styles.flex} />
+          <PillButton
+            label={busy ? 'Checking…' : 'Send'}
+            disabled={!password || busy}
+            onPress={confirm}
+            style={styles.flex}
+          />
+        </View>
+      }
+    >
+      <Text style={styles.body}>Enter your password to send your wallet to your phone.</Text>
+      <View style={styles.passwordField}>
+        <PasswordField
+          autoFocus
+          value={password}
+          onChangeText={(t) => {
+            setPassword(t);
+            setWrong(false);
+          }}
+          onSubmit={confirm}
+          error={wrong}
+        />
+      </View>
+      {wrong ? <Text style={styles.wrong}>Wrong password.</Text> : null}
+    </SheetScreen>
+  );
+}
+
 const useStyles = makeStyles((c) => ({
   flex: {
     flex: 1,
@@ -320,6 +384,14 @@ const useStyles = makeStyles((c) => ({
   },
   centered: {
     textAlign: 'center',
+  },
+  passwordField: {
+    marginTop: 16,
+  },
+  wrong: {
+    marginTop: 8,
+    color: c.error,
+    fontSize: 14,
   },
   body: {
     color: c.textSecondary,

@@ -12,9 +12,12 @@ export const SHARED_WALLET_MODES: readonly TradeMode[] = ['Swap'];
 export function useTradeModes(): TradeMode[] {
   const multisig = useActiveMultisig();
   const { tradeTabs } = useSettings();
+  if (!AVAILABLE_TRADE_MODES.length) return [];
   if (multisig) return [...SHARED_WALLET_MODES];
   // Products switched off for now never show, even if chosen before.
   const shown = tradeTabs.filter((m) => AVAILABLE_TRADE_MODES.includes(m));
+  // Nothing at all in the browser (AVAILABLE_TRADE_MODES is empty there).
+  if (!AVAILABLE_TRADE_MODES.length) return [];
   return shown.length ? shown : ['Swap'];
 }
 
@@ -25,6 +28,8 @@ export function useTradeModes(): TradeMode[] {
 export function useTradeTabs(): TradeMode[] {
   const { tradeTabs } = useSettings();
   const shown = tradeTabs.filter((m) => AVAILABLE_TRADE_MODES.includes(m));
+  // Nothing at all in the browser (AVAILABLE_TRADE_MODES is empty there).
+  if (!AVAILABLE_TRADE_MODES.length) return [];
   return shown.length ? shown : ['Swap'];
 }
 

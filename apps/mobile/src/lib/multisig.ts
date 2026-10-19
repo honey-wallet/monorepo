@@ -713,7 +713,9 @@ function demoApproval(proposalId: string, m: Multisig) {
         : `“${what}” · ${approvalsLeft(store.get().multisigs[p.walletId] ?? m, p)} more to go · ${wallet}`;
     // A system notification when allowed, else an in-app toast.
     notify({ title, body, proposalId }).then((shown) => {
-      if (!shown) showToast(`${title}. ${body}`);
+      // review: shorter toast. Before: showToast(`${title}. ${body}`)
+      if (!shown)
+        showToast(outcome === 'executed' ? 'Transaction executed' : 'Transaction approved');
     });
   }, DEMO_APPROVAL_MS);
 }
@@ -769,7 +771,7 @@ export function startDemoRequests() {
       proposalId: proposal.id,
       approval: true,
     }).then((shown) => {
-      if (!shown) showToast(`Maya wants to send 25 USDC from ${walletName('family')}`);
+      if (!shown) showToast('New approval request');
     });
   }, DEMO_REQUEST_MS);
 }

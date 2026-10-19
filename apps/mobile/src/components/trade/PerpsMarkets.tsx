@@ -4,6 +4,7 @@ import { ScrollView, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import type { IconName } from '@/components/Icon';
 import { MenuDropdown } from '@/components/motion/MenuDropdown';
+import { PageDots } from '@/components/motion/PageDots';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
@@ -64,6 +65,7 @@ function DemoPerpsMarkets({
     ? ['All', 'Saved', ...PERP_CATEGORIES.slice(1)]
     : PERP_CATEGORIES;
   const [sort, setSort] = useState<PerpSort>('volume');
+  const [featuredPage, setFeaturedPage] = useState(0);
   const order = PERP_SORTS.find((o) => o.value === sort) ?? PERP_SORTS[0];
   const q = query.trim().toLowerCase();
   const markets = PERP_MARKETS.filter(
@@ -121,10 +123,20 @@ function DemoPerpsMarkets({
       {/* A few big markets as cards, after Polymarket's Featured row */}
       {category === 'All' && !q ? (
         <View style={styles.section}>
-          <Text style={styles.heading}>Featured</Text>
+          {/* Dots on the right say the row scrolls sideways (review: it wasn't obvious). */}
+          <View style={styles.featuredHeader}>
+            <Text style={styles.heading}>Featured</Text>
+            <PageDots count={FEATURED.length - 1} index={featuredPage} />
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            scrollEventThrottle={32}
+            onScroll={(e) => {
+              const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+              const max = Math.max(1, contentSize.width - layoutMeasurement.width);
+              setFeaturedPage(Math.round((contentOffset.x / max) * (FEATURED.length - 2)));
+            }}
             style={styles.chipScroll}
             contentContainerStyle={styles.featured}
           >
@@ -382,6 +394,11 @@ const useStyles = makeStyles((c) => ({
   heading: {
     color: c.textSecondary,
     fontSize: 15,
+  },
+  featuredHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   flex: {
     flex: 1,

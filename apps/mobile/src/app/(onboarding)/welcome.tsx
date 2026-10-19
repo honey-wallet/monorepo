@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { useId } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
@@ -20,6 +21,8 @@ export default function WelcomeScreen() {
   const insets = useSafeAreaInsets();
   const styles = useStyles();
   const c = useTheme();
+  // review: a fixed gradient id collides in the browser, where every SVG shares one page.
+  const heroId = `hero${useId().replace(/[^\w]/g, '')}`;
 
   const start = (mode: 'create' | 'restore') => {
     tap();
@@ -30,12 +33,14 @@ export default function WelcomeScreen() {
     <View style={styles.root}>
       <Svg width={width} height={height * 0.62} style={styles.backdrop}>
         <Defs>
-          <LinearGradient id="hero" x1="0" y1="0" x2="0" y2="1">
+          {/* <LinearGradient id="hero" x1="0" y1="0" x2="0" y2="1"> */}
+          <LinearGradient id={heroId} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={c.heroTop} />
             <Stop offset="1" stopColor={c.canvas} />
           </LinearGradient>
         </Defs>
-        <Rect width="100%" height="100%" fill="url(#hero)" />
+        {/* <Rect width="100%" height="100%" fill="url(#hero)" /> */}
+        <Rect width="100%" height="100%" fill={`url(#${heroId})`} />
       </Svg>
 
       <View style={styles.hero}>

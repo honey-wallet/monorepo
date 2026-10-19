@@ -279,7 +279,9 @@ export function WalletSettingsRow({ tradeTabs = false }: { tradeTabs?: boolean }
     <View style={styles.walletSettings}>
       {/* On Trade's settings: add, hide or reorder the product tabs. */}
       {/* Not on a shared wallet: it only ever has Swap. */}
-      {tradeTabs && !multisig && (
+      {/* No Trade tabs to pick in the browser (no trading there). */}
+      {/* Nor with Swap alone (the extension): nothing to add, hide or reorder. */}
+      {tradeTabs && !multisig && AVAILABLE_TRADE_MODES.length > 1 && (
         <SheetRow
           icon="trade"
           title="Trade tabs"
@@ -301,9 +303,26 @@ export function WalletSettingsRow({ tradeTabs = false }: { tradeTabs?: boolean }
 }
 
 /** Centred explanatory text under a sheet's title. */
-export function SheetText({ children }: { children: ReactNode }) {
+/**
+ * A line of grey text under a tray's title. Left-aligned like the title (review: centred
+ * text under a left title looked off); `center` for centred headers and footnotes.
+ */
+export function SheetText({
+  children,
+  center,
+  lead,
+}: {
+  children: ReactNode;
+  center?: boolean;
+  /** Right under the tray's title: closer to it (review: the gap read as a new section). */
+  lead?: boolean;
+}) {
   const styles = useStyles();
-  return <Text style={styles.text}>{children}</Text>;
+  return (
+    <Text style={[styles.text, center && styles.textCenter, lead && styles.textLead]}>
+      {children}
+    </Text>
+  );
 }
 
 type SheetRowProps = {
@@ -535,7 +554,14 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 15,
     lineHeight: 21,
+    // textAlign: 'center',
+  },
+  textCenter: {
     textAlign: 'center',
+  },
+  // The header row is 44 tall with 8 under it; pull the line up into that space.
+  textLead: {
+    marginTop: -10,
   },
   skeletonRow: {
     minHeight: 56,

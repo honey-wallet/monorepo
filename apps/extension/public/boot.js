@@ -13,7 +13,10 @@
   if (params.has('window') && typeof chrome !== 'undefined' && chrome.windows) {
     const fit = () => {
       const dw = 393 - window.innerWidth;
-      const dh = 852 - window.innerHeight;
+      // Approvals ask for the popup's height (h=600); Expand view for a phone's.
+      // const dh = 852 - window.innerHeight;
+      const height = Number(params.get('h')) || 852;
+      const dh = height - window.innerHeight;
       if (!dw && !dh) return;
       chrome.windows.getCurrent((w) => {
         if (w?.id === undefined || w.state !== 'normal') return;

@@ -1,6 +1,8 @@
+import * as Clipboard from 'expo-clipboard';
 import { router, useLocalSearchParams } from 'expo-router';
 import type { ReactNode } from 'react';
-import { Share, Text, View } from 'react-native';
+// import { Share, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextsReveal } from '@/components/motion/TextsReveal';
@@ -52,10 +54,16 @@ export default function ActivitySheet() {
   }
   const explorer = EXPLORER[detail.chain];
   const link = explorer.tx(detail.hash);
+  // Share copies the transaction hash (review): it's what people pass on, and the
+  // browser has no share sheet.
+  // const share = () => {
+  //   Share.share({
+  //     message: `${TITLE[activity.kind]} ${detail.amount} on ${detail.chain}\n${link}`,
+  //   }).catch(() => {});
+  // };
   const share = () => {
-    Share.share({
-      message: `${TITLE[activity.kind]} ${detail.amount} on ${detail.chain}\n${link}`,
-    }).catch(() => {});
+    tap();
+    void Clipboard.setStringAsync(detail.hash).then(() => showToast('Hash copied'));
   };
 
   return (
@@ -137,7 +145,7 @@ export default function ActivitySheet() {
           hitSlop={8}
           onPress={() => {
             tap();
-            showToast('Reported. It will be hidden from Activity.');
+            showToast('Reported as spam');
           }}
           style={styles.report}
         >

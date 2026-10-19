@@ -56,7 +56,7 @@ export default function MyQRSheet() {
   if (!chain && !multisig && list.length > 1)
     return (
       <SheetScreen title="Which network?">
-        <SheetText>Each network has its own address.</SheetText>
+        <SheetText lead>Each network has its own address.</SheetText>
         <View style={styles.picker}>
           <ChainPicker entries={list} onPick={(family) => router.setParams({ chain: family })} />
         </View>
@@ -168,8 +168,10 @@ const useStyles = makeStyles((c) => ({
   top: {
     alignItems: 'center',
   },
+  // review: extra space above the list; the same gap as Receive's.
   picker: {
-    marginTop: 16,
+    // marginTop: 16,
+    marginTop: 8,
   },
   handle: {
     color: c.text,
@@ -219,6 +221,8 @@ const useStyles = makeStyles((c) => ({
   networksText: {
     color: c.text,
     fontSize: 15,
+    // A two-line warning (Bitcoin, Solana…) stays centred under the code.
+    textAlign: 'center',
   },
   networksRow: {
     marginTop: 16,

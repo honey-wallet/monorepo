@@ -50,11 +50,15 @@ export function ArrivedWallets({ payload }: { payload: PairPayload }) {
 
 const useStyles = makeStyles((c) => ({
   card: {
-    marginTop: 8,
+    // review: room under the title's line, like the other steps' content.
+    // marginTop: 8,
+    marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: c.card,
+    // review: in dark a card is the sheet's own colour; raise it so it shows.
+    // backgroundColor: c.card,
+    backgroundColor: c.card === c.sheet ? c.raised : c.card,
   },
   row: {
     flexDirection: 'row',

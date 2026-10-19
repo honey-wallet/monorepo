@@ -181,7 +181,7 @@ export function completeStep(step: SetupStep) {
   const done = [...state.done, step];
   const finished = doneCount({ method: state.method, done }) === setupSteps(state.method).length;
   onboarding.set({ ...state, done, credit: finished ? SETUP_REWARD_USD : state.credit });
-  if (finished) showToast(`$${SETUP_REWARD_USD} off network fees unlocked`);
+  if (finished) showToast(`$${SETUP_REWARD_USD} fee credit unlocked`);
 }
 
 /**

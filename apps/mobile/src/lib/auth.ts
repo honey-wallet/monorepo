@@ -2,6 +2,10 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import { AppState } from 'react-native';
 
 let prompts = 0;
+
+/** Browser only (auth.web.ts): the phone checks its owner with Face ID, not a password. */
+export const checkPassword = async (_password: string) => false;
+
 export const isAuthenticatingOwner = () => prompts > 0;
 
 /** Authenticate with biometrics or the device passcode; backgrounding cancels the result.

@@ -1,6 +1,6 @@
 import { type Href, Redirect, router, useLocalSearchParams } from 'expo-router';
 import { type ReactNode, useRef, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Icon, type IconName } from '@/components/Icon';
@@ -33,6 +33,7 @@ export default function GetStartedSheet() {
   const { mode = 'create' } = useLocalSearchParams<{ mode?: 'create' | 'restore' }>();
   const restore = mode === 'restore';
   const styles = useStyles();
+  const compact = useCompact();
   const c = useTheme();
   const [signingIn, setSigningIn] = useState<'apple' | 'google' | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,12 +79,14 @@ export default function GetStartedSheet() {
 
   return (
     <SheetScreen>
-      <Text style={styles.title}>{restore ? 'Use an existing wallet' : 'Create a new wallet'}</Text>
-      <SheetText>
+      <Text style={[styles.title, compact && styles.titleCompact]}>
+        {restore ? 'Use an existing wallet' : 'Create a new wallet'}
+      </Text>
+      <SheetText center>
         {restore ? 'Sign in the way you created it.' : 'No password or phrase to remember.'}
       </SheetText>
 
-      <Animated.View style={[styles.buttons, shaken]}>
+      <Animated.View style={[styles.buttons, compact && styles.buttonsCompact, shaken]}>
         <AuthButton
           label="Continue with Apple"
           icon={<AppleGlyph color={c.canvas} />}
@@ -116,7 +119,7 @@ export default function GetStartedSheet() {
       <LabeledRule label="or" />
 
       {restore ? (
-        <View style={styles.buttons}>
+        <View style={[styles.buttons, compact && styles.buttonsCompact]}>
           {/* In a browser, the easiest way in is the wallet already on the phone. */}
           {isWeb ? (
             <MoreRow
@@ -233,6 +236,7 @@ function AuthButton({
   onPress: () => void;
 }) {
   const styles = useStyles();
+  const compact = useCompact();
   const c = useTheme();
   const inverse = tone === 'inverse';
   return (
@@ -241,7 +245,12 @@ function AuthButton({
       accessibilityState={{ disabled, busy }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.auth, inverse && styles.authInverse, disabled && !busy && styles.dim]}
+      style={[
+        styles.auth,
+        compact && styles.authCompact,
+        inverse && styles.authInverse,
+        disabled && !busy && styles.dim,
+      ]}
     >
       <View style={styles.authIcon}>
         {busy ? <ActivityIndicator color={inverse ? c.canvas : c.text} /> : icon}
@@ -284,6 +293,9 @@ function MoreRow({
   );
 }
 
+/** Short windows (the extension's 600px popup): every way in still fits, no scrolling. */
+const useCompact = () => useWindowDimensions().height < 700;
+
 /** Google's four-colour G. */
 function GoogleGlyph() {
   return (
@@ -325,6 +337,13 @@ const useStyles = makeStyles((c) => ({
     marginTop: 20,
     gap: 10,
   },
+  buttonsCompact: {
+    marginTop: 12,
+    gap: 8,
+  },
+  titleCompact: {
+    marginTop: 0,
+  },
   otherWays: {
     gap: 10,
   },
@@ -347,12 +366,16 @@ const useStyles = makeStyles((c) => ({
   },
   auth: {
     height: 52,
+    minHeight: 44,
     borderRadius: 26,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     backgroundColor: c.raised,
+  },
+  authCompact: {
+    height: 44,
   },
   authInverse: {
     backgroundColor: c.text,

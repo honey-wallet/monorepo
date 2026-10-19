@@ -8,6 +8,7 @@ import { PressableRow } from '@/components/motion/PressableRow';
 import { EmptyState, ScreenHeader } from '@/components/wallet/parts';
 import { SearchField } from '@/components/wallet/SearchField';
 import { tap } from '@/lib/haptics';
+import { isWeb } from '@/lib/platform';
 import { makeStyles, useTheme } from '@/theme';
 
 const FAQ: { q: string; a: string }[] = [
@@ -37,7 +38,8 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Which chains are supported?',
-    a: 'Honey supports Bitcoin, Ethereum, Solana, Tron and the XRP Ledger, with more on the way. Switch networks from the network picker on the home screen.',
+    // a: 'Honey supports Bitcoin, Ethereum, Solana, Tron and the XRP Ledger, with more on the way. Switch networks from the network picker on the home screen.',
+    a: 'Honey supports Bitcoin, Solana, and Ethereum, Base and other EVM networks, with more on the way. Switch networks from the network picker on the home screen.',
   },
   {
     q: 'How do I contact support?',
@@ -57,6 +59,26 @@ export default function HelpScreen() {
   const results = q
     ? FAQ.filter((f) => f.q.toLowerCase().includes(q) || f.a.toLowerCase().includes(q))
     : FAQ;
+
+  const contact = (
+    <PressableRow
+      accessibilityRole="button"
+      onPress={() => {
+        tap();
+        router.push('/contact');
+      }}
+      style={[styles.contact, isWeb && styles.contactPinned]}
+    >
+      <View style={styles.contactIcon}>
+        <Icon name="chat" size={18} color={c.accentText} />
+      </View>
+      <View style={styles.flex}>
+        <Text style={styles.contactTitle}>Still need help?</Text>
+        <Text style={styles.contactHint}>Contact us</Text>
+      </View>
+      <Icon name="chevronRight" size={15} color={c.textSecondary} />
+    </PressableRow>
+  );
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
@@ -103,24 +125,11 @@ export default function HelpScreen() {
           })
         )}
 
-        <PressableRow
-          accessibilityRole="button"
-          onPress={() => {
-            tap();
-            router.push('/contact');
-          }}
-          style={styles.contact}
-        >
-          <View style={styles.contactIcon}>
-            <Icon name="chat" size={18} color={c.accentText} />
-          </View>
-          <View style={styles.flex}>
-            <Text style={styles.contactTitle}>Still need help?</Text>
-            <Text style={styles.contactHint}>Contact us</Text>
-          </View>
-          <Icon name="chevronRight" size={15} color={c.textSecondary} />
-        </PressableRow>
+        {isWeb ? null : contact}
       </ScrollView>
+      {/* review: in the 600px popup the FAQ list pushed the way to a person below the
+      fold; there it stays pinned under the list. */}
+      {isWeb ? contact : null}
     </View>
   );
 }
@@ -175,6 +184,12 @@ const useStyles = makeStyles((c) => ({
     gap: 14,
     paddingVertical: 12,
     paddingHorizontal: 20,
+  },
+  contactPinned: {
+    marginTop: 0,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: c.divider,
   },
   contactIcon: {
     width: 40,
