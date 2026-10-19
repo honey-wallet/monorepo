@@ -46,7 +46,7 @@ export default function AppIconSheet() {
     tap();
     try {
       setSelected(await changeAppIcon(name));
-      showToast(`${label} app icon selected`);
+      showToast('App icon changed');
     } catch (error) {
       console.error('Unable to change app icon', error);
       setError('Couldn’t change the app icon. Please try again.');

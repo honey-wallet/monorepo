@@ -12,7 +12,7 @@ import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { finishOnboarding } from '@/lib/onboarding';
 import { HERE, isWeb } from '@/lib/platform';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { importMnemonic, importPrivateKey, isValidMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
@@ -101,7 +101,7 @@ export default function ImportWalletSheet() {
     tap();
     const text = await Clipboard.getStringAsync();
     if (!text) {
-      showToast('Clipboard is empty');
+      showErrorToast('Clipboard is empty');
       return;
     }
     if (isKey) setKeyText(text.trim());
@@ -171,7 +171,7 @@ export default function ImportWalletSheet() {
       addVaultWallet(account);
     } catch (error) {
       setBusy(false);
-      showToast(error instanceof Error ? error.message : 'Couldn’t import this wallet');
+      showErrorToast(error instanceof Error ? error.message : 'Couldn’t import wallet');
       return;
     }
     // From onboarding, the imported wallet is the wallet: open it, money and all.

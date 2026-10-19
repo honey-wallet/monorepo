@@ -19,7 +19,7 @@ import {
 import { tap } from '@/lib/haptics';
 import { completeStep } from '@/lib/onboarding';
 import { updateSettings, useSettings } from '@/lib/settings';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { hasPrimaryMnemonic } from '@/lib/vault';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
@@ -73,9 +73,9 @@ export default function CloudBackupScreen() {
       setEditing(false);
       setPassword('');
       setConfirm('');
-      showToast(`Primary phrase backup verified`);
+      showToast('Backup verified');
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Couldn’t make the backup');
+      showErrorToast(error instanceof Error ? error.message : 'Couldn’t back up');
     } finally {
       setBusy(false);
     }

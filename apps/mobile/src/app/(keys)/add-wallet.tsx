@@ -9,7 +9,7 @@ import { tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 import { HERE, isWeb } from '@/lib/platform';
 import { getProfile } from '@/lib/profile';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { createAccount } from '@/lib/vault';
 import { addVaultWallet, nextWalletLabel } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
@@ -37,7 +37,7 @@ export default function AddWalletSheet() {
       closeSheet();
     } catch (error) {
       console.warn('Couldn’t create wallet', error);
-      showToast('Couldn’t create a wallet. Try again');
+      showErrorToast('Couldn’t create wallet');
     }
   };
 

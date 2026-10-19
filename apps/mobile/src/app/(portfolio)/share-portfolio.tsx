@@ -28,7 +28,7 @@ import {
   series,
 } from '@/lib/mock-wallet';
 import { useProfile } from '@/lib/profile';
-import { showToast } from '@/lib/toast';
+import { showErrorToast } from '@/lib/toast';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -63,7 +63,7 @@ export default function SharePortfolioSheet() {
     setSharing(true);
     try {
       if (!(await Sharing.isAvailableAsync())) {
-        showToast("Sharing isn't available on this device");
+        showErrorToast('Sharing unavailable');
         return;
       }
       const uri = await captureRef(card, { format: 'png', quality: 1 });
@@ -73,7 +73,7 @@ export default function SharePortfolioSheet() {
         UTI: 'public.png',
       });
     } catch {
-      showToast("Couldn't create the image. Try again.");
+      showErrorToast('Couldn’t create image');
     } finally {
       setSharing(false);
     }

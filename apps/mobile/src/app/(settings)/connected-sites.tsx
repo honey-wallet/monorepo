@@ -10,7 +10,7 @@ import { connectedSites, disconnectSite } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { hostOf } from '@/lib/multisig';
 import { isWeb } from '@/lib/platform';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { isWalletConnectUri, pairWalletConnect } from '@/lib/walletconnect';
 import { makeStyles } from '@/theme';
 
@@ -31,7 +31,7 @@ export default function ConnectedSitesSheet() {
     tap();
     await disconnectSite(site.origin);
     setSites((prev) => prev?.filter((s) => s.origin !== site.origin) ?? null);
-    showToast(`Disconnected ${hostOf(site.origin)}`);
+    showToast('Site disconnected');
   };
 
   // A desktop site's WalletConnect link, copied ("Copy link" under its QR code).
@@ -39,13 +39,11 @@ export default function ConnectedSitesSheet() {
     tap();
     const text = (await Clipboard.getStringAsync()).trim();
     if (!isWalletConnectUri(text)) {
-      showToast('Copy the site’s WalletConnect link first');
+      showErrorToast('Copy the site’s link first');
       return;
     }
-    showToast('Connecting to the site…');
-    pairWalletConnect(text).catch(() =>
-      showToast('That link expired. Get a new one from the site'),
-    );
+    showToast('Connecting…');
+    pairWalletConnect(text).catch(() => showErrorToast('Link expired'));
   };
 
   return (

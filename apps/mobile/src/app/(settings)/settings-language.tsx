@@ -14,7 +14,7 @@ export default function LanguageSheet() {
     tap();
     if (next !== language) {
       updateSettings({ language: next });
-      showToast(`Language set to ${next}`);
+      showToast('Language changed');
     }
     closeSheet();
   };

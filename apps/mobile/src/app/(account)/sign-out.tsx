@@ -10,7 +10,7 @@ import { failure, tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 import { signOut } from '@/lib/onboarding';
 import { HERE } from '@/lib/platform';
-import { showToast } from '@/lib/toast';
+import { showErrorToast } from '@/lib/toast';
 import { loadAccounts, type VaultAccount } from '@/lib/vault';
 import { makeStyles, useTheme } from '@/theme';
 
@@ -31,7 +31,7 @@ export default function SignOutSheet() {
   useEffect(() => {
     loadAccounts()
       .then(setAccounts)
-      .catch(() => showToast('Couldn’t load wallets. Reopen this screen'));
+      .catch(() => showErrorToast('Couldn’t load wallets'));
   }, []);
   const ready = accounts?.every((a) => confirmed.includes(a.id));
   // Nothing stored on this phone (signed in with Apple, Google or email): no ticks needed.
@@ -50,7 +50,7 @@ export default function SignOutSheet() {
     } catch {
       failure();
       setBusy(false);
-      showToast('Couldn’t sign out. Try again.');
+      showErrorToast('Couldn’t sign out');
     }
   };
 

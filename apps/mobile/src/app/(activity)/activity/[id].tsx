@@ -63,7 +63,7 @@ export default function ActivitySheet() {
   // };
   const share = () => {
     tap();
-    void Clipboard.setStringAsync(detail.hash).then(() => showToast('Transaction hash copied'));
+    void Clipboard.setStringAsync(detail.hash).then(() => showToast('Hash copied'));
   };
 
   return (
@@ -145,7 +145,7 @@ export default function ActivitySheet() {
           hitSlop={8}
           onPress={() => {
             tap();
-            showToast('Reported. It will be hidden from Activity.');
+            showToast('Reported as spam');
           }}
           style={styles.report}
         >

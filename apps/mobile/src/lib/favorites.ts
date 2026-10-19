@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { FAVORITES } from '@/lib/mock-wallet';
-import { showToast } from '@/lib/toast';
+import { showErrorToast } from '@/lib/toast';
 
 /** Favourites fill one scrolling row on Search, so they stay a short list. */
 export const MAX_FAVORITES = 5;
@@ -17,7 +17,7 @@ function set(next: string[]) {
 export function toggleFavorite(symbol: string) {
   if (favorites.includes(symbol)) return set(favorites.filter((s) => s !== symbol));
   if (favorites.length >= MAX_FAVORITES) {
-    showToast(`You can keep up to ${MAX_FAVORITES} favorites. Remove one first.`);
+    showErrorToast(`Max ${MAX_FAVORITES} favorites`);
     return;
   }
   set([...favorites, symbol]);

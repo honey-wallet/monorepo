@@ -191,7 +191,7 @@ function RequestRow({ proposal, multisig }: { proposal: Proposal; multisig: Mult
             onPress={() => {
               tap();
               reject(proposal.id);
-              showToast('Rejected');
+              showToast('Transaction rejected');
             }}
             style={styles.chip}
           >
