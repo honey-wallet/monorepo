@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-18T22:29:55.300041+00:00",
+  "scope": "Local Foundry EVM with real Safe 1.4.1 and EntryPoint 0.7 source; no public-chain deployment or bundler admission",
+  "command": "forge test --offline --json",
+  "foundryVersion": "1.8.0",
+  "solcVersion": "0.8.28",
+  "evmTarget": "cancun",
+  "testCount": 27,
+  "allPassed": true,
+  "sourcesSha256": {
+    "contracts/bunk-evm/dependencies.lock.json": "8cb217abea257f982b4a29c3c8bb7ffa9ee895e3705b2b794a1291da4fad0de2",
+    "contracts/bunk-evm/foundry.toml": "6b5bc098a76e23bee591c9b73ce2307e3296d17be638424a60275bbb3d264f1e",
+    "contracts/bunk-evm/scripts/dependencies.py": "65da40222046a3e8e25fdacdbb8d0698fe143071cb152930ac1b8819e0ad438d",
+    "contracts/bunk-evm/src/BunkFactory.sol": "7879991c827db32440d6c17b71b36098a4674b6cc30227cee02c686b8aa9fb61",
+    "contracts/bunk-evm/src/BunkModule.sol": "f5c8c8c3ee1c534adb43465d4bbdbaa43212cf63c34fc774fad26f31115b02e4",
+    "contracts/bunk-evm/src/BunkPaymaster.sol": "2e42598804a330e94c88f4aa274b138593a1f16cbf5dd897d8d4e62d7de6df6f",
+    "contracts/bunk-evm/src/BunkSetup.sol": "3ac1edcc43353d1c3b34e63c0419699e61e6cfcf03276890988349d6d6b303ca",
+    "contracts/bunk-evm/test/BunkIntegration.t.sol": "9af753cf7efed9efab469ef7ee342322e8dbb1c3a59fdbd06f276577a9428e97"
+  },
+  "contractSizes": {
+    "BunkFactory": {
+      "runtimeBytes": 7744,
+      "creationBytes": 17571
+    },
+    "BunkModule": {
+      "runtimeBytes": 5987,
+      "creationBytes": 7113
+    },
+    "BunkPaymaster": {
+      "runtimeBytes": 6742,
+      "creationBytes": 8598
+    },
+    "BunkSetup": {
+      "runtimeBytes": 488,
+      "creationBytes": 644
+    }
+  },
+  "tests": [
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testBootstrapAndCurrentKeyCannotUseOrdinarySafeSignatures()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testBootstrapCannotCrossChainOrChangeCommitmentOrAccount()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testConflictingOwnerInBundleRevertsWholeBundle()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testDeploymentUsesPinnedVectorsAndClosesBootstrap()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testDirectAndSpoofedEntryPointExecutionFail()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testDownstreamRevertRollsBackActionsButNotOwnerConsumption()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testExecutionOutOfGasKeepsRotationAndCanRecover()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testFactoryStakeLifecycleHasNoWalletAuthority()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testFuzzBadOwnerCannotSpend(uint256)",
+      "status": "Success",
+      "kind": "fuzz",
+      "runs": 256
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testHighSAndChangedGasOrNextKeyCannotAuthorize()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testHoneySponsorshipPaysForAnUnfundedWallet()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testInvalidSignatureAndExpiredWindowRollBackValidation()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testMalformedSignaturesAndOversizedCallBatchesFailBeforeConsumption()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testMultipleSequentialOwnersInOneBundle()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testNoPrefundRollsBackOwnerConsumption()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testOldOwnerCommitmentsCannotBeReactivated()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testOwnerOperationCannotCrossChainOrAccount()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testRealEntryPointExecutesAndConsumesOwnerExactlyOnce()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testRevertedSponsoredCallStillPaysAndConsumesOwner()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testSameAddressAcrossChainsHasDifferentOwnerCommitments()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testSelfAdministrationAndAlternateSafePathsFail()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testSponsorEpochRevokesOldGrantsEvenWithSameSigner()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testSponsoredCounterfactualDeploymentAndFirstOperation()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testSponsorshipAdminAndValidationAreRestricted()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testSponsorshipBudgetAndPerOperationCapAreEnforced()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testSponsorshipCannotBeChangedOrReused()",
+      "status": "Success",
+      "kind": "unit"
+    },
+    {
+      "suite": "test/BunkIntegration.t.sol:BunkIntegrationTest",
+      "name": "testUnauthorizedFirstClaimAndReinitializationFail()",
+      "status": "Success",
+      "kind": "unit"
+    }
+  ],
+  "remainingGates": [
+    "Real canonical bundler validation and stake/trace acceptance",
+    "Bootstrap/client signing and independent configuration verification",
+    "Recovery and device-loss restoration",
+    "Independent security review",
+    "Public-chain deployment matrix and beta acceptance"
+  ]
+}

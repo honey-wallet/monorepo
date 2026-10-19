@@ -89,13 +89,17 @@ export type Answer =
 /** Messages only Honey's own pages may send the worker. */
 export type AppMessage =
   | { type: 'honey:next' }
+  /** UI claims a still-pending request after owner confirmation, before side effects. */
+  | { type: 'honey:claim'; id: string }
   | { type: 'honey:answer'; answer: Answer }
   | { type: 'honey:sites' }
   | { type: 'honey:disconnect'; origin: string }
   /** Sign out or reset: disconnect every site. */
   | { type: 'honey:forget' }
   /** Keeps the worker awake while the approval window is open. */
-  | { type: 'honey:ping' };
+  | { type: 'honey:ping' }
+  /** The popup's Expand view: open Honey's phone-sized window at this route. */
+  | { type: 'honey:expand'; route: string };
 
 export const STORAGE = {
   sites: 'honey.sites',

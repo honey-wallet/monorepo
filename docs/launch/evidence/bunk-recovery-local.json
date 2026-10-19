@@ -1,0 +1,169 @@
+{
+  "scope": "Test-only standalone recovery candidate; not Safe/client integration or production acceptance",
+  "compiler": "solc 0.8.28, Cancun, optimizer 200",
+  "tests": {
+    "testAllOrdinaryLeavesCanBeReservedWithoutBurningRecovery()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 16632418
+        }
+      }
+    },
+    "testCannotConsumeBeforeSignedStart()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 624584
+        }
+      }
+    },
+    "testDeadlineBoundaryExecutesAtDeadline()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 398967
+        }
+      }
+    },
+    "testEnvelopeCannotExceedSignedLiabilityOrSwapPaymaster()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 415533
+        }
+      }
+    },
+    "testEnvelopeKeyCannotChangeOwnerApprovedScope()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 243968
+        }
+      }
+    },
+    "testEnvelopeKeyCannotLowerGasOrChangeCallsOrNonce()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 786399
+        }
+      }
+    },
+    "testExpiredGrantRenewalRotatesWithoutExecutingExpiredAction()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 811775
+        }
+      }
+    },
+    "testFactoryFrontRunCanRemoveInitCodeWithoutNewOwnerSignature()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 4772513
+        }
+      }
+    },
+    "testFeeRetryUsesOneOwnerSignatureAndFreshExactEnvelope()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 647543
+        }
+      }
+    },
+    "testFuzzCertificateMutationRejected(uint8)": {
+      "status": "Success",
+      "kind": {
+        "Fuzz": {
+          "first_case": {
+            "gas": 247745,
+            "stipend": 21192
+          },
+          "runs": 256,
+          "mean_gas": 231509,
+          "median_gas": 227410,
+          "failed_corpus_replays": 0
+        }
+      }
+    },
+    "testLiveRevertConsumesOwner()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 428356
+        }
+      }
+    },
+    "testNextOwnerActsAfterExpiredRecovery()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 3698700
+        }
+      }
+    },
+    "testReservedLeafRecoversOnlyAfterExpiryWithIdenticalBytes()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 670517
+        }
+      }
+    },
+    "testReservedLeafRejectsExpiringGrant()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 358011
+        }
+      }
+    },
+    "testReservedLeafRejectsVariableFeesEvenWithinBudget()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 230632
+        }
+      }
+    },
+    "testRevokedSponsorshipFallsBackWithinSignedGasBudget()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 742094
+        }
+      }
+    },
+    "testSignatureDomainRejectsDifferentChain()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 243987
+        }
+      }
+    },
+    "testWrongMerkleLeafCannotUseAnotherProof()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 251409
+        }
+      }
+    }
+  },
+  "existingSafeTestsPassed": 27,
+  "runtimeBytes": 8720,
+  "sourcesSha256": {
+    "contracts/bunk-evm/test/recovery/RecoveryIntent.t.sol": "98f2582c2a6ced2ccc71769b2e0164498bc8a8516b822adc4ef4d135392a1bdf",
+    "contracts/bunk-evm/test/recovery/RecoveryIntentAccount.sol": "6fd5833207dd5672ebf51a63f63b34ebaaed3f12bcf9b4bcacecca8eaf357d7e"
+  },
+  "realBundlerEvidence": "bunk-bundler-local.json#experimentalRecovery",
+  "limitations": [
+    "No Safe integration or derivation/client/journal implementation",
+    "No production provider/network certification",
+    "Pending certificate backup and concurrent-device allocation unresolved"
+  ]
+}

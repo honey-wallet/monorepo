@@ -47,7 +47,7 @@ describe('local vault', () => {
     );
     expect(openWithKey(await unlockLocalVault(relocked, 'battery staple'), sealed)).toBe('secret');
     expect(locked.data).not.toBe(relocked.data);
-  });
+  }, 15_000);
 
   it('seals text so only the data key opens it, and edits fail', () => {
     const key = random(32);

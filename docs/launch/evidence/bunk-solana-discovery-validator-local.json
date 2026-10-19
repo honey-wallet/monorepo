@@ -1,0 +1,1108 @@
+{
+  "scope": "Isolated loopback Agave validator, public scalar fixture keys and immutable local deployment; not public-provider, phrase-client, app or production certification",
+  "validatorVersion": {
+    "feature-set": 1620780344,
+    "solana-core": "3.1.11"
+  },
+  "genesis": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S",
+  "genesisHex": "b390d871e50c314446f06d6f3038c2a019c7416223d2a331154a2fd354e87421",
+  "program": "7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4",
+  "programData": "CknGqaCYEqZuwwgnUQ2JmbPBgWStLWVyFTvBpsMBRnbK",
+  "immutable": true,
+  "artifactSha256": "b18a1904e74dba4297fcc274350c79497dcad7355a2e7280895f1bc6647e9107",
+  "artifactBytes": 122112,
+  "deployedCodeMatched": true,
+  "fixtureArtifactPreserved": "b34079503c5cf62e67171010d43622dd1c505e44e780fe915af6967daedb4b69",
+  "sourcesSha256": {
+    "Cargo.lock": "158d2e3ce3cdd23bb09751b1b63252d42e9c57d7ee1a85278a1292d8b8d00a8d",
+    "Cargo.toml": "566042715d33b74b1d5835f5ca7cb312cdda25e68d20cca69cb6a3540a6c9a6f",
+    "build.rs": "e3356201be98c8fca53f5690e73c6a530b24d52414db77acd440ced00661e35e",
+    "scripts/acceptance.py": "3b5340210a110eee26557539e4d5d408bca9699d1476889c1bb1d1b002020afe",
+    "scripts/client.py": "84c341fbfd21cbe3d1fd891e4944d63cde3f2f8dcce06f98ef2ed7c51aea54df",
+    "scripts/validator.py": "089fe3de21753c8fc2de0da54d7d8f2c122cc8c308fed67ca82798f37228ac2b",
+    "scripts/vectors.py": "6d67af09ad3850f1707142f37911d07a6ec3702d0c76010c0cecfdad60461831",
+    "src/auth.rs": "bb821946e2ad5390bb533023eff8a5b21fc9643d2ecd1f732a461337fffd22dc",
+    "src/lib.rs": "121d80516f5aed1e3e79c1f749839db0458e2c703cfaffbcb3699f85cebacffc",
+    "src/state.rs": "444c8fe7cadb3203de5da01de869aacbd58589fd8ca8c4017a03fb718178e92b",
+    "tests/fixtures/v1.json": "06239607fd1dcd82fa6e7f4138fd3b871d2b41f8a3bb5e537d0eeada5f0b80a3",
+    "tests/invoker/Cargo.toml": "d1bfb4d5e29db221a0782b5ade76468cb55206104f55d2c90fe30ce63c3b0b07",
+    "tests/invoker/src/lib.rs": "c1aeabd1b94d7ac862e6052e84a83f38240c67cedd27ec338f925a9b7c3cfcda",
+    "tests/runtime.rs": "7457d6c0282548f0c7e6b905b726955e68dbe264392005fc5f309dfc8a9d1d29"
+  },
+  "sourcesRechecked": true,
+  "wallet": "GGneKDs1cAGkDnME16KpkmFbeEvAM3mGnkVyyQWSoNyS",
+  "finalState": {
+    "epoch": 1,
+    "index": 2,
+    "nonce": 3,
+    "owner": "5c29b78f10a35a49a6231d08ee840a04bcc3a37a4f9d46df327dec56b8a9b7c9",
+    "recovery": "72456720412037a6b339f884ce6d91bb4cc163a7dc3e4c58c658e6c2097b92a2",
+    "lamports": 18000000
+  },
+  "receipts": [
+    {
+      "case": "prefund undeployed PDA",
+      "signature": "5mke7FiiDEk3ZYyeAvNTKib8HJbuxF1stLtjW77Zx9uhAxLbhim7VUy1qYf4922xZdJiiFnDvuPW7NTpLZ1fiXsn",
+      "slot": 195,
+      "error": null,
+      "blockhash": "HLmhpCScLGrYyZZPW3WdG4NtKDHJwHxEGcf9VioFSfCX",
+      "wireBytes": 215,
+      "computeUnits": 150,
+      "logs": [
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "case": "wrong network initialization",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 2150 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "initialize prefunded wallet",
+      "signature": "4YDAkBQWVBAcwXct6H1mUzmWuR7VJfGsUuvgEJdTuKaPQPJ9pVSEQmhfwnzs3CqHCQUiaX2XUM16WyapNbU7bL8p",
+      "slot": 229,
+      "error": null,
+      "blockhash": "37t98AZvJjo8pb5bqa1n5GTXKDyoH8CKWBaVAgnwC4NE",
+      "wireBytes": 649,
+      "computeUnits": 15987,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 15987 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "fund forbidden successor-payer fixtures",
+      "signature": "5QBKT73huh7RcSrd4dk89gbadiEP7smrMwRponiTXmpYjuhWwf45ChQVQs6N6BieCQYRLguuhTr5xWUcTWqaMVS6",
+      "slot": 262,
+      "error": null,
+      "blockhash": "4PB4sapJ54rVgye8TZrps21MQJXMt3GA8UeKV4Lcrqnt",
+      "wireBytes": 313,
+      "computeUnits": 450,
+      "logs": [
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "case": "successor authority 4 as transport payer",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 6586 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "successor authority 5 as transport payer",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 6947 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "successor authority 6 as transport payer",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 6952 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "invalid Ed25519 signature",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 2
+          }
+        ]
+      },
+      "logs": []
+    },
+    {
+      "case": "later instruction rollback",
+      "signature": "4RjLjEoHLS5u3yhEHqCPNLZmN5xCVdBnP77Fx5nY9HwWQeJo6EDFNEUgiyqMJqUvDgbeUVayJjVKJbLw236ZKkmF",
+      "slot": 299,
+      "error": {
+        "InstructionError": [
+          2,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "blockhash": "GjZkvJiUzc71nPeLBA1XTBsonu66fBUMrFnivH6KV2Zg",
+      "wireBytes": 639,
+      "computeUnits": 20883,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 20733 of 206000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Transfer: insufficient lamports 499999999096148400, need 18446744073709551615",
+        "Program 11111111111111111111111111111111 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "identical native authorization retry",
+      "signature": "2Q34KBDW5fYJED57GhHGWVEUkFHoGAfTM3VagpStDqdKP7mvsuQU5shENHduDngCmbqoCq43kRiYpdWTXpWiyB2u",
+      "slot": 335,
+      "error": null,
+      "blockhash": "DuwrVHsYqYR5NXZcUMevUVA2QLXnXehaFSGjLzbDLxy2",
+      "wireBytes": 622,
+      "computeUnits": 20733,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 20733 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "pre-signed independent recovery after owner advance",
+      "signature": "5b5cu5qAEjf81U5SeMDPenxam9Y1bEHuaanHmqoWtkFWFPpyP1dbQREA8QGkLfbCXTJUnbbPR4D7wYLY8Q59wAhB",
+      "slot": 371,
+      "error": null,
+      "blockhash": "5yCzj6TUBy9NBydZ8pNmgYeGzPSwNDTVp3dHokhduuw4",
+      "wireBytes": 650,
+      "computeUnits": 31468,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 31468 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "stale generation authorization",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 3
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 6094 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x3"
+      ]
+    },
+    {
+      "case": "recovery replay",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 3
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 6465 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x3"
+      ]
+    },
+    {
+      "case": "new generation native action",
+      "signature": "6C3NCijNJb1bZHRL7AsbtGVawPYUiJsXszZhp4zWUeSx2Wuc43L79o5fWogcdNrmmttchKvCzWZof7MHSJnrd85",
+      "slot": 404,
+      "error": null,
+      "blockhash": "CsctAH56mTYPBewnmiiHodnBdHkgNzmpBwnZ75fiEtnX",
+      "wireBytes": 622,
+      "computeUnits": 20733,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 20733 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "create token fixture 210",
+      "signature": "57pak2RV7SeCwcFb55uVoKYSwfHNEdNcgviV3PVMwPakZk5yynTmy3Gna5wN52i9fD1JsXRqrXRvAP6rqfARtvEG",
+      "slot": 438,
+      "error": null,
+      "blockhash": "GZ6S6qhUiZT3mLSsBPsmw6p5XQJW1csEVY66hi9N1Zw6",
+      "wireBytes": 390,
+      "computeUnits": 2929,
+      "logs": [
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [1]",
+        "Program log: Instruction: InitializeMint2",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 2779 of 202850 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success"
+      ]
+    },
+    {
+      "case": "create token fixture 211",
+      "signature": "2tUGGuHdCAmg8eP393jCuaxJfuEZcpBHY2cLBiR4RfEN7zUvktSaCchZs1NS6uc944P8Db1NPJKPyeEKmrVH32Hq",
+      "slot": 470,
+      "error": null,
+      "blockhash": "Cjj93SpScGHeuS4RY9CLzgtLaUntBeGgp4MsvVEUG7Tm",
+      "wireBytes": 421,
+      "computeUnits": 4363,
+      "logs": [
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [1]",
+        "Program log: Instruction: InitializeAccount3",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 4213 of 202850 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success"
+      ]
+    },
+    {
+      "case": "create token fixture 212",
+      "signature": "gvYxxJ7S3ViMo3kWJ6rdqc3CojupaB11ikERRzocT6955L91sKAVGBG2AaeySsSgrcXVSo236bALHb2M8ESnDJ2",
+      "slot": 505,
+      "error": null,
+      "blockhash": "6cQ9fZ9xucFCJnmcVAzvYJSidqZfxjcTaNFQQw121R4z",
+      "wireBytes": 421,
+      "computeUnits": 4363,
+      "logs": [
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [1]",
+        "Program log: Instruction: InitializeAccount3",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 4213 of 202850 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success"
+      ]
+    },
+    {
+      "case": "insufficient-token CPI rollback",
+      "signature": "5UmNuehYpvzLekQEQxMYrxfxDxwo5F1DsYoCj3MCt2CKGjfYRTUQYtYNbb8qsUn25PhshVMADob3LWvVwVXhizs3",
+      "slot": 539,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "blockhash": "APXiSx7YB6DgnztAb89genQ58mHE9WW9L1dTumBjYpQX",
+      "wireBytes": 731,
+      "computeUnits": 28079,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program log: Instruction: TransferChecked",
+        "Program log: Error: insufficient funds",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 4486 of 179407 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA failed: custom program error: 0x1",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 28079 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "fund token fixture",
+      "signature": "5mZ1siaLiGcrHLSPsRgqW7XhHow8avGFrU8qPWWqhh63rEB4GidiGQMzDCaDYECXwbyY36sLUTkqXyLtkEQ4t6Tf",
+      "slot": 573,
+      "error": null,
+      "blockhash": "AWXcEj4BdEeiWoooHRctz8SLqyLym9bHrSH63RfTzxpK",
+      "wireBytes": 245,
+      "computeUnits": 4491,
+      "logs": [
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [1]",
+        "Program log: Instruction: MintTo",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 4491 of 200000 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success"
+      ]
+    },
+    {
+      "case": "identical CPI authorization retry",
+      "signature": "4BewwcCUQKCkrYwZVQYUELMAhzbJL4igNekYPbZXT1h28wXUuTMmfWXNaJU3D96oFBYw2YafFQeDMCRvFG5dYpzq",
+      "slot": 606,
+      "error": null,
+      "blockhash": "Heem7CpeM1sphJ6jbGiuvoExjQJkET15kXe4cdow1G1N",
+      "wireBytes": 731,
+      "computeUnits": 30220,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program log: Instruction: TransferChecked",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 6174 of 179407 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 30220 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "client prefund phrase PDA",
+      "signature": "3cfsQDQUpzJcxgEuRZcbgj8AVRTerkYCUev1Ad4XjrGwBsW3E1y3zUSVEV1TkkAYwpkXq1yQbwJRaN6oWULGfmfu",
+      "slot": 650,
+      "error": null,
+      "blockhash": "CfgWgXXjDCujm3SjwvSPoiMfcPrg82KR2yArX2JSdNAT",
+      "wireBytes": 215,
+      "computeUnits": 150,
+      "logs": [
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "case": "client phrase initialization",
+      "signature": "5z6tjekMYfyRzou79ViQSLJDkPEeYvveRD5cbC3aUTEryhH82MjUasAZQ9196mx9644vkWnKd3PQqvbMYCYuGaF5",
+      "slot": 685,
+      "error": null,
+      "blockhash": "2bYAestrYe34zjPDPcGwjTvMMpZH9GSgRBcGkeMhtMFG",
+      "wireBytes": 649,
+      "computeUnits": 17487,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 17487 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "client included native rollback",
+      "signature": "4Phu5iqkW6U1gCfy2vg7zXFXyJMdWK11aRbKrsdtQgJU32BvBSQ8gKNBMrZi7TV9KtdVofV4ncY9rpLRihuzabGd",
+      "slot": 747,
+      "error": {
+        "InstructionError": [
+          2,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "blockhash": "Bho59Rx6RPamo3DgmZw3K2zLEkxe3pTU58Srz59JqG3p",
+      "wireBytes": 639,
+      "computeUnits": 22383,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 22233 of 206000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Transfer: insufficient lamports 499999999065765440, need 18446744073709551615",
+        "Program 11111111111111111111111111111111 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "client identical native authorization retry",
+      "signature": "3R8EcxoYsqQYy9jx2SBhLdvfgVCejyKeCcePwFHi7cSxqENGGcSuXopsSgMGvMGiCt1VDyrXtZe6RBeE1iXQYUqR",
+      "slot": 780,
+      "error": null,
+      "blockhash": "9YLHdnR8RNrfWUP1WwpokSch6SKULTrzz26qgqjEuNTJ",
+      "wireBytes": 622,
+      "computeUnits": 22233,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 22233 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "client phrase recovery after advancement",
+      "signature": "4fgCEbnvEMi3po83L4GvH59egXoBejyPytKTg6c7Abpsrxw7PkWTbSj21oPxfnG8NfnbuMh5grWv5317Mdivs7sR",
+      "slot": 829,
+      "error": null,
+      "blockhash": "7Qp4qtRWG7wMzBvcAWbbRXEkg4jji8Wr63TjM2wioz2H",
+      "wireBytes": 650,
+      "computeUnits": 38968,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 38968 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "client stale old-generation authorization",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 3
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 6094 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x3"
+      ]
+    },
+    {
+      "case": "client recovery replay",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 3
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 6465 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x3"
+      ]
+    },
+    {
+      "case": "client token fixture authority",
+      "signature": "Lwv4PWH7AziCLeyXT7efhhhjSnhgA9bXEuACYpU5e16bJzqkdR5XKNkH4vRMEHjJgChRMQx6BFsG68TYT6ZReE3",
+      "slot": 872,
+      "error": null,
+      "blockhash": "4KyJ2Z9T5jzy6Vh28vHW6HKQEB85Hh62ahGSgDx9SHyr",
+      "wireBytes": 334,
+      "computeUnits": 2792,
+      "logs": [
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [1]",
+        "Program log: Instruction: SetAuthority",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 2792 of 200000 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success"
+      ]
+    },
+    {
+      "case": "client phrase SPL CPI",
+      "signature": "5VVBu8EeFGAKmb5uhdE1DZ4YgF6dresCfyUsyUAJddEsbxBXJKnpTTD8J6GnVxS7ADyYo6TpnDbbC6v55YNML4oH",
+      "slot": 918,
+      "error": null,
+      "blockhash": "HqdBSq7XibrWH3Wuxorr7aaZrj6SHfZs8FkMZoJuXh9j",
+      "wireBytes": 731,
+      "computeUnits": 31720,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA invoke [2]",
+        "Program log: Instruction: TransferChecked",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA consumed 6174 of 177907 compute units",
+        "Program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 31720 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "journal prefund undeployed phrase wallet",
+      "signature": "4fCFo8t3swDxKyHwC4zBmtZEjbPH5MnosuVBVt2MzeCSjSU1oQrsdGuppE2bhHa7v25ddicUeJXYEFwxMMEQ8pSK",
+      "slot": 967,
+      "error": null,
+      "blockhash": "AvS3PxQva45qwDLFkhr39GZ3n5nK5imgPZ1ut3BRvKTP",
+      "wireBytes": 215,
+      "computeUnits": 150,
+      "logs": [
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Program 11111111111111111111111111111111 success"
+      ]
+    },
+    {
+      "case": "journal reconstructed bootstrap",
+      "signature": "2JVqDpPHS1JN43i59vQpm6mtYqHvrUmuXZmX4VXm8GwSAf8nLDYqf3j47rLAxcqUh4ncCQ5RyeUwW5mZBWUeJ9pe",
+      "slot": 1060,
+      "error": null,
+      "blockhash": "DpYC5sn5bajupHobpL3aN5pYEBBbwF9NcYczR9YQjdkg",
+      "wireBytes": 649,
+      "computeUnits": 18987,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 18987 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "journal initial generation reset",
+      "signature": "3NEdcj1SVUTZFGb7fcjZFPFSnGwcmiPW7gZgwxBTCHmXZhTfDiBBS4HzA3HH2yvmdMs2f2r36nioQEJqwFb9xNAz",
+      "slot": 1137,
+      "error": null,
+      "blockhash": "EiYKcH4mPDWVqXnS1n73zJnKNKUxN1tZ7TNWJpyXNiJs",
+      "wireBytes": 650,
+      "computeUnits": 35968,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 35968 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "journal included native rollback",
+      "signature": "4kgsfN6isUyXB3qH2BtgwuJmwxTrJmRVCaRZzgKwDkjTX7zbY59AMsCP3uGeyLLC2LDAV6MYXMHmHKathaJDC3Fu",
+      "slot": 1286,
+      "error": {
+        "InstructionError": [
+          2,
+          {
+            "Custom": 1
+          }
+        ]
+      },
+      "blockhash": "HBZHDPZQN79wuQR6i7ZT3t89iYpQKFaxHPkwWUUtyr2w",
+      "wireBytes": 639,
+      "computeUnits": 28383,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 28233 of 206000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success",
+        "Program 11111111111111111111111111111111 invoke [1]",
+        "Transfer: insufficient lamports 499999999040011080, need 18446744073709551615",
+        "Program 11111111111111111111111111111111 failed: custom program error: 0x1"
+      ]
+    },
+    {
+      "case": "journal persisted native retry",
+      "signature": "5TxDFNTtnE4T2Gqc4QjRsHQYGBdPwosWGVTunkcNe1PaCGDxSGDYKan2sj8wvJ92RbQkqeFJLnyuQDHrxxWA2Gbc",
+      "slot": 1353,
+      "error": null,
+      "blockhash": "4Zgsm1tvCNQSsir2J1rvrdhN3uDLvHtEKQKbm3rde9Gu",
+      "wireBytes": 622,
+      "computeUnits": 28233,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 28233 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "journal lost-history reconstructed recovery",
+      "signature": "668ai8qf2GQvrbtJYpxd7G1B7hr9VH5fJwdASHwpAjH1rfaJ1q6yJv4DXNMynu3HkZJpAVH8279SVtpqAtacn571",
+      "slot": 1470,
+      "error": null,
+      "blockhash": "AFpohkiCVgN85nrsxUhH8bPUFoAdN1vAMhPCrAKfgrxg",
+      "wireBytes": 650,
+      "computeUnits": 44968,
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 11111111111111111111111111111111 invoke [2]",
+        "Program 11111111111111111111111111111111 success",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 44968 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 success"
+      ]
+    },
+    {
+      "case": "journal old owner after phrase restore",
+      "simulationOnly": true,
+      "error": {
+        "InstructionError": [
+          1,
+          {
+            "Custom": 3
+          }
+        ]
+      },
+      "logs": [
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 invoke [1]",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 consumed 7594 of 203000 compute units",
+        "Program 7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4 failed: custom program error: 0x3"
+      ]
+    }
+  ],
+  "workDirectory": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-solana-validator-cv4e25g0",
+  "validatorCommand": [
+    "solana-test-validator",
+    "--config",
+    "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-solana-validator-cv4e25g0/cli.yml",
+    "--ledger",
+    "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-solana-validator-cv4e25g0/ledger",
+    "--bind-address",
+    "127.0.0.1",
+    "--rpc-port",
+    "29588",
+    "--faucet-port",
+    "29590",
+    "--gossip-port",
+    "29591",
+    "--dynamic-port-range",
+    "29592-29627",
+    "--mint",
+    "Frh1NMSHLraTyJMzbNeQf3YELAYe3DmfmHqvpVeHi7vf",
+    "--ticks-per-slot",
+    "8",
+    "--quiet"
+  ],
+  "phraseClient": {
+    "scope": {
+      "genesisHash": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S",
+      "program": "7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4",
+      "accountIndex": 9
+    },
+    "wallet": "9PwmF2t9noeBGQqZvaHQGFcmvs7HCLrT4faaoGzRkR5N",
+    "finalState": {
+      "genesisHash": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S",
+      "identity": "E8WQCdDPQNweq19C1ModwMtxQL2RfSsYBpRquhJQKbbQ",
+      "accountIndex": 9,
+      "epoch": 1,
+      "ownerIndex": 1,
+      "nonce": "2",
+      "owner": "0x9162e6cefe1176e6f262a98a4c95c4a25776a4a600671a97cdb24a9d6d32535a",
+      "recovery": "0xc51c1afee4e9635fbfbe711b3a6faf76b76e99304503f942f11c263a3409f909",
+      "bump": 254,
+      "ownerPublicKey": "4creg8gtoKoNycgBWs3vYBfDkGSnuBzGEfSPwQEkUMCE",
+      "recoveryPublicKey": "2DonoStWudSezmXp2bxoFsJc2HLBHDynNkyHuLPRQkrm"
+    },
+    "bundleSha256": "43050dd4112015a8516a14326a1f0886b6d62478f0b8153e024473810797ce27",
+    "firstReceipt": 20,
+    "receiptCount": 16,
+    "initializationDigest": "0x625c001329569eae6e5b62275de3b5f40a4e53d8caeeb19bdfc3aa82f7e53a28",
+    "nativeDigest": "0x35c8a55f16be54851d3972ae06744bba48cbd59a6b2d624db9fff53dcf021d6e",
+    "recoveryDigest": "0x7d35665af6928204ac6cf34f9e87d4fe1ee0d98f606136a71a291a75b8a19aa4",
+    "cpiDigest": "0xd371c3b0cfbecb11973a31f1bb4355d72a47a6dc3caedb3c0fbe78e0a1ca615b",
+    "journal": {
+      "wallet": "FRatF853pjJGCw72ayzxCz1uaGD5AaHXXLXTpDozFet",
+      "key": "bunk-solana-account:adbb901d2cc84ebf8dbd51fd41e78aa3bacedf250cf9355a972a7645f10ae950",
+      "final": {
+        "phase": "ready",
+        "wallet": "FRatF853pjJGCw72ayzxCz1uaGD5AaHXXLXTpDozFet",
+        "checkpoint": {
+          "slot": 1472,
+          "blockhash": "36XXvbGFVri482vQA7CZVc39rWu1XyuezaqXrQttFcpp",
+          "blockTime": 1792388524
+        },
+        "state": {
+          "genesisHash": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S",
+          "identity": "Bwo5EpBhVVuNW9en8PD9KcJAvDvDaV4Req8rue5CiH5F",
+          "accountIndex": 10,
+          "epoch": 2,
+          "ownerIndex": 0,
+          "nonce": "1",
+          "owner": "0xd9279a88a69e22e91ea72d3cee9733fb68d43940b18a2e8ebf2e53abb8268d53",
+          "recovery": "0xa851dceae8bce099f9a9dbc8f8bfe9b58dc6ac3aa5335cd263b8c8c3a9d908f5",
+          "bump": 253
+        }
+      },
+      "inspection": {
+        "revision": 6,
+        "phase": "ready",
+        "bootstrap": null,
+        "recovery": null,
+        "owner": "reserved",
+        "encrypted": true
+      },
+      "discovery": {
+        "releaseKey": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S:7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4",
+        "startAccountIndex": 10,
+        "count": 2,
+        "nextAccountIndex": 12,
+        "inventoryComplete": false,
+        "signingAuthorized": false,
+        "candidates": [
+          {
+            "scope": {
+              "genesisHash": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S",
+              "program": "7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4",
+              "accountIndex": 10
+            },
+            "wallet": "FRatF853pjJGCw72ayzxCz1uaGD5AaHXXLXTpDozFet",
+            "checkpoint": {
+              "slot": 1507,
+              "blockhash": "CBWxkC8GZ5svNvQH8euspY4ZYu8yckT7G42tGjp5vkpk",
+              "blockTime": 1792388528
+            },
+            "account": {
+              "address": "FRatF853pjJGCw72ayzxCz1uaGD5AaHXXLXTpDozFet",
+              "owner": "7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4",
+              "executable": false,
+              "data": {
+                "0": 72,
+                "1": 78,
+                "2": 89,
+                "3": 66,
+                "4": 85,
+                "5": 78,
+                "6": 75,
+                "7": 49,
+                "8": 179,
+                "9": 144,
+                "10": 216,
+                "11": 113,
+                "12": 229,
+                "13": 12,
+                "14": 49,
+                "15": 68,
+                "16": 70,
+                "17": 240,
+                "18": 109,
+                "19": 111,
+                "20": 48,
+                "21": 56,
+                "22": 194,
+                "23": 160,
+                "24": 25,
+                "25": 199,
+                "26": 65,
+                "27": 98,
+                "28": 35,
+                "29": 210,
+                "30": 163,
+                "31": 49,
+                "32": 21,
+                "33": 74,
+                "34": 47,
+                "35": 211,
+                "36": 84,
+                "37": 232,
+                "38": 116,
+                "39": 33,
+                "40": 162,
+                "41": 158,
+                "42": 83,
+                "43": 244,
+                "44": 0,
+                "45": 188,
+                "46": 47,
+                "47": 133,
+                "48": 97,
+                "49": 131,
+                "50": 14,
+                "51": 18,
+                "52": 233,
+                "53": 27,
+                "54": 67,
+                "55": 89,
+                "56": 212,
+                "57": 83,
+                "58": 126,
+                "59": 154,
+                "60": 26,
+                "61": 164,
+                "62": 202,
+                "63": 29,
+                "64": 202,
+                "65": 231,
+                "66": 72,
+                "67": 243,
+                "68": 250,
+                "69": 174,
+                "70": 226,
+                "71": 14,
+                "72": 10,
+                "73": 0,
+                "74": 0,
+                "75": 0,
+                "76": 2,
+                "77": 0,
+                "78": 0,
+                "79": 0,
+                "80": 0,
+                "81": 0,
+                "82": 0,
+                "83": 0,
+                "84": 1,
+                "85": 0,
+                "86": 0,
+                "87": 0,
+                "88": 0,
+                "89": 0,
+                "90": 0,
+                "91": 0,
+                "92": 217,
+                "93": 39,
+                "94": 154,
+                "95": 136,
+                "96": 166,
+                "97": 158,
+                "98": 34,
+                "99": 233,
+                "100": 30,
+                "101": 167,
+                "102": 45,
+                "103": 60,
+                "104": 238,
+                "105": 151,
+                "106": 51,
+                "107": 251,
+                "108": 104,
+                "109": 212,
+                "110": 57,
+                "111": 64,
+                "112": 177,
+                "113": 138,
+                "114": 46,
+                "115": 142,
+                "116": 191,
+                "117": 46,
+                "118": 83,
+                "119": 171,
+                "120": 184,
+                "121": 38,
+                "122": 141,
+                "123": 83,
+                "124": 168,
+                "125": 81,
+                "126": 220,
+                "127": 234,
+                "128": 232,
+                "129": 188,
+                "130": 224,
+                "131": 153,
+                "132": 249,
+                "133": 169,
+                "134": 219,
+                "135": 200,
+                "136": 248,
+                "137": 191,
+                "138": 233,
+                "139": 181,
+                "140": 141,
+                "141": 198,
+                "142": 172,
+                "143": 58,
+                "144": 165,
+                "145": 51,
+                "146": 92,
+                "147": 210,
+                "148": 99,
+                "149": 184,
+                "150": 200,
+                "151": 195,
+                "152": 169,
+                "153": 217,
+                "154": 8,
+                "155": 245,
+                "156": 253
+              }
+            },
+            "state": {
+              "genesisHash": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S",
+              "identity": "Bwo5EpBhVVuNW9en8PD9KcJAvDvDaV4Req8rue5CiH5F",
+              "accountIndex": 10,
+              "epoch": 2,
+              "ownerIndex": 0,
+              "nonce": "1",
+              "owner": "0xd9279a88a69e22e91ea72d3cee9733fb68d43940b18a2e8ebf2e53abb8268d53",
+              "recovery": "0xa851dceae8bce099f9a9dbc8f8bfe9b58dc6ac3aa5335cd263b8c8c3a9d908f5",
+              "bump": 253
+            },
+            "lamports": "19000000"
+          },
+          {
+            "scope": {
+              "genesisHash": "D5x5e4ehLcUJY22KniWJdStDiwz5w1ziEYp8BeW18q9S",
+              "program": "7RQth22a5riMzLw1g2Kxdo5HhJszNBgy6YTf4eMoQVy4",
+              "accountIndex": 11
+            },
+            "wallet": "CrXCKX3Npp9tL4KruL9jdCdwaShBXycPFb5hE1LLJRtd",
+            "checkpoint": {
+              "slot": 1509,
+              "blockhash": "6aPh1wEVsgwEBLdv1YY67J4Ryzc4LpbDtcFc6e1t6PNc",
+              "blockTime": 1792388528
+            },
+            "account": null,
+            "state": null,
+            "lamports": "0"
+          }
+        ]
+      },
+      "processExitCodes": [73, 73, 73],
+      "concurrentReservations": [
+        {
+          "error": "BunkJournalConflict",
+          "message": "Concurrent Bunk journal change; reload before proceeding"
+        },
+        {
+          "key": "bunk-solana-account:adbb901d2cc84ebf8dbd51fd41e78aa3bacedf250cf9355a972a7645f10ae950",
+          "digest": "0xbb9b6b69c1eaa1348e60b939856e754c1ec8b9c9ecd7ee641a6c798174e2877c",
+          "phase": "reserved"
+        }
+      ],
+      "firstReceipt": 29,
+      "receiptCount": 7,
+      "originalDatabase": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-solana-validator-cv4e25g0/journal.sqlite",
+      "restoredDatabase": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-solana-validator-cv4e25g0/restored.sqlite"
+    },
+    "warning": "Public phrase fixtures and task-owned encrypted SQLite only; no application activation or production provider certification."
+  },
+  "clientSourcesSha256": {
+    "packages/keyring/src/bunk-evm-observe.test.ts": "398bf3982d051b5f13a21dde5caf0adc04deeca34faab34f49cdf2bb8ce2ad67",
+    "packages/keyring/src/bunk-evm-observe.ts": "ef3939a8cc92f342a91e8bfa748ecda90939d917707ebf6eae219fbf6c6d71ec",
+    "packages/keyring/src/bunk-evm-sign.ts": "296eb8570ed28e82f48265d8a92ca403416b826cd347feb1667f4a4095710f34",
+    "packages/keyring/src/bunk-evm-v2-journal.ts": "25a49e3ff6c67077f4fd1f047c3d387b0df997a64a6a03cd6b2cda4d154df7d1",
+    "packages/keyring/src/bunk-evm-v2-sign.ts": "545e9570239f54a7e63053cbfc2f873a951a6978c66d55426e5e558cd6dd3ce0",
+    "packages/keyring/src/bunk-evm-v2-store.ts": "c3f4ffe425ac8925a9f82fff3def6cd16eb7bd385a7ca1bbda8ad3e172dc29e0",
+    "packages/keyring/src/bunk-evm-v2.test.ts": "d70bb1cc62ba8f0abd169524e4fe7726d0f56d75c5243d2d49593d64f8c99766",
+    "packages/keyring/src/bunk-evm-v2.ts": "0f18ebc2602a72e55305444029e39d676056e3670da2649dc2d77d783e9de685",
+    "packages/keyring/src/bunk-evm-v3-account.ts": "837fe98f0d66c271db31f283fcc3b3469bd21d2c40da8a217b71c48e41350448",
+    "packages/keyring/src/bunk-evm-v3-discovery.ts": "668aeeb4e8b3e7be52497bc29ac8128719c12880ae8aeef443fe071220c09e3b",
+    "packages/keyring/src/bunk-evm-v3-journal.ts": "400013dd8789eb811f6a44ee034418b99a059356e1c0b8f5c3d99e949fb4e338",
+    "packages/keyring/src/bunk-evm-v3-sign.ts": "525a954a1a36d554bd1957852c97a57f916edd65be1cf59cc3d23a09a4bb2d16",
+    "packages/keyring/src/bunk-evm-v3.test.ts": "4da0d066bc4e3a8ca6dcd0987235315f534789fb1c52eb57278fa985b93f8392",
+    "packages/keyring/src/bunk-evm-v3.ts": "1724313218e0c32d9177eb3026cf18f261f02f95f5eab1e6f1c2c0df350d323e",
+    "packages/keyring/src/bunk-evm.test.ts": "6b766c3f03e310e6ab8766c5a14033e08074f08b6f0737eb51253f0b4db64394",
+    "packages/keyring/src/bunk-evm.ts": "eb0b67cef6195649f32bc86947fa49fee3bc7bba4aed54fc3f6590bfe9901bee",
+    "packages/keyring/src/bunk-indexeddb-store.ts": "3d2a7ff44256eea9b5f023b92cd587667b1a2059f4dad7f2c64e7e47eee72359",
+    "packages/keyring/src/bunk-journal-key.test.ts": "fbe96990637b33325fa06e9581f83dc21901e159ce010a9ea7df5a10f36d1ae1",
+    "packages/keyring/src/bunk-journal-key.ts": "81cb9b83c847fafcf908752c47e9561833a44d4c4233b0142e18de019df68531",
+    "packages/keyring/src/bunk-solana-discovery.test.ts": "038d046477cbc59af1f347dc090fccddc4a241b51d8909e0fa905483248dcac4",
+    "packages/keyring/src/bunk-solana-discovery.ts": "46e5bb1879bada1b409a363d2afc6fdac66777ab7e9ec628f128955d2caf9cf9",
+    "packages/keyring/src/bunk-solana-journal.test.ts": "e7c1d96f6c5ba9abcc1ba71d8ac622878d90bdf9dcf8883670bf7dd8de7ae756",
+    "packages/keyring/src/bunk-solana-journal.ts": "e8d38921733360e5c8e570571652405b5c1d6b9f17d7b55a89645b5d8f31082b",
+    "packages/keyring/src/bunk-solana-observe.ts": "02bdb9c95ed60e978b02c6a829552ae0d3aed7faaf2acb4b9ad729290fab5ef4",
+    "packages/keyring/src/bunk-solana.test.ts": "1a19b262f5df41cd202613d0fdbf41e9592ca3001891ed78d001c55848d56b1b",
+    "packages/keyring/src/bunk-solana.ts": "3e8984462c024c1ba6e40b967211f1e9a04063f7145a1fd2345b36a2d5603e90",
+    "packages/keyring/src/bunk.test.ts": "22dd5601ce0224b3e4d873b42539d7a6e3322b24ae64b0c1c3f80d03ce0eb618",
+    "packages/keyring/src/bunk.ts": "6f30f3edec4918ddeddc4b64ec65474ba75d0e04f88c98b0dacde7bd2d9fe8ec",
+    "packages/keyring/src/fixtures/bunk-solana.json": "f329028dce9ede3b1c954ccee6c28bc517f306140a09b0af4b8d6a875ec2f583",
+    "packages/keyring/scripts/bunk-solana-vectors.py": "25155db8c599e5c227314c44564d157a9c7e25063bfdc4380ac1566ed4f49829",
+    "packages/keyring/tests/fixtures/bunk-solana-client.mjs": "680e35e306628be0813d26aa7303a416b29e974d8f690f2402acd1bb1aad50f7",
+    "packages/keyring/scripts/bunk-solana-validator.mjs": "77105f10b3efb9e9f361cf03493d03033efdc0ba0f5009bd9995babc3d896bbb",
+    "packages/keyring/package.json": "d3f8e700b8b84f9d68f99b33887e6fcddc7e08b2f204da1f0b4db4b782baf96c",
+    "pnpm-lock.yaml": "d7f4b8f33108bbe838989a962531951c2256d8697c1854ef17b945f8604931d3"
+  },
+  "clientSourcesRechecked": true,
+  "clientWorkDirectory": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-solana-client-GF9BWp"
+}

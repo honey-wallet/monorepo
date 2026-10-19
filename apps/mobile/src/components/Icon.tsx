@@ -12,6 +12,11 @@ const ICONS = {
   chevronLeft: { ios: 'chevron.left', android: 'chevron_left', web: 'chevron_left' },
   chevronDown: { ios: 'chevron.down', android: 'keyboard_arrow_down', web: 'keyboard_arrow_down' },
   expand: { ios: 'chevron.up.chevron.down', android: 'unfold_more', web: 'unfold_more' },
+  expandView: {
+    ios: 'arrow.up.left.and.arrow.down.right',
+    android: 'open_in_full',
+    web: 'open_in_full',
+  },
   up: { ios: 'arrowtriangle.up.fill', android: 'arrow_drop_up', web: 'arrow_drop_up' },
   down: { ios: 'arrowtriangle.down.fill', android: 'arrow_drop_down', web: 'arrow_drop_down' },
   send: { ios: 'paperplane.fill', android: 'send', web: 'send' },

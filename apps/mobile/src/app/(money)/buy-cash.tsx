@@ -10,6 +10,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { DemoMoneyNotice } from '@/components/savings/DemoMoneyNotice';
 import { Copyable } from '@/components/sheets/Details';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetScreen, StatRow } from '@/components/sheets/Sheet';
@@ -22,7 +23,7 @@ import { success, tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatBalance, formatPrice, formatUsd, MARKET, marketOf } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
-import { markFunded, useOnboarding } from '@/lib/onboarding';
+import { markDemoFunded, useOnboarding } from '@/lib/onboarding';
 import { followFix, useFailure } from '@/lib/outcomes';
 import { txReceipt } from '@/lib/tx-receipt';
 import { useWalletView } from '@/lib/wallet-view';
@@ -41,6 +42,18 @@ const QUICK = [50, 100, 250];
 
 /** Buy crypto with cash, or sell it for cash: amount, then a review. Demo only. */
 export default function BuyCashSheet() {
+  const { wallet } = useWalletView();
+  if (!wallet.demo) {
+    return (
+      <SheetScreen title="Buy crypto">
+        <Text>Cash purchases and sales are demo-only until a provider is connected.</Text>
+      </SheetScreen>
+    );
+  }
+  return <DemoBuyCashSheet />;
+}
+
+function DemoBuyCashSheet() {
   const {
     symbol: initial,
     mode,
@@ -114,7 +127,7 @@ export default function BuyCashSheet() {
     if (!selling && !onboarding.funded) {
       tap();
       closeSheet();
-      markFunded(value);
+      markDemoFunded();
       return;
     }
     finishDemo(selling ? 'nothing was sold' : 'nothing was bought');
@@ -145,6 +158,7 @@ export default function BuyCashSheet() {
   return (
     <FlowTray>
       <SheetScreen title={verb} size="fill">
+        <DemoMoneyNotice />
         <View style={styles.flex}>
           {/* One centred group: the token, the amount and the quick amounts. */}
           <View style={styles.amountArea}>
@@ -251,117 +265,121 @@ export default function BuyCashSheet() {
       {/* Family's pattern: the amount on the page, the review and result in a tray over it. */}
       <InlineTray onClose={() => (page === 'done' ? finish() : go('amount'))}>
         {page === 'amount' ? null : (
-          <ContentSwap id={page} index={PAGES.indexOf(page)}>
-            {page === 'failed' && outcome.failure ? (
-              <SheetScreen>
-                <FailurePage
-                  compact
-                  failure={outcome.failure}
-                  rows={[
-                    {
-                      label: selling ? 'Selling' : 'Buying',
-                      value: `${formatUsd(value)} of ${symbol}`,
-                    },
-                    { label: selling ? 'To' : 'With', value: METHODS[method].label },
-                  ]}
-                  onRetry={() => {
-                    tap();
-                    if (outcome.failure && followFix(outcome.failure)) return;
-                    // Over the limit: change the amount; anything else: back to the review,
-                    // where the payment method can change too.
-                    setPage(outcome.failure?.kind === 'limit' ? 'amount' : 'review');
-                  }}
-                  onClose={() => {
-                    tap();
-                    closeSheet();
-                  }}
-                />
-              </SheetScreen>
-            ) : page === 'done' && proposalId ? (
-              <SheetScreen>
-                <LiveProposedPage proposalId={proposalId} onDone={finish} compact />
-              </SheetScreen>
-            ) : page === 'done' ? (
-              <SheetScreen>
-                <SuccessPage
-                  compact
-                  title={selling ? 'Sold' : 'Bought'}
-                  amount={{
-                    symbol,
-                    text: `${formatBalance(selling ? tokenValue : (value - fee) / price)} ${symbol}`,
-                  }}
-                  rows={[
-                    {
-                      label: selling ? 'You get' : 'You paid',
-                      value: formatUsd(selling ? value - fee : value),
-                    },
-                    { label: 'Fee', value: formatUsd(fee) },
-                    { label: selling ? 'To' : 'With', value: METHODS[method].label },
-                    {
-                      // The provider's order id, to quote to support.
-                      label: 'Order ID',
-                      value: (
-                        <Copyable
-                          value={txReceipt('Ethereum', `${symbol}:${value}:${method}`).hash}
-                          toast="Order ID copied"
-                        />
-                      ),
-                    },
-                    { label: selling ? 'Sold' : 'Bought', value: 'Just now' },
-                  ]}
-                  onDone={finish}
-                />
-              </SheetScreen>
-            ) : (
-              <SheetScreen title={`Review ${verb.toLowerCase()}`} onBack={() => go('amount')}>
-                <View style={styles.summary}>
-                  <TokenIcon symbol={symbol} size={48} />
-                  <Text style={styles.summaryLabel}>
-                    {selling ? `You're selling` : `You're buying`}
+          <>
+            <DemoMoneyNotice deposit />
+            <ContentSwap id={page} index={PAGES.indexOf(page)}>
+              {page === 'failed' && outcome.failure ? (
+                <SheetScreen>
+                  <FailurePage
+                    compact
+                    failure={outcome.failure}
+                    rows={[
+                      {
+                        label: selling ? 'Selling' : 'Buying',
+                        value: `${formatUsd(value)} of ${symbol}`,
+                      },
+                      { label: selling ? 'To' : 'With', value: METHODS[method].label },
+                    ]}
+                    onRetry={() => {
+                      tap();
+                      if (outcome.failure && followFix(outcome.failure)) return;
+                      // Over the limit: change the amount; anything else: back to the review,
+                      // where the payment method can change too.
+                      setPage(outcome.failure?.kind === 'limit' ? 'amount' : 'review');
+                    }}
+                    onClose={() => {
+                      tap();
+                      closeSheet();
+                    }}
+                  />
+                </SheetScreen>
+              ) : page === 'done' && proposalId ? (
+                <SheetScreen>
+                  <LiveProposedPage proposalId={proposalId} onDone={finish} compact />
+                </SheetScreen>
+              ) : page === 'done' ? (
+                <SheetScreen>
+                  <SuccessPage
+                    compact
+                    title={selling ? 'Demo sale simulation' : 'Demo purchase simulation'}
+                    amount={{
+                      symbol,
+                      text: `${formatBalance(selling ? tokenValue : (value - fee) / price)} ${symbol}`,
+                    }}
+                    detail="Simulation only. No transaction was sent and no real-wallet balance changed."
+                    rows={[
+                      {
+                        label: selling ? 'You get' : 'You paid',
+                        value: formatUsd(selling ? value - fee : value),
+                      },
+                      { label: 'Fee', value: formatUsd(fee) },
+                      { label: selling ? 'To' : 'With', value: METHODS[method].label },
+                      {
+                        // The provider's order id, to quote to support.
+                        label: 'Order ID',
+                        value: (
+                          <Copyable
+                            value={txReceipt('Ethereum', `${symbol}:${value}:${method}`).hash}
+                            toast="Order ID copied"
+                          />
+                        ),
+                      },
+                      { label: selling ? 'Sold' : 'Bought', value: 'Just now' },
+                    ]}
+                    onDone={finish}
+                  />
+                </SheetScreen>
+              ) : (
+                <SheetScreen title={`Review ${verb.toLowerCase()}`} onBack={() => go('amount')}>
+                  <View style={styles.summary}>
+                    <TokenIcon symbol={symbol} size={48} />
+                    <Text style={styles.summaryLabel}>
+                      {selling ? `You're selling` : `You're buying`}
+                    </Text>
+                    <Text style={styles.summaryAmount} adjustsFontSizeToFit numberOfLines={1}>
+                      {formatBalance(selling ? tokenValue : (value - fee) / price)} {symbol}
+                    </Text>
+                  </View>
+                  <View style={styles.rule} />
+                  <View style={styles.rows}>
+                    <StatRow label="Rate" value={`1 ${symbol} = ${formatPrice(price)}`} />
+                    <StatRow
+                      label={selling ? 'Receive to' : 'Pay with'}
+                      value={
+                        <View style={styles.inline}>
+                          <Icon name={METHODS[method].icon} size={15} color={c.textSecondary} />
+                          <Text style={styles.rowValue}>{METHODS[method].label}</Text>
+                        </View>
+                      }
+                    />
+                    <StatRow
+                      label={`Provider fee (${(METHODS[method].fee * 100).toFixed(2)}%)`}
+                      value={formatUsd(fee)}
+                    />
+                    <StatRow label="Network cost" value="<$0.01" />
+                    {selling && signer.rule(sellAction) ? (
+                      <StatRow label="Shared wallet" value={signer.rule(sellAction)} />
+                    ) : null}
+                    <StatRow
+                      label={selling ? 'You receive' : 'Total'}
+                      value={
+                        <Text style={styles.total}>{formatUsd(selling ? value - fee : value)}</Text>
+                      }
+                    />
+                  </View>
+                  <Text style={styles.note}>
+                    Prices move. The final amount is set when your order goes through.
                   </Text>
-                  <Text style={styles.summaryAmount} adjustsFontSizeToFit numberOfLines={1}>
-                    {formatBalance(selling ? tokenValue : (value - fee) / price)} {symbol}
-                  </Text>
-                </View>
-                <View style={styles.rule} />
-                <View style={styles.rows}>
-                  <StatRow label="Rate" value={`1 ${symbol} = ${formatPrice(price)}`} />
-                  <StatRow
-                    label={selling ? 'Receive to' : 'Pay with'}
-                    value={
-                      <View style={styles.inline}>
-                        <Icon name={METHODS[method].icon} size={15} color={c.textSecondary} />
-                        <Text style={styles.rowValue}>{METHODS[method].label}</Text>
-                      </View>
-                    }
-                  />
-                  <StatRow
-                    label={`Provider fee (${(METHODS[method].fee * 100).toFixed(2)}%)`}
-                    value={formatUsd(fee)}
-                  />
-                  <StatRow label="Network cost" value="<$0.01" />
-                  {selling && signer.rule(sellAction) ? (
-                    <StatRow label="Shared wallet" value={signer.rule(sellAction)} />
-                  ) : null}
-                  <StatRow
-                    label={selling ? 'You receive' : 'Total'}
-                    value={
-                      <Text style={styles.total}>{formatUsd(selling ? value - fee : value)}</Text>
-                    }
-                  />
-                </View>
-                <Text style={styles.note}>
-                  Prices move. The final amount is set when your order goes through.
-                </Text>
 
-                <PillButton
-                  label={selling ? signer.cta('Confirm sale', sellAction) : 'Confirm buy'}
-                  onPress={confirm}
-                  style={styles.cta}
-                />
-              </SheetScreen>
-            )}
-          </ContentSwap>
+                  <PillButton
+                    label={selling ? signer.cta('Confirm sale', sellAction) : 'Confirm buy'}
+                    onPress={confirm}
+                    style={styles.cta}
+                  />
+                </SheetScreen>
+              )}
+            </ContentSwap>
+          </>
         )}
       </InlineTray>
     </FlowTray>

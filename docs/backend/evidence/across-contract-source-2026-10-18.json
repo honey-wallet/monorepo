@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-18",
+  "repository": "https://github.com/across-protocol/contracts",
+  "commit": "950e9154f3d61e59590eb7d4403fae5d3cae84f8",
+  "files": {
+    "V3SpokePoolInterface.sol": {
+      "url": "https://github.com/across-protocol/contracts/blob/950e9154f3d61e59590eb7d4403fae5d3cae84f8/contracts/interfaces/V3SpokePoolInterface.sol",
+      "sha256": "07f5b06abe1c51b481aa7d293939cdd912690ae5739323f912c5ce2e7b7652ed"
+    },
+    "SpokePool.sol": {
+      "url": "https://github.com/across-protocol/contracts/blob/950e9154f3d61e59590eb7d4403fae5d3cae84f8/contracts/spoke-pools/SpokePool.sol",
+      "sha256": "a30a02a2fc942e83ed404d96affbf495255f2999e3fbccf48e2a6f214a1de6db"
+    },
+    "SpokePoolPeriphery.sol": {
+      "url": "https://github.com/across-protocol/contracts/blob/950e9154f3d61e59590eb7d4403fae5d3cae84f8/contracts/periphery/SpokePoolPeriphery.sol",
+      "sha256": "a084c09330b44f93ee7109f707347050cc67c687176763e207e20a542f9949e2"
+    }
+  },
+  "limits": "Public source semantics reference only; observed runtime pins are separate local-fork evidence and do not approve a production deployment. Current event names use bytes32 identifiers; legacy events and periphery callbacks are not accepted by the direct verifier."
+}

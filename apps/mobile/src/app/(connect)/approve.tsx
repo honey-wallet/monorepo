@@ -1,9 +1,9 @@
 import type { Answer, Approval, ApprovalKind, Site } from '@honey-wallet/extension/protocol';
-import { evmNetwork, parseTypedData } from '@honey-wallet/keyring';
+import { evmNetwork } from '@honey-wallet/keyring';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatEther, type Hex } from 'viem';
+import { formatEther, formatUnits } from 'viem';
 import { Avatar } from '@/components/Avatar';
 import { Icon, type IconName } from '@/components/Icon';
 import { CHECKBOX_SIZE, Checkbox } from '@/components/motion/Checkbox';
@@ -11,12 +11,20 @@ import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetRow, StatRow } from '@/components/sheets/Sheet';
 import { confirmOwner } from '@/lib/auth';
-import { answerApproval, hasWorker, keepWorkerAwake, nextApproval } from '@/lib/dapp';
 import {
-  callName,
+  answerApproval,
+  claimApproval,
+  hasWorker,
+  keepWorkerAwake,
+  nextApproval,
+} from '@/lib/dapp';
+import {
+  approvalReviewError,
+  type EvmSendPreparation,
   type EvmTx,
   evmMessageBytes,
   fromBase64,
+  inspectEvmCall,
   isPermit,
   performApproval,
   prepareEvmSend,
@@ -25,7 +33,7 @@ import {
   siweDomain,
   solanaSummary,
   TYPED_ROW_LIMIT,
-  typedRows,
+  typedDataReview,
 } from '@/lib/dapp-sign';
 import { failure, success, tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
@@ -180,9 +188,18 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [evmSendPreparation, setEvmSendPreparation] = useState<EvmSendPreparation | null>(null);
+  // A signer/provider failure may be retried after the request crossed its atomic
+  // approval boundary. Keep the worker claim for this mounted approval screen.
+  const [claimed, setClaimed] = useState(false);
   // A site flagged as a scam needs this ticked first, so one tap can't approve it.
   const scam = approval.verified === 'scam';
   const [riskAccepted, setRiskAccepted] = useState(false);
+  const requiresFallbackConsent =
+    approval.kind === 'evmSend' &&
+    (approval.params as { tx: EvmTx }).tx.data === '0x' &&
+    (approval.params as { tx: EvmTx }).tx.to !== null;
+  const [fallbackAccepted, setFallbackAccepted] = useState(false);
   const site = approval.site;
   const signer = signers.find((s) => s.wallet.id === (site?.walletId ?? picked));
 
@@ -192,6 +209,8 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
     approval.kind === 'evmSend' && sharedNetwork && site && sharedNetwork.chainId !== site.chainId
       ? `${signer?.wallet.label} is on ${sharedNetwork.name}. Switch the site to ${sharedNetwork.name} first.`
       : null;
+
+  const reviewError = approvalReviewError(approval);
 
   const send = async (answer: Answer) => {
     await answerApproval(answer);
@@ -219,14 +238,41 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           ? 'The wallet this site connected to isn’t in Honey anymore.'
           : signer.shared && approval.kind !== 'evmSend'
             ? 'Shared wallets can only send transactions to sites for now, not sign messages.'
-            : wrongNetwork;
+            : (wrongNetwork ?? reviewError);
 
   const approve = async () => {
-    if (busy || blocked || (scam && !riskAccepted)) return;
+    if (
+      busy ||
+      blocked ||
+      (scam && !riskAccepted) ||
+      (requiresFallbackConsent && !fallbackAccepted) ||
+      (approval.kind === 'evmSend' && !signer?.shared && evmSendPreparation?.status !== 'ready')
+    )
+      return;
     tap();
     setBusy(true);
     setError(null);
     try {
+      // Connecting reveals wallet addresses. Require the same owner confirmation on
+      // native and web, where the password prompt is the browser vault's re-auth gate.
+      if (
+        (approval.kind === 'connect' || (!isWeb && approval.kind !== 'switchChain')) &&
+        !(await confirmOwner(`Approve for ${hostOf(approval.origin)}`))
+      ) {
+        setBusy(false);
+        return;
+      }
+      // Disconnect may revoke a request while this approval window is still open.
+      // Claiming atomically establishes that owner approval began before revocation.
+      if (!claimed) {
+        if (!(await claimApproval(approval.id))) {
+          setBusy(false);
+          setError('This request is no longer active.');
+          await onAnswered();
+          return;
+        }
+        setClaimed(true);
+      }
       if (approval.kind === 'connect') {
         const s = eligible.find((x) => x.wallet.id === picked);
         if (!s) throw new Error('Pick a wallet');
@@ -263,17 +309,11 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           },
         });
       } else {
-        // On the phone, Face ID before anything is signed (the browser's vault is already
-        // unlocked by its password).
-        if (
-          !isWeb &&
-          approval.kind !== 'switchChain' &&
-          !(await confirmOwner(`Approve for ${hostOf(approval.origin)}`))
-        ) {
-          setBusy(false);
-          return;
-        }
-        await send(await performApproval(approval, signer?.wallet.id ?? ''));
+        const prepared =
+          approval.kind === 'evmSend' && evmSendPreparation?.status === 'ready'
+            ? evmSendPreparation.prepared
+            : undefined;
+        await send(await performApproval(approval, signer?.wallet.id ?? '', prepared));
       }
       success();
     } catch (e) {
@@ -320,7 +360,12 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
             {signer && site ? (
               <WalletLine signer={signer} site={site} kind={approval.kind} />
             ) : null}
-            <Details approval={approval} shared={!!signer?.shared} />
+            <Details
+              approval={approval}
+              shared={!!signer?.shared}
+              preparation={evmSendPreparation}
+              onPreparation={setEvmSendPreparation}
+            />
           </>
         )}
         {blocked || error ? (
@@ -348,12 +393,29 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
           />
         </View>
       ) : null}
+      {requiresFallbackConsent ? (
+        <View style={styles.scamAlert}>
+          <Checkbox
+            label="I understand this may run unreviewed contract fallback code."
+            checked={fallbackAccepted}
+            onChange={setFallbackAccepted}
+          />
+        </View>
+      ) : null}
       <View style={styles.buttons}>
         <PillButton label="Cancel" variant="secondary" onPress={cancel} style={styles.flex} />
         {blocked ? null : (
           <PillButton
             label={busy ? '…' : primary}
-            disabled={busy || (scam && !riskAccepted) || (approval.kind === 'connect' && !picked)}
+            disabled={
+              busy ||
+              (scam && !riskAccepted) ||
+              (requiresFallbackConsent && !fallbackAccepted) ||
+              (approval.kind === 'evmSend' &&
+                !signer?.shared &&
+                evmSendPreparation?.status !== 'ready') ||
+              (approval.kind === 'connect' && !picked)
+            }
             onPress={approve}
             style={styles.flex}
           />
@@ -437,7 +499,17 @@ function WalletLine({ signer, site, kind }: { signer: Signer; site: Site; kind: 
 
 // What it asks for
 
-function Details({ approval, shared }: { approval: Approval; shared: boolean }) {
+function Details({
+  approval,
+  shared,
+  preparation,
+  onPreparation,
+}: {
+  approval: Approval;
+  shared: boolean;
+  preparation: EvmSendPreparation | null;
+  onPreparation: (preparation: EvmSendPreparation | null) => void;
+}) {
   const p = approval.params as Record<string, unknown>;
   switch (approval.kind) {
     case 'switchChain':
@@ -449,7 +521,14 @@ function Details({ approval, shared }: { approval: Approval; shared: boolean }) 
     case 'evmTypedData':
       return <TypedData approval={approval} json={p.data as string} />;
     case 'evmSend':
-      return <EvmSend approval={approval} shared={shared} />;
+      return (
+        <EvmSend
+          approval={approval}
+          shared={shared}
+          preparation={preparation}
+          onPreparation={onPreparation}
+        />
+      );
     case 'solanaSignTransaction':
     case 'solanaSend':
       return <SolanaTx approval={approval} />;
@@ -506,50 +585,49 @@ function MessageBox({ approval, bytes }: { approval: Approval; bytes: Uint8Array
 
 function TypedData({ approval, json }: { approval: Approval; json: string }) {
   const styles = useStyles();
-  const typed = useMemo(() => {
+  const review = useMemo(() => {
     try {
-      return parseTypedData(json);
+      return typedDataReview(json);
     } catch {
       return null;
     }
   }, [json]);
-  if (!typed) return <Warning text="This request is malformed. Cancel it." />;
-  const domain = typed.domain as {
-    name?: string;
-    chainId?: number | string;
-    verifyingContract?: string;
-  };
-  const chainId = domain.chainId === undefined ? undefined : Number(domain.chainId);
-  const wrongChain = chainId !== undefined && approval.site && chainId !== approval.site.chainId;
-  const { rows, complete } = typedRows(
-    typed.types as unknown as Record<string, { name: string; type: string }[]>,
-    String(typed.primaryType),
-    typed.message as Record<string, unknown>,
-  );
+  if (!review) return <Warning text="This request is malformed. Cancel it." />;
+  const { typed } = review;
+  const signedChainId = review.chainId;
+  const wrongChain =
+    signedChainId !== undefined && approval.site && signedChainId !== approval.site.chainId;
   return (
     <>
-      {complete ? null : (
+      {review.complete ? null : (
         <Warning
-          text={`This request has missing or malformed fields, or more than ${TYPED_ROW_LIMIT}. Honey won’t sign it.`}
+          text={`This request has missing, malformed, unbound, or more than ${TYPED_ROW_LIMIT} fields. Honey won’t sign it.`}
         />
       )}
+      {!review.hasChainBinding ? (
+        <Warning text="No chain ID is included in the signed domain. This signature may be valid on multiple chains." />
+      ) : null}
       {isPermit(typed.primaryType as string) ? (
         <Warning text="This lets someone move your tokens without asking again. Only sign on sites you trust." />
       ) : null}
       {wrongChain ? (
         <Warning
-          text={`This is for ${evmNetwork(chainId)?.name ?? `chain ${chainId}`}, not the site’s network.`}
+          text={`This is for ${evmNetwork(signedChainId)?.name ?? `chain ${signedChainId}`}, not the site’s network.`}
         />
       ) : null}
       <View style={styles.card}>
-        <StatRow label="Type" value={String(typed.primaryType)} />
-        {domain.name ? <StatRow label="App" value={domain.name} /> : null}
-        {domain.verifyingContract ? (
-          <StatRow label="Contract" value={shortAddress(domain.verifyingContract, 6, 4)} />
-        ) : null}
+        <StatRow label="Type" value={review.primaryTypeLabel} />
+        <StatRow label="Signed domain fields" value={String(review.domainRows.length)} />
       </View>
       <View style={styles.message}>
-        {rows.map(([key, value]) => (
+        <Text style={styles.fieldKey}>Domain separator</Text>
+        {review.domainRows.map(([key, value]) => (
+          <Text key={`domain:${key}`} style={styles.field} selectable>
+            <Text style={styles.fieldKey}>{key}</Text> {value}
+          </Text>
+        ))}
+        <Text style={styles.fieldKey}>Signed message</Text>
+        {review.messageRows.map(([key, value]) => (
           <Text key={key} style={styles.field} selectable>
             <Text style={styles.fieldKey}>{key}</Text> {value}
           </Text>
@@ -560,45 +638,80 @@ function TypedData({ approval, json }: { approval: Approval; json: string }) {
 }
 
 /** A transaction's amount, recipient and fee. A shared wallet's runs later, so no estimate. */
-function EvmSend({ approval, shared }: { approval: Approval; shared: boolean }) {
+function EvmSend({
+  approval,
+  shared,
+  preparation,
+  onPreparation,
+}: {
+  approval: Approval;
+  shared: boolean;
+  preparation: EvmSendPreparation | null;
+  onPreparation: (preparation: EvmSendPreparation | null) => void;
+}) {
   const styles = useStyles();
   const { tx, chainId } = approval.params as { tx: EvmTx; chainId: number };
   const network = evmNetwork(chainId);
-  const [fee, setFee] = useState<{ max: bigint } | { error: string } | null>(null);
   useEffect(() => {
-    if (shared) return;
+    if (shared) {
+      onPreparation(null);
+      return;
+    }
     let live = true;
+    onPreparation({ status: 'loading' });
     prepareEvmSend(tx, chainId)
-      .then((r) => live && setFee({ max: r.maxFee }))
-      .catch((e) => live && setFee({ error: reasonOf(e) }));
+      .then((prepared) => live && onPreparation({ status: 'ready', prepared }))
+      .catch((e) => live && onPreparation({ status: 'error', message: reasonOf(e) }));
     return () => {
       live = false;
     };
-  }, [tx, chainId, shared]);
+  }, [tx, chainId, shared, onPreparation]);
   const value = BigInt(tx.value);
-  const call = callName(tx.data as Hex);
+  const call = inspectEvmCall(tx.data, tx.to);
   const native = network?.native ?? 'ETH';
   return (
     <>
-      {call?.risky ? <Warning text={`${call.name}: lets a contract move your tokens.`} /> : null}
-      {fee && 'error' in fee ? <Warning text={`This will probably fail: ${fee.error}`} /> : null}
+      {!call.reviewable ? (
+        <Warning text={call.reason ?? 'Honey cannot safely decode this contract call.'} />
+      ) : null}
+      {call.warning ? <Warning icon="info" text={call.warning} /> : null}
+      {preparation?.status === 'error' ? (
+        <Warning text={`This will probably fail: ${preparation.message}`} />
+      ) : null}
       <View style={styles.card}>
         <StatRow label="Amount" value={`${formatEther(value)} ${native}`} />
         <StatRow
           label={tx.to ? 'To' : 'Creates'}
-          value={tx.to ? shortAddress(tx.to, 6, 4) : 'A new contract'}
+          value={
+            tx.to ? (
+              <Text style={styles.reviewValue} selectable>
+                {tx.to}
+              </Text>
+            ) : (
+              'A new contract'
+            )
+          }
         />
-        {call ? <StatRow label="Action" value={call.name} /> : null}
+        <StatRow label="Action" value={call.label} />
+        {call.rows.map(([label, value]) => (
+          <StatRow
+            key={label}
+            label={label}
+            value={
+              <Text style={styles.reviewValue} selectable>
+                {value}
+              </Text>
+            }
+          />
+        ))}
         <StatRow
           label="Network fee"
           value={
             shared
               ? 'Paid when it runs'
-              : fee === null
+              : preparation?.status !== 'ready'
                 ? 'Estimating…'
-                : 'max' in fee
-                  ? `Up to ${Number(formatEther(fee.max)).toPrecision(3)} ${native}`
-                  : '—'
+                : `Up to ${formatEther(preparation.prepared.maxFee)} ${native}`
           }
         />
       </View>
@@ -608,15 +721,24 @@ function EvmSend({ approval, shared }: { approval: Approval; shared: boolean }) 
 
 function SolanaTx({ approval }: { approval: Approval }) {
   const styles = useStyles();
-  const summary = solanaSummary((approval.params as { transaction: string }).transaction);
+  let summary: ReturnType<typeof solanaSummary> = null;
+  try {
+    summary = solanaSummary((approval.params as { transaction: string }).transaction);
+  } catch {
+    summary = null;
+  }
   const mine = approval.site?.solana;
   if (!summary) return <Warning text="This transaction can’t be read. Cancel it." />;
   return (
     <>
-      <Warning
-        icon="info"
-        text="Honey can’t show what this transaction does yet. Only approve on sites you trust."
-      />
+      {!summary.reviewable ? (
+        <Warning text="This transaction contains an instruction Honey cannot safely interpret. Signing is blocked." />
+      ) : (
+        <Warning
+          icon="info"
+          text="Review every instruction below. Only simple SOL transfers and compute-budget settings are supported."
+        />
+      )}
       <View style={styles.card}>
         <StatRow
           label="Fee paid by"
@@ -624,7 +746,52 @@ function SolanaTx({ approval }: { approval: Approval }) {
         />
         <StatRow label="Signers" value={String(summary.signers.length)} />
         <StatRow label="Version" value={String(summary.version)} />
+        <StatRow label="Instructions" value={String(summary.instructions.length)} />
       </View>
+      {summary.instructions.map((instruction, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: duplicate Solana instructions are distinct ordered effects
+        <View key={`${index}:${instruction.kind}`} style={styles.card}>
+          <StatRow label={`Instruction ${index + 1}`} value={instruction.kind} />
+          {instruction.kind === 'solTransfer' ? (
+            <>
+              <StatRow
+                label="From"
+                value={
+                  <Text style={styles.reviewValue} selectable>
+                    {instruction.from}
+                  </Text>
+                }
+              />
+              <StatRow
+                label="To"
+                value={
+                  <Text style={styles.reviewValue} selectable>
+                    {instruction.to}
+                  </Text>
+                }
+              />
+              <StatRow label="Amount" value={`${formatUnits(instruction.lamports, 9)} SOL`} />
+              <StatRow label="Lamports" value={instruction.lamports.toString()} />
+            </>
+          ) : instruction.kind === 'computeUnitLimit' ? (
+            <StatRow label="Compute units" value={String(instruction.units)} />
+          ) : instruction.kind === 'computeUnitPrice' ? (
+            <StatRow label="Micro-lamports per unit" value={instruction.microLamports.toString()} />
+          ) : (
+            <>
+              <StatRow
+                label="Program"
+                value={
+                  <Text style={styles.reviewValue} selectable>
+                    {instruction.program ?? 'Unresolved program'}
+                  </Text>
+                }
+              />
+              <StatRow label="Opaque data bytes" value={String(instruction.data.length)} />
+            </>
+          )}
+        </View>
+      ))}
     </>
   );
 }
@@ -781,5 +948,14 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     gap: 10,
     paddingTop: 12,
+  },
+  reviewValue: {
+    color: c.text,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'right',
+    flexShrink: 1,
+    maxWidth: '72%',
+    fontFamily: 'monospace',
   },
 }));

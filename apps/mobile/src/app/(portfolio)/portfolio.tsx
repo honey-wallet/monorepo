@@ -176,6 +176,14 @@ export default function PortfolioScreen() {
           </View>
         )}
       </View>
+      {empty ? null : (
+        <View style={[styles.gutter, styles.sampleNotice]} accessibilityRole="text">
+          <Text style={styles.sampleNoticeText}>
+            Sample portfolio data. The balances, allocation, and performance below are illustrative
+            and do not reflect this wallet.
+          </Text>
+        </View>
+      )}
 
       <View style={styles.chart}>
         <SkeletonReveal loading={loading} skeleton={<SkeletonChart height={CHART_HEIGHT} />}>
@@ -320,6 +328,18 @@ function Signed({
 const useStyles = makeStyles((c) => ({
   gutter: {
     paddingHorizontal: 20,
+  },
+  sampleNotice: {
+    marginTop: 8,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: c.raised,
+  },
+  sampleNoticeText: {
+    color: c.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
   },
   name: {
     color: c.text,

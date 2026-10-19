@@ -42,7 +42,7 @@ export default function SignOutSheet() {
     tap();
     setBusy(true);
     try {
-      if (!(await confirmOwner('Sign out of Honey'))) {
+      if (!(await confirmOwner('Sign out of Honey', false))) {
         setBusy(false);
         return;
       }

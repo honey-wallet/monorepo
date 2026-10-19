@@ -1,0 +1,140 @@
+{
+  "scope": "V2 signing, encrypted journal/reconstruction and finalized-observation candidate; no app activation or production certification",
+  "independentOracle": "Python/OpenSSL BIP32 and Foundry ABI/Keccak/ECDSA; no TypeScript/Noble/Scure/viem implementation",
+  "vectors": 3,
+  "envelopesPerVector": 256,
+  "selectedLeaves": [0, 254, 255],
+  "keyringTestsPassed": 295,
+  "rootLint": "passed",
+  "rootTypecheck": "5 tasks passed; 2 cached",
+  "rootTests": "7 tasks passed; 2 cached; 295 keyring tests executed; localhost fixtures permitted; explicitly ignored infrastructure suites not enabled",
+  "sourcesSha256": {
+    "packages/keyring/src/bunk-evm-v2.ts": "0f18ebc2602a72e55305444029e39d676056e3670da2649dc2d77d783e9de685",
+    "packages/keyring/src/bunk-evm-v2-sign.ts": "545e9570239f54a7e63053cbfc2f873a951a6978c66d55426e5e558cd6dd3ce0",
+    "packages/keyring/src/bunk-evm-v2.test.ts": "d70bb1cc62ba8f0abd169524e4fe7726d0f56d75c5243d2d49593d64f8c99766",
+    "packages/keyring/src/bunk-evm-observe.ts": "ef3939a8cc92f342a91e8bfa748ecda90939d917707ebf6eae219fbf6c6d71ec",
+    "packages/keyring/src/bunk-evm-observe.test.ts": "398bf3982d051b5f13a21dde5caf0adc04deeca34faab34f49cdf2bb8ce2ad67",
+    "packages/keyring/scripts/bunk-evm-v2-vectors.py": "8a8679061baf7b5dcc65cdecd4dcc27712ea574c224f10a30041be80fc042230",
+    "packages/keyring/src/fixtures/bunk-evm-v2.json": "089aea970ef9ac929141abe1afd0eff16751f44f0661ce83e8fdf12ac0f1d7ba"
+  },
+  "realBundlerEvidence": "bunk-bundler-local.json#clientV2",
+  "limitations": [
+    "Durable SQLite coordinator exists; actual app/extension adapters remain open",
+    "Reconstruction policy review and pending-certificate replication/backup/rollback/device recovery unresolved",
+    "No public-provider/network acceptance or independent review"
+  ],
+  "bundlerSourceHashesRechecked": true,
+  "bundlerSourceCount": 62,
+  "bundlerArtifactCount": 95,
+  "clientCases": [
+    {
+      "hash": "0xd4b08e62f0faf86a1aec0d67d2538b6bfebc3dbdd700b96de9839fec077353f4",
+      "transactionHash": "0x94c06564c89832b5da0eebf245bf5d6f5ba9da705e2986ad8ce75e45d91d7418",
+      "event": "ActionExecuted",
+      "observation": {
+        "config": {
+          "chainId": "1337",
+          "factory": {
+            "address": "0x9F4dcd09DE62E1985807C74716dBB6768CE26892",
+            "codeHash": "0x003b55107f11a3ef47610c4546c7069af7666e9317013ea3bc554125ddf1751b"
+          },
+          "singleton": {
+            "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+            "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+          },
+          "proxyFactory": {
+            "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+            "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+          },
+          "entryPoint": {
+            "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+            "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+          },
+          "module": {
+            "address": "0x9cE1267a78ce1938FB6aC19aae3901849a43FF36",
+            "codeHash": "0x7ca7829c140ec9c5f5922d7adf6419ecf3f14452f770164fc8cd28dd29aef87f"
+          },
+          "helper": {
+            "address": "0xF70aEf3c5f6e3E744ae139b3fe6Ff0f035ea0891",
+            "codeHash": "0xd15873ba1b005f914b5f563acf1f5a61de090f8e672008a462361f7eec014b7b"
+          },
+          "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+          "protocolVersion": 2
+        },
+        "protocolVersion": 2,
+        "block": {
+          "hash": "0x4f77a44baf52213509782711dc6f51c1bea6315fa7e9428c456d91f803e6e395",
+          "number": "320",
+          "timestamp": "1792372253"
+        },
+        "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+        "accountIndex": 2,
+        "status": "deployed",
+        "state": {
+          "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+          "accountIndex": 2,
+          "ownerIndex": 1,
+          "commitment": "0x2f2db0d58fbe952b2744b8e5c8629883cdfec8a7050f83ce31eaabf3522d9619",
+          "nonce": "1",
+          "protocolVersion": 2,
+          "deployed": true
+        }
+      }
+    },
+    {
+      "hash": "0x3ac66bfbd430d4d1025a5804425e4f0ac406811ce7927f9c08e446e3a3ff1526",
+      "transactionHash": "0x675070755d7d9a532264b87f20aee528a8b1bc414d72173738f8d4afe540b3fa",
+      "event": "ExpiredActionSkipped",
+      "observation": {
+        "config": {
+          "chainId": "1337",
+          "factory": {
+            "address": "0x9F4dcd09DE62E1985807C74716dBB6768CE26892",
+            "codeHash": "0x003b55107f11a3ef47610c4546c7069af7666e9317013ea3bc554125ddf1751b"
+          },
+          "singleton": {
+            "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+            "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+          },
+          "proxyFactory": {
+            "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+            "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+          },
+          "entryPoint": {
+            "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+            "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+          },
+          "module": {
+            "address": "0x9cE1267a78ce1938FB6aC19aae3901849a43FF36",
+            "codeHash": "0x7ca7829c140ec9c5f5922d7adf6419ecf3f14452f770164fc8cd28dd29aef87f"
+          },
+          "helper": {
+            "address": "0xF70aEf3c5f6e3E744ae139b3fe6Ff0f035ea0891",
+            "codeHash": "0xd15873ba1b005f914b5f563acf1f5a61de090f8e672008a462361f7eec014b7b"
+          },
+          "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+          "protocolVersion": 2
+        },
+        "protocolVersion": 2,
+        "block": {
+          "hash": "0x5463f763f95cd1bffb61e16e69c8be7dd27156e59acb85f26ec2d468079290ed",
+          "number": "352",
+          "timestamp": "1792372285"
+        },
+        "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+        "accountIndex": 2,
+        "status": "deployed",
+        "state": {
+          "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+          "accountIndex": 2,
+          "ownerIndex": 2,
+          "commitment": "0x4a7f7bbdb9bee359efb7b30626e6d761abd3b65275bbb36ab239a17d84a1ec2d",
+          "nonce": "2",
+          "protocolVersion": 2,
+          "deployed": true
+        }
+      }
+    }
+  ],
+  "journalEvidence": "bunk-journal-local.json"
+}

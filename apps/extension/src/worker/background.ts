@@ -8,6 +8,7 @@ import {
   STORAGE,
 } from './protocol';
 import { createRouter } from './router';
+import { createRpcClient } from './rpc';
 
 /**
  * Honey for Chrome's service worker: answers websites (through content.ts), keeps the
@@ -24,10 +25,10 @@ const toError = (error: unknown): ProviderError =>
     : ERR.internal;
 
 /**
- * Honey runs in a phone-sized window (an iPhone's 393 × 852 points), the toolbar button's
- * and approvals' alike, so every screen is laid out exactly as on the phone: one layout
- * to maintain. Chrome's toolbar popup can't be that tall (it stops at 800 × 600). The
- * page trims the window to that inner size once it knows the frame (public/boot.js).
+ * Approvals and Expand view open Honey in a phone-sized window (an iPhone's 393 × 852
+ * points), laid out exactly as on the phone. The toolbar button opens the usual popup
+ * under it instead, 393 × 600 (Chrome caps a popup at 800 × 600). The page trims the
+ * window to that inner size once it knows the frame (public/boot.js).
  */
 export const PHONE = { width: 393, height: 852 } as const;
 /** A first guess at the title bar, corrected by the page. */
@@ -70,24 +71,11 @@ async function openWindow(key: string, route: string) {
 
 const openApprovals = () => openWindow(STORAGE.window, 'approve');
 
-// The toolbar button opens (or brings back) Honey's own window.
-chrome.action.onClicked.addListener(() => void openWindow(STORAGE.appWindow, ''));
+// The toolbar button opens the popup under it, like other wallets (manifest
+// default_popup); Expand view there opens Honey's own window ('honey:expand').
+// chrome.action.onClicked.addListener(() => void openWindow(STORAGE.appWindow, ''));
 
-async function rpc(url: string, method: string, params: unknown) {
-  let body: { result?: unknown; error?: ProviderError };
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-    });
-    body = await res.json();
-  } catch {
-    throw { ...ERR.internal, message: 'Couldn’t reach the network. Try again.' };
-  }
-  if (body.error) throw toError(body.error);
-  return body.result;
-}
+const rpc = createRpcClient();
 
 const router = createRouter({
   load: async <T>(key: string) => (await chrome.storage.local.get(key))[key] as T | undefined,
@@ -167,6 +155,8 @@ chrome.runtime.onMessage.addListener((message: AppMessage, sender, respond) => {
     switch (message?.type) {
       case 'honey:next':
         return router.next();
+      case 'honey:claim':
+        return router.claim(message.id);
       case 'honey:answer':
         return router.answer(message.answer);
       case 'honey:sites':
@@ -178,6 +168,13 @@ chrome.runtime.onMessage.addListener((message: AppMessage, sender, respond) => {
         await router.forgetAll();
         return true;
       case 'honey:ping':
+        return true;
+      case 'honey:expand':
+        // A path inside the app only; boot.js checks it again when the window loads.
+        await openWindow(
+          STORAGE.appWindow,
+          typeof message.route === 'string' ? message.route.slice(0, 512) : '',
+        );
         return true;
       default:
         return null;

@@ -1,0 +1,139 @@
+{
+  "derivationVersion": 1,
+  "purpose": "synthetic-test-only-never-fund",
+  "phrase": "push protect grunt rookie audit pave detect swamp clerk document april venue",
+  "vectors": [
+    {
+      "name": "evm-ethereum-first",
+      "network": {
+        "family": "evm",
+        "chainId": "1"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/60'/0'/0'/0'/0'/0'/0'/0'/0'/1'/0'/0'",
+      "publicKey": "0x0327f4497ddfa139fcabacc6e3d33d5196d7e41026577a928f3377d0b00a16bedb",
+      "commitment": "0xc1a8045b40bec4e553e259bdf0c975abd3fabcb6ce358e7609fb19c3fdb2399a"
+    },
+    {
+      "name": "evm-ethereum-next",
+      "network": {
+        "family": "evm",
+        "chainId": "1"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 1,
+      "path": "m/7744'/1'/60'/0'/0'/0'/0'/0'/0'/0'/0'/1'/0'/1'",
+      "publicKey": "0x027876e347a5389c17a325945f636d8388fd06ab7f472bd9e88b558fa378d957c7",
+      "commitment": "0xca468801911d0b5d66eaefc574eb763c89dc39451866fb5e35cfeb0c4f3a55ec"
+    },
+    {
+      "name": "evm-base-first",
+      "network": {
+        "family": "evm",
+        "chainId": "8453"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/60'/0'/0'/0'/0'/0'/0'/0'/0'/8453'/0'/0'",
+      "publicKey": "0x033983ac8087ca1af8d6b98a2a6aa9b0e7442282c53647162ee2b9457aafb227b0",
+      "commitment": "0xba9790b940e60c3f5e08fe3f1e0a6743006fe11f2b023ee2db71ca25d1b10ed3"
+    },
+    {
+      "name": "evm-max-chain-id",
+      "network": {
+        "family": "evm",
+        "chainId": "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+      },
+      "accountIndex": 7,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/60'/255'/2147483647'/2147483647'/2147483647'/2147483647'/2147483647'/2147483647'/2147483647'/2147483647'/7'/0'",
+      "publicKey": "0x03fc8d59109d30a00eed469f2e323c73904b23c108719062f5775286d2f60ee77a",
+      "commitment": "0xd70083728eb37074f28043f21d132b97cba29b426dd575dfd2308fbcc4adbb4b"
+    },
+    {
+      "name": "evm-last-owner",
+      "network": {
+        "family": "evm",
+        "chainId": "1"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 2147483647,
+      "path": "m/7744'/1'/60'/0'/0'/0'/0'/0'/0'/0'/0'/1'/0'/2147483647'",
+      "publicKey": "0x0377cc1477a4ff89f655f1749cd0cf74224708fbf332a8958511beaa398c6ba8e7",
+      "commitment": "0xa655dde4ab6e910518e733a4008eeda31cf26f122e0a88cb18e93aa0a3fb564c"
+    },
+    {
+      "name": "solana-synthetic-first",
+      "network": {
+        "family": "solana",
+        "genesisHash": "1thX6LZfHDZZKUs92febYZhYRcXddmzfzF2NvTkPNE"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/501'/0'/8454530'/21070274'/18956641'/1087430897'/8949912'/1347704924'/808596534'/471670303'/0'/0'",
+      "publicKey": "0x552e484ceebef8ef6d53137a5f25587d4d5a8885b16614b7ac51d8aeb1b39a63",
+      "commitment": "0x197f6a7a864c127fa5d8624c7d425dd5c6e8a8398ced5b950a71d3d18a44db92"
+    },
+    {
+      "name": "solana-synthetic-next",
+      "network": {
+        "family": "solana",
+        "genesisHash": "1thX6LZfHDZZKUs92febYZhYRcXddmzfzF2NvTkPNE"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 1,
+      "path": "m/7744'/1'/501'/0'/8454530'/21070274'/18956641'/1087430897'/8949912'/1347704924'/808596534'/471670303'/0'/1'",
+      "publicKey": "0x9b613b5d6b1bd6a677e608a7827c986e9c97733317548183b78a794cc37e6678",
+      "commitment": "0x118465063b7c828662bcd2ffdfecb93f1e0c883022d28c89a9d64f1f8b6b25e5"
+    },
+    {
+      "name": "bitcoin-mainnet",
+      "network": {
+        "family": "bitcoin",
+        "network": "mainnet"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/0'/0'/0'",
+      "publicKey": "0x03a65e7fd5446ddbfd9ad81bfeb504ffea15a02ba2885f18a3c8e36698f6df5eae",
+      "commitment": "0x9e552e6de779669908dc1c1edc9812e7e948cce4"
+    },
+    {
+      "name": "bitcoin-testnet",
+      "network": {
+        "family": "bitcoin",
+        "network": "testnet"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/1'/0'/0'",
+      "publicKey": "0x023241a9e4b5fa50661d745886bf7587cb187105f3cf617507f98a427037eb2fbb",
+      "commitment": "0x21063a2c9a7f60d8002bae9201ba821c9457457d"
+    },
+    {
+      "name": "bitcoin-signet",
+      "network": {
+        "family": "bitcoin",
+        "network": "signet"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/2'/0'/0'",
+      "publicKey": "0x039113e349e46db0580e7ae2439ca5cb9a2f39add46faff9242d8033504bad931f",
+      "commitment": "0x6d8ca9987a12bf7c0e14898829e230fff77350de"
+    },
+    {
+      "name": "bitcoin-regtest",
+      "network": {
+        "family": "bitcoin",
+        "network": "regtest"
+      },
+      "accountIndex": 0,
+      "ownerIndex": 0,
+      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/3'/0'/0'",
+      "publicKey": "0x0284e583b94cbff8c8bb055db5b3f1f42557b6051cbeae9ee3556e6104408046c7",
+      "commitment": "0xdee7ce0b8f2aa17fd756069f6566d74f1c09fe4e"
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "scope": "Exploratory failures on disposable local chains; all remain unresolved compatibility gates. No production chain was used.",
+  "gethVersion": "1.17.8",
+  "cases": [
+    {
+      "label": "default Geth dev Bogota / sponsored creation",
+      "altoVersion": "0.0.19",
+      "verificationGasLimit": 500000,
+      "directDeploymentGasEstimate": 1288547,
+      "traceFailure": "AA13 initCode failed or OOG",
+      "logSha256": "3a476e902c4ebc567611cb009f3ef7b3053b284639cc48886ee30d6cb72bbcca"
+    },
+    {
+      "label": "explicit Osaka / Alto 0.0.19 safe-mode simulation decoding",
+      "altoVersion": "0.0.19",
+      "safeMode": true,
+      "selector": "0x99410554",
+      "decodedSelector": "DelegateAndRevert(bool,bytes)",
+      "nestedSuccess": true,
+      "error": "AbiErrorSignatureNotFoundError",
+      "validatorSha256": "4634eb47e73a784ba11063199ff64ef6bbaa8e85301968a8684c591255ce591d",
+      "pimlicoSimulationArtifactSha256": "812ea84692da2679065505cbf9572008d5f610267ab7e69d69dbc593082a741e",
+      "packageIntegrity": "sha512-0V7cXgZxHeqZMeZ1gnkpKDcTGM/8eJI2r48FOstSFh5ikkRqlXik6Vpe3gKyDma4BTKgaiF/scMOcQezYI9+yg==",
+      "logSha256": "e42753f0bbb2a1f170dea27f938a9a4388bd12ed88590ced3113d8d1ff50ed26"
+    },
+    {
+      "label": "Osaka / unsponsored counterfactual creation",
+      "altoVersion": "0.0.18",
+      "verificationGasLimit": 500000,
+      "error": "AA26 over verificationGasLimit",
+      "note": "Sponsored creation and already-deployed self-funding pass the separate seven-case harness."
+    }
+  ]
+}

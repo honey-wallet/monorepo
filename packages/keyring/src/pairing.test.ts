@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   channelFor,
+  clearPairAnswerSecrets,
+  clearPairOfferSecrets,
+  clearPairSession,
   createPairAnswer,
   createPairOffer,
   decodeNonce,
@@ -9,6 +12,7 @@ import {
   openPayload,
   openReveal,
   type PairAnswer,
+  type PairPayload,
   pairSession,
   parsePairUri,
   sealPayload,
@@ -56,6 +60,35 @@ function pair(relay: { commit?: (c: string) => string; reveal?: (r: string) => s
 }
 
 describe('pairing', () => {
+  it('overwrites ephemeral offer, answer, and session key buffers when retired', () => {
+    const offer = createPairOffer(random);
+    const answer = createPairAnswer(random);
+    const session = pairSession(answer.secretKey, offer.publicKey, {
+      channel: offer.channel,
+      extensionKey: offer.publicKey,
+      phoneKey: answer.publicKey,
+      extensionNonce: offer.nonce,
+      phoneNonce: answer.nonce,
+    });
+    const offerSecret = offer.secretKey;
+    const offerNonce = offer.nonce;
+    const answerSecret = answer.secretKey;
+    const answerNonce = answer.nonce;
+    const sessionKey = session.key;
+
+    clearPairOfferSecrets(offer);
+    clearPairAnswerSecrets(answer);
+    clearPairSession(session);
+
+    expect(offerSecret.every((byte) => byte === 0)).toBe(true);
+    expect(offerNonce.every((byte) => byte === 0)).toBe(true);
+    expect(answerSecret.every((byte) => byte === 0)).toBe(true);
+    expect(answerNonce.every((byte) => byte === 0)).toBe(true);
+    expect(sessionKey.every((byte) => byte === 0)).toBe(true);
+    // Cleanup is safe in overlapping error and unmount handlers.
+    expect(() => clearPairSession(session)).not.toThrow();
+  });
+
   it('gives both sides the same key and code', () => {
     const { phoneSide, extensionSide } = pair();
     const ext = extensionSide();
@@ -70,6 +103,38 @@ describe('pairing', () => {
     const data = sealPayload(phoneSide.key, payload, random);
     expect(data).not.toContain('abandon');
     expect(openPayload(extensionSide().key, data)).toEqual(payload);
+  });
+
+  it('overwrites the caller-owned sealing nonce after payload encryption', () => {
+    const { phoneSide } = pair();
+    const nonce = new Uint8Array(24).fill(7);
+    sealPayload(phoneSide.key, { v: 1, mnemonic: PHRASE, accounts: [] }, () => nonce);
+    expect(nonce.every((byte) => byte === 0)).toBe(true);
+  });
+
+  it.each([
+    ['non-array accounts', { not: 'an array' }],
+    ['non-object account', [null]],
+    ['unsafe index', [{ index: Number.MAX_SAFE_INTEGER, label: 'Wallet' }]],
+    ['negative index', [{ index: -1, label: 'Wallet' }]],
+    [
+      'duplicate index',
+      [
+        { index: 0, label: 'One' },
+        { index: 0, label: 'Two' },
+      ],
+    ],
+    ['non-string label', [{ index: 0, label: 42 }]],
+    ['oversized label', [{ index: 0, label: 'x'.repeat(257) }]],
+    ['too many accounts', Array.from({ length: 257 }, (_, index) => ({ index, label: 'Wallet' }))],
+  ])('rejects malformed pairing account metadata: %s', (_case, accounts) => {
+    const { phoneSide, extensionSide } = pair();
+    const data = sealPayload(
+      phoneSide.key,
+      { v: 1, mnemonic: PHRASE, accounts } as PairPayload,
+      random,
+    );
+    expect(() => openPayload(extensionSide().key, data)).toThrow('Bad pairing payload');
   });
 
   it('rejects a reveal that differs from the commitment', () => {

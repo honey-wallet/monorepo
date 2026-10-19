@@ -1,0 +1,108 @@
+{
+  "scope": "Real isolated Chrome pages/profile and encrypted v3 per-owner journal; coordinator missing-history gate included; not packaged MV3 worker, power-loss or production certification",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/155.0.8059.80",
+    "revision": "@43a195105613ac83c21d3f14de279f4a045c7da0",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "jsVersion": "15.5.35.23"
+  },
+  "browserProcessStarts": 4,
+  "hardTerminations": 2,
+  "origin": "http://127.0.0.1:64775",
+  "strictDurabilityRequired": true,
+  "cases": [
+    "two tabs serialize insert/update CAS and forty concurrent increments",
+    "request success followed by transaction abort never returns committed success",
+    "strict durability is requested; a simulated downgrade aborts without writing",
+    "encrypted records reopen across tabs without plaintext in stored value",
+    "ciphertext substitution across account keys is rejected",
+    "connection close aborts or rejects in-flight writes",
+    "invalid keys/revisions and corrupt rows fail closed",
+    "incompatible database schemas are not repaired or deleted automatically",
+    "schema upgrade closes old handles; unsupported new version is refused",
+    "blocked open times out and its late request cannot leak a connection",
+    "empty browser history remains fenced by the v3 account coordinator",
+    "actual encrypted v3 owner journal admits only one approval across tabs",
+    "hard browser termination before owner-signature persistence retains uncertainty; fresh process reconstructs golden bytes",
+    "hard browser termination before leaf-signature persistence retains uncertainty; fresh process reconstructs exact 1120-byte authorization",
+    "graceful full browser restart reopens identical saved authorization"
+  ],
+  "finalJournal": {
+    "revision": 7,
+    "owner": "signed",
+    "ownerSignature": "0x2db12143ac04592440e0f810d2987ddb1a1879fef07099661fc3aa94fc14e79c028f7fe2840f5b7a0023f2fd0d1a6bff82e18b8930cdd472e0d02bcf3c183e231c",
+    "envelopes": [
+      {
+        "attempt": 255,
+        "phase": "signed",
+        "signature": "0xb620eb718ba5f47152af384ae3362d18f667a2f66a5456393fb7a798b51962d81e0fb53d8b3772df0b9e98fb54c6c59a4e53a45fd6fcfd5a366e829f4b1ea4ff1b"
+      }
+    ]
+  },
+  "sourcesSha256": {
+    "packages/keyring/src/bunk-evm-observe.test.ts": "398bf3982d051b5f13a21dde5caf0adc04deeca34faab34f49cdf2bb8ce2ad67",
+    "packages/keyring/src/bunk-evm-observe.ts": "ef3939a8cc92f342a91e8bfa748ecda90939d917707ebf6eae219fbf6c6d71ec",
+    "packages/keyring/src/bunk-evm-sign.ts": "296eb8570ed28e82f48265d8a92ca403416b826cd347feb1667f4a4095710f34",
+    "packages/keyring/src/bunk-evm-v2-journal.ts": "25a49e3ff6c67077f4fd1f047c3d387b0df997a64a6a03cd6b2cda4d154df7d1",
+    "packages/keyring/src/bunk-evm-v2-sign.ts": "545e9570239f54a7e63053cbfc2f873a951a6978c66d55426e5e558cd6dd3ce0",
+    "packages/keyring/src/bunk-evm-v2-store.ts": "914982ab0b8689c6d73c204e5754a4e83f22bca2b16e2dfe057710636883e14c",
+    "packages/keyring/src/bunk-evm-v2.test.ts": "d70bb1cc62ba8f0abd169524e4fe7726d0f56d75c5243d2d49593d64f8c99766",
+    "packages/keyring/src/bunk-evm-v2.ts": "0f18ebc2602a72e55305444029e39d676056e3670da2649dc2d77d783e9de685",
+    "packages/keyring/src/bunk-evm-v3-account.ts": "837fe98f0d66c271db31f283fcc3b3469bd21d2c40da8a217b71c48e41350448",
+    "packages/keyring/src/bunk-evm-v3-journal.ts": "400013dd8789eb811f6a44ee034418b99a059356e1c0b8f5c3d99e949fb4e338",
+    "packages/keyring/src/bunk-evm-v3-sign.ts": "525a954a1a36d554bd1957852c97a57f916edd65be1cf59cc3d23a09a4bb2d16",
+    "packages/keyring/src/bunk-evm-v3.test.ts": "4da0d066bc4e3a8ca6dcd0987235315f534789fb1c52eb57278fa985b93f8392",
+    "packages/keyring/src/bunk-evm-v3.ts": "1724313218e0c32d9177eb3026cf18f261f02f95f5eab1e6f1c2c0df350d323e",
+    "packages/keyring/src/bunk-evm.test.ts": "6b766c3f03e310e6ab8766c5a14033e08074f08b6f0737eb51253f0b4db64394",
+    "packages/keyring/src/bunk-evm.ts": "eb0b67cef6195649f32bc86947fa49fee3bc7bba4aed54fc3f6590bfe9901bee",
+    "packages/keyring/src/bunk-indexeddb-store.ts": "27d4b0021977ded781c99d98ce064cde32cddf61e41104bae8c33a57a8289171",
+    "packages/keyring/src/bunk-journal-key.test.ts": "fbe96990637b33325fa06e9581f83dc21901e159ce010a9ea7df5a10f36d1ae1",
+    "packages/keyring/src/bunk-journal-key.ts": "81cb9b83c847fafcf908752c47e9561833a44d4c4233b0142e18de019df68531",
+    "packages/keyring/src/bunk.test.ts": "22dd5601ce0224b3e4d873b42539d7a6e3322b24ae64b0c1c3f80d03ce0eb618",
+    "packages/keyring/src/bunk.ts": "6f30f3edec4918ddeddc4b64ec65474ba75d0e04f88c98b0dacde7bd2d9fe8ec",
+    "packages/keyring/src/index.ts": "305d29469015ad05659cd4026b7dc98ed69c34a4e935c13016b979275da78775",
+    "packages/keyring/src/fixtures/bunk-evm-v3.json": "ad30435b4bcc588695f7d1c961b31a3aa30cdb8ba0f1f057f1041cea23efafa5",
+    "packages/keyring/src/fixtures/bunk-evm-v2.json": "089aea970ef9ac929141abe1afd0eff16751f44f0661ce83e8fdf12ac0f1d7ba",
+    "packages/keyring/src/fixtures/bunk-journal-key.json": "4fc40b08230e7cc6fbda4e89bf7a802ba71b7eeb0201110282a75cd5a68868dc",
+    "packages/keyring/scripts/bunk-journal-key-vectors.py": "dfdc2fcde6380c9af4a5e0d42d7755db2cd30cafb817b1bf75f78de7109d1744",
+    "packages/keyring/package.json": "d3f8e700b8b84f9d68f99b33887e6fcddc7e08b2f204da1f0b4db4b782baf96c",
+    "pnpm-lock.yaml": "d7f4b8f33108bbe838989a962531951c2256d8697c1854ef17b945f8604931d3",
+    "packages/keyring/scripts/bunk-browser-journal.mjs": "e3edf8aad2a3bcffe6286efb58dce5084967e70c403e3aae9dc57aa2ef7d6463",
+    "packages/keyring/tests/fixtures/bunk-browser-probe.mjs": "2d631d85373de9004972579d62787e76038db7f78280b5f0d64ac34a07585122"
+  },
+  "bundleSha256": "fdbd2a70358cc1b694d1afba589ef0701d4eda7742b5f294349cb858fbba207c",
+  "sourceHashesRechecked": true,
+  "keyLifecycle": {
+    "algorithm": "HKDF-SHA256; fixed journal v1 salt/info; 64-byte BIP39 seed to 32-byte key",
+    "everyBrowserReopenDerivesFromPublicPhrase": true,
+    "independentPythonVectorsMatched": 2,
+    "unitTestsPassed": 6
+  },
+  "repositoryValidation": {
+    "command": "pnpm lint && pnpm typecheck && pnpm test",
+    "result": "passed",
+    "biomeFiles": 570,
+    "typecheckTasks": 5,
+    "typecheckTasksCached": 2,
+    "testTasks": 7,
+    "testTasksCached": 2,
+    "keyringTestsExecuted": 301,
+    "ignoredInfrastructureTestsEnabled": false,
+    "log": "/private/tmp/honey-bunk-browser-root.log"
+  },
+  "workflow": {
+    "path": ".github/workflows/bunk-contracts.yml",
+    "sha256": "3b8bac04eb652a39713df40f63e2447896189084a7a92f889f7b8d82d0c090fb",
+    "job": "browser-journal",
+    "githubExecutionClaimed": false
+  },
+  "limitations": [
+    "Packaged MV3 worker and actual app unlock/import/lock flows are not integrated or tested.",
+    "No physical power-loss, browser eviction or coherent whole-database rollback guarantee.",
+    "SQLite/Geth/Alto coordinator evidence is a separate historical snapshot; no new chain deployment or full bundler rerun in this milestone.",
+    "Expo, account discovery, trusted release configuration, relay funding and multi-device writer coordination remain open.",
+    "Phrase-derived key adds no seed entropy, seed-theft protection or device revocation. Existing random-key encrypted data requires deliberate migration.",
+    "No app activation, public deployment, production certification or completed independent security review."
+  ]
+}

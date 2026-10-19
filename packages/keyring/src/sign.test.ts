@@ -7,12 +7,14 @@ import { describe, expect, it } from 'vitest';
 import {
   evmAddressOfKey,
   readSolanaTransaction,
+  reviewSolanaTransaction,
   signEvmMessage,
   signEvmTransaction,
   signEvmTypedData,
   signSolanaMessage,
   signSolanaTransaction,
   solanaAddressOfKey,
+  verifyEvmTypedDataSignature,
 } from './sign';
 
 // The key from EIP-712's own example: keccak256("cow").
@@ -58,6 +60,23 @@ describe('EVM signing', () => {
         '07299936d304c153f6443dfa05f40ff007d72911b6f72307f996231605b91562' +
         '1c',
     );
+  });
+
+  it('verifies an existing typed signature offline and rejects changed authority', async () => {
+    const signature = await signEvmTypedData(COW, JSON.stringify(MAIL));
+    expect(
+      await verifyEvmTypedDataSignature(evmAddressOfKey(COW), JSON.stringify(MAIL), signature),
+    ).toBe(true);
+    expect(
+      await verifyEvmTypedDataSignature(MAIL.message.to.wallet, JSON.stringify(MAIL), signature),
+    ).toBe(false);
+    expect(
+      await verifyEvmTypedDataSignature(
+        evmAddressOfKey(COW),
+        JSON.stringify({ ...MAIL, message: { ...MAIL.message, contents: 'Changed' } }),
+        signature,
+      ),
+    ).toBe(false);
   });
 
   it('rejects typed data without a known primary type', async () => {
@@ -114,6 +133,31 @@ function solanaTx(signers: Uint8Array[], extra: Uint8Array[], { v0 = false } = {
   return Uint8Array.from([signers.length, ...new Uint8Array(64 * signers.length), ...message]);
 }
 
+function systemTransferTx(from: Uint8Array, recipient: Uint8Array, lamports: bigint) {
+  const data = new Uint8Array(12);
+  const view = new DataView(data.buffer);
+  view.setUint32(0, 2, true); // SystemInstruction::Transfer
+  view.setBigUint64(4, lamports, true);
+  const message = [
+    1, // required signatures
+    0, // readonly signed
+    2, // readonly unsigned (recipient and System Program)
+    3, // account keys
+    ...from,
+    ...recipient,
+    ...new Uint8Array(32), // System Program ID
+    ...new Uint8Array(32), // recent blockhash
+    1, // instruction count
+    2, // program ID index
+    2, // account count
+    0,
+    1,
+    data.length,
+    ...data,
+  ];
+  return Uint8Array.from([1, ...new Uint8Array(64), ...message]);
+}
+
 describe('Solana signing', () => {
   const ours = hexToBytes('11'.repeat(32));
   const payer = hexToBytes('22'.repeat(32));
@@ -144,5 +188,29 @@ describe('Solana signing', () => {
       'isn’t for this wallet',
     );
     expect(() => readSolanaTransaction(Uint8Array.of(1, 2, 3))).toThrow('Bad Solana transaction');
+  });
+
+  it('reviews exact System Program transfer effects and marks opaque instructions unsupported', () => {
+    const reviewed = reviewSolanaTransaction(systemTransferTx(pub(ours), pub(payer), 123_456n));
+    expect(reviewed.reviewable).toBe(true);
+    expect(reviewed.reviewedInstructions).toEqual([
+      {
+        kind: 'solTransfer',
+        from: base58.encode(pub(ours)),
+        to: base58.encode(pub(payer)),
+        lamports: 123_456n,
+      },
+    ]);
+
+    const opaque = reviewSolanaTransaction(solanaTx([pub(ours)], [program]));
+    expect(opaque.reviewable).toBe(false);
+    expect(opaque.reviewedInstructions[0]?.kind).toBe('unknown');
+  });
+
+  it('rejects trailing bytes instead of silently omitting them from review', () => {
+    const valid = systemTransferTx(pub(ours), pub(payer), 1n);
+    expect(() => readSolanaTransaction(Uint8Array.from([...valid, 1]))).toThrow(
+      'Bad Solana transaction',
+    );
   });
 });

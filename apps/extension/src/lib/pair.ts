@@ -1,5 +1,8 @@
 import type { PairChannel, PairSlot } from '@honey-wallet/api-client';
 import {
+  clearPairBytes,
+  clearPairOfferSecrets,
+  clearPairSession,
   createPairOffer,
   encodeNonce,
   openPayload,
@@ -41,17 +44,24 @@ export const startPairing = (): PairOffer => createPairOffer(random);
  * the shared key and the code to compare.
  */
 export async function waitForPhone(offer: PairOffer, signal: AbortSignal): Promise<PairSession> {
-  const pair = mailbox(offer);
-  const commitment = await waitFor(pair, 'commit', signal);
-  await api.pairSend(pair, 'nonce', { data: encodeNonce(offer.nonce) });
-  const phone = openReveal(await waitFor(pair, 'reveal', signal), commitment);
-  return pairSession(offer.secretKey, phone.publicKey, {
-    channel: offer.channel,
-    extensionKey: offer.publicKey,
-    phoneKey: phone.publicKey,
-    extensionNonce: offer.nonce,
-    phoneNonce: phone.nonce,
-  });
+  let phone: ReturnType<typeof openReveal> | undefined;
+  try {
+    const pair = mailbox(offer);
+    const commitment = await waitFor(pair, 'commit', signal);
+    await api.pairSend(pair, 'nonce', { data: encodeNonce(offer.nonce) });
+    phone = openReveal(await waitFor(pair, 'reveal', signal), commitment);
+    return pairSession(offer.secretKey, phone.publicKey, {
+      channel: offer.channel,
+      extensionKey: offer.publicKey,
+      phoneKey: phone.publicKey,
+      extensionNonce: offer.nonce,
+      phoneNonce: phone.nonce,
+    });
+  } finally {
+    clearPairOfferSecrets(offer);
+    clearPairBytes(phone?.nonce);
+    clearPairBytes(phone?.publicKey);
+  }
 }
 
 /** After the user confirmed the codes match: waits for the wallet and opens it. */
@@ -60,5 +70,10 @@ export async function receiveWallet(
   session: PairSession,
   signal: AbortSignal,
 ): Promise<PairPayload> {
-  return openPayload(session.key, await waitFor(mailbox(offer), 'payload', signal));
+  try {
+    return openPayload(session.key, await waitFor(mailbox(offer), 'payload', signal));
+  } finally {
+    clearPairSession(session);
+    clearPairOfferSecrets(offer);
+  }
 }

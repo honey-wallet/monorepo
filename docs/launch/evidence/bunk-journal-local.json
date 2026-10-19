@@ -1,0 +1,76 @@
+{
+  "scope": "Shared v2 journal with explicit deterministic reconstruction; policy review, app adapters, backup/rollback/device recovery remain open",
+  "journalFormatVersion": 1,
+  "bunkProtocolVersion": 2,
+  "keyringTestsPassed": 295,
+  "journalStorageTestsPassed": 20,
+  "rootLint": "passed",
+  "rootTypecheck": "5 tasks passed; 2 cached",
+  "rootTests": "7 tasks passed; 2 cached; 295 keyring tests executed; localhost fixtures permitted; explicitly ignored infrastructure suites not enabled",
+  "processRestart": {
+    "result": "passed",
+    "scope": "Public-fixture encrypted SQLite restart and abrupt-signing-crash recovery",
+    "scenarios": [
+      {
+        "boundary": "saved",
+        "distinctProcesses": true,
+        "abruptExit": false,
+        "revision": 5,
+        "userOpHash": "0xf48e76ece08e8290d6e747d1ebd8a062980efe3b2b61a04206cb929934231d35"
+      },
+      {
+        "boundary": "owner",
+        "distinctProcesses": true,
+        "abruptExit": true,
+        "revision": 6,
+        "userOpHash": "0xf48e76ece08e8290d6e747d1ebd8a062980efe3b2b61a04206cb929934231d35"
+      },
+      {
+        "boundary": "leaf",
+        "distinctProcesses": true,
+        "abruptExit": true,
+        "revision": 6,
+        "userOpHash": "0xf48e76ece08e8290d6e747d1ebd8a062980efe3b2b61a04206cb929934231d35"
+      }
+    ]
+  },
+  "liveJournal": {
+    "reconstructedOwners": 1,
+    "reconstructedEnvelopes": 1,
+    "encrypted": true,
+    "reopenedIdenticalOperations": 2,
+    "records": 2,
+    "creationRevision": 6,
+    "recoveryRevision": 6
+  },
+  "realBundlerEvidence": "bunk-bundler-local.json#clientV2",
+  "sourceHashesRechecked": 62,
+  "artifactHashesRechecked": 95,
+  "githubWorkflowExecuted": false,
+  "sourcesSha256": {
+    "packages/keyring/src/bunk-evm-v2-journal.ts": "25a49e3ff6c67077f4fd1f047c3d387b0df997a64a6a03cd6b2cda4d154df7d1",
+    "packages/keyring/src/bunk-evm-v2-store.ts": "8781624d78f6c50bab7dd818e9e0c035b30aff4b0cc93de0ed22fc1f1abf8134",
+    "packages/keyring/src/bunk-evm-v2-sign.ts": "545e9570239f54a7e63053cbfc2f873a951a6978c66d55426e5e558cd6dd3ce0",
+    "packages/keyring/tests/bunk-evm-v2-journal.test.mjs": "e5bcd2f30a91662a25ce440f6de5013331775e1c2c0c2ac4afbf59a7ad556eb9",
+    "packages/keyring/tests/fixtures/bunk-journal-worker.mjs": "ee6b5eb1ae415d8f1164d22811b32647de2a1622537f9866766153b8353364c0",
+    "packages/keyring/scripts/bunk-journal-restart.mjs": "64cdb6d97148b0466f5837864be4008487b1a66bc9a14b69a8ddc549025ac8b4",
+    "packages/keyring/vitest.config.ts": "6f1247d89537be89243be348ca47c76a3042aa4a4b3f2974d63383c95956e3f8",
+    ".github/workflows/bunk-contracts.yml": "49dcbd7052d5a4c847b619ce8e26ac822ebd26b3e74e608122afc307ef034e8e"
+  },
+  "limitations": [
+    "Candidate reconstruction policy needs review; does not provide literal single cryptographic computation",
+    "No backup/archive restore or protection against whole-database rollback",
+    "No concurrent-device authority handoff",
+    "SQLite async interface not exercised in Expo; subsequent shared IndexedDB/browser proof is recorded separately in bunk-browser-journal-local.json.",
+    "Local tests do not prove power-loss durability, production-provider compatibility or independent review"
+  ],
+  "reconstructionPolicy": "One distinct approved digest per derived key; identical deterministic signature computation may repeat explicitly after a crash. Normal signing refuses uncertain slots.",
+  "signatureCounts": {
+    "ownerDistinctApprovals": 2,
+    "ownerComputations": 3,
+    "envelopeDistinctOperations": 2,
+    "envelopeComputations": 3,
+    "note": "Bundler clientV2.ownerIntentSignatures counts two distinct signature byte strings, not computations; one owner and one envelope are explicitly reconstructed."
+  },
+  "subsequentBrowserEvidence": "bunk-browser-journal-local.json; this historical run and its hashes are unchanged"
+}

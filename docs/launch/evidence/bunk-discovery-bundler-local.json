@@ -1,0 +1,1060 @@
+{
+  "chainId": 1337,
+  "signingImplementation": "packages/keyring/src/bunk-evm-sign.ts",
+  "observationImplementation": "packages/keyring/src/bunk-evm-observe.ts",
+  "finalityScope": "Geth dev simulated finality every 32 blocks, not production consensus proof",
+  "contractDigestComparisons": [
+    "configHash",
+    "initializer",
+    "predictAccount",
+    "deploymentDigest",
+    "getUserOpHash",
+    "ownerDigest",
+    "sponsorshipDigest"
+  ],
+  "safeMode": true,
+  "validationSkipped": false,
+  "deploymentGas": "401333",
+  "codeHashes": {
+    "entryPoint": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219",
+    "singleton": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8",
+    "proxyFactory": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b",
+    "factory": "0xaa9f06f88831afb2b0f4aa719e27ce48e197b7528e6e44da15aa47fe6e39782c",
+    "module": "0x79d76135485d2f0b5abef771de87b85a9224d0cc2e47eee9e8d5041c808dec58",
+    "paymaster": "0x0e387a654baac3e2a8500c40dfb69b43a2cf718ffed87096b5762ba8ab4a6bb0"
+  },
+  "cases": [
+    {
+      "label": "changed signed gas",
+      "rejected": true,
+      "message": "RPC Request failed. AA24 signature error AA24 signature error"
+    },
+    {
+      "label": "forbidden TIMESTAMP",
+      "rejected": true,
+      "message": "RPC Request failed. account uses banned opcode: TIMESTAMP account uses banned opcode: TIMESTAMP"
+    },
+    {
+      "label": "unstaked factory",
+      "rejected": true,
+      "message": "RPC Request failed. unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002 unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002"
+    },
+    {
+      "label": "sponsored counterfactual creation",
+      "hash": "0x7bffa4254b2a8df3b368e28c78f44f0a33d68bc3fd63ead47bc2274815c57fc7",
+      "transactionHash": "0xfef6156a41fe2a0907a09fd2cc36e8bb04f5c9fad1a9e58aab5c0a820f9b16c3",
+      "success": true,
+      "ownerIndex": 1,
+      "nonce": "1",
+      "finalizedBlock": {
+        "hash": "0x395b254630a1feb15923052ea4be141fff74dc907fb66bbe44352ac6364e07eb",
+        "number": "64"
+      }
+    },
+    {
+      "label": "sponsored downstream revert",
+      "hash": "0x39e594e0e74a70aba8d18b7d68e22d967e4553ec379b39e580aacef854003e3a",
+      "transactionHash": "0x3ebd9fadb858d477bbbc91ee73edcaa7b9e719739e17c52c1520b17919885041",
+      "success": false,
+      "ownerIndex": 2,
+      "nonce": "2",
+      "finalizedBlock": {
+        "hash": "0xda4519e18a84d2db74f2ee7f706a646d660d86ab7f5b063480568e58b2a2d7d3",
+        "number": "96"
+      }
+    },
+    {
+      "label": "next owner after failure",
+      "hash": "0x89c962c7aac00fef320de012976dbeac2273d70490c6aa7699331299bc434141",
+      "transactionHash": "0x6d8961a2016cdacb12cbc190931b92d5e8110650709e9f0bd7f8c37831ad4659",
+      "success": true,
+      "ownerIndex": 3,
+      "nonce": "3",
+      "finalizedBlock": {
+        "hash": "0x81f2b9a40f4f58292fbfde0a0e6cfca0de445bfef5553356f47a47dd3bb93446",
+        "number": "128"
+      }
+    },
+    {
+      "label": "self-funded deployed account",
+      "hash": "0x56ff894866bbd09ae268dff1a583b102a690e8d73236060230c918edc59944cb",
+      "transactionHash": "0x56a8ebaa4d66e5a37b41ab108a32c4110149c5ae6cd3f380aa5e0cfbde060892",
+      "success": true,
+      "ownerIndex": 1,
+      "nonce": "1",
+      "finalizedBlock": {
+        "hash": "0xae11ecee4b52018ce58f6556d267722c451163924926f395b1ed23891ae3ff42",
+        "number": "192"
+      }
+    }
+  ],
+  "experimentalRecovery": {
+    "scope": "Test-only standalone account, not Safe integration or production acceptance",
+    "ownerSignatureCountForExpiredIntent": 1,
+    "envelopeAllocations": [
+      {
+        "root": "0x19aedb93f3f3094c1f7e34861d96adbe47bc06c97aa6a2f693d0d9e9b03926cf",
+        "attempt": 0,
+        "signer": "0x7F1d642DbfD62aD4A8fA9810eA619707d09825D0"
+      },
+      {
+        "root": "0x19aedb93f3f3094c1f7e34861d96adbe47bc06c97aa6a2f693d0d9e9b03926cf",
+        "attempt": 1,
+        "signer": "0x5935897A39AFABbedA5a599D38236E7Df151C8b8"
+      },
+      {
+        "root": "0xbc5c913c86fe8857fbefe1ed748f6dc83a7fe575edbc56b65585d68e23c4c02c",
+        "attempt": 0,
+        "signer": "0x5793e629c061e7FD642ab6A1b4d552CeC0e2D606"
+      },
+      {
+        "root": "0xb88fc70eb9976221780f37f916e8c06c4d0496571a901de59e4c24c378e98ee8",
+        "attempt": 255,
+        "signer": "0xD7499B76f0240428078Fe711A7Ff6eFDC2ac3963"
+      }
+    ],
+    "certificateHash": "0xde0c0b4a5fc89e9fb5e8015457c1dc2a6d466b1df92dd9aedf2a3de49f1dc6d2",
+    "ownerSignatureHash": "0x1d6d716b855b249f2b51cd4e74a020a921e1f9d904e67b5945dc1ce6027155cb",
+    "expiredGrantRejected": "RPC Request failed. UserOperation expires too soon, validUntil=1792376898, now=1792376900 UserOperation expires too soon, validUntil=1792376898, now=1792376900",
+    "cases": [
+      {
+        "hash": "0xd1e972d73ddbcf198c5dc2ae5c186b3936a682271070d9f390c4da56fce37765",
+        "transactionHash": "0x051ffa08cd5d036e39e9bf190e15edf7ac2c538643b11189ecbfc3c0977d49f8",
+        "event": "ExpiredActionSkipped"
+      },
+      {
+        "hash": "0x0c89e7dd1aa6aaef1607c0d00cb6661e6c6dd4593fccfb191b017560cf2d1e38",
+        "transactionHash": "0xaf106d0705631f9b5c89b6cecf791d4052d63860088347d04bf5fb8e6fe1bcd4",
+        "event": "ActionExecuted"
+      },
+      {
+        "hash": "0xd54aace1731ccdb753e7252c0570fb0bf3fc4d2e9b39277f6b24f38adae72625",
+        "transactionHash": "0x17477c16f89156e0d95c4dd4fef29f842894aa648f6992e2652b1223533e9b17",
+        "event": "ExpiredActionSkipped"
+      }
+    ],
+    "codeHash": "0x75b574d8f80f3cf1beec032732893f135e1ef5c3df8d24d1829f940389dc1b53"
+  },
+  "safeRecoveryV2": {
+    "scope": "Version 2 real Safe/EntryPoint candidate on local Osaka; no shared-client or production certification",
+    "factory": "0x9f4dcd09de62e1985807c74716dbb6768ce26892",
+    "module": "0x9cE1267a78ce1938FB6aC19aae3901849a43FF36",
+    "helper": "0xF70aEf3c5f6e3E744ae139b3fe6Ff0f035ea0891",
+    "account": "0x4AF997b94CAe4899a1D422A809E7A21b0E54e0A7",
+    "configHash": "0xa3e106ed0721aff06fd4dc620a316b0ee80d621d89ff8e9f658c319c632587ae",
+    "deploymentGas": "378807",
+    "unstakedRejection": "RPC Request failed. unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002 unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002",
+    "changedFeeRejection": "RPC Request failed. AA24 signature error AA24 signature error",
+    "ownerSignatureCounts": {
+      "0xE57bFE9F44b819898F47BF37E5AF72a0783e1141": 1,
+      "0xfaE394561e33e242c551d15D4625309EA4c0B97f": 1,
+      "0xF1F6619B38A98d6De0800F1DefC0a6399eB6d30C": 1,
+      "0x4CCeBa2d7D2B4fdcE4304d3e09a1fea9fbEb1528": 1,
+      "0x3DA8D322CB2435dA26E9C9fEE670f9fB7Fe74E49": 1
+    },
+    "ownerSignatureCountForExpiredIntent": 1,
+    "envelopeAllocations": [
+      {
+        "root": "0xfc2793a06aff72d8736b727111ea0ace0b613b2e2559c9db5271bc5641482dd8",
+        "attempt": 0,
+        "signer": "0xAD1117CAB797E37CAB0Eee8Ca7C30bD2452Ef2a3"
+      },
+      {
+        "root": "0x19aedb93f3f3094c1f7e34861d96adbe47bc06c97aa6a2f693d0d9e9b03926cf",
+        "attempt": 0,
+        "signer": "0x7F1d642DbfD62aD4A8fA9810eA619707d09825D0"
+      },
+      {
+        "root": "0x19aedb93f3f3094c1f7e34861d96adbe47bc06c97aa6a2f693d0d9e9b03926cf",
+        "attempt": 1,
+        "signer": "0x5935897A39AFABbedA5a599D38236E7Df151C8b8"
+      },
+      {
+        "root": "0xbc5c913c86fe8857fbefe1ed748f6dc83a7fe575edbc56b65585d68e23c4c02c",
+        "attempt": 0,
+        "signer": "0x5793e629c061e7FD642ab6A1b4d552CeC0e2D606"
+      },
+      {
+        "root": "0xb88fc70eb9976221780f37f916e8c06c4d0496571a901de59e4c24c378e98ee8",
+        "attempt": 255,
+        "signer": "0xD7499B76f0240428078Fe711A7Ff6eFDC2ac3963"
+      },
+      {
+        "root": "0xd61d9a62c435c279022bfcf8b2d84d8fd6f93f557829daac7314707236cbb99a",
+        "attempt": 0,
+        "signer": "0x725D327818161E0B4C6cCA5b8b1567d2A40b5B86"
+      }
+    ],
+    "certificateHash": "0x0334e4b2acee12e577094a1b4db35a4e380e1529ef830feb1169e276a3dc0e91",
+    "ownerSignatureHash": "0xf35336f16741e6bd428960a9b39245a4bb52de9cc828b2141df62b9abb5cdf0a",
+    "expiredGrantRejected": "RPC Request failed. UserOperation expires too soon, validUntil=1792376928, now=1792376930 UserOperation expires too soon, validUntil=1792376928, now=1792376930",
+    "cases": [
+      {
+        "hash": "0x47d0595ae7b0b9b1e165e7293c546657dad71d5faf9c694b4e7b5db7fad4b4e6",
+        "transactionHash": "0xc297f99e4e3e59ba925e3944d3a978a1492715c7fc4e3f26e6b4b784d929da15",
+        "event": "ExpiredActionSkipped"
+      },
+      {
+        "hash": "0xa23c92646c2ec8cd927edaf899de01dc786a6486e0855438994f669043ec1046",
+        "transactionHash": "0xffe231afe090448244abf75679a1f4d58803f977b032d3a335f52489a306fb43",
+        "event": "ActionExecuted"
+      },
+      {
+        "hash": "0xf96bb07419d8085d2eed5ab7706cde77ac4d8d763099dbbe65e9af9d283eef74",
+        "transactionHash": "0xdd1225dfd8eb341d19c3df9ed85ac178e92576e479270325a8deec3605fd7fad",
+        "event": "ExpiredActionSkipped"
+      },
+      {
+        "hash": "0xeaaec157e264f517169422655b6a2954f14a7f354097fd3d03f90e7574c7a020",
+        "transactionHash": "0x4995cc95cbfa629bf9f8c0309c63930bcdf582ce43bcdcc4c490b558d7aee18f",
+        "event": "ActionExecuted",
+        "withdrawnDepositWei": "7422209090166870"
+      }
+    ],
+    "proxyCodeHash": "0x491e8c30813e9feac89516c594804e0b7e7fe76f332a321519ddaed728508b38",
+    "moduleCodeHash": "0x7ca7829c140ec9c5f5922d7adf6419ecf3f14452f770164fc8cd28dd29aef87f"
+  },
+  "clientV2": {
+    "scope": "Actual v2 seed-derived client, encrypted SQLite journal and finalized observer on isolated Osaka; not backup/device or public provider certification",
+    "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+    "deploymentIdentity": "0xe9053fF95a113a1ebf4e17Ea83aEFd7a05Ca2e52",
+    "inputHashes": {
+      "packages/keyring/src/index.ts": "0adbdd0bd6dcf7bf3eacddaed857fc913f1ab50ec76bff7e6ad38104e5768e5a",
+      "packages/keyring/src/fixtures/bunk-evm-v2.json": "089aea970ef9ac929141abe1afd0eff16751f44f0661ce83e8fdf12ac0f1d7ba"
+    },
+    "journal": {
+      "reconstructedOwners": 1,
+      "reconstructedEnvelopes": 1,
+      "encrypted": true,
+      "reopenedIdenticalOperations": 2,
+      "records": 2,
+      "creationRevision": 6,
+      "recoveryRevision": 6
+    },
+    "ownerIntentSignatures": 2,
+    "distinctOwnerIndices": [0, 1],
+    "envelopeLeaves": [0, 255],
+    "cases": [
+      {
+        "hash": "0xa49b6a8ad75065012dd500c349993959ea3493f36dc963b235491d207a9dd2ba",
+        "transactionHash": "0x1558e97bb7ef121a283db6214f3eabc4b63ae86a856f519f536764778e872ad1",
+        "event": "ActionExecuted",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x9F4dcd09DE62E1985807C74716dBB6768CE26892",
+              "codeHash": "0x003b55107f11a3ef47610c4546c7069af7666e9317013ea3bc554125ddf1751b"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0x9cE1267a78ce1938FB6aC19aae3901849a43FF36",
+              "codeHash": "0x7ca7829c140ec9c5f5922d7adf6419ecf3f14452f770164fc8cd28dd29aef87f"
+            },
+            "helper": {
+              "address": "0xF70aEf3c5f6e3E744ae139b3fe6Ff0f035ea0891",
+              "codeHash": "0xd15873ba1b005f914b5f563acf1f5a61de090f8e672008a462361f7eec014b7b"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 2
+          },
+          "protocolVersion": 2,
+          "block": {
+            "hash": "0x08df8d58af160d194f36980bd5cd0a84609a891087d6d7a73e41877e557a1f10",
+            "number": "320",
+            "timestamp": "1792377014"
+          },
+          "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+          "accountIndex": 2,
+          "status": "deployed",
+          "state": {
+            "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+            "accountIndex": 2,
+            "ownerIndex": 1,
+            "commitment": "0x2f2db0d58fbe952b2744b8e5c8629883cdfec8a7050f83ce31eaabf3522d9619",
+            "nonce": "1",
+            "protocolVersion": 2,
+            "deployed": true
+          }
+        }
+      },
+      {
+        "hash": "0x3ac66bfbd430d4d1025a5804425e4f0ac406811ce7927f9c08e446e3a3ff1526",
+        "transactionHash": "0x9716baf867356db2e6eb822f188fbb15a606a4a62f611c5f7d57a3ce8aacd5bc",
+        "event": "ExpiredActionSkipped",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x9F4dcd09DE62E1985807C74716dBB6768CE26892",
+              "codeHash": "0x003b55107f11a3ef47610c4546c7069af7666e9317013ea3bc554125ddf1751b"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0x9cE1267a78ce1938FB6aC19aae3901849a43FF36",
+              "codeHash": "0x7ca7829c140ec9c5f5922d7adf6419ecf3f14452f770164fc8cd28dd29aef87f"
+            },
+            "helper": {
+              "address": "0xF70aEf3c5f6e3E744ae139b3fe6Ff0f035ea0891",
+              "codeHash": "0xd15873ba1b005f914b5f563acf1f5a61de090f8e672008a462361f7eec014b7b"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 2
+          },
+          "protocolVersion": 2,
+          "block": {
+            "hash": "0x71f8f582963a87e6c6453c6be8f27f7888a52e7b67d336e3a22a4a927dd1c43f",
+            "number": "352",
+            "timestamp": "1792377046"
+          },
+          "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+          "accountIndex": 2,
+          "status": "deployed",
+          "state": {
+            "account": "0x557356B877f841C862dF54675010e5F5950ef669",
+            "accountIndex": 2,
+            "ownerIndex": 2,
+            "commitment": "0x4a7f7bbdb9bee359efb7b30626e6d761abd3b65275bbb36ab239a17d84a1ec2d",
+            "nonce": "2",
+            "protocolVersion": 2,
+            "deployed": true
+          }
+        }
+      }
+    ]
+  },
+  "seedRecoveryV3": {
+    "scope": "V3 Safe independent seed-recovery authority with public scalar fixtures; no seed client, app restore or production certification",
+    "factory": "0x336cb44ff973dc623de2a461715b0fc70cabe2c7",
+    "module": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+    "helper": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+    "account": "0xBfdbFb840B73cAC32d3019a63df79ECE895f9AD4",
+    "deploymentGas": "383210",
+    "transientBootstrap": true,
+    "verificationGasLimit": 500000,
+    "unstakedRejection": "RPC Request failed. unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002 unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002",
+    "staleRejection": "RPC Request failed. AA24 signature error AA24 signature error",
+    "recoverySignatureCount": 1,
+    "recoveryDigest": "0xc8f9f710653e5e54274de123eb555eafce7bf6217e21c4160717d61339a1fc3c",
+    "recoveryTransactionHash": "0x3a808bc223855591767ceee9cd26c24e5848b537a5b0a044b55fbb75234721a5",
+    "resetMovedWalletFunds": false,
+    "resetChangedEntryPointNonce": false,
+    "distinctOwnerSignatures": {
+      "0xE57bFE9F44b819898F47BF37E5AF72a0783e1141": 1,
+      "0xfaE394561e33e242c551d15D4625309EA4c0B97f": 1,
+      "0xF1F6619B38A98d6De0800F1DefC0a6399eB6d30C": 1,
+      "0x811da72aCA31e56F770Fc33DF0e45fD08720E157": 1
+    },
+    "finalized": {
+      "number": "384",
+      "hash": "0x4bbd6e5d8619023d12ff5c1d64e43e6dc6f88872305d94fec9a79ca87fd81718",
+      "owner": ["0xdaec5ee9f17873e87bb7c9fb5ca4458579734aa93da19c777d85e0793e9bc803", 1],
+      "recovery": ["0xbcdd6b0082242852a538c924cd251f14bd1b6be13940c08e39e5f5ddb7f23ff2", 1]
+    },
+    "cases": [
+      {
+        "hash": "0x4f0c792715ac95f5c7cf4946a9cb54dc6e5b9e32d74fc79c8ff89d0024e1fd7f",
+        "transactionHash": "0x50b03be829d41b5f477162514559cbbcfe2dbe84743bc341b012f8e761110f8c",
+        "event": "ActionExecuted"
+      },
+      {
+        "hash": "0x83cc900ac89cc4ebafd053b7a754b366f53cf6f907eba463e2cf20c4ceea3aa6",
+        "transactionHash": "0xa76e4b85309e8c91af6e17565399506e6798f5da3c9033cdc2a96693c6485e51",
+        "event": "ActionExecuted"
+      }
+    ]
+  },
+  "clientV3": {
+    "scope": "Actual v3 phrase client and fresh-process recovery using finalized chain state without pending approval/journal; isolated Osaka, not app restore or production certification",
+    "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+    "accountIndex": 3,
+    "deploymentIdentity": "0x87B5e213f2731fA5c18a14295482c4e2c2fD0aea",
+    "keyScope": "0x6151e501e8d7b05d83a68994b03f53b8e64fcd076c29c2b9e7783d84dfdb358b",
+    "recoveryProcessInputs": [
+      "public RPC",
+      "verified local configuration",
+      "deployment identity/account index",
+      "public test phrase fixture"
+    ],
+    "recoveryReceivedPendingApproval": false,
+    "recoveryReceivedJournal": false,
+    "resetChangedWalletFunds": false,
+    "resetChangedEntryPointNonce": false,
+    "ownerAndEnvelopeKeysUsed": 6,
+    "recoveryDigest": "0xd24d057968356d1fe8efd0ce62e110eb32033e076e54487a9ff75ab292197c5a",
+    "recoveryTransactionHash": "0x6fe292a6f75d9706d74dd9425345776408f1ce6ad16a6c44ef2d7128a92d0aec",
+    "staleRejection": "RPC Request failed. AA24 signature error AA24 signature error",
+    "cases": [
+      {
+        "hash": "0x0b8abd7e50ef9b041647109a3f0110f82512ecbb108ca43a9ca127b5f4f0f1dd",
+        "transactionHash": "0xf36435b35f72b09a8ef94e744d3461c1d34a049925f3ece9d0c16ac4896a5d93",
+        "event": "ActionExecuted",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x1ad26889fb7243e80a55c879ac16a247965d31ef2ee2676710da42556038db1c",
+            "number": "448",
+            "timestamp": "1792377143"
+          },
+          "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+          "accountIndex": 3,
+          "status": "deployed",
+          "state": {
+            "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+            "accountIndex": 3,
+            "ownerIndex": 1,
+            "commitment": "0x2f7a8a02c26ddac17923a4f54e8f11ed163bb23041865fcf109271f924f2de89",
+            "nonce": "1",
+            "recoveryCommitment": "0x4889214b06c9af3c0e31e9289a31682ccdd86dc73a12be092d8c17da83396fdc",
+            "epoch": 0,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      },
+      {
+        "event": "SeedRecovery",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x7a24ad144c084c6f4becdf7d8f4d75e7a6628824b13ea4d0eb196958763e83fe",
+            "number": "512",
+            "timestamp": "1792377207"
+          },
+          "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+          "accountIndex": 3,
+          "status": "deployed",
+          "state": {
+            "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+            "accountIndex": 3,
+            "ownerIndex": 0,
+            "commitment": "0xf71d0560f6cc812d10763ae0cd65ec969ecee326df096203258489be99f7e008",
+            "nonce": "1",
+            "recoveryCommitment": "0xfaab8e4868a96adbc6003be47e7dc0d411a5cc5131a7abbcbda9fc1b297eb888",
+            "epoch": 1,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      },
+      {
+        "hash": "0x331461ed3a0a5ef157e114d6d457ac36fa3576b1f15353416e6eae55cdd21350",
+        "transactionHash": "0x650b45b947a9d39d408e979b80ce1465999e03c6dc1453298b41f1d81b69bb4f",
+        "event": "ActionExecuted",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0xa1dc19856a0475c3c96e8b5b1446905154e729244683290aaa57ab590abea7eb",
+            "number": "544",
+            "timestamp": "1792377239"
+          },
+          "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+          "accountIndex": 3,
+          "status": "deployed",
+          "state": {
+            "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+            "accountIndex": 3,
+            "ownerIndex": 1,
+            "commitment": "0x0116e5f019a6758cf9927892e3bde35cfabcfb048fae0897a8d1eb78e307e99b",
+            "nonce": "2",
+            "recoveryCommitment": "0xfaab8e4868a96adbc6003be47e7dc0d411a5cc5131a7abbcbda9fc1b297eb888",
+            "epoch": 1,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      }
+    ]
+  },
+  "coordinatorV3": {
+    "scope": "V3 encrypted SQLite account coordinator: lost creation approval, prefunded undeployed account, direct bootstrap, recovery signer process death/reconstruction, finalized reset and sponsored resumed action on isolated Osaka; not device/power-loss/production certification",
+    "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+    "accountIndex": 4,
+    "accountKey": "bunk-v3-account:c765f1607e8e7db21add534ea69f67076eceb5ff01d640365430a9ae4cbca7fa",
+    "bootstrapTransactionHash": "0xa9f2cbf778c446f9dbb85581791aee6d90586f99d0e7f077f4367c0d0c25d061",
+    "recoveryTransactionHash": "0xe850c4964813183bf9fb658659338965f8cd7ef77bbfcd4e73bddc3b3aa6253a",
+    "recoveryWorkerExit": 73,
+    "reconstructedRecoveryDigest": "0x046dd71684dcfa0821f29b6789c51f727cd07e1c0f15fb4f0a026bded473d389",
+    "missingHistorySignedOldOwner": false,
+    "resetChangedWalletFunds": false,
+    "resetChangedEntryPointNonce": false,
+    "oldRejection": "RPC Request failed. AA10 sender already constructed AA10 sender already constructed",
+    "reopenedIdenticalOperation": true,
+    "finalJournalRetired": true,
+    "revision": 20,
+    "discovery": {
+      "releaseKey": "1337:0x6151e501e8d7b05d83a68994b03f53b8e64fcd076c29c2b9e7783d84dfdb358b",
+      "startAccountIndex": 4,
+      "count": 3,
+      "nextAccountIndex": 7,
+      "inventoryComplete": false,
+      "signingAuthorized": false,
+      "candidates": [
+        {
+          "observation": {
+            "config": {
+              "chainId": "1337",
+              "factory": {
+                "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+                "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+              },
+              "singleton": {
+                "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+                "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+              },
+              "proxyFactory": {
+                "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+                "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+              },
+              "entryPoint": {
+                "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+                "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+              },
+              "module": {
+                "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+                "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+              },
+              "helper": {
+                "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+                "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+              },
+              "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+              "protocolVersion": 3
+            },
+            "protocolVersion": 3,
+            "block": {
+              "hash": "0x7df40ad1a04203a0ec41d5377d232835af41767981f985c6b83f2a8520e37f6f",
+              "number": "736",
+              "timestamp": "1792377432"
+            },
+            "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+            "accountIndex": 4,
+            "status": "deployed",
+            "state": {
+              "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+              "accountIndex": 4,
+              "ownerIndex": 1,
+              "commitment": "0xd544d5ece2ecfb7872bf68e3ec1219a1ab8524d653db89d3be2a2692553871e2",
+              "nonce": "1",
+              "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f",
+              "epoch": 1,
+              "protocolVersion": 3,
+              "deployed": true
+            }
+          },
+          "nativeBalance": "1000000000000000000",
+          "entryPointDeposit": "500000000000000000"
+        },
+        {
+          "observation": {
+            "config": {
+              "chainId": "1337",
+              "factory": {
+                "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+                "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+              },
+              "singleton": {
+                "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+                "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+              },
+              "proxyFactory": {
+                "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+                "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+              },
+              "entryPoint": {
+                "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+                "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+              },
+              "module": {
+                "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+                "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+              },
+              "helper": {
+                "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+                "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+              },
+              "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+              "protocolVersion": 3
+            },
+            "protocolVersion": 3,
+            "block": {
+              "hash": "0x7df40ad1a04203a0ec41d5377d232835af41767981f985c6b83f2a8520e37f6f",
+              "number": "736",
+              "timestamp": "1792377432"
+            },
+            "account": "0x0bB23f7C5433d040AA27d5aa774f19719e144E2a",
+            "accountIndex": 5,
+            "status": "undeployed"
+          },
+          "nativeBalance": "10000000000000000",
+          "entryPointDeposit": "20000000000000000"
+        },
+        {
+          "observation": {
+            "config": {
+              "chainId": "1337",
+              "factory": {
+                "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+                "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+              },
+              "singleton": {
+                "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+                "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+              },
+              "proxyFactory": {
+                "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+                "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+              },
+              "entryPoint": {
+                "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+                "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+              },
+              "module": {
+                "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+                "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+              },
+              "helper": {
+                "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+                "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+              },
+              "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+              "protocolVersion": 3
+            },
+            "protocolVersion": 3,
+            "block": {
+              "hash": "0x7df40ad1a04203a0ec41d5377d232835af41767981f985c6b83f2a8520e37f6f",
+              "number": "736",
+              "timestamp": "1792377432"
+            },
+            "account": "0xc14F2eA3d1c7075a3e9e5943D9099c66a0A915aE",
+            "accountIndex": 6,
+            "status": "undeployed"
+          },
+          "nativeBalance": "0",
+          "entryPointDeposit": "0"
+        }
+      ]
+    },
+    "cases": [
+      {
+        "event": "Recovered",
+        "key": "bunk-v3-account:c765f1607e8e7db21add534ea69f67076eceb5ff01d640365430a9ae4cbca7fa",
+        "phase": "ready",
+        "state": {
+          "protocolVersion": 3,
+          "deployed": true,
+          "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+          "accountIndex": 4,
+          "ownerIndex": 0,
+          "commitment": "0x443a9d865b308182ecdeb5bc9bcfcdd647f4a813be2a504e1f8aad28ba694b25",
+          "nonce": "0",
+          "epoch": 1,
+          "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f"
+        },
+        "block": {
+          "hash": "0x6d6170762ca6bbb55c723b44f5aef8b76893d69e617c0afc34b2c26123976a0c",
+          "number": "672",
+          "timestamp": "1792377368"
+        }
+      },
+      {
+        "hash": "0x91cdd6034b53350d361a9465ad3f6b4bbab3893ea6d282622d6a58465b67e74d",
+        "transactionHash": "0xcd7b8946de088b8a8ef6abe693830232b3b0daeee2c0ef446b5c3e5c7bd3438e",
+        "event": "ActionExecuted",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x3b23ba8774623c28f494c22e111e2c5635fb67620df09ed6aa85d73a1877a1fa",
+            "number": "704",
+            "timestamp": "1792377400"
+          },
+          "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+          "accountIndex": 4,
+          "status": "deployed",
+          "state": {
+            "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+            "accountIndex": 4,
+            "ownerIndex": 1,
+            "commitment": "0xd544d5ece2ecfb7872bf68e3ec1219a1ab8524d653db89d3be2a2692553871e2",
+            "nonce": "1",
+            "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f",
+            "epoch": 1,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      },
+      {
+        "event": "Reconciled",
+        "key": "bunk-v3-account:c765f1607e8e7db21add534ea69f67076eceb5ff01d640365430a9ae4cbca7fa",
+        "phase": "ready",
+        "state": {
+          "protocolVersion": 3,
+          "deployed": true,
+          "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+          "accountIndex": 4,
+          "ownerIndex": 1,
+          "commitment": "0xd544d5ece2ecfb7872bf68e3ec1219a1ab8524d653db89d3be2a2692553871e2",
+          "nonce": "1",
+          "epoch": 1,
+          "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f"
+        },
+        "block": {
+          "hash": "0x3b23ba8774623c28f494c22e111e2c5635fb67620df09ed6aa85d73a1877a1fa",
+          "number": "704",
+          "timestamp": "1792377400"
+        }
+      }
+    ]
+  },
+  "scope": "Local isolated Osaka chain, unmodified Alto 0.0.18; not public-chain or current-provider certification.",
+  "gethImage": "ethereum/client-go@sha256:abf3605177f8bdcfce436985a8054cca4ae59256323a4ffb72c56c04f3d1fadd",
+  "nodeImage": "node@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752",
+  "altoVersion": "0.0.18",
+  "clientVersion": "Geth/v1.17.8-stable-a5790770/linux-arm64/go1.27.1",
+  "genesisConfig": {
+    "chainId": 1337,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "arrowGlacierBlock": 0,
+    "grayGlacierBlock": 0,
+    "shanghaiTime": 0,
+    "cancunTime": 0,
+    "pragueTime": 0,
+    "osakaTime": 0,
+    "terminalTotalDifficulty": 0,
+    "depositContractAddress": "0x0000000000000000000000000000000000000000",
+    "blobSchedule": {
+      "cancun": {
+        "target": 3,
+        "max": 6,
+        "baseFeeUpdateFraction": 3338477
+      },
+      "prague": {
+        "target": 6,
+        "max": 9,
+        "baseFeeUpdateFraction": 5007716
+      }
+    }
+  },
+  "factoryStakeWei": "1000000000000000000",
+  "paymasterStakeWei": "1000000000000000000",
+  "unstakeDelaySeconds": 86400,
+  "sourcesSha256": {
+    "dependencies.lock.json": "8cb217abea257f982b4a29c3c8bb7ffa9ee895e3705b2b794a1291da4fad0de2",
+    "foundry.toml": "6b5bc098a76e23bee591c9b73ce2307e3296d17be638424a60275bbb3d264f1e",
+    "src/BunkFactory.sol": "7879991c827db32440d6c17b71b36098a4674b6cc30227cee02c686b8aa9fb61",
+    "src/BunkModule.sol": "f5c8c8c3ee1c534adb43465d4bbdbaa43212cf63c34fc774fad26f31115b02e4",
+    "src/BunkPaymaster.sol": "2e42598804a330e94c88f4aa274b138593a1f16cbf5dd897d8d4e62d7de6df6f",
+    "src/BunkRecoveryFactory.sol": "f0f3771252b591c82f2b82b2f148df789e01e8c5bf1e687d69c0bacde3c64032",
+    "src/BunkRecoveryModule.sol": "37105a411ac89aa8c370cb463712cde40b94fba834e6773675ea651b421a3f39",
+    "src/BunkRecoverySetup.sol": "3021e0e9d082de33f3c97a30935c99b6e4ad85f74d69029aa186d6526fc4dcda",
+    "src/BunkSeedRecoveryFactory.sol": "d7698a59b0fd2b4f1ec26abaf79c261ab48262fb7d712aef035cc8548e687670",
+    "src/BunkSeedRecoveryModule.sol": "54dc0c3a420737d204575b0af6c11209f0e7677eaba9bc4f9b58cc8513ec788b",
+    "src/BunkSeedRecoverySetup.sol": "e0e72159316a06ce52a9d74886ea1b10c3871810d2ebf1cd3a7617b9b2ccd1ed",
+    "src/BunkSetup.sol": "3ac1edcc43353d1c3b34e63c0419699e61e6cfcf03276890988349d6d6b303ca",
+    "test/BundlerNegativeAccount.sol": "bad8a1d833eea2278d701ee2527d1e400cb438b623185ec34393ac9df2c36460",
+    "test/BunkIntegration.t.sol": "20035153e103685b7954338eaf38c6ebc970096ce094d720b2c7a330ee100ba3",
+    "test/BunkRecoveryIntegration.t.sol": "48d83aa0cead726aaa4849861541e3481986e71136c757aecce7c42076a44b7a",
+    "test/BunkSeedRecoveryIntegration.t.sol": "5c3f9ba23ba9627b35fe9bcc0821b0c04d7b86cef0a7b010242875b7d11d2622",
+    "test/bundler/client-v2.mjs": "c8e13fdda047964e2dfba7fab1ce1920f7aa09061109f12ecc1e424bf080a770",
+    "test/bundler/client-v3.mjs": "ef04c5d9f989f8208cd081ff788b8842683ecd9672a36de93bd6b2a92ab2fb22",
+    "test/bundler/coordinator-v3-worker.mjs": "267d75697f0c3b031413c5251ab15ec2ee3e6f95d5794f688f8a99439b54f374",
+    "test/bundler/coordinator-v3.mjs": "959acc3c3e3666f1dca15019e722e7cb960ce8b0a1181c9901e4d4077e132324",
+    "test/bundler/deploy.mjs": "d2814a80e719d87ae018a7608c8dfc32227c55e6e71758415d82c0e039657cdd",
+    "test/bundler/pnpm-lock.yaml": "24d5deb74e1bd7e6f5740b961a41566cd5083a9e31010523c583a0797c422dc0",
+    "test/bundler/recovery.mjs": "c1e43da01d5e22cc1fac225f2247bdfcf803a3cd5858cd8afac03926f2d3ba66",
+    "test/bundler/restore-v3.mjs": "2bbe88bfec6f12b709417cd599a757f8c7b7c9fbb6dd8fe8311f20d535f52764",
+    "test/bundler/run.py": "d20f0741234d234b17ef33822d984ba25940556e485297a4574b3f52eb26c0b5",
+    "test/bundler/safe-recovery.mjs": "f2c2ed9ff7c6b1f6c096cc95f5f8901d2d7c033d75da1bd4003f9b93d19b3c9e",
+    "test/bundler/seed-recovery.mjs": "4106a0d66ac7aa8a1b1362878b9803a1a612b9ace0c9543e1dd7b486a99bedda",
+    "test/bundler/typescript-loader.mjs": "d1ffd45569842c3173477eeca77a5ec0f43fbaff211a07ef8559124d5e9e1aae",
+    "test/bundler/validate.mjs": "1c7b7dea7bf3c1a14929a86bd51eb412f37b4a79c448cd8732d99a17d2b85a66",
+    "test/recovery/RecoveryIntent.t.sol": "98f2582c2a6ced2ccc71769b2e0164498bc8a8516b822adc4ef4d135392a1bdf",
+    "test/recovery/RecoveryIntentAccount.sol": "6fd5833207dd5672ebf51a63f63b34ebaaed3f12bcf9b4bcacecca8eaf357d7e",
+    "../../packages/keyring/package.json": "d3f8e700b8b84f9d68f99b33887e6fcddc7e08b2f204da1f0b4db4b782baf96c",
+    "../../packages/keyring/scripts/bunk-evm-v2-vectors.py": "8a8679061baf7b5dcc65cdecd4dcc27712ea574c224f10a30041be80fc042230",
+    "../../packages/keyring/scripts/bunk-evm-v3-vectors.py": "cace8576c80679a26f568a175fa2bc0d54e94137af10a4f1adba19a02c4bc674",
+    "../../packages/keyring/scripts/bunk-evm-vectors.py": "b3cdf67a6c84982592a9e2a434fe6474daba52ffd24900fcae0ba1dc7a10b0b2",
+    "../../packages/keyring/scripts/bunk-journal-key-vectors.py": "dfdc2fcde6380c9af4a5e0d42d7755db2cd30cafb817b1bf75f78de7109d1744",
+    "../../packages/keyring/scripts/bunk-vectors.py": "ebbb7e5e3096f2cb3e2b08e2a898912b4b4f0a959125e603a44b37a08d67d6ff",
+    "../../packages/keyring/src/bunk-evm-observe.test.ts": "398bf3982d051b5f13a21dde5caf0adc04deeca34faab34f49cdf2bb8ce2ad67",
+    "../../packages/keyring/src/bunk-evm-observe.ts": "ef3939a8cc92f342a91e8bfa748ecda90939d917707ebf6eae219fbf6c6d71ec",
+    "../../packages/keyring/src/bunk-evm-sign.ts": "296eb8570ed28e82f48265d8a92ca403416b826cd347feb1667f4a4095710f34",
+    "../../packages/keyring/src/bunk-evm-v2-journal.ts": "25a49e3ff6c67077f4fd1f047c3d387b0df997a64a6a03cd6b2cda4d154df7d1",
+    "../../packages/keyring/src/bunk-evm-v2-sign.ts": "545e9570239f54a7e63053cbfc2f873a951a6978c66d55426e5e558cd6dd3ce0",
+    "../../packages/keyring/src/bunk-evm-v2-store.ts": "914982ab0b8689c6d73c204e5754a4e83f22bca2b16e2dfe057710636883e14c",
+    "../../packages/keyring/src/bunk-evm-v2.test.ts": "d70bb1cc62ba8f0abd169524e4fe7726d0f56d75c5243d2d49593d64f8c99766",
+    "../../packages/keyring/src/bunk-evm-v2.ts": "0f18ebc2602a72e55305444029e39d676056e3670da2649dc2d77d783e9de685",
+    "../../packages/keyring/src/bunk-evm-v3-account.ts": "837fe98f0d66c271db31f283fcc3b3469bd21d2c40da8a217b71c48e41350448",
+    "../../packages/keyring/src/bunk-evm-v3-discovery.ts": "668aeeb4e8b3e7be52497bc29ac8128719c12880ae8aeef443fe071220c09e3b",
+    "../../packages/keyring/src/bunk-evm-v3-journal.ts": "400013dd8789eb811f6a44ee034418b99a059356e1c0b8f5c3d99e949fb4e338",
+    "../../packages/keyring/src/bunk-evm-v3-sign.ts": "525a954a1a36d554bd1957852c97a57f916edd65be1cf59cc3d23a09a4bb2d16",
+    "../../packages/keyring/src/bunk-evm-v3.test.ts": "4da0d066bc4e3a8ca6dcd0987235315f534789fb1c52eb57278fa985b93f8392",
+    "../../packages/keyring/src/bunk-evm-v3.ts": "1724313218e0c32d9177eb3026cf18f261f02f95f5eab1e6f1c2c0df350d323e",
+    "../../packages/keyring/src/bunk-evm.test.ts": "6b766c3f03e310e6ab8766c5a14033e08074f08b6f0737eb51253f0b4db64394",
+    "../../packages/keyring/src/bunk-evm.ts": "eb0b67cef6195649f32bc86947fa49fee3bc7bba4aed54fc3f6590bfe9901bee",
+    "../../packages/keyring/src/bunk-indexeddb-store.ts": "27d4b0021977ded781c99d98ce064cde32cddf61e41104bae8c33a57a8289171",
+    "../../packages/keyring/src/bunk-journal-key.test.ts": "fbe96990637b33325fa06e9581f83dc21901e159ce010a9ea7df5a10f36d1ae1",
+    "../../packages/keyring/src/bunk-journal-key.ts": "81cb9b83c847fafcf908752c47e9561833a44d4c4233b0142e18de019df68531",
+    "../../packages/keyring/src/bunk.test.ts": "22dd5601ce0224b3e4d873b42539d7a6e3322b24ae64b0c1c3f80d03ce0eb618",
+    "../../packages/keyring/src/bunk.ts": "6f30f3edec4918ddeddc4b64ec65474ba75d0e04f88c98b0dacde7bd2d9fe8ec",
+    "../../packages/keyring/src/fixtures/bunk-evm-v1.json": "22b63866f81a28d0dbad6ce86d52bc0b97eb2ea4937109b632e0c6f9e2c88bd7",
+    "../../packages/keyring/src/fixtures/bunk-evm-v2.json": "089aea970ef9ac929141abe1afd0eff16751f44f0661ce83e8fdf12ac0f1d7ba",
+    "../../packages/keyring/src/fixtures/bunk-evm-v3.json": "ad30435b4bcc588695f7d1c961b31a3aa30cdb8ba0f1f057f1041cea23efafa5",
+    "../../packages/keyring/src/fixtures/bunk-journal-key.json": "4fc40b08230e7cc6fbda4e89bf7a802ba71b7eeb0201110282a75cd5a68868dc",
+    "../../packages/keyring/src/fixtures/bunk-v1.json": "ca20013812dbb4102f57f590d8ece1bc5b780bc01537b5409148049734b64f6e",
+    "../../packages/keyring/src/index.ts": "0adbdd0bd6dcf7bf3eacddaed857fc913f1ab50ec76bff7e6ad38104e5768e5a",
+    "../../packages/keyring/tests/bunk-evm-v2-journal.test.mjs": "e5bcd2f30a91662a25ce440f6de5013331775e1c2c0c2ac4afbf59a7ad556eb9",
+    "../../packages/keyring/tests/bunk-evm-v3-account.test.mjs": "cd8c8b292aafb3734a747fcfb030e0b12bec9b7179be64956118e53bac1168fe",
+    "../../packages/keyring/tests/bunk-evm-v3-discovery.test.mjs": "5e653c1d15269e26a00112b4156dc0481b079d6f6e64c78967545f1d5358455e",
+    "../../packages/keyring/tests/fixtures/bunk-browser-probe.mjs": "2d631d85373de9004972579d62787e76038db7f78280b5f0d64ac34a07585122",
+    "../../packages/keyring/tests/fixtures/bunk-journal-worker.mjs": "ee6b5eb1ae415d8f1164d22811b32647de2a1622537f9866766153b8353364c0",
+    "../../packages/keyring/vitest.config.ts": "6f1247d89537be89243be348ca47c76a3042aa4a4b3f2974d63383c95956e3f8"
+  },
+  "artifactsSha256": {
+    "out/BasePaymaster.sol/BasePaymaster.json": "3ebfed7cf14a60c8a4f0942415d1882af1be1e8f1624b33f227f95e5e6d17e22",
+    "out/BundlerNegativeAccount.sol/BundlerNegativeAccount.json": "6ad224618116dba905fee7612723ec513b0add17b9db4e96d90d33e3ad3f5951",
+    "out/BunkFactory.sol/BunkFactory.json": "68499d55d6138f8fbf4534f90f7cdff216057c23175ac92fddd40b21b62e2374",
+    "out/BunkIntegration.t.sol/BunkIntegrationTest.json": "4fb580fcebc2a273362d50aab3562dfe4007bd1fa2613e0a34e1eaa8f0e326da",
+    "out/BunkIntegration.t.sol/Target.json": "fb9f25a5ce25db8aed1f524119fe75e37566d5a5a4bba71deac94defa21dd41f",
+    "out/BunkIntegration.t.sol/Vm.json": "b247f979c3fd110ce10187e7bc8d63a9c0850b2f9415d4793323df3c614194f9",
+    "out/BunkIntegration.t.sol/VmContractHelper57.json": "15def068e298d01f41e2c9c701e3b3dbce9bec03b97c4ff88ed1475fc379ff3e",
+    "out/BunkIntegration.t.sol/VmContractHelper63.json": "c5028aa762429d839979bfb2f94a4493e606080a9476170c988ed185807b81ca",
+    "out/BunkIntegration.t.sol/VmContractHelper64.json": "3fc84fe1849057d6dfebf326a68c9aed461f45c5a7b1335bbb8c935a124a8c47",
+    "out/BunkModule.sol/BunkModule.json": "40215699ee5560412901305cfc6e906cb5373482f96e03176d605e3894702f27",
+    "out/BunkModule.sol/IBunkBootstrap.json": "c9e1b5255d1fa29e54e0c7d15b587fc4dd34ad3354a2c13fff19f5d565154ca0",
+    "out/BunkPaymaster.sol/BunkPaymaster.json": "4241f1b073337506365c705a5f2a969f04c5f3294658ba0586013d63e21e9a0a",
+    "out/BunkRecoveryFactory.sol/BunkRecoveryFactory.json": "e8e5cb25b52fa4eca8548e2fbb19c91233196e4e2a7b95856a1586c7c93ad6f3",
+    "out/BunkRecoveryIntegration.t.sol/BunkRecoveryIntegrationTest.json": "c7d2e8c4a7a8e33403016d3a3be6bdd83a3becd25dd988be4104b6d1f80984c8",
+    "out/BunkRecoveryIntegration.t.sol/VmContractHelper70.json": "652b48945a583d96499f98b8925f43886264c24c6e66658550decb7fb77a2fd7",
+    "out/BunkRecoveryModule.sol/BunkRecoveryModule.json": "e8829f7b4f15e8bbf86836420359f9d6e26b497db918ab23c1d8f0871c77a1d2",
+    "out/BunkRecoveryModule.sol/IBunkRecoveryBootstrap.json": "a94e48276e3fa46879dd4c3a3224865c173dd406ad2f60550074c7310b65ad9e",
+    "out/BunkRecoverySetup.sol/BunkRecoverySetup.json": "dd695e829d09c8391b1ecc8a48f4cc1a356b052f92823292fea38b3a43407ca5",
+    "out/BunkSeedRecoveryFactory.sol/BunkSeedRecoveryFactory.json": "f292635c211e02f015d7c3786f0ad539f336ff6f6d24e14ae51224fe58db3f24",
+    "out/BunkSeedRecoveryIntegration.t.sol/BunkSeedRecoveryIntegrationTest.json": "cfd33ecb2a46b415bf3ad1fa5159c0a448ce617767429680ecfbb48f1a44524e",
+    "out/BunkSeedRecoveryIntegration.t.sol/SeedRecoveryRelay.json": "cd45737e2d81f50a57b73b5cfb2fe2245ad98280cf67906c7996b2ef16d07f1d",
+    "out/BunkSeedRecoveryIntegration.t.sol/VmContractHelper71.json": "b419a59cdc6280a8fe5a2babbf8afa14724d622bdb5ff1a5592b9e220d00b27b",
+    "out/BunkSeedRecoveryModule.sol/BunkSeedRecoveryModule.json": "a4e33281754bcd801d344c321dddf9a9ebe0919721b6461c460dea5d16affe9f",
+    "out/BunkSeedRecoveryModule.sol/IBunkSeedRecoveryBootstrap.json": "a8b615410c9b885beb31c04c0c3e7c614c38c3c4710c12e1b8ad69e9b7946a07",
+    "out/BunkSeedRecoverySetup.sol/BunkSeedRecoverySetup.json": "8f76206e00f9205f0f280498825f3ee3c83d9394873500208efed473d1a4ffd5",
+    "out/BunkSetup.sol/BunkSetup.json": "33beda2ff9fe70cc638bce20272ecf17ccc7aa2ec90772f20dc817535cb2455c",
+    "out/Context.sol/Context.json": "b803ff6517cd4147d863fb546b5c11a80b714e5c681eda71b35bd2685fd6b557",
+    "out/ECDSA.sol/ECDSA.json": "c42d75d30fcaffeec4e1257dcc6dfa441630a5d4051b8c90439e9012745eeb3c",
+    "out/EIP712.sol/EIP712.json": "0c41f94cb383aa22165e916297ace27bdad926191b6cdcbaf3775c062745195b",
+    "out/ERC165.sol/ERC165.json": "807bf1405717fc57355e21b6b7c54caf252a2d38377d5500087ff85cc6752ffd",
+    "out/EntryPoint.sol/EntryPoint.json": "77f306891ad4a1ccf2aa4e45c29afe7ece4161db98038c3d49a0d243083ce4f4",
+    "out/Enum.sol/Enum.json": "591364973ecfc3f192bb72d22f2f3495f4375f1ed00d73e77bc3896eb33a48d8",
+    "out/Exec.sol/Exec.json": "183f2fe1f53d9e083f3f61ecf3a1aa24f232e74d28b92f74da8db06a1ee7b66e",
+    "out/Executor.sol/Executor.json": "6a332924bf2baceece6ab02b878f12954d85266e5a1bf633ee2c66fb68bcbb05",
+    "out/FallbackManager.sol/FallbackManager.json": "f0875fbe9e3dde1edc948a38ae5de5c1b6683ebfbab57b55dac63c95786f4968",
+    "out/GuardManager.sol/BaseGuard.json": "650eb64ecf717aa4aa82f031eb863cd655e5c41ec3a79b113984759e4862ac8d",
+    "out/GuardManager.sol/Guard.json": "eeb42d15ac5d1e9507b3bbf40bf89ed77786967fddde83c9cf17acec784b9ce4",
+    "out/GuardManager.sol/GuardManager.json": "6b10f5c0bdf4125a37c798e1b29ebda304fae1100ae1bd4bf3d5fd4546071ae8",
+    "out/IAccount.sol/IAccount.json": "6cde04e8a9439cf5ef5ceea07f45dc24eb5ecdaeb0dff1972c1ab0f566904fa9",
+    "out/IAccountExecute.sol/IAccountExecute.json": "fc1734594262682f54649857630e71ebde165a47cb9c969c61831e31085ce137",
+    "out/IAggregator.sol/IAggregator.json": "f2e579b147045790f91e3c1ce81010686aed15a803f4cfef07c79e5d60441bcd",
+    "out/IERC165.sol/IERC165.json": "461db04b1c265fbc573e7e1b6b274f5bc6594d0e0f93b634fc46295190a3c539",
+    "out/IERC5267.sol/IERC5267.json": "87d6b5c3b50a574d9457e6317eb99a6029e36566a2f73d44b10ea44a560f8070",
+    "out/IEntryPoint.sol/IEntryPoint.json": "38d9ab1ef25ab414f80fe39a6477b201b7e9a5ded0c925702830e28b19bf74ac",
+    "out/INonceManager.sol/INonceManager.json": "2c1a65e277c7785d539167f49ed9861b6f975bb6766759b367143cf1590063f8",
+    "out/IPaymaster.sol/IPaymaster.json": "47b94a457db4ee3bd9660faaaf27cdda5375d0ec5937b38790c5745f06b1d4cf",
+    "out/IProxyCreationCallback.sol/IProxyCreationCallback.json": "2761cdfdff97695dc2ff38b25cf04181c5af3239dbf0d8a0c1cfa04536d4fc5c",
+    "out/ISignatureValidator.sol/ISignatureValidator.json": "5286f971f738ffa4a776381485852c48bb417a627d7bfef3ffb4d80959c09299",
+    "out/ISignatureValidator.sol/ISignatureValidatorConstants.json": "f4ac9184df49b2c8149353562b1f6b481ffc19f84619400881f1fd148734f794",
+    "out/IStakeManager.sol/IStakeManager.json": "6d3d034e05ba3f51d5529bca20eb5ed0968fc5448e28cb784d994c3483fb53fc",
+    "out/Math.sol/Math.json": "172248eb320f86785d38f648a108157a283bf1d5c7f482edce7cb207fe6607f4",
+    "out/MerkleProof.sol/MerkleProof.json": "aa60005d7dac8b33044a1f297dd7ab4b76f6a877d903d319bfb556aa15e100d0",
+    "out/MessageHashUtils.sol/MessageHashUtils.json": "cbc4a4943a61f15d93ad3b291aae6734ed37211c36a742c1a428a5836650b3ba",
+    "out/ModuleManager.sol/ModuleManager.json": "6013a7765d3782fd49705e0e7d4368445d1ad76bc498df6e47ef9f929542f283",
+    "out/NativeCurrencyPaymentFallback.sol/NativeCurrencyPaymentFallback.json": "128a9c7ba03c886b057a13dd18fa779e7750b871ef254f07a2bb75d801da2595",
+    "out/NonceManager.sol/NonceManager.json": "618a45696320780689c79fd533e9127d2bda0f70dadbc71268d6e04c56cd49d1",
+    "out/Ownable.sol/Ownable.json": "913872f1f4911b75e878aad3ed8f4e12848ed2584596068d080eed325721f06e",
+    "out/OwnerManager.sol/OwnerManager.json": "f4494252948cacbb4af033f87f72c00a21d2befe18516edab2faf37053ed30dc",
+    "out/RecoveryIntent.t.sol/RecoveryIntentTest.json": "b15a037ce66d0b3de93562ace948589404a1dc039f400be2813962ab694fc23f",
+    "out/RecoveryIntent.t.sol/VmContractHelper67.json": "6362f7b53221137d83b83740365edbfe4cb7d6e7a952a11893a2c062383fa11f",
+    "out/RecoveryIntent.t.sol/VmContractHelper68.json": "9a5a26d6909054a202e59b956a9a861a9e2f4c8a35c97802295e3557231e4873",
+    "out/RecoveryIntentAccount.sol/RecoveryIntentAccount.json": "874604eab6b32c39a850ff865e6654cdb0e9505ff24bf32dd89c8f1f0fc165f5",
+    "out/RecoveryIntentAccount.sol/RecoveryIntentFactory.json": "e8f3d0a06cf2e3d179457b27f1be755d84d9eff00229b397923e0815d4b65278",
+    "out/ReentrancyGuard.sol/ReentrancyGuard.json": "02f45b8781d1d12e1ced05cd27645b6bac59a44a77a49855a7811b95879f818d",
+    "out/Safe.sol/Safe.json": "e95a91a01429ab18f41e16db286f9fcc52701619987dc1578a4760aad62572a7",
+    "out/SafeMath.sol/SafeMath.json": "5c67103a9f4dbeabe2bbd1cc037672f54aadd5c7eeb2ff495924ea2db495a842",
+    "out/SafeProxy.sol/IProxy.json": "ef8708e95b878c817d04dd461516f2c4950f11408022da609f8b180f29176eab",
+    "out/SafeProxy.sol/SafeProxy.json": "bc830d98ba8f16a726d7165a4f2cd6835787fe8705f0ad6845dab4fe7a140dcd",
+    "out/SafeProxyFactory.sol/SafeProxyFactory.json": "81c1bf1bea60f69b47dc0d3b0f0dc8dd05b8ba8d4370348f8e7e7e2af707eefa",
+    "out/SecuredTokenTransfer.sol/SecuredTokenTransfer.json": "b969ae11b1f0775d781b813acb444dfbd9ef7a5b527ca824c4fc898e479288e0",
+    "out/SelfAuthorized.sol/SelfAuthorized.json": "bd510f7486616593bc594ac75bc8af8e2b4d598637d2d467f815f74d2a47b73f",
+    "out/SenderCreator.sol/SenderCreator.json": "14bf530cfcddb76180139d2497db74917ae0f1ca6fc7596647e3e319f687d36c",
+    "out/ShortStrings.sol/ShortStrings.json": "3a8236bac081d941b21b485dfbf46bbfbb7c1be4cea5aad4a03deeb0829d5c82",
+    "out/SignatureDecoder.sol/SignatureDecoder.json": "9232671dc44f4bcdedf7aed828340f30af79a8c10a76bfcdb255f70c44d92605",
+    "out/SignedMath.sol/SignedMath.json": "120b86137e08c77a0f375c48635d81be864e125c86d48703a4acb62ab6a9e423",
+    "out/Singleton.sol/Singleton.json": "2bcca42e6904b5a585ee2acbd0b6815511deba54272eacdf0a73b07753221f45",
+    "out/StakeManager.sol/StakeManager.json": "5d6e985e87564c7e517a22377532cf61a07f04d5e3a16af8ecd9ef8c6385da73",
+    "out/StorageAccessible.sol/StorageAccessible.json": "38c502039f9e4586b54b18908f8a294f1bec42809f831fe0cf056c2bedfdcb9f",
+    "out/StorageSlot.sol/StorageSlot.json": "287075ca35c31e6cdc9a0ba148a5837bff88cc262d480a6ba2f9339ef57680e2",
+    "out/Strings.sol/Strings.json": "53c2923a26648533fc12fe58eee5de2a65ed8516b6fd60e687d79446d44a0081",
+    "out/UserOperationLib.sol/UserOperationLib.json": "2eb4f631fd466e671af940b520026412918ba48a226217ab846e5e6e0d0bb2fc",
+    "out/build-info/05ab3d2526852633.json": "1a63f294867fbb4163b098d9a1ece75703324222778832677ced2e55d37a4acc",
+    "out/build-info/12ee9fb3cf8b9dd4.json": "ea15706a166e9367e5e671778d6790fa3374028caf264f92526cc77d2a965e59",
+    "out/build-info/1be1b9a62ec6cf40.json": "23e4fac3308370d3a66fbf4126cb1bc78c8b3d18ab2c70f1ddb3dc614c054b20",
+    "out/build-info/43f39113db236b40.json": "5de2faa6238770fe6b2ab0c8d5609228e9d5bb187553981d9681a44218abe6d5",
+    "out/build-info/5bef2fc3b5e61780.json": "06bacae5f041dfbe1d4b361c1663df66944c3c6cc859ea5583d952f18eeef9be",
+    "out/build-info/63e9b63e70355b0b.json": "cc827065cb2655168bcb7794ef9a659e292318b30da4da82d580f71f00354881",
+    "out/build-info/9081b80a8cabef63.json": "92064cc2f51d6630cb03684dc4395ba17e109b56c78c716dd1cd5129384b47a5",
+    "out/build-info/911f145254d4e9b5.json": "c09693380197a9a776fa5a480b539358d6043040d048c5b128e7ee4327f7027e",
+    "out/build-info/9ef94d6acfa4b84f.json": "279f06b482893f6fea56e74f6d6e72e4ef295cafa5df74c5c67d34dd7a74be45",
+    "out/build-info/a396e6d5b7adffe1.json": "b3815ec6b1ad3d7f63665d917fc55063f6b8d7391cd5dcb478838fa03f8eab3f",
+    "out/build-info/a63279c71504bdd9.json": "c024344c76d007dc40ec21b90321d069a2fbf16b65acff1cff8f1608d93f1c70",
+    "out/build-info/a6f63ed8a005c866.json": "7b4ab91f66a38e2a58f6b48f2a85609fc40cb600914efa2cd641213553fe19ac",
+    "out/build-info/da2d48745a4f973c.json": "8e68b06dd086fd2e6e5b59427888efa63084b2fe418cb7fe896c3e20b3a25dff",
+    "out/introspection/IERC165.sol/IERC165.json": "cb5041c861d47d3b8a90ea5457eb7126568521091653644b58377acb4c55ba75"
+  },
+  "sourceAndArtifactHashesRechecked": true
+}

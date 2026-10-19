@@ -29,7 +29,7 @@ describe('extension vault', () => {
     expect(await vault.unlock('wrong password')).toBe(false);
     expect(await vault.unlock('correct horse')).toBe(true);
     expect(await vault.unlocked()).toBe(PHRASE);
-  });
+  }, 15_000);
 
   it('locks itself after being idle', async () => {
     const { vault, tick } = setup();

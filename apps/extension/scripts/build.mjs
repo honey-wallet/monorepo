@@ -21,6 +21,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { loadEnvFile } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 
@@ -29,6 +30,11 @@ const mobile = join(root, '..', 'mobile');
 // `--out=<dir>` builds somewhere else, so several screenshot runs can build at once.
 const outArg = process.argv.find((a) => a.startsWith('--out='))?.slice('--out='.length);
 const out = outArg ?? join(root, process.argv.includes('--e2e') ? 'dist-e2e' : 'dist');
+
+// Keep extension-only public settings beside this package; Expo itself runs from the
+// mobile workspace and would otherwise look for .env.local in the wrong directory.
+const extensionEnv = join(root, '.env.local');
+if (existsSync(extensionEnv)) loadEnvFile(extensionEnv);
 
 rmSync(out, { recursive: true, force: true });
 const exported = spawnSync(
@@ -94,6 +100,24 @@ writeFileSync(indexPath, html);
 
 cpSync(join(root, 'public'), out, { recursive: true });
 if (!existsSync(join(out, 'manifest.json'))) throw new Error('manifest.json missing');
+
+// The extension popup calls the API directly. MV3 host permissions are part of the
+// installed package, so keep them in sync with the URL embedded in the Expo bundle.
+const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:8080';
+const api = new URL(apiUrl);
+if (
+  api.origin !== apiUrl.replace(/\/$/, '') ||
+  !(
+    api.protocol === 'https:' ||
+    (api.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(api.hostname))
+  )
+) {
+  throw new Error('EXPO_PUBLIC_API_URL must be an HTTPS origin or a localhost HTTP origin');
+}
+const manifestPath = join(out, 'manifest.json');
+const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+manifest.host_permissions = [...new Set([...(manifest.host_permissions ?? []), `${api.origin}/*`])];
+writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 // The scripts websites talk to (src/worker): the service worker, the content script and
 // the provider pages see. Each is one self-contained file; content scripts can't import.

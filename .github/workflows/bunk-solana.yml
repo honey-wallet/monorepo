@@ -1,0 +1,52 @@
+name: Bunk Solana
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/bunk-solana/**'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/bunk-solana.yml'
+  pull_request:
+    paths:
+      - 'packages/bunk-solana/**'
+      - 'rust-toolchain.toml'
+      - '.github/workflows/bunk-solana.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bunk-solana-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  runtime:
+    name: Compiled SBF in LiteSVM (no validator)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: packages/bunk-solana
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install repository Rust toolchain and build prerequisites
+        run: |
+          rustup toolchain install
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential clang cmake libssl-dev libudev-dev pkg-config protobuf-compiler
+      - name: Install checksum-pinned Agave SBF CLI
+        run: |
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/agave.tar.bz2" \
+            https://github.com/anza-xyz/agave/releases/download/v3.1.11/solana-release-x86_64-unknown-linux-gnu.tar.bz2
+          printf '%s  %s\n' '5978d621fe2582fc2403fa13f3c06502020bcb42e806ddd4612150049d1a3fbb' "$RUNNER_TEMP/agave.tar.bz2" | sha256sum --check --strict
+          tar -xjf "$RUNNER_TEMP/agave.tar.bz2" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/solana-release/bin" >> "$GITHUB_PATH"
+      - name: Prepare pinned tools and locked dependencies
+        run: |
+          cargo build-sbf --install-only --tools-version v1.52
+          cargo fetch --locked
+      - name: Run offline vectors, builds, Clippy and runtime tests
+        run: python3 scripts/acceptance.py --output "$RUNNER_TEMP/bunk-solana-evidence.json"
+      - name: Record source and binary hashes with test results
+        run: cat "$RUNNER_TEMP/bunk-solana-evidence.json"

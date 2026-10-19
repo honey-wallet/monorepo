@@ -2,7 +2,7 @@ import type { Answer, Approval } from '@honey-wallet/extension/protocol';
 import {
   evmNetwork,
   parseTypedData,
-  readSolanaTransaction,
+  reviewSolanaTransaction,
   SOLANA_MAINNET,
   signEvmMessage,
   signEvmTransaction,
@@ -11,6 +11,7 @@ import {
   signSolanaTransaction,
 } from '@honey-wallet/keyring';
 import { createPublicClient, type Hex, http, type TransactionSerializable } from 'viem';
+import { requestJsonRpc } from '@/lib/json-rpc';
 import { privateKeyOf } from '@/lib/vault';
 
 /**
@@ -27,9 +28,15 @@ export type EvmTx = { from: string; to: string | null; value: Hex; data: Hex; ga
 export function readableMessage(bytes: Uint8Array): { text: string; isText: boolean } {
   try {
     const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    // Control characters other than newlines and tabs mean it's data, not a message.
-    // biome-ignore lint/suspicious/noControlCharactersInRegex: that's the check
-    if (!/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/.test(text)) return { text, isText: true };
+    // Show layout-changing and invisible format controls explicitly. The signed bytes
+    // remain untouched; only this review string is escaped.
+    const review = text.replace(
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security display filter
+      // biome-ignore lint/suspicious/noMisleadingCharacterClass: intentional independent code point escaping
+      /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF\uFFF9-\uFFFB\u{E0000}-\u{E007F}]/gu,
+      (char) => `[U+${char.codePointAt(0)?.toString(16).toUpperCase().padStart(4, '0')}]`,
+    );
+    return { text: review, isText: true };
   } catch {
     // Not UTF-8.
   }
@@ -61,44 +68,354 @@ export function siweDomain(text: string): string | null {
   return match?.[1] ?? null;
 }
 
-export const fromBase64 = (data: string) => Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+export const fromBase64 = (data: string) => {
+  if (!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(data)) {
+    throw new Error('Bad base64 data');
+  }
+  return Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+};
 export const toBase64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 
 /** The fee payer and size of a Solana transaction, or null if it can't be read. */
 export function solanaSummary(base64: string) {
   try {
     const bytes = fromBase64(base64);
-    const read = readSolanaTransaction(bytes);
+    const read = reviewSolanaTransaction(bytes);
     return {
       feePayer: read.feePayer,
       signers: read.signers,
       bytes: bytes.length,
       version: read.version,
+      instructions: read.reviewedInstructions,
+      reviewable: read.reviewable,
     };
   } catch {
     return null;
   }
 }
 
-/** Well-known function selectors, to name the call. Approvals get a warning. */
-const SELECTORS: Record<string, { name: string; risky?: boolean }> = {
-  '0xa9059cbb': { name: 'Transfer tokens' },
-  '0x23b872dd': { name: 'Transfer tokens from', risky: true },
-  '0x095ea7b3': { name: 'Approve spending', risky: true },
-  '0x39509351': { name: 'Increase allowance', risky: true },
-  '0xa22cb465': { name: 'Approve all NFTs', risky: true },
-  '0x42842e0e': { name: 'Transfer NFT' },
+export type EvmCallReview = {
+  reviewable: boolean;
+  label: string;
+  rows: [string, string][];
+  warning?: string;
+  reason?: string;
 };
 
-export function callName(data: Hex) {
-  if (data.length < 10) return null;
+/** Decode the deliberately small standard-call allowlist shown in dApp approvals. */
+export function inspectEvmCall(data: Hex, to: string | null): EvmCallReview {
+  if (!/^0x(?:[0-9a-f]{2})*$/i.test(data)) {
+    return {
+      reviewable: false,
+      label: 'Malformed contract call',
+      rows: [],
+      reason: 'Invalid calldata.',
+    };
+  }
+  if (data === '0x') {
+    if (!to) {
+      return {
+        reviewable: false,
+        label: 'Contract deployment',
+        rows: [],
+        reason: 'Contract creation code cannot be reviewed safely yet.',
+      };
+    }
+    return {
+      reviewable: true,
+      label: 'Native asset transfer or empty call',
+      rows: [],
+      warning: 'The destination may be a contract whose fallback behavior Honey has not inspected.',
+    };
+  }
+  if (data.length < 10) {
+    return {
+      reviewable: false,
+      label: 'Unknown contract call',
+      rows: [],
+      reason: 'Calldata is too short to identify.',
+    };
+  }
   const selector = data.slice(0, 10).toLowerCase();
-  return SELECTORS[selector] ?? { name: `Contract call · ${selector}` };
+  const body = data.slice(10);
+  const word = (index: number) => body.slice(index * 64, (index + 1) * 64);
+  const address = (index: number) => {
+    const value = word(index);
+    if (value.length !== 64 || !/^0{24}[0-9a-f]{40}$/i.test(value)) return null;
+    return `0x${value.slice(24)}`;
+  };
+  const amount = (index: number) => {
+    const value = word(index);
+    return value.length === 64 ? BigInt(`0x${value}`).toString() : null;
+  };
+  const exactWords = (count: number) => body.length === count * 64;
+  const unsupported = (label: string, rows: [string, string][], reason: string): EvmCallReview => ({
+    reviewable: false,
+    label,
+    rows,
+    reason,
+  });
+  if (selector === '0xa9059cbb') {
+    const recipient = exactWords(2) ? address(0) : null;
+    const units = exactWords(2) ? amount(1) : null;
+    if (!recipient || units === null)
+      return unsupported('ERC-20 transfer', [], 'Malformed transfer arguments.');
+    return {
+      reviewable: true,
+      label: 'ERC-20 transfer',
+      rows: [
+        ['Recipient', recipient],
+        ['Raw token units', units],
+      ],
+      warning:
+        'Honey recognizes the standard ERC-20 selector, but does not verify this contract’s bytecode or token decimals.',
+    };
+  }
+  if (selector === '0x23b872dd') {
+    const from = exactWords(3) ? address(0) : null;
+    const recipient = exactWords(3) ? address(1) : null;
+    const units = exactWords(3) ? amount(2) : null;
+    return unsupported(
+      'Ambiguous transferFrom',
+      from && recipient && units !== null
+        ? [
+            ['From', from],
+            ['To', recipient],
+            ['Raw amount or token ID', units],
+          ]
+        : [],
+      'This selector can mean a fungible-token amount or an NFT token ID; Honey cannot identify which effect this contract implements.',
+    );
+  }
+  if (selector === '0x095ea7b3') {
+    const spender = exactWords(2) ? address(0) : null;
+    const units = exactWords(2) ? amount(1) : null;
+    return unsupported(
+      'Ambiguous approval',
+      spender && units !== null
+        ? [
+            ['Spender', spender],
+            ['Raw amount or token ID', units],
+          ]
+        : [],
+      'This selector can authorize fungible-token spending or approve one NFT; Honey cannot identify which effect this contract implements.',
+    );
+  }
+  if (selector === '0x39509351' || selector === '0xa457c2d7') {
+    const spender = exactWords(2) ? address(0) : null;
+    const units = exactWords(2) ? amount(1) : null;
+    if (!spender || units === null)
+      return unsupported('Allowance change', [], 'Malformed allowance arguments.');
+    return {
+      reviewable: true,
+      label: selector === '0x39509351' ? 'Increase token allowance' : 'Decrease token allowance',
+      rows: [
+        ['Spender', spender],
+        ['Raw token units', units],
+      ],
+      warning:
+        'Honey recognizes the standard selector, but does not verify this contract’s bytecode or token decimals.',
+    };
+  }
+  if (selector === '0xa22cb465') {
+    const operator = exactWords(2) ? address(0) : null;
+    const approved = exactWords(2) ? word(1) : '';
+    if (!operator || !/^(?:0{63}0|0{63}1)$/i.test(approved)) {
+      return unsupported('Operator approval', [], 'Malformed operator approval arguments.');
+    }
+    return {
+      reviewable: true,
+      label: approved.endsWith('1')
+        ? 'Approve all assets for operator'
+        : 'Revoke operator approval',
+      rows: [['Operator', operator]],
+      warning:
+        'This standard selector may grant control over every NFT managed by the contract; the contract implementation is not verified.',
+    };
+  }
+  if (selector === '0x42842e0e') {
+    const from = exactWords(3) ? address(0) : null;
+    const recipient = exactWords(3) ? address(1) : null;
+    const tokenId = exactWords(3) ? amount(2) : null;
+    if (!from || !recipient || tokenId === null)
+      return unsupported('NFT transfer', [], 'Malformed NFT transfer arguments.');
+    return {
+      reviewable: true,
+      label: 'ERC-721 transfer',
+      rows: [
+        ['From', from],
+        ['Recipient', recipient],
+        ['Token ID', tokenId],
+      ],
+      warning:
+        'Honey recognizes the standard ERC-721 selector, but does not verify this contract’s bytecode.',
+    };
+  }
+  return unsupported(
+    `Unknown contract call · ${selector}`,
+    [['Calldata', data]],
+    'Honey cannot safely decode this contract call, so signing is blocked.',
+  );
 }
 
 /** Typed-data messages that let someone else move your tokens. */
 export const isPermit = (primaryType: string) =>
   /^Permit(Single|Batch|TransferFrom|BatchTransferFrom|WitnessTransferFrom)?$/.test(primaryType);
+
+const DOMAIN_FIELDS = ['name', 'version', 'chainId', 'verifyingContract', 'salt'] as const;
+type TypedField = { name: string; type: string };
+
+/** The full domain separator input and message fields as viem will hash them. */
+export function typedDataReview(json: string) {
+  const typed = parseTypedData(json);
+  const raw = JSON.parse(json) as {
+    domain?: Record<string, unknown> | null;
+    types?: Record<string, unknown>;
+  };
+  const types = typed.types as unknown as Record<string, readonly TypedField[]>;
+  const domain = (typed.domain ?? {}) as Record<string, unknown>;
+  const explicit = Object.hasOwn(types, 'EIP712Domain');
+  const domainType = explicit
+    ? types.EIP712Domain
+    : DOMAIN_FIELDS.flatMap((name): TypedField[] => {
+        const value = domain[name];
+        const included =
+          (name === 'name' && typeof value === 'string') ||
+          (name === 'version' && Boolean(value)) ||
+          (name === 'chainId' && (typeof value === 'number' || typeof value === 'bigint')) ||
+          ((name === 'verifyingContract' || name === 'salt') && Boolean(value));
+        if (!included) return [];
+        return [
+          {
+            name,
+            type:
+              name === 'chainId'
+                ? 'uint256'
+                : name === 'verifyingContract'
+                  ? 'address'
+                  : name === 'salt'
+                    ? 'bytes32'
+                    : 'string',
+          },
+        ];
+      });
+  const domainShape = Array.isArray(domainType);
+  const domainRows =
+    explicit && domainShape
+      ? typedRows({ EIP712Domain: domainType }, 'EIP712Domain', domain).rows
+      : [];
+  const domainFields = domainShape ? domainType.map((field) => field.name) : [];
+  const unboundDomainFields = Object.keys(domain).filter((field) => !domainFields.includes(field));
+  if (!explicit && domainShape) {
+    for (const field of DOMAIN_FIELDS) {
+      const bound = domainFields.includes(field);
+      const provided = Object.hasOwn(domain, field);
+      const value = bound
+        ? displayTypedValue(domain[field])
+        : provided
+          ? `${displayTypedValue(domain[field])} (provided but not signed)`
+          : '(not set; not signed)';
+      domainRows.push([field, value]);
+    }
+  } else if (domainShape) {
+    for (const field of DOMAIN_FIELDS) {
+      if (domainFields.includes(field)) continue;
+      domainRows.push([
+        field,
+        Object.hasOwn(domain, field)
+          ? `${displayTypedValue(domain[field])} (provided but not signed)`
+          : '(not included in signature)',
+      ]);
+    }
+  }
+  for (const field of unboundDomainFields) {
+    if (!domainRows.some(([name]) => name === field)) {
+      domainRows.push([field, `${displayTypedValue(domain[field])} (not signed)`]);
+    }
+  }
+  const message = typedRows(
+    types,
+    String(typed.primaryType),
+    (typed.message ?? {}) as Record<string, unknown>,
+  );
+  const malformedDomain =
+    !domainShape ||
+    (raw.domain !== undefined &&
+      raw.domain !== null &&
+      (typeof raw.domain !== 'object' || Array.isArray(raw.domain)));
+  const encodedChainId = domainFields.includes('chainId') ? domain.chainId : undefined;
+  const chainId =
+    (typeof encodedChainId === 'number' || typeof encodedChainId === 'bigint') &&
+    (domainType as readonly TypedField[]).some(
+      (field) => field.name === 'chainId' && /^uint\d*$/.test(field.type),
+    )
+      ? Number(encodedChainId)
+      : undefined;
+  return {
+    typed,
+    primaryTypeLabel: escapeReviewText(String(typed.primaryType)),
+    domainRows: domainRows.map(([key, value]) => [escapeReviewText(key), value]),
+    messageRows: message.rows,
+    messageComplete: message.complete,
+    domainComplete:
+      !malformedDomain &&
+      unboundDomainFields.length === 0 &&
+      (explicit ? typedRows({ EIP712Domain: domainType }, 'EIP712Domain', domain).complete : true),
+    complete:
+      !malformedDomain &&
+      unboundDomainFields.length === 0 &&
+      message.complete &&
+      (explicit ? typedRows({ EIP712Domain: domainType }, 'EIP712Domain', domain).complete : true),
+    unboundDomainFields,
+    chainId,
+    hasChainBinding: chainId !== undefined,
+  };
+}
+
+function displayTypedValue(value: unknown): string {
+  if (typeof value === 'string') return escapeReviewText(value);
+  if (typeof value === 'bigint') return value.toString();
+  if (value === undefined || value === null) return '(missing)';
+  return typeof value === 'object' ? JSON.stringify(value) : String(value);
+}
+
+function escapeReviewText(value: string): string {
+  // Keep the typed-data payload intact for signing; escape format/control characters
+  // only in the human-readable approval view.
+  return value.replace(
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: intentional security display filter
+    // biome-ignore lint/suspicious/noMisleadingCharacterClass: intentional independent code point escaping
+    /[\u0000-\u001F\u007F\u00AD\u034F\u061C\u115F\u1160\u17B4\u17B5\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFE00-\uFE0F\uFEFF\uFFF9-\uFFFB\u{E0000}-\u{E007F}]/gu,
+    (char) => `[U+${char.codePointAt(0)?.toString(16).toUpperCase().padStart(4, '0')}]`,
+  );
+}
+
+/** Shared fail-closed review gate used both by the screen and the signing boundary. */
+export function approvalReviewError(approval: Approval): string | null {
+  try {
+    const params = approval.params as Record<string, unknown>;
+    if (approval.kind === 'evmSend') {
+      const call = inspectEvmCall((params.tx as EvmTx).data, (params.tx as EvmTx).to);
+      return call.reviewable
+        ? null
+        : (call.reason ?? 'Honey cannot safely decode this contract call.');
+    }
+    if (approval.kind === 'evmTypedData') {
+      return typedDataReview(params.data as string).complete
+        ? null
+        : 'This typed-data request has fields Honey cannot show exactly as signed. Signing is blocked.';
+    }
+    if (approval.kind === 'solanaSignTransaction' || approval.kind === 'solanaSend') {
+      const review = reviewSolanaTransaction(fromBase64(params.transaction as string));
+      return review.reviewable
+        ? null
+        : 'Honey can’t safely decode every Solana instruction; signing is blocked.';
+    }
+    return null;
+  } catch {
+    return 'Honey could not safely read this request. Signing is blocked.';
+  }
+}
 
 // EVM sending
 
@@ -145,6 +462,28 @@ export async function prepareEvmSend(tx: EvmTx, chainId: number) {
   return { unsigned, maxFee: gas * perGas };
 }
 
+export type PreparedEvmSend = Awaited<ReturnType<typeof prepareEvmSend>>;
+
+export type EvmSendPreparation =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; prepared: PreparedEvmSend };
+
+function preparedSendMatches(tx: EvmTx, chainId: number, prepared: PreparedEvmSend) {
+  const unsigned = prepared.unsigned;
+  const feePerGas = unsigned.type === 'eip1559' ? unsigned.maxFeePerGas : unsigned.gasPrice;
+  return (
+    unsigned.chainId === chainId &&
+    (unsigned.to ?? null) === tx.to &&
+    (unsigned.value ?? 0n) === BigInt(tx.value) &&
+    (unsigned.data ?? '0x').toLowerCase() === tx.data.toLowerCase() &&
+    (tx.gas === undefined || unsigned.gas === BigInt(tx.gas)) &&
+    unsigned.gas !== undefined &&
+    feePerGas !== undefined &&
+    prepared.maxFee === unsigned.gas * feePerGas
+  );
+}
+
 /** A node's error, short enough to show. */
 export function reasonOf(error: unknown) {
   const text =
@@ -153,15 +492,18 @@ export function reasonOf(error: unknown) {
   return text.split('\n')[0]?.slice(0, 160) ?? 'Unknown error';
 }
 
-async function solanaRpc(method: string, params: unknown[]) {
-  const res = await fetch(SOLANA_MAINNET.rpc, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+export function requestSolanaRpc(
+  method: string,
+  params: unknown[],
+  fetcher: typeof fetch = fetch,
+  timeoutMs = 15_000,
+) {
+  return requestJsonRpc(SOLANA_MAINNET.rpc, method, params, {
+    fetcher,
+    timeoutMs,
+    // A Solana send response is a transaction signature or a small RPC error object.
+    maxResponseBytes: 16 * 1024,
   });
-  const body = (await res.json()) as { result?: unknown; error?: { message?: string } };
-  if (body.error) throw new Error(body.error.message ?? 'Solana rejected the transaction');
-  return body.result;
 }
 
 // Answering
@@ -170,33 +512,40 @@ async function solanaRpc(method: string, params: unknown[]) {
  * Signs (and for "send", broadcasts) what the site asked for with `walletId`'s key.
  * Returns the answer for the site; throws when signing or sending failed.
  */
-export async function performApproval(approval: Approval, walletId: string): Promise<Answer> {
+export async function performApproval(
+  approval: Approval,
+  walletId: string,
+  preparedEvmSend?: PreparedEvmSend,
+): Promise<Answer> {
   const id = approval.id;
   const params = approval.params as Record<string, unknown>;
   const chain = approval.kind.startsWith('solana') ? 'solana' : 'evm';
   if (approval.kind === 'switchChain') return { id, result: null };
+  const reviewError = approvalReviewError(approval);
+  if (reviewError) throw new Error(reviewError);
+  let reviewedEvmSend: PreparedEvmSend | undefined;
+  if (approval.kind === 'evmSend') {
+    const { chainId, tx } = params as { chainId: number; tx: EvmTx };
+    if (!preparedEvmSend || !preparedSendMatches(tx, chainId, preparedEvmSend)) {
+      throw new Error('Transaction details or fee estimate changed. Review the transaction again.');
+    }
+    reviewedEvmSend = preparedEvmSend;
+  }
   const key = await privateKeyOf(walletId, chain);
   try {
     switch (approval.kind) {
       case 'evmSign':
         return { id, result: await signEvmMessage(key, params.message as string) };
       case 'evmTypedData': {
-        // Only what could be shown in full is signed.
-        const typed = parseTypedData(params.data as string);
-        const shown = typedRows(
-          typed.types as unknown as Record<string, TypedField[]>,
-          String(typed.primaryType),
-          typed.message as Record<string, unknown>,
-        );
-        if (!shown.complete)
-          throw new Error('This request can’t be shown exactly as it would be signed');
         return { id, result: await signEvmTypedData(key, params.data as string) };
       }
       case 'evmSend': {
         const chainId = params.chainId as number;
+        if (!reviewedEvmSend) throw new Error('Transaction review is missing.');
         const { client } = clientFor(chainId);
-        const { unsigned } = await prepareEvmSend(params.tx as EvmTx, chainId);
-        const signed = await signEvmTransaction(key, unsigned);
+        // The exact nonce, gas limit, and fee caps shown in the approval screen are
+        // the values signed. Never silently refresh them after the user's consent.
+        const signed = await signEvmTransaction(key, reviewedEvmSend.unsigned);
         return { id, result: await client.sendRawTransaction({ serializedTransaction: signed }) };
       }
       case 'solanaSignMessage': {
@@ -207,12 +556,14 @@ export async function performApproval(approval: Approval, walletId: string): Pro
         return { id, result: { signature: toBase64(signature) } };
       }
       case 'solanaSignTransaction': {
-        const signed = signSolanaTransaction(key, fromBase64(params.transaction as string));
+        const transaction = fromBase64(params.transaction as string);
+        const signed = signSolanaTransaction(key, transaction);
         return { id, result: { signedTransaction: toBase64(signed) } };
       }
       case 'solanaSend': {
-        const signed = signSolanaTransaction(key, fromBase64(params.transaction as string));
-        const signature = await solanaRpc('sendTransaction', [
+        const transaction = fromBase64(params.transaction as string);
+        const signed = signSolanaTransaction(key, transaction);
+        const signature = await requestSolanaRpc('sendTransaction', [
           toBase64(signed),
           { encoding: 'base64', preflightCommitment: 'confirmed' },
         ]);
@@ -225,8 +576,6 @@ export async function performApproval(approval: Approval, walletId: string): Pro
     key.fill(0);
   }
 }
-
-type TypedField = { name: string; type: string };
 
 /**
  * Every field EIP-712 encodes, in order, by walking the declared types from the primary
@@ -287,7 +636,7 @@ export function typedRows(
       malformed = true;
       return;
     }
-    rows.push([path, typeof value === 'object' ? JSON.stringify(value) : String(value)]);
+    rows.push([escapeReviewText(path), displayTypedValue(value)]);
   };
   walk(primaryType, message, '', 0);
   return { rows, complete: !truncated && !malformed };

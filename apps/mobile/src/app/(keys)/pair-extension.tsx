@@ -1,5 +1,10 @@
 import type { PairChannel } from '@honey-wallet/api-client';
-import { type PairPayload, type PairSession, sealPayload } from '@honey-wallet/keyring';
+import {
+  clearPairSession,
+  type PairPayload,
+  type PairSession,
+  sealPayload,
+} from '@honey-wallet/keyring';
 import { getRandomBytes } from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -64,20 +69,39 @@ export default function PairExtensionSheet() {
     () => state.step === 'intro' && offerDirection(state.uri) === 'toPhone',
   );
   const abort = useRef(new AbortController());
-  useEffect(() => () => abort.current.abort(), []);
+  const sessions = useRef(new Set<PairSession>());
+  useEffect(
+    () => () => {
+      abort.current.abort();
+      for (const session of sessions.current) clearPairSession(session);
+      sessions.current.clear();
+    },
+    [],
+  );
 
   const start = async (uri: string) => {
     tap();
     setState({ step: 'connecting' });
+    let session: PairSession | undefined;
     try {
       if (!toPhone && !(await readPrimaryWallet())) {
         throw new Error('Create or import a wallet first.');
       }
-      const { pair, session } = await phoneHandshake(uri, abort.current.signal);
+      const result = await phoneHandshake(uri, abort.current.signal);
+      session = result.session;
+      if (abort.current.signal.aborted) {
+        clearPairSession(session);
+        return;
+      }
+      sessions.current.add(session);
       // The device the wallet leaves checks the code: the browser here, so show it.
-      if (toPhone) await receive(session, pair);
-      else setState({ step: 'compare', session, pair });
+      if (toPhone) await receive(session, result.pair);
+      else setState({ step: 'compare', session, pair: result.pair });
     } catch (error) {
+      if (session) {
+        clearPairSession(session);
+        sessions.current.delete(session);
+      }
       if (!abort.current.signal.aborted) setState({ step: 'error', message: messageOf(error) });
     }
   };
@@ -92,6 +116,9 @@ export default function PairExtensionSheet() {
       setState({ step: 'review', payload });
     } catch (error) {
       if (!abort.current.signal.aborted) setState({ step: 'error', message: messageOf(error) });
+    } finally {
+      clearPairSession(session);
+      sessions.current.delete(session);
     }
   };
 
@@ -120,6 +147,8 @@ export default function PairExtensionSheet() {
       success();
       setState({ step: 'confirm', session, pair, payload: { v: 1, ...wallet } });
     } catch (error) {
+      clearPairSession(session);
+      sessions.current.delete(session);
       setState({ step: 'error', message: messageOf(error) });
     }
   };
@@ -127,9 +156,12 @@ export default function PairExtensionSheet() {
   // Cancelling Face ID (or the passcode) leaves you on the confirm step to try again.
   const send = async (session: PairSession, pair: PairChannel, payload: PairPayload) => {
     tap();
-    if (!(await confirmOwner('Send your wallet to this browser'))) return;
-    setState({ step: 'sending' });
     try {
+      if (!(await confirmOwner('Send your wallet to this browser'))) {
+        setState({ step: 'error', message: 'Pairing cancelled. Scan a new code to try again.' });
+        return;
+      }
+      setState({ step: 'sending' });
       const data = sealPayload(session.key, payload, getRandomBytes);
       await api.pairSend(pair, 'payload', { data });
       completeStep('browser');
@@ -137,6 +169,9 @@ export default function PairExtensionSheet() {
       setState({ step: 'done' });
     } catch (error) {
       setState({ step: 'error', message: messageOf(error) });
+    } finally {
+      clearPairSession(session);
+      sessions.current.delete(session);
     }
   };
 
@@ -371,6 +406,8 @@ export default function PairExtensionSheet() {
           onMatch={() => matched(state.session, state.pair)}
           onGiveUp={() => {
             abort.current.abort();
+            clearPairSession(state.session);
+            sessions.current.delete(state.session);
             setState({
               step: 'error',
               message:

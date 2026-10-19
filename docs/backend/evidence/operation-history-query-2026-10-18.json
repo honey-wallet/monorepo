@@ -1,0 +1,80 @@
+{
+  "explain": [
+    {
+      "Execution Time": 0.167,
+      "Plan": {
+        "Actual Loops": 1,
+        "Actual Rows": 11,
+        "Actual Startup Time": 0.028,
+        "Actual Total Time": 0.143,
+        "Async Capable": false,
+        "Local Dirtied Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Written Blocks": 0,
+        "Node Type": "Limit",
+        "Parallel Aware": false,
+        "Plan Rows": 11,
+        "Plan Width": 61,
+        "Plans": [
+          {
+            "Actual Loops": 1,
+            "Actual Rows": 11,
+            "Actual Startup Time": 0.028,
+            "Actual Total Time": 0.141,
+            "Alias": "operations",
+            "Async Capable": false,
+            "Index Cond": "((user_id = '1558024e-4387-42d7-94e9-f8bcc2e37f1c'::uuid) AND (wallet_id = '7c4d2f0d-a298-4072-b223-c89424feb8e0'::uuid) AND (ROW(created_at, id) < ROW('2026-01-01 02:48:20+00'::timestamp with time zone, '192c9aac-51d4-4fb0-baf2-e4e53f3da22a'::uuid)))",
+            "Index Name": "operations_wallet_page",
+            "Local Dirtied Blocks": 0,
+            "Local Hit Blocks": 0,
+            "Local Read Blocks": 0,
+            "Local Written Blocks": 0,
+            "Node Type": "Index Scan",
+            "Parallel Aware": false,
+            "Parent Relationship": "Outer",
+            "Plan Rows": 96,
+            "Plan Width": 61,
+            "Relation Name": "operations",
+            "Rows Removed by Index Recheck": 0,
+            "Scan Direction": "Forward",
+            "Shared Dirtied Blocks": 0,
+            "Shared Hit Blocks": 64,
+            "Shared Read Blocks": 0,
+            "Shared Written Blocks": 0,
+            "Startup Cost": 0.42,
+            "Temp Read Blocks": 0,
+            "Temp Written Blocks": 0,
+            "Total Cost": 188.76
+          }
+        ],
+        "Shared Dirtied Blocks": 0,
+        "Shared Hit Blocks": 64,
+        "Shared Read Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Startup Cost": 0.42,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0,
+        "Total Cost": 22.0
+      },
+      "Planning": {
+        "Local Dirtied Blocks": 0,
+        "Local Hit Blocks": 0,
+        "Local Read Blocks": 0,
+        "Local Written Blocks": 0,
+        "Shared Dirtied Blocks": 0,
+        "Shared Hit Blocks": 66,
+        "Shared Read Blocks": 0,
+        "Shared Written Blocks": 0,
+        "Temp Read Blocks": 0,
+        "Temp Written Blocks": 0
+      },
+      "Planning Time": 0.209,
+      "Triggers": []
+    }
+  ],
+  "limitWithLookahead": 11,
+  "pageDepth": 900,
+  "scope": "disposable PostgreSQL; 100001 operation rows across two wallets; one principal; warm local query; not concurrent user capacity",
+  "selectedWalletRows": 1001
+}

@@ -1,0 +1,29 @@
+# Disposable local backend dependencies; never deploy these credentials to production.
+# docker compose -p honey-backend-dev -f compose.backend.yaml up -d --wait
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: honey
+      POSTGRES_PASSWORD: honey_local_only
+      POSTGRES_DB: honey
+    ports:
+      - "127.0.0.1:${HONEY_POSTGRES_PORT:-25432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U honey -d honey"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+    # Ephemeral by design. A restart recreates local test data.
+    tmpfs:
+      - /var/lib/postgresql/data
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "127.0.0.1:${HONEY_REDIS_PORT:-26379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 20

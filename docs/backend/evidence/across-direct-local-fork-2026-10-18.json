@@ -1,0 +1,98 @@
+{
+  "date": "2026-10-18",
+  "scope": "Actual Across/USDC contracts on two isolated forks; manual local relayer, no provider API or application execution worker.",
+  "sourceFork": {
+    "chain": 1,
+    "block": 26220316,
+    "hash": "0xa574f79244e43ba13c7962ce9cabad37c352bef6164fdfb1c66e8c3c3a129442"
+  },
+  "destinationFork": {
+    "chain": 8453,
+    "block": 52773813,
+    "hash": "0xbf06e2cbebdbcf02ebe86fc4ec5a4bcfb51c1de914769c61b7c9b63fc91a894e"
+  },
+  "localChains": [31337, 31338],
+  "inputAmountRaw": "1000000",
+  "deliveredAmountRaw": "990000",
+  "inputAllowanceAfter": "0",
+  "relayerAllowanceAfter": "0",
+  "unfinalizedRejected": true,
+  "changedRecipientRejected": true,
+  "sourcePolicy": {
+    "spoke": {
+      "address": "0x5c7bcd6e7de5423a257d81b442095a1a6ced35c5",
+      "codeHash": "0x932cddc50793da935ccf915651ad67f6b746e9936fcc5614f0ff492563782c75"
+    },
+    "spokeImplementation": {
+      "address": "0x456ac26e5ec083ee9889eba0d1a0a582502b8e84",
+      "codeHash": "0x94cc890a705ae8f4b973b6531b201fcd53c6bcbefba7caa12d1812f6fcede5bf"
+    },
+    "token": {
+      "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "codeHash": "0xd80d4b7c890cb9d6a4893e6b52bc34b56b25335cb13716e0d1d31383e6b41505"
+    },
+    "tokenImplementation": {
+      "address": "0x43506849d7c04f9138d1a2050bbf3a0c054402dd",
+      "codeHash": "0xcdfb7d322961af3acae7a8f7ee8b69c205b36f576cc5b077f170c7eb8ecbe3ea"
+    },
+    "wrappedNative": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+  },
+  "destinationPolicy": {
+    "spoke": {
+      "address": "0x09aea4b2242abc8bb4bb78d537a67a245a7bec64",
+      "codeHash": "0x932cddc50793da935ccf915651ad67f6b746e9936fcc5614f0ff492563782c75"
+    },
+    "spokeImplementation": {
+      "address": "0xf23c6c04a2b88e8651fe99bbdccbb5c9d306e6b0",
+      "codeHash": "0xb36f3bbdffcc931890a4354aa13c9756f032cf6f968d1d1a9604cb3ece9eb480"
+    },
+    "token": {
+      "address": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      "codeHash": "0xa6705a10bb756b5dea144591118be77d7af0c3eee3bf2dfe2583dcb0364fefab"
+    },
+    "tokenImplementation": {
+      "address": "0x2ce6311ddae708829bc0784c967b7d77d19fd779",
+      "codeHash": "0x11b75a237997ab8328f65b2d5a55c10f0346d0a175741ed42ddf4f2c66b9e873"
+    },
+    "wrappedNative": "0x4200000000000000000000000000000000000006"
+  },
+  "proof": {
+    "deposit": {
+      "terms": {
+        "sourceChain": "31337",
+        "destinationChain": "31338",
+        "depositor": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "recipient": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+        "inputToken": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "outputToken": "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+        "inputAmount": "1000000",
+        "outputAmount": "990000",
+        "exclusiveRelayer": "0x0000000000000000000000000000000000000000",
+        "quoteTimestamp": "1792336983",
+        "fillDeadline": "1792340583",
+        "exclusivityParameter": "0"
+      },
+      "depositId": "4793626",
+      "exclusivityDeadline": 0,
+      "source": {
+        "transactionHash": "0xb6746cd34c5c6f38f3bf763d7b701aeb7d7464d0b65034400b2bb5239b71c273",
+        "blockNumber": 26220321,
+        "blockHash": "0xe1890cbafbc41f2fe1c4811378aab31570b500021c73915e94a58199e959d28a",
+        "logIndex": 1,
+        "finalizedNumber": 26220322,
+        "finalizedHash": "0x689baa162b511d9b61f36352c704953e68dcb6445863a2605a48fc227b4d5e3d"
+      },
+      "checkedAtMs": 1792337435669
+    },
+    "destination": {
+      "transactionHash": "0xd8ae6123ecafda4edb0bee1d73f3aba7bf29dbefd8ac39a854089c32ac27ff92",
+      "blockNumber": 52773818,
+      "blockHash": "0x107b11ec0eb1160c0602360d3917b2956facb6e1fed3ce897b83aa76b4f19ca4",
+      "logIndex": 0,
+      "finalizedNumber": 52773819,
+      "finalizedHash": "0x88561f44cd5834fa87b0664890a7e39e370cd14b6ae165ff5bcc1a455d77ca96"
+    },
+    "fillType": 0,
+    "checkedAtMs": 1792337435684
+  }
+}

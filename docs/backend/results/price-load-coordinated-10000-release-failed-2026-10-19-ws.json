@@ -1,0 +1,72 @@
+{
+  "actualStartUnixMs": 1792360173087,
+  "authenticatedPrincipalCount": 0,
+  "authenticatedRequestsPerPrincipal": [],
+  "clientFrameCountTotal": 2017161,
+  "closedDuringRun": 19,
+  "connectedAfterRamp": 9981,
+  "connectionFailures": {
+    "http4xx": 0,
+    "http5xx": 19,
+    "io": 0,
+    "other": 0,
+    "timeout": 0
+  },
+  "framesDuringSoak": 588879,
+  "generator": "external-process",
+  "httpAggregateTargetRps": 100,
+  "httpAuthenticated": false,
+  "httpCompleted": 0,
+  "httpCompletedAtDeadline": 0,
+  "httpCompletedPerSecond": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  ],
+  "httpCompletedRpsAtDeadline": 0.0,
+  "httpEnabled": false,
+  "httpErrors": 0,
+  "httpExpectedShardRequests": 0,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 0,
+  "httpIssuedPerSecond": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  ],
+  "httpIssuedRpsAtDeadline": 0.0,
+  "httpLatencyMicrosFirst100k": {
+    "max": null,
+    "p50": null,
+    "p95": null,
+    "p99": null
+  },
+  "httpLatencySamples": 0,
+  "httpObservedRpsIncludingDrain": 0.0,
+  "httpRoute": "/api/v1/prices",
+  "httpSchedulerMaxLagMicros": 60000911,
+  "httpSchedulerSkippedSlots": 0,
+  "httpShardCount": 1,
+  "httpShardIndex": 0,
+  "httpStartUnixMs": 1792360173087,
+  "httpTargetRps": 100,
+  "minimumFramesPerClientDuringSoak": 0,
+  "minimumLifetimeFramesForAnyClient": 0,
+  "plannedStartUnixMs": 1792360173079,
+  "profileOnly": false,
+  "rampMs": 134261,
+  "runId": "98409035-be6d-4771-b627-2725a3214b19",
+  "schemaVersion": 4,
+  "serverProcessSample": {
+    "pid": "34014",
+    "ps": "%CPU RSS_KiB ELAPSED",
+    "sample": "11.5 141328 04:31"
+  },
+  "soakSeconds": 60,
+  "targetWebSockets": 10000,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClientDuringSoak": 45
+  },
+  "tls": false,
+  "totalFrames": 2017161
+}

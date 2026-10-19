@@ -13,6 +13,8 @@ import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { DemoMoneyNotice } from '@/components/savings/DemoMoneyNotice';
+import { LiveSavingsScreen } from '@/components/savings/LiveEarnMarkets';
 import { HeaderActions } from '@/components/wallet/HeaderActions';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { TabScreen } from '@/components/wallet/TabScreen';
@@ -38,6 +40,11 @@ function formatJarAmount(symbol: string, amount: number) {
 
 /** The piggy bank: Honey Jars for crypto set aside for goals, and ways to earn on it. */
 export default function SavingsScreen() {
+  const { wallet } = useWalletView();
+  return wallet.demo ? <DemoSavingsScreen /> : <LiveSavingsScreen />;
+}
+
+function DemoSavingsScreen() {
   const styles = useStyles();
   const c = useTheme();
   // A brand-new wallet hasn't saved anything yet: only the jars it made itself.
@@ -67,6 +74,7 @@ export default function SavingsScreen() {
         />
       }
     >
+      <DemoMoneyNotice />
       {/* Aave-style: what you've put away and what it's growing to is the one big
           number here, then your jars, then where the rest is earning. */}
       <EarningList

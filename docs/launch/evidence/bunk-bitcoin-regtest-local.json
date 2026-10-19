@@ -1,0 +1,198 @@
+{
+  "scope": "Public-fixture local Bitcoin Core regtest construction/signature/CPFP/reorg acceptance; no production signer, journal, UTXO discovery or public-network activation",
+  "coreVersion": 310100,
+  "binarySha256": "d55c12b0b02001cc16b1481c4075361dcba193100a8143924abda911174c09ec",
+  "network": "regtest",
+  "connections": 0,
+  "genesis": "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206",
+  "parent": {
+    "prepared": {
+      "transaction": {
+        "version": 2,
+        "lockTime": 102,
+        "inputs": [
+          {
+            "txid": "056321d12ba00c74ca1742b5505dac69f275e28d6e19ce10bd25c1cbd20f5699",
+            "vout": 1,
+            "satoshis": "160000",
+            "publicKey": "03d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e",
+            "sequence": 4294967294
+          },
+          {
+            "txid": "f114769515c9bf00e8051ec046ffb039c07e629d951f0fb167d780ba056ce370",
+            "vout": 1,
+            "satoshis": "20000",
+            "publicKey": "03d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e",
+            "sequence": 4294967294
+          },
+          {
+            "txid": "056321d12ba00c74ca1742b5505dac69f275e28d6e19ce10bd25c1cbd20f5699",
+            "vout": 3,
+            "satoshis": "110000",
+            "publicKey": "036130589cecb5424ce8902fea2fb4f256f4e217d2f41d2b165a9f91f0d40e716c",
+            "sequence": 4294967294
+          }
+        ],
+        "outputs": [
+          {
+            "satoshis": "200000",
+            "scriptPubKey": "512058bcd59259d90edcabaf5cfb26bb1ee820455d19252091eec407050b42bf983a"
+          },
+          {
+            "satoshis": "89710",
+            "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb"
+          }
+        ]
+      },
+      "selected": [
+        {
+          "txid": "056321d12ba00c74ca1742b5505dac69f275e28d6e19ce10bd25c1cbd20f5699",
+          "vout": 1,
+          "satoshis": "160000",
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415"
+        },
+        {
+          "txid": "f114769515c9bf00e8051ec046ffb039c07e629d951f0fb167d780ba056ce370",
+          "vout": 1,
+          "satoshis": "20000",
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415"
+        },
+        {
+          "txid": "056321d12ba00c74ca1742b5505dac69f275e28d6e19ce10bd25c1cbd20f5699",
+          "vout": 3,
+          "satoshis": "110000",
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad"
+        }
+      ],
+      "changeAddress": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+      "changeIndex": 3,
+      "changeSatoshis": "89710",
+      "feeSatoshis": "290",
+      "maxVbytes": 290,
+      "unsignedTransaction": "020000000399560fd2cbc125bd10ce196e8de275f269ac5d50b54217ca740ca02bd12163050100000000feffffff70e36c05ba80d767b10f1f959d627ec039b0ff46c01e05e800bfc915957614f10100000000feffffff99560fd2cbc125bd10ce196e8de275f269ac5d50b54217ca740ca02bd12163050300000000feffffff02400d03000000000022512058bcd59259d90edcabaf5cfb26bb1ee820455d19252091eec407050b42bf983a6e5e010000000000160014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb66000000",
+      "txid": "49d3c5681495104189243721570d346eed6bc397e979399337f230a3a12eb67f",
+      "signatureDigests": [
+        "f95d479b4165a3c2072db2bb4cc48ff046bf3d5bfea2effd46764dd5b57b2091",
+        "3c0c08bbdb0a0052695ead77016b120099d7260e2efeefe554985d1d4e7ec4f0",
+        "7e1dbc114a0850f12af4dbd8bd224589994137a8828084bd9db149aff28634bf"
+      ],
+      "signingAuthorized": false
+    },
+    "signed": {
+      "rawTransaction": "0200000000010399560fd2cbc125bd10ce196e8de275f269ac5d50b54217ca740ca02bd12163050100000000feffffff70e36c05ba80d767b10f1f959d627ec039b0ff46c01e05e800bfc915957614f10100000000feffffff99560fd2cbc125bd10ce196e8de275f269ac5d50b54217ca740ca02bd12163050300000000feffffff02400d03000000000022512058bcd59259d90edcabaf5cfb26bb1ee820455d19252091eec407050b42bf983a6e5e010000000000160014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb0247304402203031b560e76e0f84e7a58c868899dce6d6c6a16f6d27f9b0559c1bca388c8be9022054b1d5193b4b9ca1ea717c35d6558e59feb0d0dc94c63c11f5d7cab2acbd20dd012103d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e0247304402207580f6e1092d31c69fff748781f0ab0e44f98323aeb7639eb3e0e9e7338abe7b02207aa91f45c0140171f31ab58feec9a1e8686c8c5d8171568a973543a42114167d012103d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e02473044022017b94de39a4e2a605646c369e9d5dc5e8f93e9d935c3cd78e0a5d9f9946cfb50022055553f10ac90fe3efa93f2005fbebd4000ddabb123b2cd92702b8062376de3150121036130589cecb5424ce8902fea2fb4f256f4e217d2f41d2b165a9f91f0d40e716c66000000",
+      "txid": "49d3c5681495104189243721570d346eed6bc397e979399337f230a3a12eb67f",
+      "wtxid": "e84e709597efe052251346a3a85831476458b9d726180653f77dcea841230c7c",
+      "weight": 1151,
+      "vbytes": 288
+    }
+  },
+  "parentAcceptance": {
+    "txid": "49d3c5681495104189243721570d346eed6bc397e979399337f230a3a12eb67f",
+    "wtxid": "e84e709597efe052251346a3a85831476458b9d726180653f77dcea841230c7c",
+    "allowed": true,
+    "vsize": 288,
+    "fees": {
+      "base": "0.00000290",
+      "effective-feerate": "0.00001006",
+      "effective-includes": ["e84e709597efe052251346a3a85831476458b9d726180653f77dcea841230c7c"]
+    }
+  },
+  "child": {
+    "prepared": {
+      "transaction": {
+        "version": 2,
+        "lockTime": 102,
+        "inputs": [
+          {
+            "txid": "49d3c5681495104189243721570d346eed6bc397e979399337f230a3a12eb67f",
+            "vout": 1,
+            "satoshis": "89710",
+            "publicKey": "0355d64a189b7b02be8e8da716cf150d08696dfe490ca02e829b72f3e804886ad8",
+            "sequence": 4294967294
+          }
+        ],
+        "outputs": [
+          {
+            "satoshis": "15000",
+            "scriptPubKey": "00149b48ec203768e0486bae9b877f2d56720eec26f7"
+          },
+          {
+            "satoshis": "74005",
+            "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8"
+          }
+        ]
+      },
+      "selected": [
+        {
+          "txid": "49d3c5681495104189243721570d346eed6bc397e979399337f230a3a12eb67f",
+          "vout": 1,
+          "satoshis": "89710",
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb"
+        }
+      ],
+      "changeAddress": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+      "changeIndex": 4,
+      "changeSatoshis": "74005",
+      "feeSatoshis": "705",
+      "maxVbytes": 141,
+      "unsignedTransaction": "02000000017fb62ea1a330f237933979e997c36bed6e340d57213724894110951468c5d3490100000000feffffff02983a0000000000001600149b48ec203768e0486bae9b877f2d56720eec26f715210100000000001600149e79ce9b6762ceaa258047b2fc718d7d581025e866000000",
+      "txid": "679559026cd8a3fa7952df125e7595a97539305e443035f584cb5607658b8edf",
+      "signatureDigests": ["56647ddcc8c4f6632b744c237650be3cd4484a14882d9ceb8734ad4535ff0dcb"],
+      "signingAuthorized": false
+    },
+    "signed": {
+      "rawTransaction": "020000000001017fb62ea1a330f237933979e997c36bed6e340d57213724894110951468c5d3490100000000feffffff02983a0000000000001600149b48ec203768e0486bae9b877f2d56720eec26f715210100000000001600149e79ce9b6762ceaa258047b2fc718d7d581025e80247304402205810827c3eda090d9673bde8a8cba6351459b997e153a4ba2e1f95b8b56a6920022076a1d7531a0b03e981c443df1e3dbc0e8088e88d1b6a87934c9cc35005cccf9101210355d64a189b7b02be8e8da716cf150d08696dfe490ca02e829b72f3e804886ad866000000",
+      "txid": "679559026cd8a3fa7952df125e7595a97539305e443035f584cb5607658b8edf",
+      "wtxid": "525e8eed3adf827783f31d9b50f75c85c5a8814b15d9523a97060da70d6ee145",
+      "weight": 561,
+      "vbytes": 141
+    }
+  },
+  "childAcceptance": {
+    "txid": "679559026cd8a3fa7952df125e7595a97539305e443035f584cb5607658b8edf",
+    "wtxid": "525e8eed3adf827783f31d9b50f75c85c5a8814b15d9523a97060da70d6ee145",
+    "allowed": true,
+    "vsize": 141,
+    "fees": {
+      "base": "0.00000705",
+      "effective-feerate": "0.00005000",
+      "effective-includes": ["525e8eed3adf827783f31d9b50f75c85c5a8814b15d9523a97060da70d6ee145"]
+    }
+  },
+  "wrongAmountRejected": {
+    "txid": "b5bdcdb6573ef4aeeb21844cd7f8195f3ed9a1d3454a7f901413eff331017c84",
+    "wtxid": "68bc67a990ebaace17c7ba96c69a4b3e5e15dfbb480f046ac68fbbceca50661f",
+    "allowed": false,
+    "reject-reason": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)",
+    "reject-details": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation), input 0 of b5bdcdb6573ef4aeeb21844cd7f8195f3ed9a1d3454a7f901413eff331017c84 (wtxid 68bc67a990ebaace17c7ba96c69a4b3e5e15dfbb480f046ac68fbbceca50661f), spending 056321d12ba00c74ca1742b5505dac69f275e28d6e19ce10bd25c1cbd20f5699:1"
+  },
+  "changedRecipientRejected": {
+    "txid": "6c8536a2c5b00b5d466f51ef19f8440763f3c15d5ce13db62accefed340aae54",
+    "wtxid": "b0937dba96f3540e20806286ad65a5fd85939966c9c949780e9e3dcd3c112d80",
+    "allowed": false,
+    "reject-reason": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)",
+    "reject-details": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation), input 0 of 6c8536a2c5b00b5d466f51ef19f8440763f3c15d5ce13db62accefed340aae54 (wtxid b0937dba96f3540e20806286ad65a5fd85939966c9c949780e9e3dcd3c112d80), spending 056321d12ba00c74ca1742b5505dac69f275e28d6e19ce10bd25c1cbd20f5699:1"
+  },
+  "reorgedBlock": "256a18849bcfbdc0a27df9e1e193112d01f1d5fb888abf9297624ac02bb1ba3d",
+  "replacementBlock": "0c76cfe3e549f37c4c3dfe944d374f4fa0013eff6d2fec7c6dc850cdb80264a6",
+  "identicalRebroadcast": true,
+  "unselectedInputPreserved": true,
+  "allKnownSelectedOwnerCoinsSpent": true,
+  "workDirectory": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-bitcoin-regtest-exkfowrb",
+  "sourcesSha256": {
+    "packages/keyring/src/bunk.ts": "6f30f3edec4918ddeddc4b64ec65474ba75d0e04f88c98b0dacde7bd2d9fe8ec",
+    "packages/keyring/src/bunk-bitcoin.ts": "9163f703a6b4e1c32e5ef37117180c3c255342f40725642ee25910dc663480f7",
+    "packages/keyring/src/bunk-bitcoin.test.ts": "b8e233e3a52ce2518b1a727c1418b8fcbe97200dbe5eba885b9864ef18cdb81c",
+    "packages/keyring/tests/fixtures/bunk-bitcoin-client.mjs": "3c0ee5972bb2c3e24ec6b7ea7d08db1336cb75910c773bde3a2c7c440bdeb9a8",
+    "packages/keyring/scripts/bunk-bitcoin-regtest.mjs": "d96bf3ebcb388ed4f259dd25bf798199c9287793464f4878f59a9b3f26444c93",
+    "packages/keyring/scripts/bunk-bitcoin-regtest.py": "802f594b9bdab1a0d044958daa6908a66897a8cd1ee8bf483c6e64cfd7de0442",
+    "packages/keyring/package.json": "d3f8e700b8b84f9d68f99b33887e6fcddc7e08b2f204da1f0b4db4b782baf96c",
+    "pnpm-lock.yaml": "d7f4b8f33108bbe838989a962531951c2256d8697c1854ef17b945f8604931d3"
+  },
+  "sourcesRechecked": true,
+  "bundleSha256": "a0c0292aba475c8c10dbaf8e89a02ee472848dcbca330d9df6abcc337c668d4e"
+}

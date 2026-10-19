@@ -1,0 +1,607 @@
+{
+  "scope": "current backend production source + migrations + recovery SQL and build workflows",
+  "status": "scoped production source review complete",
+  "base_commit": "7a27ec4741f3b5f7c2f30bf5eb922564c1720a79",
+  "source_files": 99,
+  "migration_files": 14,
+  "excluded": [
+    "standalone test modules (used as supporting evidence)",
+    "clients/keyring/contracts",
+    "third-party dependency source",
+    "production infrastructure and provider configuration"
+  ],
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "sha256": "94f134b6bf9aa11d3ba984b8eb047f321faf3e1cbb52e477f529406f413354ca",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": ".github/workflows/docker.yml",
+      "sha256": "8459b4c44759a11ce7eb6b6125e67ea1e067bb4dc0473935972c22a2157fa471",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/Dockerfile",
+      "sha256": "82481d9105284c704d9ef89483f1075d399ea7c202f8e8113c727e65d340b29a",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180001_identity_and_work.sql",
+      "sha256": "8a8b190d197d93d0cdd4128df67775c7272c8ee2bbc1206eebdbe15f4833c678",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180002_preparations.sql",
+      "sha256": "5248799d7caa89fb170853092a7f3e9b4cabf3f271ca8a60e376a20dcc5ae236",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180003_submissions.sql",
+      "sha256": "e3456a7f15b501067c2f6ccd9e5f8b3d53c8fcd62e340cf2079841a3247c94e4",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180004_reconciliation.sql",
+      "sha256": "d6f7b2789720dc120fc9357d29b77496baf95634c8bfe483407bc445026ee389",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180005_aave_signing.sql",
+      "sha256": "bc6a87191402655c3c2c24639ec444f53f9d63e45c95e91592bb481f383aa2d9",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180006_operation_history.sql",
+      "sha256": "312646f77322fb52795ec90cdee400447fe544d88fbb774edd1449dbcca6ef6b",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180007_earn_signing.sql",
+      "sha256": "54c7ff0557da72e17acec1a67c5b982b0050d04ef0bd2b2fb40fa90a470b405b",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180008_sealed_preparations.sql",
+      "sha256": "9e1f839ce843fe3d1a765d3f7af5c7dc5301d6220ee64cc1a642b71f4059d0b6",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180009_swap_permits.sql",
+      "sha256": "3e03881da4d1231b1994f361e1cb7e6e16ab25e74e2ab929436bdaee98b41768",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180010_bridge_monitor.sql",
+      "sha256": "f075a1bfe458d80bbc5eee2b6e9d48ad328c2050e436ac9b7d636b61930b3086",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180011_across_settlement.sql",
+      "sha256": "f3e378c17a5bcf6703be016ffe3a7ba203d2e60236b3368f4c5021ac95ac6f93",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610180012_refresh_families.sql",
+      "sha256": "c6598e6c0450665c049176b4dbc6f30045779edd06af1673b273fc9c84488e40",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610190001_wallet_links.sql",
+      "sha256": "18477e863ab7d9b01dcae6373c068f627b15d774accae66f285aca40d6be72cb",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/migrations/202610190002_job_queue_metrics.sql",
+      "sha256": "ed6f0a25ea9f56735e278232e441bfd44894a2e45a277b85c763a47686b0ceaa",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/aave_service.rs",
+      "sha256": "2254add8d0f61eb3e62af89365f6f77c26e1c1e44e2c99dc1e148ab2d72b0010",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/across_service.rs",
+      "sha256": "b93de798154b19baa2db50854a6118863ee6da5ce2f297eec916e9fc589887d1",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/across_settlement.rs",
+      "sha256": "e7cc0650af56ce64f229cb51ce3c4d32135d89eb7baf8cf7f8c70a21676810b5",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/bridge_monitor.rs",
+      "sha256": "901cd737ca6d0cb0976a3a2ab961e17d038dcd360a9f31bbfcbe040199a14eb2",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/chains/bitcoin.rs",
+      "sha256": "d6d05e62280b8d46b6ff017ca82b82dce6e19e1b037bfb697d2e295a0381151a",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/chains/evm.rs",
+      "sha256": "4168bf10f48b4c5d9b71d559e149a0089994fb5a75f41908aab5b35e7ae6cba8",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/chains/mod.rs",
+      "sha256": "219f6372443b18cc3344771d225e17536e4b70714d4a0e68e94adc0c287924be",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/chains/solana.rs",
+      "sha256": "877171edb0a55ae9cb6857fe2dc370b387ee663d17f28b98a09588fb186c5d1d",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/chains/tron.rs",
+      "sha256": "c391298bb98d8684aa20cc9b24829df1f1f89d1edf1accb4dc2052770c71b8ed",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/chains/xrpl.rs",
+      "sha256": "f5ec9254a740d98fc731ed3aab22c1d35cb1ab8f415a269ccc7f4b0444be10f1",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/config.rs",
+      "sha256": "47996bab8bb400f0d25d08edb4fc786cc1dc60cd7a5160b9b238fb9e07443d95",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/database.rs",
+      "sha256": "fdc3713ace6a94629ac5fb6b46cebf6886a4ed0ab4d5480e49b18d9bdce1822b",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/earn_catalog.rs",
+      "sha256": "0759f8bc5494163c581e15df030b486807d9d75e45430e78701398f82d87c9fa",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/earn_service.rs",
+      "sha256": "dd671ba6d153057776d327c7c4c127b25ea9610b7e82398c8c7ba6f0aff33948",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/error.rs",
+      "sha256": "616f56d0929561604cc85aaaa359c6cded95b08efd26c50d369f9cdf5fd2e5dd",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/evm_envelope.rs",
+      "sha256": "4011a8c55fed635fd6b820b097af9fbacc0468dbc94d6e055cd54ced8fb4015f",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/exposure.rs",
+      "sha256": "8cb6be47c66d45fcaae53450e1c8ddc85e208d9b93f221c055678af8b34bdd79",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/http_runtime.rs",
+      "sha256": "ad6e9d09b4d6a07b9b455770f29a747909519c6e739a3b41b43e2e524565416b",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/hyperliquid_perps.rs",
+      "sha256": "e9699416457c9c3a0c9a3cfe4fb5408f87198e88010f58745542bda37aabd74e",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/identity.rs",
+      "sha256": "ac75f305a93b3731b182d0c4e32e46045bab0032804911838a6dd58798995ab1",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/lib.rs",
+      "sha256": "0d69403be1432eb455b32bacb39cb2945b9f3a4761b515f0ff7ecb0becaa3d0f",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/main.rs",
+      "sha256": "0db51378febcdd42ff61862a14e7810f5967cf5a018a3d1806dfe66e8405d028",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/markets.rs",
+      "sha256": "7cec26d239842bfc8800e73ad198988ee15f07f6ecc7321d48cf69df5fff6cb4",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/metrics.rs",
+      "sha256": "2a129fc68b8f9ef0451766e4fffdd4b49b3388b0cfae4f98efa131fe9733a4ca",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/monitoring.rs",
+      "sha256": "a72d7d3c4fc8c50cdac7c862c38694390f643978a2c651ae73f48afd58096e5a",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/morpho_service.rs",
+      "sha256": "b351d695e176885d15104d96cdb85c3b0df70d4ca9052d75a1257a08a9c75693",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/operation_history.rs",
+      "sha256": "213e5a111b5fa03065c74a2dd7113ddec60136d5ade9418cd733ef1178c8f08a",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/pairing_store.rs",
+      "sha256": "a72456c7aa96458a3b01e9f24471dddc453aa8e7703159e944c5e48c1f08d19b",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/preparation/reviewed.rs",
+      "sha256": "46f590b6d0630ca0a4aa56a23015fd336b5628b2d6ed90922ffd0dd05822339b",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/preparation/sealed.rs",
+      "sha256": "cbd10b7a9641ef22d229586cfbdc6450b4e46868c51be42e540ab8bf4e31d0c8",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/preparation.rs",
+      "sha256": "8ea0bd37489ffdcd0b609740f51af2dc3a551eadd7fa5c843d66c9446f32f78e",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/aave_execution.rs",
+      "sha256": "619855c3a76ec3c1a13362ef5813d47bc1eb73831c91ecb2a2513cddf74c0f20",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/across_evidence.rs",
+      "sha256": "64be2a184515a505c27a561545da75ce3fac6301bb3abaa45c940b53444f5aa8",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/across_execution.rs",
+      "sha256": "2743cde6179f4359e46432c658f0a85d6fe6e2dc4eb00345ddc8f09f33c09f7e",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/across_quotes.rs",
+      "sha256": "5a57e2bfe71f11d32d7ca77576e840e87a2da8a31b7b26668c0a04dd924cb103",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/bridge_status.rs",
+      "sha256": "e111695c87ed50bdcff5d3c249ea2893626c32a9e6f9729811208eedf3b4b024",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/earn.rs",
+      "sha256": "ea6fa93c10e48be87c7a0a65f269d949fac0faf44491567b67303e67874dd06e",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/evm_prepare.rs",
+      "sha256": "11713894141c1471aaacf72cc5b2feb6e279ed3db8644a94b6208e485616e637",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/evm_rpc.rs",
+      "sha256": "4ad94fd4c9625e70f90996b95134e9fc26f9d3798861bb7bad00d0d88d7c28f6",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/mod.rs",
+      "sha256": "f950b679fdd0fc88b8b541ca9104e91baf9ef13d4eed1ceb8701c730470432c9",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/morpho_execution.rs",
+      "sha256": "312df4d2a8dd99a812d49200c539f16b347e8fcac3b110dbdeddfbcaeeb0bbe4",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/permit2.rs",
+      "sha256": "7e7c8f072fb035cc630766c4f39a5d60815f69704e4910587c5326ec37549d41",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/relay_quotes.rs",
+      "sha256": "ee90e7c2c1fdd061ff208b4b1a3489ead7d31fb3cbc3ba4f081c966bd5672f4a",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/rpc_budget.rs",
+      "sha256": "f51f3895d529f815549f4345a4cc1c68dd3c1e29bd7cebc8d025f0e930083aa1",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/transport.rs",
+      "sha256": "2629f551c6a1450022352382cf2a7640b44017d8ae8709555816be4276808e52",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/uniswap/build.rs",
+      "sha256": "b1dc047bb69547b999f4009bcbf1c2cbb08a2bf2149d1e57421a1a276dbf974d",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/uniswap.rs",
+      "sha256": "323b022e534661847474212bcc97502d71e46499e1103546edc6efb274a8e092",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/uniswap_economics.rs",
+      "sha256": "1d2f50d4cc0aac18fa4bf9b1cd264234aa9966436b86d9133092197547299247",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/uniswap_execution.rs",
+      "sha256": "13441956f93c74ff5558dd38088bacc2bda7f8409ea2d02168bade83468ca8cd",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/providers/uniswap_router.rs",
+      "sha256": "6b8477551b2630d5796c6847dadb503a27f37022660a6c78111c675c90fbf7c6",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/reconciliation.rs",
+      "sha256": "3911a3984f295c8c154e1b9d054c1c0ac0cc73abf2da3d2bb0bcd446e8e6ac6a",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/redis_store.rs",
+      "sha256": "e0abd1bc0d09ccd17aefe72f361a3b7718fbdad6f9bb0c9c60b48d5a77da351e",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/relayer.rs",
+      "sha256": "82c06e405504f83c1818af62c5881494d190a548bfd445aece4b3adb860d79aa",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/aave.rs",
+      "sha256": "a8c5d33af5070af5e489a8bbadaa4a795103b26a28cbd5b66408076f0fd49937",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/accounts.rs",
+      "sha256": "c68a2f471d1de1415ba12175dfa9f49a3335211591eed281a3171f7e1fa9891f",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/across.rs",
+      "sha256": "9152797f7be8d2f73e7318fda0ed9a67ecd1de73e630e1db75d23c32fbe63dca",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/bridges.rs",
+      "sha256": "30e0c22049db402b07fbd55989b5e905f2b66a16752042930bad8882bbe67e6f",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/capabilities.rs",
+      "sha256": "b326a80b45f8118056f9522ada6444d016ddb0e3ec356a07ac95f749e657a4cc",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/chains.rs",
+      "sha256": "eedbb4d286e3d03260b928cfa97931fd7ad79d2b95d32c2c2b81d8d521d610bb",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/earn.rs",
+      "sha256": "bb18e31e10ef7c1d8668f084e71718f36e3261c2dacc57c16821f3ec51e4bbd9",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/health.rs",
+      "sha256": "3ada6de20993ee9e3cd8d18fcb167bf6303e48c1f5f26bad01be423b242ce90d",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/hyperliquid.rs",
+      "sha256": "c9c72768471ea5c7d3c29f3644080511c7038cf0fefba8b4618049d0567cafb1",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/identity.rs",
+      "sha256": "75d0abe080f932bb5f5f001da09a39b37936165d2a73916424e4fba94974f273",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/mod.rs",
+      "sha256": "dd9c34e89ceacdc3dc6beff1244929abf8576ae2a418c63884493c03c2444661",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/monitoring.rs",
+      "sha256": "65ae0b72994b97d828cc7a893cc74d578a5c647c0ec6f3fd10ba481e6cf482a0",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/morpho.rs",
+      "sha256": "26889c805a986955716de7f3f6d9bdeee5f641c1433ed30c29c8219e9018a611",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/operations.rs",
+      "sha256": "7bc55613dbde473a988f67cb9f6fb7e8822a47b1d1b97453bad6fc727f3e87d7",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/pairing.rs",
+      "sha256": "16f6154fc7df7eb0475490b84538f8ab73c3a0a70d9f2fcd3b16bab1b1d2d95c",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/polymarket.rs",
+      "sha256": "a61646cc671f72c7937bf7daedd47b08e966388c94db63d8d9573fb32dda1700",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/prices.rs",
+      "sha256": "6c690c4d3219977432852621b05c7537bae07d5fe211ae4cf3729372b861b40c",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/relay.rs",
+      "sha256": "98b2e83249093ca4c0622f1f1cd11ed9f4e6b02bf2d758c696b9f903bccb05c9",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/relay_quotes.rs",
+      "sha256": "b542901a9126f0c206ab269351b6648eda987d59cde2c295ae3baa5f77b53874",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/session_signatures.rs",
+      "sha256": "061effab8f892e979c5de332aa25e4f02ae67431dec65568381ac8014e83d7b0",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/swaps.rs",
+      "sha256": "0d84ed90af3c62fe863e7f23febd77c726250900c7ca1bef276ff408f94f81ae",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/routes/v1.rs",
+      "sha256": "29c25c03a183140e077aa02962be6444ff2e0e1f9010989600e5597f4a6d9f27",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/runtime.rs",
+      "sha256": "83c128459e547b52b150a13e0799a52722bb794786007e62c84e552e11e3ad85",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/dual_quota.lua",
+      "sha256": "2e6f5fac07aef96a83a1d08c4d2e951363c331baf8f8e9eca7a1142f553c0e9c",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/earn_claim.lua",
+      "sha256": "c1c5c1e109f3f4e3493ce33265d68405721fb9fba890f9132663d20b2db9ce7f",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/earn_publish.lua",
+      "sha256": "e26fd80fe9f3c2c7a5cc76173c3be303b1f3f500c1d98406b2a0360e2154d356",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/earn_read.lua",
+      "sha256": "18eab93b70a48c0d8a2fbbd83223d8bc0c256703bdab4df0ea0cf000c321d8bc",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/market_backoff.lua",
+      "sha256": "b304201ea5fb1ee9fb9ab2b3b18e5d378072ab4d071a3f2aa47b785ee76efbfd",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/market_poll.lua",
+      "sha256": "5a5c00f024b16ab5ed2b4dcd176b6c1afc00c49dc3e16136a8f67f18edca4457",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/market_publish.lua",
+      "sha256": "af26bca8bb73a3d4abd46bc1db96ea27d688c1a145611b56fcb7b839217f442a",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/pair_receive.lua",
+      "sha256": "d2220e47b003f81e4d4dcbc44e46ca91b80ddf7fd2b00b71711fb562278b2156",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/pair_send.lua",
+      "sha256": "289b66f8c60b0eefb97ae73e88babd79065533a5fb2d7557efbe6e212117a5f8",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/polymarket_cache_publish.lua",
+      "sha256": "15bbcde90250ad1324a024e47df9edf282e3f18a8d4f822a9882bafc3a0d199d",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/provider_read_cooldown.lua",
+      "sha256": "43e570a3df818ee8f6d6ac5222db4d251ee1a5d5225428bf5e042e4e17aae100",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/provider_read_gate.lua",
+      "sha256": "f71b91cec3c5e6edab3783d61dbe8b33ddfd6b93efceda09a60216bb2187181e",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/rpc_budget.lua",
+      "sha256": "aabf14a698bfbf0f4dc4ecaf7e79bfab6a355dbbe558b38f06617d164b9d02dd",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/single_quota.lua",
+      "sha256": "15192b76811c914269e1005fd32233d3eb5704185bb0e0f057544434289b72c7",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/scripts/socket_lease.lua",
+      "sha256": "dc58666f5b5eef8f0b9824d75f5c1388a2e125cde5950279aa5aefb5094b8bdb",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/session_signatures.rs",
+      "sha256": "1610ccc26b1b7f36d7ee8e273d0510ddea41b3eadc030360f5dd202709ad4410",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/submissions.rs",
+      "sha256": "068e8e83f07bc02772a8c75d56a8397d3f1c5a4576023211d1284d10e84a2b8c",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/supervision.rs",
+      "sha256": "da88d9f824209341320923e7d596cb22a56125637bbca49544310a7eb40beecc",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/swap_review.rs",
+      "sha256": "919e1747a36d603b8dcaedfeb09caae7d4773460b7e51fcb6bd4218b37463357",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/telemetry.rs",
+      "sha256": "5b0ad7be0443bb8fd6d6671d811731bed06e331577a29975c4499d1b532ceba6",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/uniswap_service.rs",
+      "sha256": "8393ea706a4af229ceda0f863e3f46d4a6432871794f2cfed432e8bde688c6c6",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/wallet.rs",
+      "sha256": "49c1c9fb2fd1ba4d8556b09607deb15589d26cd5c00fdc0d88c5d8f8d539d899",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "apps/server/src/work.rs",
+      "sha256": "aeeac39de7a1963a331a463505e121a074d51d05bc3a36a76fbfa4758f5698f2",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    },
+    {
+      "path": "scripts/backend/recovery-invalidate-auth.sql",
+      "sha256": "25ec6cb3de619c46026268fb486c3f12894efbd04f0e19048ed80b600d7dd836",
+      "coverage": "production source reviewed; embedded tests not exhaustively audited"
+    }
+  ],
+  "reviewers": [
+    "independent auth/runtime reviewer",
+    "independent markets/Redis reviewer",
+    "independent financial execution reviewer",
+    "parent integration review"
+  ],
+  "fix_review": "Across shared parser independently reviewed by auth reviewer and parent; test-only verifier helpers do not alter production verifier"
+}

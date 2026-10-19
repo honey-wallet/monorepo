@@ -1,0 +1,122 @@
+{
+  "cachedHttpReads": 100,
+  "catalog": {
+    "maxAgeMs": 120000,
+    "products": [
+      {
+        "ageMs": 4677,
+        "assetAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "chainId": "1",
+        "contractAddress": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+        "id": "2c2e0b3049c77699837207aac4b852eff919cba3a1a03a815eea1cf840fda1ab",
+        "label": "Reference Aave Ethereum USDC",
+        "observation": {
+          "asset": {
+            "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+            "decimals": 6,
+            "symbol": "USDC"
+          },
+          "availableLiquidityRaw": "157154393444231",
+          "chainId": "1",
+          "contractAddress": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+          "executionAvailable": false,
+          "fetchedAtMs": 1792310136679,
+          "positionAsset": {
+            "address": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
+            "decimals": 6,
+            "symbol": "aEthUSDC"
+          },
+          "protocol": "aave_v3",
+          "restrictions": {
+            "frozen": false,
+            "gated": null,
+            "paused": false,
+            "supplyCapReached": false
+          },
+          "schemaVersion": 1,
+          "sourceBlocks": [],
+          "supplyApy": {
+            "basis": "current_supply",
+            "fraction": "0.038309486241178150765079064",
+            "rewardsIncluded": false
+          },
+          "supplyCapRaw": "3000000000000000",
+          "totalSuppliedRaw": "2384874042169629",
+          "vaultFees": null
+        },
+        "protocol": "aave_v3",
+        "status": "fresh"
+      },
+      {
+        "ageMs": 2912,
+        "assetAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "chainId": "1",
+        "contractAddress": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+        "id": "d35bdbb0517e41fd187dea012a99c87282313b02742622aa3de9a2e544e9f69c",
+        "label": "Reference Morpho V2 USDC",
+        "observation": {
+          "asset": {
+            "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+            "decimals": 6,
+            "symbol": "USDC"
+          },
+          "availableLiquidityRaw": "2179664331669",
+          "chainId": "1",
+          "contractAddress": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+          "executionAvailable": false,
+          "fetchedAtMs": 1792310138444,
+          "positionAsset": {
+            "address": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+            "decimals": 18,
+            "symbol": "kUSDC"
+          },
+          "protocol": "morpho_vault_v2",
+          "restrictions": {
+            "frozen": null,
+            "gated": false,
+            "paused": null,
+            "supplyCapReached": null
+          },
+          "schemaVersion": 1,
+          "sourceBlocks": [
+            {
+              "component": "configuration",
+              "number": "26218087"
+            },
+            {
+              "component": "state",
+              "number": "26218088"
+            },
+            {
+              "component": "apy",
+              "number": "26218088"
+            }
+          ],
+          "supplyApy": {
+            "basis": "trailing_one_day_after_fees",
+            "fraction": "0.05450325062161674",
+            "rewardsIncluded": false
+          },
+          "supplyCapRaw": null,
+          "totalSuppliedRaw": "8258592781381",
+          "vaultFees": [
+            {
+              "kind": "performance",
+              "rateWad": "50000000000000000"
+            },
+            {
+              "kind": "management",
+              "rateWad": null
+            }
+          ]
+        },
+        "protocol": "morpho_vault_v2",
+        "status": "fresh"
+      }
+    ],
+    "schemaVersion": 1,
+    "status": "ready"
+  },
+  "providerCallsUnchanged": true,
+  "replicas": 2
+}

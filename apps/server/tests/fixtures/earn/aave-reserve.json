@@ -1,0 +1,38 @@
+{
+  "data": {
+    "reserve": {
+      "market": {
+        "address": "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+        "chain": { "chainId": 1 },
+        "name": "AaveV3Ethereum"
+      },
+      "underlyingToken": {
+        "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+        "chainId": 1,
+        "decimals": 6,
+        "symbol": "USDC"
+      },
+      "aToken": {
+        "address": "0x98C23E9d8f34FEFb1B7BD6a91B7FF122F4e16F5c",
+        "chainId": 1,
+        "decimals": 6,
+        "symbol": "aEthUSDC"
+      },
+      "isFrozen": false,
+      "isPaused": false,
+      "supplyInfo": {
+        "apy": {
+          "raw": "38313795766101947560963736",
+          "decimals": 27,
+          "value": "0.038313795766101947560963736"
+        },
+        "supplyCap": { "amount": { "raw": "3000000000000000", "decimals": 6 } },
+        "supplyCapReached": false,
+        "total": { "raw": "2384736973843328", "decimals": 6 }
+      },
+      "borrowInfo": {
+        "availableLiquidity": { "amount": { "raw": "157022404660081", "decimals": 6 } }
+      }
+    }
+  }
+}

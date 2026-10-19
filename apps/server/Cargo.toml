@@ -9,21 +9,48 @@ repository.workspace = true
 publish.workspace = true
 
 [dependencies]
+chacha20poly1305.workspace = true
+zeroize.workspace = true
+alloy-consensus.workspace = true
+alloy-eips.workspace = true
+alloy-primitives.workspace = true
 anyhow.workspace = true
 axum.workspace = true
+reqwest.workspace = true
+httpdate.workspace = true
+prometheus-client.workspace = true
+async-trait.workspace = true
+prost.workspace = true
+opentelemetry-proto.workspace = true
+opentelemetry-http.workspace = true
+opentelemetry.workspace = true
+opentelemetry_sdk.workspace = true
+opentelemetry-otlp.workspace = true
+tracing-opentelemetry.workspace = true
+futures-util.workspace = true
 dotenvy.workspace = true
+http-body-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
+sqlx.workspace = true
+sqlx-core.workspace = true
+sqlx-postgres.workspace = true
+siwe.workspace = true
+time.workspace = true
+hex.workspace = true
+redis.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tower-http.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
+uuid.workspace = true
 
 [dev-dependencies]
-http-body-util.workspace = true
 tower.workspace = true
+k256 = { version = "0.13.4", features = ["ecdsa"] }
+tokio-tungstenite = "0.29"
 
 [lints]
 workspace = true

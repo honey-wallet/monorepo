@@ -1,0 +1,74 @@
+{
+  "actualStartUnixMs": 1792360173088,
+  "authenticatedPrincipalCount": 3,
+  "authenticatedRequestsPerPrincipal": [400, 400, 400],
+  "clientFrameCountTotal": 0,
+  "closedDuringRun": 0,
+  "connectedAfterRamp": 0,
+  "connectionFailures": {
+    "http4xx": 0,
+    "http5xx": 0,
+    "io": 0,
+    "other": 0,
+    "timeout": 0
+  },
+  "framesDuringSoak": 0,
+  "generator": "external-process",
+  "httpAggregateTargetRps": 100,
+  "httpAuthenticated": true,
+  "httpCompleted": 1200,
+  "httpCompletedAtDeadline": 1200,
+  "httpCompletedPerSecond": [
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
+  ],
+  "httpCompletedRpsAtDeadline": 20.0,
+  "httpEnabled": true,
+  "httpErrors": 0,
+  "httpExpectedShardRequests": 1200,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 1200,
+  "httpIssuedPerSecond": [
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
+  ],
+  "httpIssuedRpsAtDeadline": 20.0,
+  "httpLatencyMicrosFirst100k": {
+    "max": 15554,
+    "p50": 2839,
+    "p95": 5314,
+    "p99": 7311
+  },
+  "httpLatencySamples": 1200,
+  "httpObservedRpsIncludingDrain": 19.99815943306659,
+  "httpRoute": "/api/v1/me",
+  "httpSchedulerMaxLagMicros": 5519,
+  "httpSchedulerSkippedSlots": 0,
+  "httpShardCount": 5,
+  "httpShardIndex": 3,
+  "httpStartUnixMs": 1792360173088,
+  "httpTargetRps": 20,
+  "minimumFramesPerClientDuringSoak": 0,
+  "minimumLifetimeFramesForAnyClient": 0,
+  "plannedStartUnixMs": 1792360173079,
+  "profileOnly": true,
+  "rampMs": 0,
+  "runId": "98409035-be6d-4771-b627-2725a3214b19",
+  "schemaVersion": 4,
+  "serverProcessSample": {
+    "pid": "34014",
+    "ps": "%CPU RSS_KiB ELAPSED",
+    "sample": "11.5 141328 04:31"
+  },
+  "soakSeconds": 60,
+  "targetWebSockets": 0,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClientDuringSoak": 0
+  },
+  "tls": false,
+  "totalFrames": 0
+}

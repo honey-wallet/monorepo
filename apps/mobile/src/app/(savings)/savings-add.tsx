@@ -6,6 +6,8 @@ import { ContentSwap } from '@/components/motion/ContentSwap';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { DemoMoneyNotice } from '@/components/savings/DemoMoneyNotice';
+import { LiveEarnSheet } from '@/components/savings/LiveEarnMarkets';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetRow, SheetScreen, StatRow } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
@@ -38,6 +40,11 @@ type Page = (typeof PAGES)[number];
  * to pay, then the success burst.
  */
 export default function SavingsAddSheet() {
+  const { wallet } = useWalletView();
+  return wallet.demo ? <DemoSavingsAddSheet /> : <LiveEarnSheet />;
+}
+
+function DemoSavingsAddSheet() {
   const params = useLocalSearchParams<{ rate?: string }>();
   const styles = useStyles();
   const c = useTheme();
@@ -72,6 +79,7 @@ export default function SavingsAddSheet() {
   return (
     <FlowTray>
       <SheetScreen title="Add money" size="fill">
+        <DemoMoneyNotice />
         <View style={styles.flex}>
           <View style={styles.amountArea}>
             <TypedAmount value={typed} prefix="$" size={56} />
@@ -100,111 +108,115 @@ export default function SavingsAddSheet() {
       {/* Review and result rise in a tray over the amount (Family's pattern). */}
       <InlineTray onClose={() => (page === 'done' ? finish() : go('amount'))}>
         {page === 'amount' ? null : (
-          <ContentSwap id={page} index={PAGES.indexOf(page)}>
-            {page === 'failed' && outcome.failure ? (
-              <SheetScreen>
-                <FailurePage
-                  compact
-                  failure={outcome.failure}
-                  rows={[{ label: 'Adding', value: dollars }]}
-                  onRetry={() => {
-                    tap();
-                    if (outcome.failure && followFix(outcome.failure)) return;
-                    setPage('review');
-                  }}
-                  onClose={() => {
-                    tap();
-                    closeSheet();
-                  }}
-                />
-              </SheetScreen>
-            ) : page === 'done' ? (
-              <SheetScreen>
-                <SuccessPage
-                  compact
-                  title="Added to savings"
-                  amount={{ symbol: 'USDC', text: `${amount.toLocaleString('en-US')} USDC` }}
-                  rows={[
-                    { label: 'Earning', value: apy },
-                    { label: 'Paid with', value: METHODS[method].label },
-                    { label: 'Withdraw', value: 'Any time' },
-                  ]}
-                  onDone={finish}
-                />
-              </SheetScreen>
-            ) : (
-              <SheetScreen title="Add to savings" onBack={() => go('amount')}>
-                <View style={styles.flex}>
-                  <View style={styles.hero}>
-                    <Text style={styles.amount}>{dollars}</Text>
-                    <Text style={[styles.hint, styles.gain]}>
-                      ≈ {formatUsd(grown)} in {AHEAD} years
-                    </Text>
-                  </View>
-
-                  <Text style={styles.label}>Pay with</Text>
-                  <View style={styles.methods}>
-                    {(Object.keys(METHODS) as Method[]).map((m) => {
-                      const short = m === 'wallet' && !walletEnough;
-                      return (
-                        <SheetRow
-                          key={m}
-                          leading={
-                            m === 'wallet' ? (
-                              <TokenIcon symbol="USDC" size={34} />
-                            ) : (
-                              <View style={styles.well}>
-                                <Icon name={METHODS[m].icon} size={17} color={c.text} />
-                              </View>
-                            )
-                          }
-                          title={METHODS[m].label}
-                          subtitle={
-                            m === 'wallet'
-                              ? !inWallet
-                                ? 'No USDC in your wallet yet'
-                                : short
-                                  ? `Only ${formatUsd(inWallet)} available`
-                                  : `${formatUsd(inWallet)} available`
-                              : `${(METHODS[m].fee * 100).toFixed(2)}% fee`
-                          }
-                          accessory="check"
-                          selected={method === m}
-                          onPress={
-                            short
-                              ? undefined
-                              : () => {
-                                  tap();
-                                  setMethod(m);
-                                }
-                          }
-                        />
-                      );
-                    })}
-                  </View>
-
-                  <View style={styles.stats}>
-                    <StatRow label="Earns" value={apy} />
-                    <StatRow label="Fee" value={fee ? formatUsd(fee) : 'Free'} />
-                    <StatRow label="Withdraw" value="Any time, no lockup" />
-                  </View>
-
-                  <PillButton
-                    label={`Add ${dollars}`}
-                    onPress={() => {
-                      if (outcome.attempt()) {
-                        setPage('failed');
-                        return;
-                      }
-                      success();
-                      setPage('done');
+          <>
+            <DemoMoneyNotice deposit />
+            <ContentSwap id={page} index={PAGES.indexOf(page)}>
+              {page === 'failed' && outcome.failure ? (
+                <SheetScreen>
+                  <FailurePage
+                    compact
+                    failure={outcome.failure}
+                    rows={[{ label: 'Adding', value: dollars }]}
+                    onRetry={() => {
+                      tap();
+                      if (outcome.failure && followFix(outcome.failure)) return;
+                      setPage('review');
                     }}
-                    style={styles.cta}
+                    onClose={() => {
+                      tap();
+                      closeSheet();
+                    }}
                   />
-                </View>
-              </SheetScreen>
-            )}
-          </ContentSwap>
+                </SheetScreen>
+              ) : page === 'done' ? (
+                <SheetScreen>
+                  <SuccessPage
+                    compact
+                    title="Demo addition simulation"
+                    amount={{ symbol: 'USDC', text: `${amount.toLocaleString('en-US')} USDC` }}
+                    detail="No funds were added and your wallet balance was not changed."
+                    rows={[
+                      { label: 'Earning', value: apy },
+                      { label: 'Paid with', value: METHODS[method].label },
+                      { label: 'Withdraw', value: 'Any time' },
+                    ]}
+                    onDone={finish}
+                  />
+                </SheetScreen>
+              ) : (
+                <SheetScreen title="Add to savings" onBack={() => go('amount')}>
+                  <View style={styles.flex}>
+                    <View style={styles.hero}>
+                      <Text style={styles.amount}>{dollars}</Text>
+                      <Text style={[styles.hint, styles.gain]}>
+                        ≈ {formatUsd(grown)} in {AHEAD} years
+                      </Text>
+                    </View>
+
+                    <Text style={styles.label}>Pay with</Text>
+                    <View style={styles.methods}>
+                      {(Object.keys(METHODS) as Method[]).map((m) => {
+                        const short = m === 'wallet' && !walletEnough;
+                        return (
+                          <SheetRow
+                            key={m}
+                            leading={
+                              m === 'wallet' ? (
+                                <TokenIcon symbol="USDC" size={34} />
+                              ) : (
+                                <View style={styles.well}>
+                                  <Icon name={METHODS[m].icon} size={17} color={c.text} />
+                                </View>
+                              )
+                            }
+                            title={METHODS[m].label}
+                            subtitle={
+                              m === 'wallet'
+                                ? !inWallet
+                                  ? 'No USDC in your wallet yet'
+                                  : short
+                                    ? `Only ${formatUsd(inWallet)} available`
+                                    : `${formatUsd(inWallet)} available`
+                                : `${(METHODS[m].fee * 100).toFixed(2)}% fee`
+                            }
+                            accessory="check"
+                            selected={method === m}
+                            onPress={
+                              short
+                                ? undefined
+                                : () => {
+                                    tap();
+                                    setMethod(m);
+                                  }
+                            }
+                          />
+                        );
+                      })}
+                    </View>
+
+                    <View style={styles.stats}>
+                      <StatRow label="Earns" value={apy} />
+                      <StatRow label="Fee" value={fee ? formatUsd(fee) : 'Free'} />
+                      <StatRow label="Withdraw" value="Any time, no lockup" />
+                    </View>
+
+                    <PillButton
+                      label={`Add ${dollars}`}
+                      onPress={() => {
+                        if (outcome.attempt()) {
+                          setPage('failed');
+                          return;
+                        }
+                        success();
+                        setPage('done');
+                      }}
+                      style={styles.cta}
+                    />
+                  </View>
+                </SheetScreen>
+              )}
+            </ContentSwap>
+          </>
         )}
       </InlineTray>
     </FlowTray>

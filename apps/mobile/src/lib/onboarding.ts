@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { randomAvatarSeed } from '@/components/Avatar';
+import { forgetSavedBackendSession } from '@/lib/backend-session';
 import { forgetSites } from '@/lib/dapp';
 import { isWeb } from '@/lib/platform';
 import { setProfile } from '@/lib/profile';
@@ -166,11 +167,11 @@ function nameFromEmail(email: string) {
   return local ? local[0].toUpperCase() + local.slice(1) : 'Honey';
 }
 
-/** The first deposit landed: the wallet now shows its balance. */
-export function markFunded(usd?: number) {
+/** Demo-only purchase walkthrough: show the fixture portfolio without claiming receipt. */
+export function markDemoFunded() {
   if (onboarding.get().funded) return;
   onboarding.set((s) => ({ ...s, funded: true }));
-  showToast(usd ? `$${usd.toFixed(2)} arrived. You're all set` : 'Money arrived. You’re all set');
+  showToast('Demo balance updated');
 }
 
 /** Ticks off a setup step; the last one unlocks the fee credit. */
@@ -184,25 +185,14 @@ export function completeStep(step: SetupStep) {
 }
 
 /**
- * DEMO: an incoming transfer a few seconds after the Receive sheet opens on an empty
- * wallet, so the first-deposit moment can be seen without a real chain. Remove once
- * balances come from the server.
- */
-let demoDeposit: ReturnType<typeof setTimeout> | undefined;
-export function simulateDemoDeposit() {
-  if (onboarding.get().funded || demoDeposit) return;
-  demoDeposit = setTimeout(() => {
-    demoDeposit = undefined;
-    markFunded(25);
-  }, 6000);
-}
-
-/**
  * Signs out: the wallet comes off this phone (keys, profile and wallets added here),
  * and the app goes back to Welcome. The money stays where it is, on the network, and
  * is accessible again with the original recovery phrase or private key.
  */
 export async function signOut(confirmedAccountIds: readonly string[]) {
+  // Revoke/forget backend credentials before removing the owner wallet. Local
+  // refresh material is deleted even when the server cannot be reached.
+  await forgetSavedBackendSession();
   await eraseVault(confirmedAccountIds);
   // Honey for Chrome: no website stays connected to wallets that just left.
   await forgetSites();

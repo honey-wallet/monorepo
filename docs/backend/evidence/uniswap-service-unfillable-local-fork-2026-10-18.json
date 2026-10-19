@@ -1,0 +1,17 @@
+{
+  "scope": "Local actual-contract unfillable minimum; synthetic provider",
+  "forkBlock": {
+    "number": "26218343",
+    "hash": "0x8dcb6d2609ae19485570b7b5f5270218febea23bc4d34bc3b1669922970b9c4d"
+  },
+  "operationId": "4fe8cc51-8a92-408e-be17-fb2c4f28ed65",
+  "finalState": "failed",
+  "preparation": null,
+  "submission": null,
+  "balancesUnchanged": true,
+  "permitNonceUnconsumed": true,
+  "erc20AllowanceUnchanged": true,
+  "reviewRetained": true,
+  "quoteCalls": 1,
+  "buildCalls": 1
+}

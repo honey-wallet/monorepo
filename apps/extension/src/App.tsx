@@ -1,6 +1,8 @@
 import {
   type Addresses,
   type ChainFamily,
+  clearPairOfferSecrets,
+  clearPairSession,
   createMnemonic,
   isValidMnemonic,
   MIN_PASSWORD_LENGTH,
@@ -9,7 +11,15 @@ import {
   type PairSession,
 } from '@honey-wallet/keyring';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { HyperliquidAccount } from './HyperliquidAccount';
 import { Logo } from './Logo';
+import {
+  approveBackendSignIn,
+  type BackendSignInReview,
+  backendAccessToken,
+  clearBackendSignIn,
+  prepareBackendSignIn,
+} from './lib/backend-auth';
 import { receiveWallet, startPairing, waitForPhone } from './lib/pair';
 import { local, session } from './lib/storage';
 import { type Account, type AccountView, createVault, random } from './lib/vault';
@@ -41,7 +51,14 @@ export default function App() {
     })();
   }, []);
 
-  useEffect(() => vault.onLock(() => setScreen({ name: 'unlock' })), []);
+  useEffect(
+    () =>
+      vault.onLock(() => {
+        void clearBackendSignIn();
+        setScreen({ name: 'unlock' });
+      }),
+    [],
+  );
 
   const welcome = () => setScreen({ name: 'welcome' });
   const askPassword = (pending: Pending) => setScreen({ name: 'password', pending });
@@ -172,6 +189,7 @@ function Pair({ onBack, onWallet }: { onBack: () => void; onWallet: (p: Pending)
   const [offer, setOffer] = useState<PairOffer>(() => startPairing());
   const [state, setState] = useState<PairState>({ step: 'scan' });
   const abort = useRef<AbortController | null>(null);
+  const sessions = useRef(new Set<PairSession>());
 
   // Wait for the phone to scan this code; a new code restarts the wait.
   useEffect(() => {
@@ -179,11 +197,23 @@ function Pair({ onBack, onWallet }: { onBack: () => void; onWallet: (p: Pending)
     abort.current = controller;
     setState({ step: 'scan' });
     waitForPhone(offer, controller.signal)
-      .then((session) => setState({ step: 'compare', session }))
+      .then((session) => {
+        if (controller.signal.aborted) {
+          clearPairSession(session);
+          return;
+        }
+        sessions.current.add(session);
+        setState({ step: 'compare', session });
+      })
       .catch((error: unknown) => {
         if (!controller.signal.aborted) setState({ step: 'error', message: messageOf(error) });
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      clearPairOfferSecrets(offer);
+      for (const session of sessions.current) clearPairSession(session);
+      sessions.current.clear();
+    };
   }, [offer]);
 
   const confirm = (session: PairSession) => {
@@ -196,10 +226,19 @@ function Pair({ onBack, onWallet }: { onBack: () => void; onWallet: (p: Pending)
       )
       .catch((error: unknown) => {
         if (!controller.signal.aborted) setState({ step: 'error', message: messageOf(error) });
+      })
+      .finally(() => {
+        clearPairSession(session);
+        sessions.current.delete(session);
       });
   };
 
-  const restart = () => setOffer(startPairing());
+  const restart = () => {
+    for (const session of sessions.current) clearPairSession(session);
+    sessions.current.clear();
+    clearPairOfferSecrets(offer);
+    setOffer(startPairing());
+  };
 
   if (state.step === 'compare' || state.step === 'receiving') {
     const receiving = state.step === 'receiving';
@@ -527,12 +566,59 @@ function Home({ mnemonic, onLock }: { mnemonic: string; onLock: () => void }) {
   const [accounts, setAccounts] = useState<AccountView[] | null>(null);
   const [active, setActive] = useState(0);
   const [copied, setCopied] = useState<ChainFamily | null>(null);
+  const [backendReview, setBackendReview] = useState<BackendSignInReview | null>(null);
+  const [backendAddress, setBackendAddress] = useState<string | null>(null);
+  const [backendBusy, setBackendBusy] = useState(false);
+  const [backendError, setBackendError] = useState<string | null>(null);
+  const backendRequestGeneration = useRef(0);
 
   useEffect(() => {
     vault.accounts(mnemonic).then(setAccounts);
   }, [mnemonic]);
 
   const account = accounts?.[active];
+  const accessToken = backendAccessToken();
+
+  const prepareSignIn = async () => {
+    if (!account || backendBusy) return;
+    const requestGeneration = ++backendRequestGeneration.current;
+    setBackendBusy(true);
+    setBackendError(null);
+    setBackendReview(null);
+    setBackendAddress(null);
+    try {
+      const extensionId = globalThis.chrome?.runtime?.id;
+      if (!extensionId) throw new Error('Open Honey from the installed browser extension.');
+      const review = await prepareBackendSignIn(account, `chrome-extension://${extensionId}`);
+      if (requestGeneration === backendRequestGeneration.current) setBackendReview(review);
+    } catch (error) {
+      if (requestGeneration === backendRequestGeneration.current) setBackendError(messageOf(error));
+    } finally {
+      setBackendBusy(false);
+    }
+  };
+
+  const approveSignIn = async () => {
+    if (!backendReview || backendBusy) return;
+    const requestGeneration = backendRequestGeneration.current;
+    setBackendBusy(true);
+    setBackendError(null);
+    try {
+      const address = await approveBackendSignIn(mnemonic, backendReview);
+      if (requestGeneration !== backendRequestGeneration.current) {
+        await clearBackendSignIn();
+        return;
+      }
+      setBackendAddress(address);
+      setBackendReview(null);
+    } catch (error) {
+      if (requestGeneration === backendRequestGeneration.current) setBackendError(messageOf(error));
+      else if (error instanceof Error && /revocation failed/i.test(error.message))
+        setBackendError(error.message);
+    } finally {
+      setBackendBusy(false);
+    }
+  };
 
   const copy = async (family: ChainFamily, addresses: Addresses) => {
     await navigator.clipboard.writeText(addresses[family]);
@@ -560,7 +646,19 @@ function Home({ mnemonic, onLock }: { mnemonic: string; onLock: () => void }) {
           <select
             className="account-select"
             value={active}
-            onChange={(e) => setActive(Number(e.target.value))}
+            onChange={async (e) => {
+              const requestGeneration = ++backendRequestGeneration.current;
+              setBackendAddress(null);
+              setBackendReview(null);
+              setActive(Number(e.target.value));
+              const revoked = await clearBackendSignIn();
+              if (requestGeneration === backendRequestGeneration.current)
+                setBackendError(
+                  revoked
+                    ? null
+                    : 'Signed out here, but server revocation failed. This session expires within 15 minutes.',
+                );
+            }}
             aria-label="Wallet"
           >
             {accounts.map((a, i) => (
@@ -598,6 +696,69 @@ function Home({ mnemonic, onLock }: { mnemonic: string; onLock: () => void }) {
       <p className="note">
         Each network has its own address. Send only that network’s tokens to it.
       </p>
+      <p className="section">Honey account</p>
+      <div className="card">
+        {backendAddress ? (
+          <>
+            <p role="status">Signed in as {short(backendAddress)} for this popup session.</p>
+            {accessToken ? (
+              <HyperliquidAccount
+                key={backendAddress.toLowerCase()}
+                token={accessToken}
+                address={backendAddress}
+              />
+            ) : null}
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                const requestGeneration = ++backendRequestGeneration.current;
+                setBackendAddress(null);
+                const revoked = await clearBackendSignIn();
+                if (requestGeneration === backendRequestGeneration.current)
+                  setBackendError(
+                    revoked
+                      ? null
+                      : 'Signed out here, but server revocation failed. This session expires within 15 minutes.',
+                  );
+              }}
+            >
+              Sign out
+            </Button>
+          </>
+        ) : backendReview ? (
+          <>
+            <p>Review this sign-in message. It grants no transaction authority.</p>
+            <pre className="note" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
+              {backendReview.challenge.message}
+            </pre>
+            <Button disabled={backendBusy} onClick={() => void approveSignIn()}>
+              {backendBusy ? 'Signing in…' : 'Approve sign-in'}
+            </Button>
+            <Button
+              variant="text"
+              onClick={() => {
+                backendRequestGeneration.current += 1;
+                void clearBackendSignIn();
+                setBackendReview(null);
+                setBackendBusy(false);
+              }}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <>
+            <p>
+              Create a short-lived Honey account session for this popup to view read-only provider
+              data.
+            </p>
+            <Button disabled={!account || backendBusy} onClick={() => void prepareSignIn()}>
+              {backendBusy ? 'Preparing sign-in…' : 'Sign in to Honey'}
+            </Button>
+          </>
+        )}
+        {backendError ? <p className="note error">{backendError}</p> : null}
+      </div>
     </Page>
   );
 }

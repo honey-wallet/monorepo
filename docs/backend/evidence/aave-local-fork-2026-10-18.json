@@ -1,0 +1,42 @@
+{
+  "scope": "disposable local Anvil fork; no public broadcasts",
+  "chainId": 31337,
+  "evidence": [
+    {
+      "action": "supply",
+      "preparationHash": "fd5ae2277e5af30558365a3949263e9c190993c6c37b4c92b1d311c75ebbbae8",
+      "sourceBlock": "26218344",
+      "transactions": [
+        {
+          "hash": "0xddf18fecfeb800ef2da54f93fb5ada7af63ae797069ce5ef4eb8581c58e364e3",
+          "blockNumber": "26218345",
+          "gasUsed": "55558",
+          "status": "0x1"
+        },
+        {
+          "hash": "0x95cbb01a1bd997a9ea6c2b542a25a26e78684a327a5c51647051d45e4600f6b6",
+          "blockNumber": "26218346",
+          "gasUsed": "201989",
+          "status": "0x1"
+        }
+      ],
+      "underlyingBalance": "9000000",
+      "aTokenBalance": "999999"
+    },
+    {
+      "action": "withdraw",
+      "preparationHash": "686442504177430cdc407ef28c58440779adc0cd458dccfbb62f3b2f5bc2230f",
+      "sourceBlock": "26218346",
+      "transactions": [
+        {
+          "hash": "0xe758bd3ecd53d8bfd02b0cfbdd1abd2d6c98cf3d8e71eba6bd1bdc33db9b32b5",
+          "blockNumber": "26218347",
+          "gasUsed": "166198",
+          "status": "0x1"
+        }
+      ],
+      "underlyingBalance": "9900000",
+      "aTokenBalance": "99998"
+    }
+  ]
+}

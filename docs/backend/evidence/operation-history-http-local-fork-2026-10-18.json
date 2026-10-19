@@ -1,0 +1,252 @@
+{
+  "scope": "local fork only; actual SIWE HTTP APIs and supervised worker; restart recovery; public fixture key; simulated finality",
+  "chainId": "31337",
+  "historyWithExecutionDisabled": {
+    "items": [
+      {
+        "operation": {
+          "id": "cfe83fea-272d-4141-bbc1-05965fe13389",
+          "walletId": "abf7d00b-4483-480e-9e3d-fb28c25f66ba",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "6"
+        },
+        "createdAtMs": 1792320000120,
+        "updatedAtMs": 1792320024395
+      },
+      {
+        "operation": {
+          "id": "09e18330-d69a-4674-81d8-0f6f313eb9b7",
+          "walletId": "abf7d00b-4483-480e-9e3d-fb28c25f66ba",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "9"
+        },
+        "createdAtMs": 1792319939216,
+        "updatedAtMs": 1792319969434
+      }
+    ],
+    "nextCursor": null
+  },
+  "evidence": [
+    {
+      "action": "supply",
+      "signingRequest": {
+        "operationId": "09e18330-d69a-4674-81d8-0f6f313eb9b7",
+        "operationVersion": "1",
+        "planHash": "d14f9c115bf0ec0d3b7206cb5dea9da0e202aaf61be1f800a6f1cbb56b777d4f",
+        "prepared": {
+          "plan": {
+            "schemaVersion": 1,
+            "provider": "aave_v3",
+            "chainId": "31337",
+            "signer": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+            "intentHash": "3ab0293e81257c1785e9277bd4213baa8469404bed798f5d96ddde08a0ccf562",
+            "registryRevision": "fork-http-v1",
+            "feePolicyRevision": "fork-no-fees-v1",
+            "quoteReference": null,
+            "expiresAtMs": 1792320065451,
+            "maximumNetworkFeeRaw": "359477620762380",
+            "maximumSpend": {
+              "assetAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+              "amountRaw": "1000000",
+              "recipient": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+            },
+            "minimumReceive": null,
+            "fees": [],
+            "simulation": {
+              "blockNumber": "26218344",
+              "blockHash": "0xf5f478937a963671ad41fe052545c85a98d6676b3e904d049e830468c7614914",
+              "callsHash": "d5e540398bf62f2c1c31e346ca6b06b9ed2366bbd3d2151054ccc8d8c896796c",
+              "observedAtMs": 1792319945451
+            },
+            "steps": [
+              {
+                "purpose": "approval",
+                "to": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+                "valueRaw": "0",
+                "data": "0x095ea7b300000000000000000000000087870bca3f3fd6335c3f4ce8392d69350b4fa4e200000000000000000000000000000000000000000000000000000000000f4240"
+              },
+              {
+                "purpose": "action",
+                "to": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+                "valueRaw": "0",
+                "data": "0x617ba037000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4800000000000000000000000000000000000000000000000000000000000f42400000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            ]
+          },
+          "firstNonce": "4928",
+          "gasLimits": ["76669", "252386"],
+          "maxFeePerGas": "1092454516",
+          "maxPriorityFeePerGas": "1000000000"
+        }
+      },
+      "includedVersion": "8",
+      "recovery": {
+        "operation": {
+          "id": "09e18330-d69a-4674-81d8-0f6f313eb9b7",
+          "walletId": "abf7d00b-4483-480e-9e3d-fb28c25f66ba",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "9"
+        },
+        "intentAvailable": true,
+        "preparation": {
+          "hash": "d14f9c115bf0ec0d3b7206cb5dea9da0e202aaf61be1f800a6f1cbb56b777d4f",
+          "provider": "aave_v3",
+          "chainId": "31337",
+          "expiresAtMs": 1792320065451,
+          "expired": false,
+          "stepCount": 2,
+          "registryRevision": "fork-http-v1",
+          "feePolicyRevision": "fork-no-fees-v1"
+        },
+        "executionAvailable": false,
+        "submission": {
+          "operationId": "09e18330-d69a-4674-81d8-0f6f313eb9b7",
+          "transactionHashes": [
+            "0xddf18fecfeb800ef2da54f93fb5ada7af63ae797069ce5ef4eb8581c58e364e3",
+            "0x95cbb01a1bd997a9ea6c2b542a25a26e78684a327a5c51647051d45e4600f6b6"
+          ]
+        },
+        "reconciliation": {
+          "checkedAtMs": 1792319969427,
+          "headNumber": "26218410",
+          "headHash": "0xa81174d337184c2ad4ba7b03c1cd5726c174ca24713223a2429793cc0df5acfc",
+          "finalizedNumber": "26218346",
+          "finalizedHash": "0xd727239f5ba79b92c9db7456bbf2cd108db5e63bc57252a080a2e0a7a97cb40b",
+          "transactions": [
+            {
+              "transactionHash": "0xddf18fecfeb800ef2da54f93fb5ada7af63ae797069ce5ef4eb8581c58e364e3",
+              "inclusion": {
+                "blockNumber": "26218345",
+                "blockHash": "0xab4213af35be970a5753689f5a1ee1bbe5549a21c0553dcce5dfb1344649e958",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "55558",
+                "effectiveGasPrice": "1040460853"
+              }
+            },
+            {
+              "transactionHash": "0x95cbb01a1bd997a9ea6c2b542a25a26e78684a327a5c51647051d45e4600f6b6",
+              "inclusion": {
+                "blockNumber": "26218346",
+                "blockHash": "0xd727239f5ba79b92c9db7456bbf2cd108db5e63bc57252a080a2e0a7a97cb40b",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "201989",
+                "effectiveGasPrice": "1035412622"
+              }
+            }
+          ]
+        }
+      },
+      "underlyingBalance": "9000000",
+      "simulatedFinalityBlocks": "64"
+    },
+    {
+      "action": "withdraw",
+      "signingRequest": {
+        "operationId": "cfe83fea-272d-4141-bbc1-05965fe13389",
+        "operationVersion": "1",
+        "planHash": "ec53c54be6c592e69993ce037010ceb944cfb9348cdc2bd2d837752267c642bd",
+        "prepared": {
+          "plan": {
+            "schemaVersion": 1,
+            "provider": "aave_v3",
+            "chainId": "31337",
+            "signer": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+            "intentHash": "700c0f057f872a15d586bffa1b37b09d08a5128b56a26dea2bb4d9fcc8851a36",
+            "registryRevision": "fork-http-v1",
+            "feePolicyRevision": "fork-no-fees-v1",
+            "quoteReference": null,
+            "expiresAtMs": 1792320121161,
+            "maximumNetworkFeeRaw": "209439886460734",
+            "maximumSpend": {
+              "assetAddress": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
+              "amountRaw": "900002",
+              "recipient": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+            },
+            "minimumReceive": {
+              "assetAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+              "amountRaw": "900000",
+              "recipient": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+            },
+            "fees": [],
+            "simulation": {
+              "blockNumber": "26218410",
+              "blockHash": "0xa81174d337184c2ad4ba7b03c1cd5726c174ca24713223a2429793cc0df5acfc",
+              "callsHash": "6fb1a3e599924a5f0793b73b9611864d91f6c99b75e3b78f115b046731cdecd0",
+              "observedAtMs": 1792320001161
+            },
+            "steps": [
+              {
+                "purpose": "action",
+                "to": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+                "valueRaw": "0",
+                "data": "0x69328dec000000000000000000000000a0b86991c6218b36c1d19d4a2e9eb0ce3606eb4800000000000000000000000000000000000000000000000000000000000dbba00000000000000000000000007e5f4552091a69125d5dfcb7b8c2659029395bdf"
+              }
+            ]
+          },
+          "firstNonce": "4930",
+          "gasLimits": ["209437"],
+          "maxFeePerGas": "1000013782",
+          "maxPriorityFeePerGas": "1000000000"
+        }
+      },
+      "includedVersion": "5",
+      "recovery": {
+        "operation": {
+          "id": "cfe83fea-272d-4141-bbc1-05965fe13389",
+          "walletId": "abf7d00b-4483-480e-9e3d-fb28c25f66ba",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "6"
+        },
+        "intentAvailable": true,
+        "preparation": {
+          "hash": "ec53c54be6c592e69993ce037010ceb944cfb9348cdc2bd2d837752267c642bd",
+          "provider": "aave_v3",
+          "chainId": "31337",
+          "expiresAtMs": 1792320121161,
+          "expired": false,
+          "stepCount": 1,
+          "registryRevision": "fork-http-v1",
+          "feePolicyRevision": "fork-no-fees-v1"
+        },
+        "executionAvailable": false,
+        "submission": {
+          "operationId": "cfe83fea-272d-4141-bbc1-05965fe13389",
+          "transactionHashes": [
+            "0x35ea07a0ffaf07160163ce5d1104ad64fa561a948ba69335dcee8229cf81d5a5"
+          ]
+        },
+        "reconciliation": {
+          "checkedAtMs": 1792320024390,
+          "headNumber": "26218475",
+          "headHash": "0xc9cf2221730d0a700eae2063e14da82a91afe0d456c4c4501601d29b6af6554c",
+          "finalizedNumber": "26218411",
+          "finalizedHash": "0x156e6fc9dc2dd776d782fcbc8e0129e55a26f89da4ba442442e34bdc7bca224b",
+          "transactions": [
+            {
+              "transactionHash": "0x35ea07a0ffaf07160163ce5d1104ad64fa561a948ba69335dcee8229cf81d5a5",
+              "inclusion": {
+                "blockNumber": "26218411",
+                "blockHash": "0x156e6fc9dc2dd776d782fcbc8e0129e55a26f89da4ba442442e34bdc7bca224b",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "166198",
+                "effectiveGasPrice": "1000006030"
+              }
+            }
+          ]
+        }
+      },
+      "underlyingBalance": "9900000",
+      "simulatedFinalityBlocks": "64"
+    }
+  ]
+}

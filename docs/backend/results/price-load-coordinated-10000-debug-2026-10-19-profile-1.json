@@ -1,0 +1,63 @@
+{
+  "actualStartUnixMs": 1792359157002,
+  "authenticatedPrincipalCount": 3,
+  "authenticatedRequestsPerPrincipal": [400, 400, 400],
+  "clientFrameCountTotal": 0,
+  "closedDuringRun": 0,
+  "connectedAfterRamp": 0,
+  "framesDuringSoak": 0,
+  "generator": "external-process",
+  "httpAggregateTargetRps": 100,
+  "httpAuthenticated": true,
+  "httpCompleted": 1200,
+  "httpCompletedAtDeadline": 1200,
+  "httpCompletedPerSecond": [
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
+  ],
+  "httpCompletedRpsAtDeadline": 20.0,
+  "httpEnabled": true,
+  "httpErrors": 0,
+  "httpExpectedShardRequests": 1200,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 1200,
+  "httpIssuedPerSecond": [
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
+  ],
+  "httpIssuedRpsAtDeadline": 20.0,
+  "httpLatencyMicrosFirst100k": {
+    "max": 66648,
+    "p50": 3476,
+    "p95": 11626,
+    "p99": 30262
+  },
+  "httpLatencySamples": 1200,
+  "httpObservedRpsIncludingDrain": 19.999374325240726,
+  "httpRoute": "/api/v1/me",
+  "httpSchedulerMaxLagMicros": 20619,
+  "httpSchedulerSkippedSlots": 0,
+  "httpShardCount": 5,
+  "httpShardIndex": 1,
+  "httpStartUnixMs": 1792359157002,
+  "httpTargetRps": 20,
+  "minimumFramesPerClientDuringSoak": 0,
+  "minimumLifetimeFramesForAnyClient": 0,
+  "plannedStartUnixMs": 1792359157000,
+  "profileOnly": true,
+  "rampMs": 0,
+  "runId": "2f1d0620-c253-426e-a091-7b410b861dee",
+  "schemaVersion": 3,
+  "serverProcessSample": null,
+  "soakSeconds": 60,
+  "targetWebSockets": 0,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClientDuringSoak": 0
+  },
+  "tls": false,
+  "totalFrames": 0
+}

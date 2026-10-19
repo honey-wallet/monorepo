@@ -54,6 +54,7 @@ import {
 } from '@/components/wallet/parts';
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useCopy } from '@/lib/copy';
+import { expandView, inPopup } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib/mock-wallet';
@@ -252,6 +253,14 @@ export default function HomeScreen() {
               </View>
             </SkeletonReveal>
           </Rise>
+
+          {empty ? null : (
+            <View style={[styles.gutterMargin, styles.demoDisclosure]} accessibilityRole="text">
+              <Text style={styles.demoDisclosureText}>
+                The balances and holdings shown here are illustrative examples, not real assets.
+              </Text>
+            </View>
+          )}
 
           {/* Send / Receive / Buy / Sell, rising one after another. An empty wallet keeps
               them too, so the layout is familiar from day one. */}
@@ -530,6 +539,14 @@ export default function HomeScreen() {
                 </View>
               </View>
               <View style={styles.shortcuts}>
+                {/* In the toolbar popup: open the same screen in Honey's phone-sized window. */}
+                {inPopup ? (
+                  <HeaderShortcut
+                    icon="expandView"
+                    label="Expand view"
+                    onPress={() => void expandView()}
+                  />
+                ) : null}
                 <HeaderShortcut
                   icon="bell"
                   label="Notifications"
@@ -638,6 +655,19 @@ const useStyles = makeStyles((c) => ({
   },
   gutterMargin: {
     marginHorizontal: 18,
+  },
+  demoDisclosure: {
+    marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: c.raised,
+  },
+  demoDisclosureText: {
+    color: c.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: 'center',
   },
   flex: {
     flex: 1,

@@ -1,0 +1,44 @@
+groups:
+  - name: honey-runtime
+    rules:
+      - alert: HoneyMetricsMissing
+        expr: up{job=~"honey-api|honey-worker"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: Honey metrics target is unavailable
+          description: Check process health, metrics bind address, scrape routing and recent rollouts.
+      - alert: HoneyApiErrors
+        expr: sum(rate(honey_http_requests_total{status_class="5xx",route!~"/health|/ready"}[5m])) / clamp_min(sum(rate(honey_http_requests_total{route!~"/health|/ready"}[5m])), 0.001) > 0.01
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: More than one percent of API handler responses are server errors
+          description: Inspect route, Redis outcome, pool occupancy and correlated request traces. Candidate threshold; calibrate to the agreed SLO.
+      - alert: HoneyRedisErrors
+        expr: sum(rate(honey_redis_commands_total{outcome!="ok"}[5m])) > 1
+        for: 1m
+        labels: { severity: critical }
+        annotations:
+          summary: Redis commands are failing or admission is saturated
+          description: Inspect Redis memory/noeviction, latency, connectivity and API admission. Never fall back to local pairing.
+      - alert: HoneyPricesStale
+        expr: honey_price_sockets_active > 0 and on(job,instance) (honey_price_stale == 1 or (time() - honey_price_sample_timestamp_milliseconds / 1000) > 10)
+        for: 30s
+        labels: { severity: warning }
+        annotations:
+          summary: Active clients have stale market data
+          description: Check provider quotas/backoff, poll ownership, Redis cache and process clock synchronization.
+      - alert: HoneyTraceExportFailing
+        expr: sum(rate(honey_trace_exports_total{outcome="failed"}[5m])) > 0
+        for: 2m
+        labels: { severity: warning }
+        annotations:
+          summary: Trace export is failing or being partially rejected
+          description: API requests remain available; inspect collector health, limits and storage. Lost trace batches are not retried by the API.
+      - alert: HoneyBackgroundTaskStopped
+        expr: increase(honey_background_failures_total[5m]) > 0
+        labels: { severity: critical }
+        annotations:
+          summary: A required Honey background task stopped
+          description: The process drains and exits. Inspect classified task_index/error_code logs and deployment restart history.

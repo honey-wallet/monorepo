@@ -1,4 +1,4 @@
-import { deriveAddresses, mnemonicToSeed, type PairPayload } from '@honey-wallet/keyring';
+import { deriveAddresses, type PairPayload, withMnemonicSeed } from '@honey-wallet/keyring';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { shortAddress } from '@/lib/mock-wallet';
@@ -22,11 +22,12 @@ export function ArrivedWallets({ payload }: { payload: PairPayload }) {
 
   useEffect(() => {
     let live = true;
-    void mnemonicToSeed(payload.mnemonic).then((seed) => {
-      if (!live) return;
+    void withMnemonicSeed(payload.mnemonic, (seed) => {
+      if (!live) return null;
       const next: Record<number, string> = {};
       for (const { index } of accountsOf(payload)) next[index] = deriveAddresses(seed, index).evm;
       setAddresses(next);
+      return null;
     });
     return () => {
       live = false;

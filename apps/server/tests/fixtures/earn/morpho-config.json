@@ -1,0 +1,36 @@
+{
+  "data": {
+    "chain_id": 1,
+    "address": "0x04422053aDDbc9bB2759b248B574e3FCA76Bc145",
+    "last_indexed_block": "26217954",
+    "version": "2.0",
+    "name": "Keyrock USDC",
+    "symbol": "kUSDC",
+    "asset": {
+      "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "decimals": 6,
+      "name": "USDCoin",
+      "symbol": "USDC"
+    },
+    "decimals_offset": 12,
+    "factory_address": "0xA1D94F746dEfa1928926b84fB2596c06926C0405",
+    "creation_block_number": "23497927",
+    "owner": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "curator": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "timelock_seconds": 604800,
+    "management_fee_wad": null,
+    "management_fee_recipient": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "performance_fee_wad": "50000000000000000",
+    "performance_fee_recipient": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "max_rate_per_second_wad": "3805175038",
+    "adapter_registry": "0x3696c5eAe4a7Ffd04Ea163564571E9CD8Ed9364e",
+    "liquidity_adapter": "0x7CA32dCD9269b0BeB21a4F364DED5cfFCB7b3635",
+    "liquidity_data": "0x64d65c9a2d91c36d56fbc42d69e979335320169b3df63bf92789e2c8883fcc64",
+    "gates": {
+      "send_shares": null,
+      "receive_shares": null,
+      "send_assets": null,
+      "receive_assets": null
+    }
+  }
+}

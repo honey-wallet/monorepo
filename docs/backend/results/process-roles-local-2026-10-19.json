@@ -1,0 +1,38 @@
+{
+  "scope": "local Redis-only binary startup, route isolation and SIGTERM; no authenticated/provider/capacity qualification",
+  "results": [
+    {
+      "role": "combined",
+      "status": {
+        "/health": 200,
+        "/ready": 200,
+        "/api/v1/capabilities": 200,
+        "/api/v1/prices": 422
+      },
+      "sigtermExitCode": 0,
+      "shutdownMs": 7
+    },
+    {
+      "role": "api",
+      "status": {
+        "/health": 200,
+        "/ready": 200,
+        "/api/v1/capabilities": 200,
+        "/api/v1/prices": 422
+      },
+      "sigtermExitCode": 0,
+      "shutdownMs": 2
+    },
+    {
+      "role": "worker",
+      "status": {
+        "/health": 200,
+        "/ready": 200,
+        "/api/v1/capabilities": 404,
+        "/api/v1/prices": 404
+      },
+      "sigtermExitCode": 0,
+      "shutdownMs": 6
+    }
+  ]
+}

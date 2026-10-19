@@ -5,14 +5,20 @@
 # Multi-arch (amd64 + arm64), cross-compiled natively rather than emulated:
 #   docker buildx build --platform linux/amd64,linux/arm64 -f apps/server/Dockerfile -t honey-server .
 
-# xx cross-compiles for TARGETPLATFORM on the build machine's own architecture.
-FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.9.0 AS xx
+# Pin the multi-architecture manifest indexes, not platform-specific manifests,
+# so the selected BUILDPLATFORM/TARGETPLATFORM stay consistent across builders.
+FROM --platform=$BUILDPLATFORM tonistiigi/xx:1.9.0@sha256:c64defb9ed5a91eacb37f96ccc3d4cd72521c4bd18d5442905b95e2226b0e707 AS xx
 
-FROM --platform=$BUILDPLATFORM rust:1.93-slim-bookworm AS builder
+FROM --platform=$BUILDPLATFORM rust:1.93-slim-bookworm@sha256:5b9332190bb3b9ece73b810cd1f1e9f06343b294ce184bcb067f0747d7d333ea AS builder
 COPY --from=xx / /
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends clang lld \
-    && rm -rf /var/lib/apt/lists/*
+ARG DEBIAN_SNAPSHOT=20261019T000000Z
+RUN set -eux; \
+    rm -f /etc/apt/sources.list.d/debian.sources; \
+    printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian/%s bookworm main\n' "$DEBIAN_SNAPSHOT" > /etc/apt/sources.list; \
+    printf 'deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-security/%s bookworm-security main\n' "$DEBIAN_SNAPSHOT" >> /etc/apt/sources.list; \
+    apt-get -o Acquire::Check-Valid-Until=false update && \
+    apt-get install -y --no-install-recommends clang lld && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 # The pinned toolchain must be in place before adding the target, or the
@@ -33,6 +39,7 @@ RUN mkdir -p apps/server/src \
     && rm -rf apps/server/src
 
 COPY apps/server/src apps/server/src
+COPY apps/server/migrations apps/server/migrations
 RUN touch apps/server/src/main.rs apps/server/src/lib.rs \
     && xx-cargo build --release --locked -p honey-server \
     && xx-verify "target/$(xx-cargo --print-target-triple)/release/honey-server" \
@@ -40,7 +47,7 @@ RUN touch apps/server/src/main.rs apps/server/src/lib.rs \
 
 # Distroless: glibc and CA certificates only; no shell, no package manager.
 # Runs as uid 65532 (nonroot) and needs no writable filesystem.
-FROM gcr.io/distroless/cc-debian12:nonroot
+FROM gcr.io/distroless/cc-debian12:nonroot@sha256:9dac0a79194e45a7da0158a9c6da57b217585af0786db3845d1f0ec1a0dd182f
 
 ARG VERSION=dev
 ARG REVISION=unknown

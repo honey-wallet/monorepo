@@ -1,4 +1,5 @@
 import { Text } from 'react-native';
+import { Icon } from '@/components/Icon';
 import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SCREEN } from '@/components/wallet/parts';
@@ -25,15 +26,19 @@ export type FooterAction = {
 
 /**
  * Two big actions at the bottom of a detail page (Buy/Sell on a token, Long/Short on
- * a perp), plus an optional grid button that opens more actions and swaps to ✕.
+ * a perp), plus an optional square button: a grid that opens more actions and swaps
+ * to ✕, or Send.
  * Pass it as a `PushedScreen` footer, which lays its children out in a row.
  */
 export function ActionFooter({
   actions,
   menu,
+  send,
 }: {
   actions: [FooterAction, FooterAction];
   menu?: { open: boolean; onToggle: () => void };
+  /** Send in the square instead of the grid (review: where people look for it). */
+  send?: () => void;
 }) {
   const styles = useStyles();
   const c = useTheme();
@@ -78,6 +83,19 @@ export function ActionFooter({
             size={menu.open ? 20 : 18}
             color={menu.open ? c.accentText : c.textSecondary}
           />
+        </PressableScale>
+      )}
+      {send && (
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel="Send"
+          onPress={() => {
+            tap();
+            send();
+          }}
+          style={styles.square}
+        >
+          <Icon name="send" size={18} color={c.text} />
         </PressableScale>
       )}
     </>

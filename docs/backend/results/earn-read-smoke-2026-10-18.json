@@ -1,0 +1,92 @@
+[
+  {
+    "schemaVersion": 1,
+    "protocol": "aave_v3",
+    "chainId": "1",
+    "contractAddress": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2",
+    "asset": {
+      "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "decimals": 6,
+      "symbol": "USDC"
+    },
+    "positionAsset": {
+      "address": "0x98c23e9d8f34fefb1b7bd6a91b7ff122f4e16f5c",
+      "decimals": 6,
+      "symbol": "aEthUSDC"
+    },
+    "totalSuppliedRaw": "2384849412133712",
+    "availableLiquidityRaw": "157133544610573",
+    "supplyCapRaw": "3000000000000000",
+    "supplyApy": {
+      "fraction": "0.038310159715882063225430235",
+      "basis": "current_supply",
+      "rewardsIncluded": false
+    },
+    "restrictions": {
+      "paused": false,
+      "frozen": false,
+      "supplyCapReached": false,
+      "gated": null
+    },
+    "vaultFees": null,
+    "sourceBlocks": [],
+    "fetchedAtMs": 1792308939951,
+    "executionAvailable": false
+  },
+  {
+    "schemaVersion": 1,
+    "protocol": "morpho_vault_v2",
+    "chainId": "1",
+    "contractAddress": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+    "asset": {
+      "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "decimals": 6,
+      "symbol": "USDC"
+    },
+    "positionAsset": {
+      "address": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+      "decimals": 18,
+      "symbol": "kUSDC"
+    },
+    "totalSuppliedRaw": "8258575366223",
+    "availableLiquidityRaw": "2179660694718",
+    "supplyCapRaw": null,
+    "supplyApy": {
+      "fraction": "0.05450325062161674",
+      "basis": "trailing_one_day_after_fees",
+      "rewardsIncluded": false
+    },
+    "restrictions": {
+      "paused": null,
+      "frozen": null,
+      "supplyCapReached": null,
+      "gated": false
+    },
+    "vaultFees": [
+      {
+        "kind": "performance",
+        "rateWad": "50000000000000000"
+      },
+      {
+        "kind": "management",
+        "rateWad": null
+      }
+    ],
+    "sourceBlocks": [
+      {
+        "component": "configuration",
+        "number": "26217988"
+      },
+      {
+        "component": "state",
+        "number": "26217988"
+      },
+      {
+        "component": "apy",
+        "number": "26217988"
+      }
+    ],
+    "fetchedAtMs": 1792308942096,
+    "executionAvailable": false
+  }
+]

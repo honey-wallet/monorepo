@@ -1,0 +1,77 @@
+{
+  "actualStartUnixMs": 1792378610196,
+  "authenticatedPrincipalCount": 3,
+  "authenticatedRequestsPerPrincipal": [400, 400, 400],
+  "clientFrameCountTotal": 0,
+  "closedDuringRun": 0,
+  "connectedAfterRamp": 0,
+  "connectionFailureStatusCodes": {
+    "500": 0,
+    "502": 0,
+    "503": 0,
+    "504": 0,
+    "other": 0
+  },
+  "connectionFailures": {
+    "http4xx": 0,
+    "http5xx": 0,
+    "io": 0,
+    "other": 0,
+    "timeout": 0
+  },
+  "framesDuringSoak": 0,
+  "generator": "external-process",
+  "httpAggregateTargetRps": 100,
+  "httpAuthenticated": true,
+  "httpCompleted": 1200,
+  "httpCompletedAtDeadline": 1200,
+  "httpCompletedPerSecond": [
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
+  ],
+  "httpCompletedRpsAtDeadline": 20.0,
+  "httpEnabled": true,
+  "httpErrors": 0,
+  "httpExpectedShardRequests": 1200,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 1200,
+  "httpIssuedPerSecond": [
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
+    20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20
+  ],
+  "httpIssuedRpsAtDeadline": 20.0,
+  "httpLatencyMicrosFirst100k": {
+    "max": 32278,
+    "p50": 2148,
+    "p95": 15442,
+    "p99": 26227
+  },
+  "httpLatencySamples": 1200,
+  "httpObservedRpsIncludingDrain": 19.9992287937391,
+  "httpRoute": "/api/v1/me",
+  "httpSchedulerMaxLagMicros": 9461,
+  "httpSchedulerSkippedSlots": 0,
+  "httpShardCount": 5,
+  "httpShardIndex": 0,
+  "httpStartUnixMs": 1792378610196,
+  "httpTargetRps": 20,
+  "minimumFramesPerClientDuringSoak": 0,
+  "minimumLifetimeFramesForAnyClient": 0,
+  "plannedStartUnixMs": 1792378610194,
+  "profileOnly": true,
+  "rampMs": 0,
+  "runId": "c56ad8f7-4375-486b-9b1d-9b1d46b2d4a5",
+  "schemaVersion": 4,
+  "serverProcessSample": null,
+  "soakSeconds": 60,
+  "targetWebSockets": 0,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClientDuringSoak": 0
+  },
+  "tls": false,
+  "totalFrames": 0
+}

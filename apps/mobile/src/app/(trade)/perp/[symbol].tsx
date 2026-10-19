@@ -17,6 +17,8 @@ import {
 import { TextSwap } from '@/components/motion/TextSwap';
 import { ActionFooter } from '@/components/sheets/ActionFooter';
 import { Description } from '@/components/sheets/Description';
+import { HyperliquidAccount } from '@/components/trade/HyperliquidAccount';
+import { LivePerpPrices } from '@/components/trade/LivePerpPrices';
 import { MarketIcon } from '@/components/trade/MarketIcon';
 import { PerpPositionCard } from '@/components/trade/PerpPositionCard';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
@@ -33,6 +35,7 @@ import {
 } from '@/lib/mock-wallet';
 import { candles, perpMarket, toggleSavedPerp, usePerpPositions, useSavedPerps } from '@/lib/perps';
 import { useTradeModeAllowed } from '@/lib/trade-modes';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 const CHART_HEIGHT = 240;
@@ -380,5 +383,16 @@ const useStyles = makeStyles((c) => ({
 
 /** Shared wallets can't use this product (see `lib/trade-modes.ts`); links land on Trade. */
 export default function PerpScreenRoute() {
-  return useTradeModeAllowed('Perps') ? <PerpScreen /> : <Redirect href="/trade" />;
+  const allowed = useTradeModeAllowed('Perps');
+  const wallet = useActiveWallet();
+  const { symbol = 'BTC' } = useLocalSearchParams<{ symbol: string }>();
+  if (!allowed) return <Redirect href="/trade" />;
+  return wallet.demo ? (
+    <PerpScreen />
+  ) : (
+    <PushedScreen title={symbol} fallback="/trade">
+      <LivePerpPrices symbol={symbol} />
+      <HyperliquidAccount />
+    </PushedScreen>
+  );
 }

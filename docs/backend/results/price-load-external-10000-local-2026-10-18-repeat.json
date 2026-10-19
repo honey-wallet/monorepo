@@ -1,0 +1,40 @@
+{
+  "clientFrameCountTotal": 571984,
+  "closedDuringRun": 0,
+  "connectedAfterRamp": 10000,
+  "framesDuringSoak": 420000,
+  "generator": "external-process",
+  "httpCompleted": 6000,
+  "httpCompletedAtDeadline": 6000,
+  "httpCompletedRpsAtDeadline": 100.0,
+  "httpErrors": 0,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 6000,
+  "httpIssuedRpsAtDeadline": 100.0,
+  "httpLatencyMicrosFirst100k": {
+    "max": 116861,
+    "p50": 371,
+    "p95": 3503,
+    "p99": 25694
+  },
+  "httpLatencySamples": 6000,
+  "httpObservedRpsIncludingDrain": 99.98711159132489,
+  "httpTargetRps": 100,
+  "minimumFramesForAnyClient": 43,
+  "rampMs": 42476,
+  "runId": "2083bd35-b55a-4925-abd8-4cb0f5778e82",
+  "serverProcessSample": {
+    "pid": "92938",
+    "ps": "%CPU RSS_KiB ELAPSED",
+    "sample": "88.7 145792 06:13"
+  },
+  "soakSeconds": 60,
+  "targetWebSockets": 10000,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClient": 45
+  },
+  "tls": false,
+  "totalFrames": 571984
+}

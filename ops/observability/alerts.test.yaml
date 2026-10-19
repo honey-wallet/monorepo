@@ -1,0 +1,63 @@
+rule_files: [/etc/prometheus/alerts.yaml]
+evaluation_interval: 5s
+tests:
+  - name: healthy feed and API do not alert
+    interval: 5s
+    input_series:
+      - series: 'up{job="honey-api",instance="api"}'
+        values: '1+0x120'
+      - series: 'honey_http_requests_total{job="honey-api",instance="api",route="/api/v1/prices",status_class="2xx"}'
+        values: '0+100x120'
+      - series: 'honey_price_sockets_active{job="honey-api",instance="api"}'
+        values: '100+0x120'
+      - series: 'honey_price_stale{job="honey-api",instance="api"}'
+        values: '0+0x120'
+      - series: 'honey_price_sample_timestamp_milliseconds{job="honey-api",instance="api"}'
+        values: '0+5000x120'
+    alert_rule_test:
+      - eval_time: 6m
+        alertname: HoneyApiErrors
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: HoneyPricesStale
+        exp_alerts: []
+      - eval_time: 6m
+        alertname: HoneyMetricsMissing
+        exp_alerts: []
+  - name: stale feed alerts only when clients are connected
+    interval: 5s
+    input_series:
+      - series: 'honey_price_sockets_active{job="honey-api",instance="active"}'
+        values: '100+0x24'
+      - series: 'honey_price_stale{job="honey-api",instance="active"}'
+        values: '1+0x24'
+      - series: 'honey_price_sockets_active{job="honey-api",instance="idle"}'
+        values: '0+0x24'
+      - series: 'honey_price_stale{job="honey-api",instance="idle"}'
+        values: '1+0x24'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: HoneyPricesStale
+        exp_alerts:
+          - exp_labels: {job: honey-api, instance: active, severity: warning}
+            exp_annotations:
+              summary: Active clients have stale market data
+              description: Check provider quotas/backoff, poll ownership, Redis cache and process clock synchronization.
+  - name: unavailable worker metrics alert independently of healthy API
+    interval: 5s
+    input_series:
+      - series: 'up{job="honey-api",instance="api"}'
+        values: '1+0x24'
+      - series: 'up{job="honey-worker",instance="worker"}'
+        values: '0+0x24'
+    alert_rule_test:
+      - eval_time: 30s
+        alertname: HoneyMetricsMissing
+        exp_alerts: []
+      - eval_time: 1m
+        alertname: HoneyMetricsMissing
+        exp_alerts:
+          - exp_labels: {job: honey-worker, instance: worker, severity: critical}
+            exp_annotations:
+              summary: Honey metrics target is unavailable
+              description: Check process health, metrics bind address, scrape routing and recent rollouts.

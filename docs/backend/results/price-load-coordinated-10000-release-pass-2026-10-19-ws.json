@@ -1,0 +1,75 @@
+{
+  "actualStartUnixMs": 1792378610195,
+  "authenticatedPrincipalCount": 0,
+  "authenticatedRequestsPerPrincipal": [],
+  "clientFrameCountTotal": 2012017,
+  "closedDuringRun": 0,
+  "connectedAfterRamp": 10000,
+  "connectionFailureStatusCodes": {
+    "500": 0,
+    "502": 0,
+    "503": 0,
+    "504": 0,
+    "other": 0
+  },
+  "connectionFailures": {
+    "http4xx": 0,
+    "http5xx": 0,
+    "io": 0,
+    "other": 0,
+    "timeout": 0
+  },
+  "framesDuringSoak": 600000,
+  "generator": "external-process",
+  "httpAggregateTargetRps": 100,
+  "httpAuthenticated": false,
+  "httpCompleted": 0,
+  "httpCompletedAtDeadline": 0,
+  "httpCompletedPerSecond": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  ],
+  "httpCompletedRpsAtDeadline": 0.0,
+  "httpEnabled": false,
+  "httpErrors": 0,
+  "httpExpectedShardRequests": 0,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 0,
+  "httpIssuedPerSecond": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+  ],
+  "httpIssuedRpsAtDeadline": 0.0,
+  "httpLatencyMicrosFirst100k": {
+    "max": null,
+    "p50": null,
+    "p95": null,
+    "p99": null
+  },
+  "httpLatencySamples": 0,
+  "httpObservedRpsIncludingDrain": 0.0,
+  "httpRoute": "/api/v1/prices",
+  "httpSchedulerMaxLagMicros": 60001935,
+  "httpSchedulerSkippedSlots": 0,
+  "httpShardCount": 1,
+  "httpShardIndex": 0,
+  "httpStartUnixMs": 1792378610195,
+  "httpTargetRps": 100,
+  "minimumFramesPerClientDuringSoak": 60,
+  "minimumLifetimeFramesForAnyClient": 133,
+  "plannedStartUnixMs": 1792378610194,
+  "profileOnly": false,
+  "rampMs": 137038,
+  "runId": "c56ad8f7-4375-486b-9b1d-9b1d46b2d4a5",
+  "schemaVersion": 4,
+  "serverProcessSample": null,
+  "soakSeconds": 60,
+  "targetWebSockets": 10000,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClientDuringSoak": 45
+  },
+  "tls": false,
+  "totalFrames": 2012017
+}

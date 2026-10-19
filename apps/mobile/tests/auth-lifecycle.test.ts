@@ -70,3 +70,9 @@ it('does not enable app protection on a device with no lock', async () => {
   expect(await confirmOwner('Enable protection', true)).toBe(false);
   expect(api.auth).not.toHaveBeenCalled();
 });
+it('fails closed for sensitive actions without device security, with explicit low-risk opt-out', async () => {
+  api.level.mockResolvedValue(0);
+  expect(await confirmOwner('Show recovery phrase')).toBe(false);
+  expect(await confirmOwner('Sign out', false)).toBe(true);
+  expect(api.auth).not.toHaveBeenCalled();
+});

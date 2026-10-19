@@ -1,0 +1,101 @@
+name: Bunk contracts
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/bunk-evm/**'
+      - 'packages/keyring/src/bunk*.ts'
+      - 'packages/keyring/src/index.ts'
+      - 'packages/keyring/src/fixtures/bunk*.json'
+      - 'packages/keyring/scripts/bunk*.py'
+      - 'packages/keyring/scripts/bunk*.mjs'
+      - 'packages/keyring/tests/**'
+      - 'packages/keyring/vitest.config.ts'
+      - 'packages/keyring/package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/bunk-contracts.yml'
+  pull_request:
+    paths:
+      - 'packages/bunk-evm/**'
+      - 'packages/keyring/src/bunk*.ts'
+      - 'packages/keyring/src/index.ts'
+      - 'packages/keyring/src/fixtures/bunk*.json'
+      - 'packages/keyring/scripts/bunk*.py'
+      - 'packages/keyring/scripts/bunk*.mjs'
+      - 'packages/keyring/tests/**'
+      - 'packages/keyring/vitest.config.ts'
+      - 'packages/keyring/package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/bunk-contracts.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bunk-contracts-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  evm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: packages/bunk-evm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
+        with:
+          version: v1.8.0
+      - name: Install and verify pinned Solidity sources
+        run: python3 scripts/dependencies.py --install
+      - run: forge fmt --check
+      - run: forge build --sizes
+      - run: forge test -vv
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10.26.0
+          run_install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.22.3
+      - name: Install shared keyring dependencies
+        working-directory: .
+        run: pnpm install --filter '@honey-wallet/keyring...' --frozen-lockfile --ignore-scripts
+      - name: Check shared client signing
+        working-directory: .
+        run: pnpm --filter @honey-wallet/keyring typecheck && pnpm --filter @honey-wallet/keyring test
+      - name: Check encrypted journal across process restart
+        working-directory: .
+        run: node --import ./packages/bunk-evm/test/bundler/typescript-loader.mjs packages/keyring/scripts/bunk-journal-restart.mjs
+      - name: Install isolated bundler test tooling
+        working-directory: packages/bunk-evm/test/bundler
+        run: pnpm install --ignore-workspace --frozen-lockfile --ignore-scripts
+      - name: Verify real bundler admission and rejection controls
+        run: python3 test/bundler/run.py --output /tmp/bunk-bundler-evidence.json
+
+  browser-journal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 10.26.0
+          run_install: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.22.3
+      - name: Install shared keyring test dependencies
+        run: pnpm install --filter '@honey-wallet/keyring...' --frozen-lockfile --ignore-scripts
+      - name: Verify independent journal key vectors
+        run: |
+          python3 packages/keyring/scripts/bunk-journal-key-vectors.py > /tmp/bunk-journal-key.json
+          python3 -c 'import json; assert json.load(open("/tmp/bunk-journal-key.json")) == json.load(open("packages/keyring/src/fixtures/bunk-journal-key.json"))'
+      - name: Verify real browser journal and process recovery
+        env:
+          BUNK_TEST_CHROME: /usr/bin/google-chrome
+        run: node packages/keyring/scripts/bunk-browser-journal.mjs /tmp/bunk-browser-evidence.json
+      - name: Record browser acceptance evidence
+        run: cat /tmp/bunk-browser-evidence.json

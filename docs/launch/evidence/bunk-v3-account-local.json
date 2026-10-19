@@ -1,0 +1,153 @@
+{
+  "scope": "Shared v3 encrypted SQLite account coordinator with finalized restore fences; local process-death and bundler acceptance, not device/power-loss/production certification",
+  "protocolVersion": 3,
+  "accountRecordVersion": 1,
+  "nestedOwnerJournalVersion": 2,
+  "coordinatorTestsPassed": 19,
+  "keyringTestsPassed": 295,
+  "rootLint": "563 Biome files plus Rust fmt/Clippy passed",
+  "rootTypecheck": "5 tasks passed; 2 cached",
+  "rootTests": "7 tasks passed; 2 cached; 295 keyring tests executed; localhost fixtures permitted; explicitly ignored infrastructure suites not enabled",
+  "realBundlerEvidence": "bunk-bundler-local.json#coordinatorV3",
+  "sourceHashesRechecked": 62,
+  "artifactHashesRechecked": 95,
+  "sourcesSha256": {
+    "packages/keyring/src/bunk-evm-v3-account.ts": "837fe98f0d66c271db31f283fcc3b3469bd21d2c40da8a217b71c48e41350448",
+    "packages/keyring/src/bunk-evm-v3-journal.ts": "400013dd8789eb811f6a44ee034418b99a059356e1c0b8f5c3d99e949fb4e338",
+    "packages/keyring/src/bunk-evm-v3-sign.ts": "525a954a1a36d554bd1957852c97a57f916edd65be1cf59cc3d23a09a4bb2d16",
+    "packages/keyring/src/bunk-evm-v2-store.ts": "8781624d78f6c50bab7dd818e9e0c035b30aff4b0cc93de0ed22fc1f1abf8134",
+    "packages/keyring/src/index.ts": "f8e1b9c653acd327f301ddc87d71914b8cbf7bcf15c19acceeab962d862f1d8d",
+    "packages/keyring/tests/bunk-evm-v3-account.test.mjs": "cd8c8b292aafb3734a747fcfb030e0b12bec9b7179be64956118e53bac1168fe",
+    "contracts/bunk-evm/test/bundler/coordinator-v3.mjs": "26c72af89eb29f0cf180c041540802c8dd6c8419f3500a0d8741ea357dc85189",
+    "contracts/bunk-evm/test/bundler/coordinator-v3-worker.mjs": "267d75697f0c3b031413c5251ab15ec2ee3e6f95d5794f688f8a99439b54f374",
+    "contracts/bunk-evm/test/bundler/run.py": "d20f0741234d234b17ef33822d984ba25940556e485297a4574b3f52eb26c0b5"
+  },
+  "liveProbe": {
+    "scope": "V3 encrypted SQLite account coordinator: lost creation approval, prefunded undeployed account, direct bootstrap, recovery signer process death/reconstruction, finalized reset and sponsored resumed action on isolated Osaka; not device/power-loss/production certification",
+    "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+    "accountIndex": 4,
+    "accountKey": "bunk-v3-account:c765f1607e8e7db21add534ea69f67076eceb5ff01d640365430a9ae4cbca7fa",
+    "bootstrapTransactionHash": "0xa9f2cbf778c446f9dbb85581791aee6d90586f99d0e7f077f4367c0d0c25d061",
+    "recoveryTransactionHash": "0xe850c4964813183bf9fb658659338965f8cd7ef77bbfcd4e73bddc3b3aa6253a",
+    "recoveryWorkerExit": 73,
+    "reconstructedRecoveryDigest": "0x046dd71684dcfa0821f29b6789c51f727cd07e1c0f15fb4f0a026bded473d389",
+    "missingHistorySignedOldOwner": false,
+    "resetChangedWalletFunds": false,
+    "resetChangedEntryPointNonce": false,
+    "oldRejection": "RPC Request failed. AA10 sender already constructed AA10 sender already constructed",
+    "reopenedIdenticalOperation": true,
+    "finalJournalRetired": true,
+    "revision": 20,
+    "cases": [
+      {
+        "event": "Recovered",
+        "key": "bunk-v3-account:c765f1607e8e7db21add534ea69f67076eceb5ff01d640365430a9ae4cbca7fa",
+        "phase": "ready",
+        "state": {
+          "protocolVersion": 3,
+          "deployed": true,
+          "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+          "accountIndex": 4,
+          "ownerIndex": 0,
+          "commitment": "0x443a9d865b308182ecdeb5bc9bcfcdd647f4a813be2a504e1f8aad28ba694b25",
+          "nonce": "0",
+          "epoch": 1,
+          "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f"
+        },
+        "block": {
+          "hash": "0x66f61c1670ecccf16b3942b5a8dbf072204ee8b5f379583a8a66b5d4d10224f3",
+          "number": "672",
+          "timestamp": "1792375002"
+        }
+      },
+      {
+        "hash": "0x84fb289f0da6ef26afd1d7b284ceffefb866bbd7fc249d32a4f7d8722d4b4785",
+        "transactionHash": "0x99ae5ea75dc45e7bc916826c224441090618ba48173d3f6b975b20ed5918ee11",
+        "event": "ActionExecuted",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x50efdb58d27296aa443dc47b4d188e8e0fbc83717389c83e844299d878635e98",
+            "number": "704",
+            "timestamp": "1792375034"
+          },
+          "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+          "accountIndex": 4,
+          "status": "deployed",
+          "state": {
+            "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+            "accountIndex": 4,
+            "ownerIndex": 1,
+            "commitment": "0xd544d5ece2ecfb7872bf68e3ec1219a1ab8524d653db89d3be2a2692553871e2",
+            "nonce": "1",
+            "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f",
+            "epoch": 1,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      },
+      {
+        "event": "Reconciled",
+        "key": "bunk-v3-account:c765f1607e8e7db21add534ea69f67076eceb5ff01d640365430a9ae4cbca7fa",
+        "phase": "ready",
+        "state": {
+          "protocolVersion": 3,
+          "deployed": true,
+          "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+          "accountIndex": 4,
+          "ownerIndex": 1,
+          "commitment": "0xd544d5ece2ecfb7872bf68e3ec1219a1ab8524d653db89d3be2a2692553871e2",
+          "nonce": "1",
+          "epoch": 1,
+          "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f"
+        },
+        "block": {
+          "hash": "0x50efdb58d27296aa443dc47b4d188e8e0fbc83717389c83e844299d878635e98",
+          "number": "704",
+          "timestamp": "1792375034"
+        }
+      }
+    ]
+  },
+  "githubWorkflowExecuted": false,
+  "limitations": [
+    "Subsequent shared IndexedDB/browser proof is recorded separately; actual Expo/packaged extension integration, application restore/activation and real-device/power-loss checks remain open.",
+    "Whole-database coherent rollback is not detected. Backup import must explicitly start fresh-generation recovery; another device holding the phrase remains authorized.",
+    "Trusted release registry/account discovery, public network/RPC/bundler acceptance, recovery relay funding and independent review remain required.",
+    "Missing-history activation requires caller-funded deployment/reset before ordinary sponsored execution. Two relay transactions are not an atomic batch.",
+    "Changed/unavailable previous finalized anchors fence restore; catastrophic finality reorg recovery requires a separate reviewed policy.",
+    "The reconstruction guarantee permits identical deterministic recomputation of a fixed digest after a crash; it is not literal single computation.",
+    "Unchanged 121-test Solidity contract proof is recorded in the contract sidecar; this run rechecked all artifact hashes."
+  ],
+  "subsequentBrowserEvidence": "bunk-browser-journal-local.json; this historical run and its hashes are unchanged"
+}

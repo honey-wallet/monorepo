@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
 import { Icon } from '@/components/Icon';
@@ -16,7 +16,6 @@ import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
-import { simulateDemoDeposit } from '@/lib/onboarding';
 import { useProfile } from '@/lib/profile';
 import { type ReceiveAddress, receiveAddresses } from '@/lib/receive';
 import { useActiveWallet } from '@/lib/wallets';
@@ -30,10 +29,6 @@ export default function ReceiveSheet() {
   // The wallet in use: a shared wallet receives at its own address, on its own network.
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
-  // DEMO: an empty wallet "receives" its first deposit a few seconds after this opens.
-  useEffect(() => {
-    if (wallet.id === 'main') simulateDemoDeposit();
-  }, [wallet.id]);
   const isMain = wallet.id === 'main';
   const { copied, copy } = useCopy(wallet.address);
   const [showExchange, setShowExchange] = useState(false);

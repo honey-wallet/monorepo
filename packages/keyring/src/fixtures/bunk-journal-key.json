@@ -1,0 +1,19 @@
+{
+  "warning": "Public test vectors only; never use for funds.",
+  "algorithm": "RFC5869 HKDF-SHA256",
+  "salt": "honey:bunk:journal:extract:v1",
+  "info": "honey:bunk:journal:encryption:v1",
+  "length": 32,
+  "vectors": [
+    {
+      "label": "incrementing-public-bytes",
+      "seed": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+      "key": "06ccfbec1c0f0581dd0938a199f379f30a852108099bc0a7053f5aa1b7d06009"
+    },
+    {
+      "label": "v3-public-fixture-phrase",
+      "seed": "1200b6954b0ee114b3744b9fe36a3c80a96a3297e5a1ffc9df25db25fed137370715dd0639a678334c40d8bd57e52618eeaed6261dccf9699156847e59ce85db",
+      "key": "5ecf59dc0a03876cb94db3f390324f2b2a9f9bc049975598c1ec937898dce508"
+    }
+  ]
+}

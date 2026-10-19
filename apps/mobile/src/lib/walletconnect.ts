@@ -8,6 +8,7 @@ import { Core } from '@walletconnect/core';
 import { buildApprovedNamespaces, getSdkError } from '@walletconnect/utils';
 import { getRandomBytes } from 'expo-crypto';
 import { router as nav } from 'expo-router';
+import { requestJsonRpc } from '@/lib/json-rpc';
 import { showToast } from '@/lib/toast';
 
 /**
@@ -39,11 +40,80 @@ const SOLANA_METHODS = [
   'solana_signAndSendTransaction',
 ];
 
+const RPC_TIMEOUT_MS = 15_000;
+const RPC_MAX_RESPONSE_BYTES = 1_048_576;
+const MAX_WALLETCONNECT_REQUEST_BYTES = 128 * 1024;
+const MAX_WALLETCONNECT_REQUEST_NODES = 4_096;
+const MAX_WALLETCONNECT_REQUEST_DEPTH = 32;
+const utf8 = new TextEncoder();
+
 const STORE = { topics: 'honey.wc.topics' };
 
 type Entry = { key: string; caller: Caller };
 let topics: Record<string, Entry> = {};
 let showing = false;
+
+/** Bounds an untrusted dApp request before it is decoded, queued or shown to an owner. */
+export function isBoundedWalletConnectRequest(request: unknown): boolean {
+  if (!request || typeof request !== 'object') return false;
+  const candidate = request as { method?: unknown; params?: unknown };
+  if (typeof candidate.method !== 'string' || candidate.method.length > 128) return false;
+
+  let bytes = 0;
+  let nodes = 0;
+  const seen = new Set<object>();
+  const stack: Array<{ value: unknown; depth: number }> = [
+    { value: candidate.method, depth: 0 },
+    { value: candidate.params, depth: 0 },
+  ];
+  const push = (value: unknown, depth: number) => {
+    if (nodes + stack.length >= MAX_WALLETCONNECT_REQUEST_NODES) return false;
+    stack.push({ value, depth });
+    return true;
+  };
+  const addString = (value: string) => {
+    if (value.length > MAX_WALLETCONNECT_REQUEST_BYTES) return false;
+    bytes += utf8.encode(value).byteLength;
+    return bytes <= MAX_WALLETCONNECT_REQUEST_BYTES;
+  };
+
+  try {
+    while (stack.length) {
+      const next = stack.pop();
+      if (!next || ++nodes > MAX_WALLETCONNECT_REQUEST_NODES) return false;
+      const { value, depth } = next;
+      if (depth > MAX_WALLETCONNECT_REQUEST_DEPTH) return false;
+      if (value === null) {
+        bytes += 4;
+      } else if (typeof value === 'string') {
+        if (!addString(value)) return false;
+      } else if (typeof value === 'number' || typeof value === 'boolean') {
+        bytes += 16;
+      } else if (Array.isArray(value)) {
+        if (seen.has(value) || value.length > MAX_WALLETCONNECT_REQUEST_NODES) return false;
+        seen.add(value);
+        bytes += 2;
+        for (const item of value) if (!push(item, depth + 1)) return false;
+      } else if (typeof value === 'object') {
+        if (seen.has(value)) return false;
+        seen.add(value);
+        bytes += 2;
+        for (const key in value) {
+          if (!Object.hasOwn(value, key)) continue;
+          if (!addString(key)) return false;
+          bytes += 2;
+          if (!push((value as Record<string, unknown>)[key], depth + 1)) return false;
+        }
+      } else {
+        return false;
+      }
+      if (bytes > MAX_WALLETCONNECT_REQUEST_BYTES) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 const router = createRouter({
   load: async <T>(key: string) => {
@@ -54,25 +124,28 @@ const router = createRouter({
   openApprovals: async () => {
     if (!showing) nav.push('/approve');
   },
-  rpc: async (url, method, params) => {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
-    });
-    const body = (await res.json()) as {
-      result?: unknown;
-      error?: { code: number; message: string };
-    };
-    if (body.error) throw body.error;
-    return body.result;
-  },
+  rpc: requestRpc,
   // WalletConnect sends its own events (accountsChanged) through the session.
   emit: () => {},
   badge: () => {},
   newId: () => Array.from(getRandomBytes(12), (b) => b.toString(16).padStart(2, '0')).join(''),
   now: () => Date.now(),
 });
+
+/** Bound provider response memory and total network wait before handing data to the router. */
+export async function requestRpc(
+  url: string,
+  method: string,
+  params: unknown,
+  fetcher: typeof fetch = fetch,
+  timeoutMs = RPC_TIMEOUT_MS,
+): Promise<unknown> {
+  return requestJsonRpc(url, method, params, {
+    fetcher,
+    timeoutMs,
+    maxResponseBytes: RPC_MAX_RESPONSE_BYTES,
+  });
+}
 
 const saveTopics = () => AsyncStorage.setItem(STORE.topics, JSON.stringify(topics));
 
@@ -224,6 +297,9 @@ async function start(): Promise<IWalletKit | null> {
 
 /** One request, through the shared router, translated to and from WalletConnect's shapes. */
 async function answer(entry: Entry, chainId: string, request: { method: string; params: unknown }) {
+  if (!isBoundedWalletConnectRequest(request)) {
+    throw { code: -32600, message: 'WalletConnect request is too large or complex.' };
+  }
   const { key, caller } = entry;
   if (chainId.startsWith('eip155:')) {
     await router.pinChain(key, Number(chainId.slice('eip155:'.length)));

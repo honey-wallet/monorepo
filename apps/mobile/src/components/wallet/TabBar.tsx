@@ -16,6 +16,7 @@ import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { tap } from '@/lib/haptics';
+import { isWeb } from '@/lib/platform';
 import { reselectTab } from '@/lib/tab-reselect';
 import { makeStyles, type Palette, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
@@ -25,7 +26,11 @@ type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>
 const PILL_TABS: { name: string; icon: IconName; label: string }[] = [
   { name: 'home', icon: 'home', label: 'Home' },
   { name: 'savings', icon: 'piggyBank', label: 'Savings' },
-  { name: 'search', icon: 'search', label: 'Search' },
+  // On the phone it's the browser (review), so a globe; the extension's tab is just search.
+  // { name: 'search', icon: 'search', label: 'Search' },
+  isWeb
+    ? { name: 'search', icon: 'search', label: 'Search' }
+    : { name: 'search', icon: 'globe', label: 'Browse' },
   { name: 'activity', icon: 'history', label: 'Activity' },
 ];
 

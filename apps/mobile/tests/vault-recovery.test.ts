@@ -18,6 +18,7 @@ vi.mock('expo-crypto', () => ({
 import {
   createAccount,
   eraseVault,
+  importPairedWallet,
   importPrivateKey,
   loadAccounts,
   readPrimaryMnemonic,
@@ -27,6 +28,25 @@ import {
 const phrase =
   'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
 beforeEach(() => storage.clear());
+it('rejects malformed paired account metadata before persisting the paired phrase', async () => {
+  await expect(
+    importPairedWallet({
+      mnemonic: phrase,
+      accounts: [{ index: -1, label: 'Invalid' }],
+    }),
+  ).rejects.toThrow('Paired wallet account list is invalid');
+  expect(storage.size).toBe(0);
+});
+
+it('imports a valid paired wallet and preserves its account label', async () => {
+  const imported = await importPairedWallet({
+    mnemonic: phrase,
+    accounts: [{ index: 0, label: 'Phone wallet' }],
+  });
+  expect(imported).toHaveLength(1);
+  expect(imported[0]?.label).toBe('Phone wallet');
+});
+
 it('requires recovery confirmation for independently imported secrets before deleting anything', async () => {
   const primary = await startWithMnemonic(phrase, 'Primary');
   const imported = await importPrivateKey('1'.repeat(64), 'Imported key');

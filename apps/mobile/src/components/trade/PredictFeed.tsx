@@ -15,6 +15,8 @@ import { Icon } from '@/components/Icon';
 import { LikeButton } from '@/components/motion/LikeButton';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
+import { ExecutionUnavailable } from '@/components/trade/ExecutionUnavailable';
+import { LivePredictionMarkets } from '@/components/trade/LivePredictionMarkets';
 import type { Side } from '@/components/trade/TradeForm';
 import { Chip } from '@/components/wallet/Chip';
 import { IntroBanner } from '@/components/wallet/IntroBanner';
@@ -82,6 +84,9 @@ export function PredictFeed({
 
   return (
     <View>
+      <LivePredictionMarkets />
+      <Text style={styles.previewHeading}>Sample preview</Text>
+      <ExecutionUnavailable message="The preview below uses sample markets and prices. Trading and settlement are not available." />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -102,8 +107,8 @@ export function PredictFeed({
       {!introDismissed && (
         <IntroBanner
           graphic={<OddsGraphic />}
-          title="Bet on what happens next"
-          body="Buy Yes or No on politics, sports, crypto and more. Winning shares pay $1."
+          title="Prediction markets preview"
+          body="Explore sample Yes and No markets. Trading and settlement are not available yet."
           link="How Predict works"
           onOpen={() => openGuide('predict')}
           onDismiss={dismissPredictIntro}
@@ -402,6 +407,13 @@ const useStyles = makeStyles((c) => ({
   },
   feed: {
     marginTop: 16,
+  },
+  previewHeading: {
+    marginHorizontal: 20,
+    marginTop: 8,
+    color: c.text,
+    fontSize: 18,
+    fontWeight: '600',
   },
   chips: {
     gap: 8,

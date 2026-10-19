@@ -1,0 +1,145 @@
+{
+  "result": "passed",
+  "scope": "Public-fixture encrypted SQLite allocation/approval races, abrupt claim/signature-write crashes and exact signed-byte recovery; no production signing policy or chain acceptance",
+  "initialized": {
+    "pid": 10924,
+    "key": "bunk-bitcoin-account:ed46462554f7eca498bf505619ffea2f8f29f5d82da87ecb40da800ae2cbb6de",
+    "digest": "32c2e3ce6a54cc7d45a198bd3686f333cafd04c8ffbb4a1f2bc8fa7956b9f67b",
+    "nextOwnerIndex": 3
+  },
+  "crash": {
+    "pid": 14378,
+    "phase": "claimed",
+    "exit": 73
+  },
+  "uncertain": {
+    "pid": 16671,
+    "retainedClaim": true,
+    "ordinaryRetryRejected": true
+  },
+  "recovered": {
+    "pid": 19837,
+    "digest": "32c2e3ce6a54cc7d45a198bd3686f333cafd04c8ffbb4a1f2bc8fa7956b9f67b",
+    "signed": {
+      "rawTransaction": "0200000000010164000000000000000000000000000000000000000000000000000000000000000000000000feffffff02307500000000000016001468e9bf580e14364109a46aceb4377a1cc3ff9602e31001000000000016001469680e2a73ab7954aedfbe5fcbb315f8a6c719f5024730440220651afb3f58ff50c7e34af7a70e7f6a2312f8e8298e123d633c79562f2c6276f202201da09d93faeab8bb83d15bc6544620aa4e422cba47c91773bc54bc96799c3c7a012102bd79b80e3971a01cd3758b4a5119f496ec4be292c57a3ba729ae6bf0d6513e7a65000000",
+      "txid": "f6f7eef53c415bad8cf3ab7df025cd1dda464bafc3e562656be50e1e3ace20ed",
+      "wtxid": "4f3170319cbf2e71cc2588e8e6a0e3e6185f2a0c1ad8f11f3448294aafebe9fa",
+      "weight": 561,
+      "vbytes": 141
+    }
+  },
+  "reopened": {
+    "pid": 22194,
+    "digest": "32c2e3ce6a54cc7d45a198bd3686f333cafd04c8ffbb4a1f2bc8fa7956b9f67b",
+    "signed": {
+      "rawTransaction": "0200000000010164000000000000000000000000000000000000000000000000000000000000000000000000feffffff02307500000000000016001468e9bf580e14364109a46aceb4377a1cc3ff9602e31001000000000016001469680e2a73ab7954aedfbe5fcbb315f8a6c719f5024730440220651afb3f58ff50c7e34af7a70e7f6a2312f8e8298e123d633c79562f2c6276f202201da09d93faeab8bb83d15bc6544620aa4e422cba47c91773bc54bc96799c3c7a012102bd79b80e3971a01cd3758b4a5119f496ec4be292c57a3ba729ae6bf0d6513e7a65000000",
+      "txid": "f6f7eef53c415bad8cf3ab7df025cd1dda464bafc3e562656be50e1e3ace20ed",
+      "wtxid": "4f3170319cbf2e71cc2588e8e6a0e3e6185f2a0c1ad8f11f3448294aafebe9fa",
+      "weight": 561,
+      "vbytes": 141
+    }
+  },
+  "allocationRace": [
+    {
+      "pid": 24476,
+      "won": false,
+      "conflict": true
+    },
+    {
+      "pid": 24482,
+      "won": true,
+      "id": "000000000000000000000000000000000000000000000000000000000000001f"
+    }
+  ],
+  "allocationRetry": {
+    "pid": 27898,
+    "ownerIndex": 4,
+    "nextOwnerIndex": 5
+  },
+  "approvalRace": [
+    {
+      "pid": 32119,
+      "won": false,
+      "conflict": true
+    },
+    {
+      "pid": 32124,
+      "won": true,
+      "id": "0000000000000000000000000000000000000000000000000000000000000016"
+    }
+  ],
+  "signatureAcknowledgementLoss": {
+    "pid": 39644,
+    "digest": "32c2e3ce6a54cc7d45a198bd3686f333cafd04c8ffbb4a1f2bc8fa7956b9f67b",
+    "signed": {
+      "rawTransaction": "0200000000010164000000000000000000000000000000000000000000000000000000000000000000000000feffffff02307500000000000016001468e9bf580e14364109a46aceb4377a1cc3ff9602e31001000000000016001469680e2a73ab7954aedfbe5fcbb315f8a6c719f5024730440220651afb3f58ff50c7e34af7a70e7f6a2312f8e8298e123d633c79562f2c6276f202201da09d93faeab8bb83d15bc6544620aa4e422cba47c91773bc54bc96799c3c7a012102bd79b80e3971a01cd3758b4a5119f496ec4be292c57a3ba729ae6bf0d6513e7a65000000",
+      "txid": "f6f7eef53c415bad8cf3ab7df025cd1dda464bafc3e562656be50e1e3ace20ed",
+      "wtxid": "4f3170319cbf2e71cc2588e8e6a0e3e6185f2a0c1ad8f11f3448294aafebe9fa",
+      "weight": 561,
+      "vbytes": 141
+    }
+  },
+  "missingHistory": {
+    "pid": 41537,
+    "missingHistoryRejectedWithoutCreatingAccount": true
+  },
+  "ciphertextAtRest": true,
+  "sourcesSha256": {
+    "packages/bunk-evm/test/bundler/typescript-loader.mjs": "e48cb47502a41e97a6c52e86e5b93ef2a35fbe3f829d7301893badd916e2c791",
+    "packages/keyring/package.json": "d3f8e700b8b84f9d68f99b33887e6fcddc7e08b2f204da1f0b4db4b782baf96c",
+    "packages/keyring/scripts/bunk-bitcoin-journal-restart.mjs": "a93c0680832576c7fd2415c5e2ca7312954e42e3564c2cf44794ab35dea6c4ec",
+    "packages/keyring/src/backup-limits.test.ts": "88f893320efa32eb7097428b8f2cc245bd4ad6651f13e6a19bc49d186e5c4e0d",
+    "packages/keyring/src/backup.test.ts": "63891c2c93540b04293261377d0c2ca5232a19caac6bd69786694413c660d99b",
+    "packages/keyring/src/backup.ts": "454e5414008df06fe0da028df7db7f7808f20fc71f94acce7e13e8484d7e8c81",
+    "packages/keyring/src/bunk-bitcoin-discovery.test.ts": "b02e08d7eeb1237291b186b4fe6fccc3def20b755ee06995d011bf1a71c93bd0",
+    "packages/keyring/src/bunk-bitcoin-discovery.ts": "ed34a04ca9b62bf419c8bb02054b34c979a64e134ca9ff422f486697c9940aa3",
+    "packages/keyring/src/bunk-bitcoin-journal.test.ts": "05668785385242d69567137579e28551270621f77089e884da7bb181d8398c08",
+    "packages/keyring/src/bunk-bitcoin-journal.ts": "2671d564bfd3f63a443f0a3f23f718980d33bc997051a09dcb58735afc7ddd58",
+    "packages/keyring/src/bunk-bitcoin-observe.test.ts": "fbb27b82e3512dc43a58a926e336980433fdbdf1f5e362f88dc4f92d615bd886",
+    "packages/keyring/src/bunk-bitcoin-observe.ts": "f5e8f349f1cfcd8e105c8071e4719c76b599ebcb3b6cd224dabc4c30d3e29135",
+    "packages/keyring/src/bunk-bitcoin-rpc.ts": "8ef43d16d90ebda1dd327d30ef034ff4478a268b3234275b68bd06ad3c197b1a",
+    "packages/keyring/src/bunk-bitcoin.test.ts": "b8e233e3a52ce2518b1a727c1418b8fcbe97200dbe5eba885b9864ef18cdb81c",
+    "packages/keyring/src/bunk-bitcoin.ts": "9163f703a6b4e1c32e5ef37117180c3c255342f40725642ee25910dc663480f7",
+    "packages/keyring/src/bunk-evm-observe.test.ts": "398bf3982d051b5f13a21dde5caf0adc04deeca34faab34f49cdf2bb8ce2ad67",
+    "packages/keyring/src/bunk-evm-observe.ts": "ef3939a8cc92f342a91e8bfa748ecda90939d917707ebf6eae219fbf6c6d71ec",
+    "packages/keyring/src/bunk-evm-sign.ts": "296eb8570ed28e82f48265d8a92ca403416b826cd347feb1667f4a4095710f34",
+    "packages/keyring/src/bunk-evm-v2-journal.ts": "25a49e3ff6c67077f4fd1f047c3d387b0df997a64a6a03cd6b2cda4d154df7d1",
+    "packages/keyring/src/bunk-evm-v2-sign.ts": "545e9570239f54a7e63053cbfc2f873a951a6978c66d55426e5e558cd6dd3ce0",
+    "packages/keyring/src/bunk-evm-v2-store.ts": "c34b341c27270b1a3e47f7651630fa2443404eeb46b72e460568290a9eb39153",
+    "packages/keyring/src/bunk-evm-v2.test.ts": "d70bb1cc62ba8f0abd169524e4fe7726d0f56d75c5243d2d49593d64f8c99766",
+    "packages/keyring/src/bunk-evm-v2.ts": "0f18ebc2602a72e55305444029e39d676056e3670da2649dc2d77d783e9de685",
+    "packages/keyring/src/bunk-evm-v3-account.ts": "837fe98f0d66c271db31f283fcc3b3469bd21d2c40da8a217b71c48e41350448",
+    "packages/keyring/src/bunk-evm-v3-discovery.ts": "668aeeb4e8b3e7be52497bc29ac8128719c12880ae8aeef443fe071220c09e3b",
+    "packages/keyring/src/bunk-evm-v3-journal.ts": "400013dd8789eb811f6a44ee034418b99a059356e1c0b8f5c3d99e949fb4e338",
+    "packages/keyring/src/bunk-evm-v3-sign.ts": "525a954a1a36d554bd1957852c97a57f916edd65be1cf59cc3d23a09a4bb2d16",
+    "packages/keyring/src/bunk-evm-v3.test.ts": "4da0d066bc4e3a8ca6dcd0987235315f534789fb1c52eb57278fa985b93f8392",
+    "packages/keyring/src/bunk-evm-v3.ts": "1724313218e0c32d9177eb3026cf18f261f02f95f5eab1e6f1c2c0df350d323e",
+    "packages/keyring/src/bunk-evm.test.ts": "6b766c3f03e310e6ab8766c5a14033e08074f08b6f0737eb51253f0b4db64394",
+    "packages/keyring/src/bunk-evm.ts": "eb0b67cef6195649f32bc86947fa49fee3bc7bba4aed54fc3f6590bfe9901bee",
+    "packages/keyring/src/bunk-indexeddb-store.ts": "b40ed742149bc212ca479dcee29d97d81fee0797bab8641ebb37f0b1c174f3c5",
+    "packages/keyring/src/bunk-journal-key.test.ts": "fbe96990637b33325fa06e9581f83dc21901e159ce010a9ea7df5a10f36d1ae1",
+    "packages/keyring/src/bunk-journal-key.ts": "81cb9b83c847fafcf908752c47e9561833a44d4c4233b0142e18de019df68531",
+    "packages/keyring/src/bunk-solana-discovery.test.ts": "038d046477cbc59af1f347dc090fccddc4a241b51d8909e0fa905483248dcac4",
+    "packages/keyring/src/bunk-solana-discovery.ts": "46e5bb1879bada1b409a363d2afc6fdac66777ab7e9ec628f128955d2caf9cf9",
+    "packages/keyring/src/bunk-solana-journal.test.ts": "e7c1d96f6c5ba9abcc1ba71d8ac622878d90bdf9dcf8883670bf7dd8de7ae756",
+    "packages/keyring/src/bunk-solana-journal.ts": "e8d38921733360e5c8e570571652405b5c1d6b9f17d7b55a89645b5d8f31082b",
+    "packages/keyring/src/bunk-solana-observe.ts": "02bdb9c95ed60e978b02c6a829552ae0d3aed7faaf2acb4b9ad729290fab5ef4",
+    "packages/keyring/src/bunk-solana.test.ts": "1a19b262f5df41cd202613d0fdbf41e9592ca3001891ed78d001c55848d56b1b",
+    "packages/keyring/src/bunk-solana.ts": "3e8984462c024c1ba6e40b967211f1e9a04063f7145a1fd2345b36a2d5603e90",
+    "packages/keyring/src/bunk.test.ts": "22dd5601ce0224b3e4d873b42539d7a6e3322b24ae64b0c1c3f80d03ce0eb618",
+    "packages/keyring/src/bunk.ts": "6f30f3edec4918ddeddc4b64ec65474ba75d0e04f88c98b0dacde7bd2d9fe8ec",
+    "packages/keyring/src/index.test.ts": "40d9c587044867f43e70bbbfcce459d160b05cb851f81ed46cb4d9901649f223",
+    "packages/keyring/src/index.ts": "43650d4599a62962a4ea4ec0d4a3bb77c19344a23f48fa76564fbc153dc8d00d",
+    "packages/keyring/src/kdf.ts": "409421f206c25c2438a33dd216ba84de548424b39ba5c3bae668583f6677ba01",
+    "packages/keyring/src/local-vault.test.ts": "12ecc3b12a53f5ba4b3fa8b17e8a380554d60dd6d9252b8f01f2384a8b0e2e97",
+    "packages/keyring/src/local-vault.ts": "1225b790a93511066a9223834307be2b6659eca401cf5e4711477bcce7d7ed22",
+    "packages/keyring/src/networks.ts": "529b24eaf4750f61a96abf4580024d6a38036733cc728207cfcdfca343447cf9",
+    "packages/keyring/src/pairing.test.ts": "fba4ee3f8611249b38ce8f4847412f4cd7cbc951b59721d0b5c4bbdea7f018cc",
+    "packages/keyring/src/pairing.ts": "6cda5ac7c0980c6a7095ee736bc7212f5b836487cac25d8e936e609907e7f980",
+    "packages/keyring/src/sign.test.ts": "f3de3b684e121ae09798b5fb8e9c19dba22cf1e57a6c3f9a80e8af77eb18e1f9",
+    "packages/keyring/src/sign.ts": "12a9805bce0c1244698e595bbbd2674b26d8dd4f087bc08abd8355765b8f7359",
+    "pnpm-lock.yaml": "d7f4b8f33108bbe838989a962531951c2256d8697c1854ef17b945f8604931d3"
+  },
+  "sourcesRechecked": true,
+  "workDirectory": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-bitcoin-journal-iqONKL"
+}

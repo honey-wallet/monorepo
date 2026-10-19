@@ -12,7 +12,7 @@
 //!
 //! Each slot is write-once for the life of the channel (five minutes), even after it
 //! has been read, so nobody can slip in a second message. Messages are read once and
-//! kept in memory only. Each client IP may hold a limited number of live messages, so
+//! shared through Redis when configured. Each client IP may hold a limited number of live messages, so
 //! one sender can't fill the mailbox for everyone.
 
 use std::{
@@ -34,8 +34,6 @@ use sha2::{Digest, Sha256};
 use crate::error::AppError;
 
 const TTL: Duration = Duration::from_secs(5 * 60);
-/// Base64url of the largest message the clients send, with room to spare.
-const MAX_DATA_LEN: usize = 16 * 1024;
 /// A backstop for the whole mailbox.
 const MAX_MESSAGES: usize = 10_000;
 /// Live messages one client IP may hold. A pairing writes four, so this allows a few
@@ -75,6 +73,23 @@ type Entries = HashMap<(String, Slot), Entry>;
 struct Mailbox {
     entries: Arc<Mutex<Entries>>,
     trust_proxy_headers: bool,
+    trusted_proxy_cidrs: Vec<crate::config::TrustedProxyCidr>,
+    shared: Option<crate::pairing_store::PairingStore>,
+}
+
+impl Slot {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Commit => "commit",
+            Self::Nonce => "nonce",
+            Self::Reveal => "reveal",
+            Self::Payload => "payload",
+        }
+    }
+
+    fn max_data_len(self) -> usize {
+        crate::pairing_store::slot_data_limit(self.as_str()).expect("known pairing slot")
+    }
 }
 
 impl Mailbox {
@@ -88,12 +103,20 @@ impl Mailbox {
     }
 
     /// Who to count a message against: the socket's IP, or behind a trusted proxy
-    /// (`TRUST_PROXY_HEADERS=true`) the last `X-Forwarded-For` entry across every such
-    /// header line, the one our proxy appended. Anything before it came from the client
-    /// and can be forged, so a missing or unreadable last entry is rejected rather than
-    /// falling back to the proxy's own address (which every client would share).
+    /// (`TRUST_PROXY_HEADERS=true`) and the TCP peer is in `TRUSTED_PROXY_CIDRS`, the
+    /// last `X-Forwarded-For` entry across every header line, which the proxy appended.
+    /// An untrusted socket peer is always keyed by its actual IP and cannot select a
+    /// quota bucket by forging this header.
     fn client(&self, headers: &HeaderMap, extensions: &Extensions) -> Result<IpAddr, AppError> {
-        let ip = if self.trust_proxy_headers {
+        let peer = extensions
+            .get::<ConnectInfo<SocketAddr>>()
+            .map_or(IpAddr::from([0, 0, 0, 0]), |info| info.0.ip());
+        let trust_forwarded = self.trust_proxy_headers
+            && self
+                .trusted_proxy_cidrs
+                .iter()
+                .any(|cidr| cidr.contains(peer));
+        let ip = if trust_forwarded {
             headers
                 .get_all("x-forwarded-for")
                 .iter()
@@ -102,9 +125,7 @@ impl Mailbox {
                 .and_then(|value| value.rsplit(',').next()?.trim().parse().ok())
                 .ok_or_else(|| AppError::BadRequest("missing client address".into()))?
         } else {
-            extensions
-                .get::<ConnectInfo<SocketAddr>>()
-                .map_or(IpAddr::from([0, 0, 0, 0]), |info| info.0.ip())
+            peer
         };
         Ok(client_bucket(ip))
     }
@@ -124,12 +145,33 @@ fn client_bucket(ip: IpAddr) -> IpAddr {
     }
 }
 
+fn receive_quota_subject(client: IpAddr) -> String {
+    hex::encode(Sha256::digest(client.to_string().as_bytes()))
+}
+
 pub fn router(trust_proxy_headers: bool) -> Router {
+    router_with_proxies(trust_proxy_headers, vec![], None)
+}
+
+pub fn router_with_store(
+    trust_proxy_headers: bool,
+    shared: Option<crate::pairing_store::PairingStore>,
+) -> Router {
+    router_with_proxies(trust_proxy_headers, vec![], shared)
+}
+
+pub fn router_with_proxies(
+    trust_proxy_headers: bool,
+    trusted_proxy_cidrs: Vec<crate::config::TrustedProxyCidr>,
+    shared: Option<crate::pairing_store::PairingStore>,
+) -> Router {
     Router::new()
         .route("/pairing/{channel}/{slot}", put(send).get(receive))
         .with_state(Mailbox {
             entries: Arc::default(),
             trust_proxy_headers,
+            trusted_proxy_cidrs,
+            shared,
         })
 }
 
@@ -160,10 +202,22 @@ async fn send(
     Json(message): Json<PairMessage>,
 ) -> Result<StatusCode, AppError> {
     authorize(&channel, &headers)?;
-    if message.data.is_empty() || message.data.len() > MAX_DATA_LEN {
+    if message.data.is_empty() || message.data.len() > slot.max_data_len() {
         return Err(AppError::BadRequest("message too large".into()));
     }
     let client = mailbox.client(&headers, &extensions)?;
+    if let Some(shared) = &mailbox.shared {
+        let subject = receive_quota_subject(client);
+        shared
+            .send(
+                &channel.to_ascii_lowercase(),
+                slot.as_str(),
+                &subject,
+                &message.data,
+            )
+            .await?;
+        return Ok(StatusCode::NO_CONTENT);
+    }
     mailbox.with(|map| {
         let key = (channel.to_ascii_lowercase(), slot);
         // Write-once, even after it's been read.
@@ -176,10 +230,16 @@ async fn send(
         if map.len() >= MAX_MESSAGES {
             return Err(AppError::Busy);
         }
+        let at = map
+            .iter()
+            .filter(|((id, _), _)| id == &key.0)
+            .map(|(_, entry)| entry.at)
+            .min()
+            .unwrap_or_else(Instant::now);
         map.insert(
             key,
             Entry {
-                at: Instant::now(),
+                at,
                 client,
                 data: Some(message.data),
             },
@@ -193,8 +253,21 @@ async fn receive(
     State(mailbox): State<Mailbox>,
     Path((channel, slot)): Path<(String, Slot)>,
     headers: HeaderMap,
+    extensions: Extensions,
 ) -> Result<Json<PairMessage>, AppError> {
     authorize(&channel, &headers)?;
+    let client = mailbox.client(&headers, &extensions)?;
+    if let Some(shared) = &mailbox.shared {
+        // Poll quotas follow the resolved client IP, not the caller-controlled channel.
+        // Otherwise a client can mint another valid token/channel for each fresh bucket.
+        let subject = receive_quota_subject(client);
+        shared.admit_receive(&subject).await?;
+        return Ok(Json(PairMessage {
+            data: shared
+                .receive(&channel.to_ascii_lowercase(), slot.as_str())
+                .await?,
+        }));
+    }
     mailbox
         .with(|map| {
             map.get_mut(&(channel.to_ascii_lowercase(), slot))
@@ -208,7 +281,7 @@ async fn receive(
 mod tests {
     use std::net::IpAddr;
 
-    use super::client_bucket;
+    use super::{client_bucket, receive_quota_subject};
 
     #[test]
     fn keeps_ipv4_clients_apart_even_when_mapped_to_ipv6() {
@@ -225,5 +298,18 @@ mod tests {
         let c: IpAddr = "2001:db8:1:3::1".parse().unwrap();
         assert_eq!(client_bucket(a), client_bucket(b));
         assert_ne!(client_bucket(a), client_bucket(c));
+    }
+
+    #[test]
+    fn receive_quota_identity_is_stable_for_the_canonical_client_bucket() {
+        let client: IpAddr = "192.0.2.10".parse().unwrap();
+        assert_eq!(
+            receive_quota_subject(client),
+            receive_quota_subject("192.0.2.10".parse().unwrap())
+        );
+        assert_ne!(
+            receive_quota_subject(client),
+            receive_quota_subject("192.0.2.11".parse().unwrap())
+        );
     }
 }

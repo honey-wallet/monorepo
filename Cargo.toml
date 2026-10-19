@@ -4,25 +4,54 @@ members = ["apps/server"]
 
 [workspace.package]
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.91"
 license = "PolyForm-Noncommercial-1.0.0"
 repository = "https://github.com/honey-wallet/monorepo"
 publish = false
 
 [workspace.dependencies]
+# Pin the consensus/eips pair compatible with the existing Rust 1.93 toolchain.
+# No RPC provider, signer, KZG, serde or network features are enabled here.
+alloy-consensus = { version = "=2.1.1", default-features = false, features = ["std", "k256"] }
+alloy-eips = { version = "=2.1.1", default-features = false, features = ["std"] }
+alloy-primitives = { version = "=1.7.3", default-features = false, features = ["std"] }
+chacha20poly1305 = "=0.10.1"
+zeroize = "1.9.1"
 anyhow = "1.0"
-axum = "0.8"
+axum = { version = "0.8", features = ["ws"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "stream"] }
+httpdate = "1"
+prometheus-client = "0.25"
+async-trait = "0.1"
+prost = "0.14"
+opentelemetry-proto = { version = "0.33", default-features = false, features = ["gen-tonic-messages", "trace"] }
+opentelemetry-http = { version = "0.33", default-features = false }
+opentelemetry = { version = "0.33", default-features = false, features = ["trace"] }
+opentelemetry_sdk = { version = "0.33", default-features = false, features = ["trace"] }
+opentelemetry-otlp = { version = "0.33", default-features = false, features = ["trace", "http-proto"] }
+tracing-opentelemetry = { version = "0.34", default-features = false }
+futures-util = { version = "0.3", features = ["sink"] }
 dotenvy = "0.15"
 http-body-util = "0.1"
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde_json = { version = "1.0", features = ["raw_value"] }
 sha2 = "0.11.0"
+sqlx = { version = "=0.8.6", default-features = false, features = ["runtime-tokio-rustls", "postgres"] }
+# Target type/migration features at PostgreSQL, avoiding optional MySQL/SQLite
+# resolution (including MySQL's RSA dependency) through the facade's feature graph.
+sqlx-core = { version = "=0.8.6", default-features = false, features = ["migrate"] }
+sqlx-postgres = { version = "=0.8.6", default-features = false, features = ["uuid", "time", "migrate"] }
+siwe = { version = "0.6.1", default-features = false }
+time = { version = "0.3", features = ["formatting", "parsing"] }
+hex = "0.4"
+redis = { version = "0.32.7", default-features = false, features = ["tokio-rustls-comp", "connection-manager"] }
 thiserror = "2.0"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time"] }
 tower = { version = "0.5", features = ["util"] }
 tower-http = { version = "0.7", features = ["cors", "trace", "timeout", "request-id", "util"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -1,0 +1,32 @@
+# Disposable local telemetry only. No host log mounts or external exports.
+# API on Docker Desktop host: METRICS_ADDR=127.0.0.1:29090.
+# Linux: bind a private host-gateway address reachable by the scrape container;
+# firewall it to the collector network. Never expose metrics on the public API.
+# HONEY_OTLP_TRACES_ENDPOINT=http://127.0.0.1:24318/v1/traces
+services:
+  jaeger:
+    image: cr.jaegertracing.io/jaegertracing/jaeger:2.22.0
+    ports:
+      - "127.0.0.1:26686:16686"
+    mem_limit: 256m
+  collector:
+    image: otel/opentelemetry-collector:0.163.1
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./ops/observability/collector.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:24318:4318"
+    depends_on: [jaeger]
+    mem_limit: 256m
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.retention.time=2h", "--storage.tsdb.retention.size=128MB"]
+    volumes:
+      - ./ops/observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+      - ./ops/observability/alerts.yaml:/etc/prometheus/alerts.yaml:ro
+      - ./ops/observability/alerts.test.yaml:/etc/prometheus/alerts.test.yaml:ro
+    ports:
+      - "127.0.0.1:29091:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    mem_limit: 256m

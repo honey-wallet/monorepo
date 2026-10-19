@@ -18,3 +18,6 @@ services:
       PORT: 8080
     read_only: true
     restart: unless-stopped
+    # The app's default shutdown budget is 15s plus bounded pool/trace cleanup.
+    # Keep Docker from SIGKILLing it at the engine's shorter default timeout.
+    stop_grace_period: 25s

@@ -1,0 +1,556 @@
+{
+  "source": "https://trade-api.gateway.uniswap.org/v1/api.json",
+  "sha256": "2f46a6cb498f27461c219dd898f513e77d725ad10546435fb3b5e1ff4fdc2e2e",
+  "note": "Selected schema nodes for review; references resolve against the original specification. Not a standalone schema or authenticated response fixture.",
+  "schemas": {
+    "QuoteRequest": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/components/schemas/TradeType"
+        },
+        "amount": {
+          "$ref": "#/components/schemas/tokenAmount"
+        },
+        "tokenInChainId": {
+          "$ref": "#/components/schemas/ChainId"
+        },
+        "tokenOutChainId": {
+          "$ref": "#/components/schemas/ChainId"
+        },
+        "tokenIn": {
+          "$ref": "#/components/schemas/inputToken"
+        },
+        "tokenOut": {
+          "$ref": "#/components/schemas/outputToken"
+        },
+        "generatePermitAsTransaction": {
+          "$ref": "#/components/schemas/generatePermitAsTransaction"
+        },
+        "swapper": {
+          "$ref": "#/components/schemas/senderWalletAddress"
+        },
+        "slippageTolerance": {
+          "$ref": "#/components/schemas/slippageTolerance"
+        },
+        "autoSlippage": {
+          "$ref": "#/components/schemas/AutoSlippage"
+        },
+        "routingPreference": {
+          "$ref": "#/components/schemas/RoutingPreference"
+        },
+        "protocols": {
+          "$ref": "#/components/schemas/Protocols"
+        },
+        "hooksOptions": {
+          "$ref": "#/components/schemas/HooksOptions"
+        },
+        "spreadOptimization": {
+          "$ref": "#/components/schemas/SpreadOptimization"
+        },
+        "urgency": {
+          "$ref": "#/components/schemas/Urgency"
+        },
+        "permitAmount": {
+          "$ref": "#/components/schemas/PermitAmount"
+        },
+        "recipient": {
+          "$ref": "#/components/schemas/receiverWalletAddress"
+        },
+        "integratorFees": {
+          "type": "array",
+          "description": "Optional integrator fee configuration. When provided, the specified fees are applied to the swap instead of the default partner fee service. Up to 4 fee entries are supported on both UniswapX and classic (Universal Router) routes. Multi-entry fees on a Universal Router route require router version 2.1.1: the API resolves to 2.1.1 automatically on chains where it is deployed, and an explicit `x-universal-router-version` pin below 2.1.1 (or a chain without a 2.1.1 deployment) is rejected with a 400. Multi-entry fees are exact-input only; an exact-output request with more than one entry is rejected with a 400. Rejections carry a machine-readable `errorCode`: `IntegratorFeesTooManyEntriesError` (more than 4 entries), `IntegratorFeeEntryExceedsMaxError` (one entry above 500 bps), `IntegratorFeesTotalExceedsMaxError` (entries summing above 500 bps), and `InvalidIntegratorFeesError` for any other malformed shape (duplicate recipient, non-positive or over-precise bips, exact-output with several entries, router version below 2.1.1). The encoded calldata is checked against the advertised fee legs before it is returned, and a mismatch withholds the calldata. Each recipient may appear at most once, and the `bips` SUMMED across all entries must not exceed 500 (5%) \u2014 the total is capped at 500 regardless of whether 1, 2, 3, or 4 fees are passed (a request whose fees sum higher is rejected with a 400: 'integratorFees total bips must be less than or equal to 500, but was <total>'). The caps are enforced server-side on every transport and re-checked at /swap. An empty array is accepted and means no integrator fees, the same as omitting the field.",
+          "items": {
+            "$ref": "#/components/schemas/IntegratorFee"
+          },
+          "maxItems": 4
+        },
+        "walletExecutionContext": {
+          "$ref": "#/components/schemas/WalletExecutionContext",
+          "x-internal": true
+        },
+        "earnIntent": {
+          "$ref": "#/components/schemas/EarnIntent",
+          "x-internal": true
+        },
+        "swapSource": {
+          "$ref": "#/components/schemas/SwapSource"
+        },
+        "enforceExactIn": {
+          "$ref": "#/components/schemas/EnforceExactIn"
+        },
+        "includeRouteCandidates": {
+          "type": "boolean",
+          "description": "When true, uniroute-backed classic quotes include routeCandidates \u2014 the top alternative routes considered, each with its whole-route amounts."
+        }
+      },
+      "required": [
+        "type",
+        "amount",
+        "tokenInChainId",
+        "tokenOutChainId",
+        "tokenIn",
+        "tokenOut",
+        "swapper"
+      ]
+    },
+    "QuoteResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "$ref": "#/components/schemas/RequestId"
+        },
+        "quote": {
+          "$ref": "#/components/schemas/Quote"
+        },
+        "routing": {
+          "$ref": "#/components/schemas/Routing"
+        },
+        "isTokenApprovalApplicable": {
+          "type": "boolean",
+          "description": "Whether an ERC-20 token approval is applicable to this swap's input. `true` when the routing pulls the input token via an allowance, so an approval may be required \u2014 verify (or orchestrate) it via `/check_approval`. `false` when no approval is ever needed for this route (e.g. native-currency input, wrap/unwrap, or a native-gas-token input paid as native value). Reflects the routing mechanism, not the swapper's current on-chain allowance. If absent, assume an approval is applicable."
+        },
+        "permitTransaction": {
+          "$ref": "#/components/schemas/TransactionRequest"
+        },
+        "permitData": {
+          "$ref": "#/components/schemas/NullablePermit"
+        },
+        "permitGasFee": {
+          "$ref": "#/components/schemas/gasFee"
+        },
+        "swapTransaction": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/SwapTransactionResponse"
+            }
+          ],
+          "description": "Ready-to-send swap transaction, returned for CLASSIC quotes when no permit signature needs to be embedded in the calldata. That's the case when the request used `x-permit2-disabled: true`, the swapper already holds a valid permit (`permitData` is `null`), or the permit was requested as a transaction (`generatePermitAsTransaction: true`). The returned calldata is built with default settings (`safetyMode: SAFE`, deadline 30 minutes ahead); use `/swap` to customize them. Not returned when `txFailureReasons` is populated; call `/swap` to build the calldata anyway. With `swapSource: \"UNIVERSAL_ROUTER\"` a failed simulation returns a 422 instead of a quote without calldata, except for `TRANSFER_FROM_FAILED` and `SLIPPAGE_TOO_LOW`, which still return calldata. `/swap` is unchanged for these quotes."
+        },
+        "swapGasFee": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/gasFee"
+            }
+          ],
+          "description": "The estimated gas fee for `swapTransaction`, equal to the `gasFee` that `/swap` would return without gas refresh. Only present when `swapTransaction` is present."
+        },
+        "sponsorshipInfo": {
+          "$ref": "#/components/schemas/SponsorshipInfo",
+          "x-internal": true
+        }
+      },
+      "required": ["routing", "quote", "permitData", "requestId"]
+    },
+    "ClassicQuote": {
+      "title": "Classic Quote",
+      "type": "object",
+      "properties": {
+        "input": {
+          "$ref": "#/components/schemas/QuoteInput"
+        },
+        "output": {
+          "$ref": "#/components/schemas/QuoteOutput"
+        },
+        "swapper": {
+          "$ref": "#/components/schemas/senderWalletAddress"
+        },
+        "chainId": {
+          "$ref": "#/components/schemas/ChainId"
+        },
+        "slippage": {
+          "$ref": "#/components/schemas/slippageTolerance"
+        },
+        "tradeType": {
+          "$ref": "#/components/schemas/TradeType"
+        },
+        "gasFee": {
+          "$ref": "#/components/schemas/gasFee"
+        },
+        "gasFeeUSD": {
+          "$ref": "#/components/schemas/gasFeeUSD"
+        },
+        "gasFeeQuote": {
+          "$ref": "#/components/schemas/gasFeeInCurrency"
+        },
+        "route": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/V2PoolInRoute"
+                },
+                {
+                  "$ref": "#/components/schemas/V3PoolInRoute"
+                },
+                {
+                  "$ref": "#/components/schemas/V4PoolInRoute"
+                }
+              ]
+            }
+          }
+        },
+        "routeString": {
+          "type": "string",
+          "description": "The route in string format."
+        },
+        "quoteId": {
+          "$ref": "#/components/schemas/quoteId"
+        },
+        "gasUseEstimate": {
+          "type": "string",
+          "description": "The estimated gas use. It does NOT include the additional gas for token approvals."
+        },
+        "blockNumber": {
+          "type": "string",
+          "description": "The current block number."
+        },
+        "gasPrice": {
+          "$ref": "#/components/schemas/gasPrice"
+        },
+        "maxFeePerGas": {
+          "$ref": "#/components/schemas/maxFeePerGas"
+        },
+        "maxPriorityFeePerGas": {
+          "$ref": "#/components/schemas/maxPriorityFeePerGas"
+        },
+        "txFailureReasons": {
+          "description": "The reason(s) why the transaction failed during simulation.",
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/TransactionFailureReason"
+          }
+        },
+        "priceImpact": {
+          "type": "number",
+          "description": "The impact the trade has on the market price of the pool, between 0-100 percent"
+        },
+        "aggregatedOutputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/components/schemas/AggregatedOutput"
+          }
+        },
+        "swapSteps": {
+          "type": "array",
+          "description": "Universal Router swap step sequence. Additive, opt-in via the `x-universal-router-swapsteps` header. When present, mirrors the inputs to `SwapRouter.encodeSwaps`. Only emitted when GuideStar wins the hybrid quoter race (`EXACT_INPUT` today; broader coverage once UniRoute's transformer ships).",
+          "items": {
+            "$ref": "#/components/schemas/SwapStep"
+          }
+        },
+        "routeCandidates": {
+          "type": "array",
+          "description": "Top route candidates the router considered but did NOT serve (the served route and candidates proven unviable \u2014 simulation or trade-build failures \u2014 are excluded), best-first. Additive, opt-in via the `includeRouteCandidates` request flag; only populated for uniroute-backed quotes. May be short or empty when the route cache limits the candidate pool.",
+          "items": {
+            "$ref": "#/components/schemas/RouteCandidate"
+          }
+        },
+        "routeGraph": {
+          "x-internal": true,
+          "$ref": "#/components/schemas/RouteGraph"
+        },
+        "priceDifference": {
+          "x-internal": true,
+          "type": "number",
+          "description": "The expected value lost versus frictionless execution at current prices, as a percent between -100 and 100. Negative values indicate price improvement. For classic swaps this equals priceImpact, the pool-based impact reported by routing."
+        }
+      }
+    },
+    "QuoteInput": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/components/schemas/tokenAmount"
+        },
+        "token": {
+          "$ref": "#/components/schemas/inputToken"
+        },
+        "maximumAmount": {
+          "$ref": "#/components/schemas/tokenAmount"
+        }
+      }
+    },
+    "QuoteOutput": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "$ref": "#/components/schemas/tokenAmount"
+        },
+        "token": {
+          "$ref": "#/components/schemas/outputToken"
+        },
+        "recipient": {
+          "$ref": "#/components/schemas/receiverWalletAddress"
+        },
+        "minimumAmount": {
+          "$ref": "#/components/schemas/tokenAmount"
+        }
+      }
+    },
+    "AggregatedOutput": {
+      "description": "An array of all outputs of the proposed transaction. This includes the swap as well as any fees collected by the API integrator. This does not include pool fees when routing is through a Uniswap Protocol pool.",
+      "type": "object",
+      "properties": {
+        "token": {
+          "$ref": "#/components/schemas/outputToken"
+        },
+        "amount": {
+          "$ref": "#/components/schemas/tokenAmount"
+        },
+        "recipient": {
+          "$ref": "#/components/schemas/receiverWalletAddress"
+        },
+        "bps": {
+          "$ref": "#/components/schemas/bps"
+        },
+        "minAmount": {
+          "$ref": "#/components/schemas/minAmount"
+        },
+        "fee": {
+          "type": "string",
+          "enum": ["INTEGRATOR"],
+          "description": "Set to INTEGRATOR when this output is an integrator fee (as specified by the `integratorFees` array in the /quote request); omitted for the core output of the swap. One INTEGRATOR output is returned per fee recipient, in the order the recipients were requested, and their amounts sum to the amount deducted from the core output."
+        }
+      }
+    },
+    "Permit": {
+      "description": "the permit2 message object for the customer to sign to permit spending by the permit2 contract.",
+      "type": "object",
+      "properties": {
+        "domain": {
+          "type": "object"
+        },
+        "values": {
+          "type": "object"
+        },
+        "types": {
+          "type": "object"
+        }
+      }
+    },
+    "NullablePermit": {
+      "description": "the permit2 message object for the customer to sign to permit spending by the permit2 contract.",
+      "type": "object",
+      "nullable": true,
+      "properties": {
+        "domain": {
+          "type": "object"
+        },
+        "values": {
+          "type": "object"
+        },
+        "types": {
+          "type": "object"
+        }
+      }
+    },
+    "TokenInRoute": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "$ref": "#/components/schemas/inputToken"
+        },
+        "chainId": {
+          "$ref": "#/components/schemas/ChainId"
+        },
+        "symbol": {
+          "$ref": "#/components/schemas/tokenSymbol"
+        },
+        "decimals": {
+          "type": "string",
+          "description": "The number of decimals supported by the token. This number is used to convert token amounts to the token's common representation."
+        },
+        "buyFeeBps": {
+          "$ref": "#/components/schemas/bpsFee"
+        },
+        "sellFeeBps": {
+          "$ref": "#/components/schemas/bpsFee"
+        }
+      }
+    },
+    "IntegratorFee": {
+      "type": "object",
+      "description": "A fee configuration specifying the fee amount in basis points and the recipient address.",
+      "properties": {
+        "bips": {
+          "type": "number",
+          "description": "Fee amount in basis points (1 bip = 0.01%). Must be greater than 0 and at most 500.",
+          "minimum": 0,
+          "exclusiveMinimum": true,
+          "maximum": 500
+        },
+        "recipient": {
+          "type": "string",
+          "description": "Ethereum address that receives the fee.",
+          "pattern": "^0x[a-fA-F0-9]{40}$"
+        }
+      },
+      "required": ["bips", "recipient"]
+    },
+    "TransactionRequest": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "$ref": "#/components/schemas/receiverWalletAddress"
+        },
+        "from": {
+          "$ref": "#/components/schemas/senderWalletAddress"
+        },
+        "data": {
+          "type": "string",
+          "description": "The calldata for the transaction."
+        },
+        "value": {
+          "type": "string",
+          "description": "The quantity of ETH tokens approved for spending by the transaction, denominated in wei. Note that by default Uniswap Labs sets this to the maximum approvable spend."
+        },
+        "gasLimit": {
+          "$ref": "#/components/schemas/gasLimit"
+        },
+        "chainId": {
+          "$ref": "#/components/schemas/ChainId"
+        },
+        "maxFeePerGas": {
+          "$ref": "#/components/schemas/maxFeePerGas"
+        },
+        "maxPriorityFeePerGas": {
+          "$ref": "#/components/schemas/maxPriorityFeePerGas"
+        },
+        "gasPrice": {
+          "$ref": "#/components/schemas/gasPrice"
+        }
+      },
+      "required": ["to", "from", "data", "value", "chainId"]
+    },
+    "CreateSwapRequest": {
+      "type": "object",
+      "description": "The parameters **signature** and **permitData** should only be included if *permitData* was returned from **/quote**.",
+      "properties": {
+        "quote": {
+          "oneOf": [
+            {
+              "$ref": "#/components/schemas/ClassicQuote"
+            },
+            {
+              "$ref": "#/components/schemas/WrapUnwrapQuote"
+            },
+            {
+              "$ref": "#/components/schemas/BridgeQuote"
+            }
+          ]
+        },
+        "signature": {
+          "type": "string",
+          "description": "The signed permit."
+        },
+        "includeGasInfo": {
+          "type": "boolean",
+          "default": false,
+          "deprecated": true,
+          "description": "Use `refreshGasPrice` instead."
+        },
+        "refreshGasPrice": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, the gas price will be re-fetched from the network."
+        },
+        "simulateTransaction": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, the transaction will be simulated. If the simulation results on an onchain error, endpoint will return an error."
+        },
+        "permitData": {
+          "allOf": [
+            {
+              "$ref": "#/components/schemas/Permit"
+            }
+          ]
+        },
+        "safetyMode": {
+          "$ref": "#/components/schemas/SwapSafetyMode"
+        },
+        "deadline": {
+          "$ref": "#/components/schemas/deadline"
+        },
+        "urgency": {
+          "$ref": "#/components/schemas/Urgency"
+        },
+        "swapSource": {
+          "$ref": "#/components/schemas/SwapSource"
+        },
+        "enforceExactIn": {
+          "$ref": "#/components/schemas/EnforceExactIn"
+        }
+      },
+      "required": ["quote"]
+    },
+    "CreateSwapResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "$ref": "#/components/schemas/RequestId"
+        },
+        "swap": {
+          "$ref": "#/components/schemas/SwapTransactionResponse"
+        },
+        "gasFee": {
+          "$ref": "#/components/schemas/gasFee"
+        }
+      },
+      "required": ["requestId", "swap"]
+    },
+    "SwapTransactionResponse": {
+      "type": "object",
+      "properties": {
+        "to": {
+          "$ref": "#/components/schemas/receiverWalletAddress"
+        },
+        "from": {
+          "$ref": "#/components/schemas/senderWalletAddress",
+          "description": "Present on every response except swapSource \"UNIVERSAL_ROUTER\" swapTransaction calldata, where the sender is the integrator's filler and unknown at quote time."
+        },
+        "data": {
+          "type": "string",
+          "description": "The calldata for the transaction."
+        },
+        "value": {
+          "type": "string",
+          "description": "Native currency attached to the call, in wei. \"0\" for swapSource \"UNIVERSAL_ROUTER\": the filler funds the router, and for a native input attaches the delivered ETH as msg.value."
+        },
+        "gasLimit": {
+          "$ref": "#/components/schemas/gasLimit"
+        },
+        "chainId": {
+          "$ref": "#/components/schemas/ChainId"
+        },
+        "maxFeePerGas": {
+          "$ref": "#/components/schemas/maxFeePerGas"
+        },
+        "maxPriorityFeePerGas": {
+          "$ref": "#/components/schemas/maxPriorityFeePerGas"
+        },
+        "gasPrice": {
+          "$ref": "#/components/schemas/gasPrice"
+        }
+      },
+      "required": ["to", "data", "value", "chainId"],
+      "description": " Same shape as TransactionRequest, except `from` is omitted for swapSource \"UNIVERSAL_ROUTER\" quotes (the executing filler is unknown to the API)."
+    },
+    "SwapSafetyMode": {
+      "type": "string",
+      "enum": ["SAFE"],
+      "description": "Swap safety mode will automatically sweep the transaction for the native token and return it to the sender wallet address. This is to prevent accidental loss of funds in the event that the token amount is set in the transaction value instead of as part of the calldata."
+    },
+    "EnforceExactIn": {
+      "type": "boolean",
+      "default": false,
+      "description": "Only with swapSource \"UNIVERSAL_ROUTER\". Set it to true when your bridge guarantees how much will arrive; the calldata then checks the router's balance and reverts if it holds less than `amount`. Leave it off if `amount` is just an estimate, or a good fill can revert over a small shortfall. Details: https://developers.uniswap.org/docs/trading/swapping-api/start-building/integration-guide#swapping-funds-already-in-the-universal-router"
+    },
+    "deadline": {
+      "type": "number",
+      "description": "The unix timestamp at which the order will be reverted if not filled."
+    }
+  }
+}

@@ -3,10 +3,11 @@ import {
   createMnemonic,
   deriveAddresses,
   evmAddressFromPrivateKey,
+  isPairAccountList,
   isValidMnemonic,
-  mnemonicToSeed,
   normalizeMnemonic,
   privateKeyFor,
+  withMnemonicSeed,
 } from '@honey-wallet/keyring';
 import { getRandomBytes } from 'expo-crypto';
 import { hexToBytes } from 'viem';
@@ -91,7 +92,7 @@ async function saveSeed(phrase: string, { primary = false } = {}) {
 async function deriveAccount(seedId: string, index: number, label: string) {
   const phrase = await read(KEY.seed(seedId));
   if (!phrase) throw new Error('Recovery phrase missing from this device');
-  const addresses = deriveAddresses(await mnemonicToSeed(phrase), index);
+  const addresses = await withMnemonicSeed(phrase, (seed) => deriveAddresses(seed, index));
   return saveAccount({
     id: `${seedId}-${index}`,
     label,
@@ -141,6 +142,8 @@ export const importPairedWallet = serial(
     accounts: { index: number; label: string }[];
   }): Promise<VaultAccount[]> => {
     if (!isValidMnemonic(payload.mnemonic)) throw new Error('That recovery phrase isn’t valid');
+    if (!isPairAccountList(payload.accounts))
+      throw new Error('Paired wallet account list is invalid');
     const phrase = normalizeMnemonic(payload.mnemonic);
     const existing = await loadAccounts();
     let seedId: string | null = null;
@@ -184,7 +187,8 @@ export async function privateKeyOf(accountId: string, chain: 'evm' | 'solana') {
   }
   const phrase = await read(KEY.seed(account.source.seedId));
   if (!phrase) throw new Error('Recovery phrase missing from this device');
-  return privateKeyFor(await mnemonicToSeed(phrase), chain, account.source.index);
+  const index = account.source.index;
+  return withMnemonicSeed(phrase, (seed) => privateKeyFor(seed, chain, index));
 }
 
 /** Imports a single EVM private key. */

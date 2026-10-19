@@ -36,3 +36,20 @@ main {
 .status-offline {
   color: var(--err);
 }
+
+.sign-in-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+button {
+  font: inherit;
+  margin: 0.25rem;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: wait;
+}

@@ -69,7 +69,15 @@ To target one package: `pnpm turbo run test --filter=@honey-wallet/web`.
 
 ## Architecture
 
-- **Server** (`apps/server`) exposes `GET /health` (liveness) and versioned routes under `/api/v1`. Errors always have the shape `{ "error": { "code", "message" } }`. Configuration comes only from environment variables.
+The production backend design and staged implementation are documented in
+[`docs/backend/ARCHITECTURE.md`](docs/backend/ARCHITECTURE.md), with engineering
+tradeoffs in [`DECISIONS.md`](docs/backend/DECISIONS.md) and current implementation,
+verification and local setup in [`IMPLEMENTATION.md`](docs/backend/IMPLEMENTATION.md).
+The implemented authentication and durable-job slice is described in
+[`IDENTITY-AND-DURABILITY.md`](docs/backend/IDENTITY-AND-DURABILITY.md).
+The 10,000-user capacity model is a test target, not a measured production claim.
+
+- **Server** (`apps/server`) exposes `GET /health` (liveness), `GET /ready` (cached dependency readiness), and versioned routes under `/api/v1`. Application errors have the shape `{ "error": { "code", "message" } }`; readiness uses its own operational response on both 200 and 503. Configuration comes only from environment variables.
 - **API client** (`packages/api-client`) is a dependency-free, typed `fetch` wrapper. Web and mobile both import it, so an API change is made once. It ships TypeScript source; Vite and Metro compile it directly, so there is no build step.
 - **Web** and **mobile** read the server URL from `VITE_API_URL` and `EXPO_PUBLIC_API_URL`.
 
@@ -96,3 +104,26 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and ou
 Honey Wallet is **source-available** under the [PolyForm Noncommercial License 1.0.0](LICENSE). You may use, modify and share it for any noncommercial purpose: personal projects, research, education, and use by charities and public institutions. **Commercial use is not permitted** under this license. Contact the maintainers if you need a commercial license.
 
 All rights in the software, including commercial rights, belong to Honey Wallet. Contributions are welcome and voluntary: contributors sign our [Contributor License Agreement](CLA.md), which assigns their contributions to Honey Wallet and confirms that no payment is owed for them.
+
+Distributed pairing and public prices: [`REDIS-AND-PRICES.md`](docs/backend/REDIS-AND-PRICES.md).
+Measured local socket capacity and remaining production gates:
+[`CAPACITY-LOCAL.md`](docs/backend/CAPACITY-LOCAL.md).
+
+Private metrics, sampled traces, alerts and a disposable local collector stack:
+[`OBSERVABILITY.md`](docs/backend/OBSERVABILITY.md).
+
+Initial Aave V3 and Morpho Vault V2 indexed data adapters and public read smoke:
+[`EARN-READERS.md`](docs/backend/EARN-READERS.md). Execution remains unavailable.
+
+Fenced Earn caching, the public catalog API, and web/native delivery:
+[`EARN-CATALOG.md`](docs/backend/EARN-CATALOG.md).
+
+Immutable transaction preparation and authenticated restart recovery:
+[`PREPARATION-AND-RECOVERY.md`](docs/backend/PREPARATION-AND-RECOVERY.md).
+Aave preparation, independent wallet-signature verification and a disposable-fork
+supply/withdraw proof: [`AAVE-EXECUTION.md`](docs/backend/AAVE-EXECUTION.md).
+Database-backed receipt reconciliation, sequential dispatch and finality evidence:
+[`RECEIPT-RECONCILIATION.md`](docs/backend/RECEIPT-RECONCILIATION.md).
+Public transaction submission, running workers and frontend execution remain unfinished.
+
+The authenticated local-fork Aave execution flow and its limits are documented in [AAVE-API.md](docs/backend/AAVE-API.md).

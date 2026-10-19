@@ -5,6 +5,7 @@ import { DarkTheme, DefaultTheme, router, Stack, type Theme, ThemeProvider } fro
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppGate } from '@/components/AppGate';
+import { BackendSessionLifecycle } from '@/components/BackendSessionLifecycle';
 import { LaunchAnimation } from '@/components/LaunchAnimation';
 import { ToastHost } from '@/components/motion/ToastHost';
 import { Tray } from '@/components/sheets/Tray';
@@ -119,6 +120,7 @@ export default function RootLayout() {
         <AppGate>
           <NotificationResponses />
           <WalletConnectSessions />
+          <BackendSessionLifecycle />
           <Stack
             screenOptions={{ headerShown: false }}
             screenLayout={({ options, navigation, route, children }) =>
@@ -135,6 +137,7 @@ export default function RootLayout() {
             <Stack.Screen name="(onboarding)" />
             <Stack.Screen name="(wallet)" options={{ gestureEnabled: false }} />
             <Stack.Screen name="(settings)/settings" />
+            <Stack.Screen name="(account)/wallet-sign-in" />
             <Stack.Screen name="(activity)/notifications" />
             <Stack.Screen name="(portfolio)/token/[symbol]" />
             <Stack.Screen name="(trade)/perp/[symbol]" />

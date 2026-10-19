@@ -153,7 +153,9 @@ export default function SharePortfolioSheet() {
           <View style={styles.chart}>
             <Sparkline data={data} width={CARD_WIDTH - 40} height={70} />
           </View>
-          <Text style={styles.footnote}>Tracked with Honey</Text>
+          <Text style={styles.footnote}>
+            Sample data · illustrative values, not wallet performance
+          </Text>
         </View>
       </SkeletonReveal>
 

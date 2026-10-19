@@ -54,6 +54,59 @@ const READ_ONLY = new Set([
 
 /** Requests one site may have waiting at once. */
 const MAX_PENDING_PER_SITE = 5;
+const RPC_WINDOW_MS = 10_000;
+const MAX_RPC_PER_SITE_WINDOW = 20;
+const MAX_RPC_GLOBAL_WINDOW = 120;
+const MAX_RPC_PER_SITE_IN_FLIGHT = 4;
+const MAX_RPC_GLOBAL_IN_FLIGHT = 24;
+const MAX_RPC_REQUEST_BYTES = 128 * 1024;
+const MAX_LOG_BLOCK_RANGE = 2_000;
+const PAGE_WINDOW_MS = 10_000;
+const MAX_PAGE_PER_SITE_WINDOW = 120;
+const MAX_PAGE_GLOBAL_WINDOW = 600;
+const MAX_PAGE_PER_SITE_IN_FLIGHT = 16;
+const MAX_PAGE_GLOBAL_IN_FLIGHT = 64;
+
+type RpcBudget = { requests: number[]; inFlight: number };
+type PageBudget = { requests: number[]; inFlight: number };
+
+function validateReadRequest(method: string, params: unknown) {
+  let serialized: string;
+  try {
+    serialized = JSON.stringify(params ?? []);
+  } catch {
+    return false;
+  }
+  if (new TextEncoder().encode(serialized).byteLength > MAX_RPC_REQUEST_BYTES) return false;
+  if (method === 'eth_getLogs') {
+    const filter = (Array.isArray(params) ? params[0] : undefined) as
+      | { fromBlock?: unknown; toBlock?: unknown }
+      | undefined;
+    const from = filter?.fromBlock;
+    const to = filter?.toBlock;
+    // Numeric ranges are bounded. Tags such as latest/safe/finalized and blockHash
+    // filters are single-block queries and remain usable.
+    if (filter && typeof filter === 'object' && 'blockHash' in filter) return true;
+    if (
+      typeof from === 'string' &&
+      /^0x[0-9a-f]+$/i.test(from) &&
+      typeof to === 'string' &&
+      /^0x[0-9a-f]+$/i.test(to)
+    ) {
+      const first = BigInt(from);
+      const last = BigInt(to);
+      if (last < first || last - first + 1n > BigInt(MAX_LOG_BLOCK_RANGE)) return false;
+    } else if (
+      typeof from !== 'string' ||
+      typeof to !== 'string' ||
+      from !== to ||
+      !['latest', 'safe', 'finalized', 'pending', 'earliest'].includes(from)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
 
 const fail = (error: ProviderError, message?: string): never => {
   throw message ? { ...error, message } : error;
@@ -78,14 +131,98 @@ export function isReadableText(data: string) {
   }
 }
 
-type Pending = { approval: Approval; settle: (answer: Answer) => void };
+type Pending = { approval: Approval; settle: (answer: Answer) => void; claimed: boolean };
 
 /** Who's asking: the tab's icon, and for WalletConnect, its check of the site's domain. */
 export type Caller = { icon?: string; verified?: Approval['verified'] };
 
 export function createRouter(deps: RouterDeps) {
   const pending = new Map<string, Pending>();
+  const rpcByOrigin = new Map<string, RpcBudget>();
+  const globalRpcRequests: number[] = [];
+  let globalRpcInFlight = 0;
+  const pageByOrigin = new Map<string, PageBudget>();
+  const globalPageRequests: number[] = [];
+  let globalPageInFlight = 0;
   let waiting = 0;
+
+  function admitPageRequest(origin: string) {
+    const now = deps.now();
+    const prune = (requests: number[]) => {
+      while (requests.length) {
+        const first = requests[0];
+        if (first === undefined || now - first < PAGE_WINDOW_MS) break;
+        requests.shift();
+      }
+    };
+    prune(globalPageRequests);
+    for (const [key, value] of pageByOrigin) {
+      prune(value.requests);
+      if (!value.inFlight && !value.requests.length) pageByOrigin.delete(key);
+    }
+    let budget = pageByOrigin.get(origin);
+    if (!budget) {
+      budget = { requests: [], inFlight: 0 };
+      pageByOrigin.set(origin, budget);
+    }
+    if (
+      budget.requests.length >= MAX_PAGE_PER_SITE_WINDOW ||
+      globalPageRequests.length >= MAX_PAGE_GLOBAL_WINDOW ||
+      budget.inFlight >= MAX_PAGE_PER_SITE_IN_FLIGHT ||
+      globalPageInFlight >= MAX_PAGE_GLOBAL_IN_FLIGHT
+    )
+      return fail(ERR.busy, 'Too many wallet requests. Try again shortly.');
+    budget.requests.push(now);
+    globalPageRequests.push(now);
+    budget.inFlight++;
+    globalPageInFlight++;
+    return () => {
+      budget.inFlight--;
+      globalPageInFlight--;
+    };
+  }
+
+  async function boundedRpc(origin: string, url: string, method: string, params: unknown) {
+    if (!validateReadRequest(method, params))
+      return fail(ERR.invalid, 'Read request is too large or expensive.');
+    const now = deps.now();
+    const prune = (requests: number[]) => {
+      while (requests.length) {
+        const first = requests[0];
+        if (first === undefined || now - first < RPC_WINDOW_MS) break;
+        requests.shift();
+      }
+    };
+    prune(globalRpcRequests);
+    for (const [key, value] of rpcByOrigin) {
+      prune(value.requests);
+      if (!value.inFlight && !value.requests.length) rpcByOrigin.delete(key);
+    }
+    let budget = rpcByOrigin.get(origin);
+    if (!budget) {
+      budget = { requests: [], inFlight: 0 };
+      rpcByOrigin.set(origin, budget);
+    }
+    prune(budget.requests);
+    if (
+      budget.requests.length >= MAX_RPC_PER_SITE_WINDOW ||
+      globalRpcRequests.length >= MAX_RPC_GLOBAL_WINDOW ||
+      budget.inFlight >= MAX_RPC_PER_SITE_IN_FLIGHT ||
+      globalRpcInFlight >= MAX_RPC_GLOBAL_IN_FLIGHT
+    )
+      return fail(ERR.busy, 'Too many network reads. Try again shortly.');
+    budget.requests.push(now);
+    globalRpcRequests.push(now);
+    budget.inFlight++;
+    globalRpcInFlight++;
+    try {
+      return await deps.rpc(url, method, params);
+    } finally {
+      budget.inFlight--;
+      globalRpcInFlight--;
+      if (!budget.inFlight && !budget.requests.length) rpcByOrigin.delete(origin);
+    }
+  }
 
   const refreshBadge = () => deps.badge(pending.size + waiting);
 
@@ -128,6 +265,18 @@ export function createRouter(deps: RouterDeps) {
   }
 
   async function disconnect(origin: string) {
+    // Pending requests have not been approved yet, so disconnect makes their old
+    // approval screens stale. Claimed requests crossed the explicit UI confirmation
+    // boundary and are allowed to finish. Revoke before the first await: claim() and
+    // this loop run synchronously in the worker, so exactly one side wins that race.
+    for (const [id, entry] of pending) {
+      if (entry.approval.origin === origin && !entry.claimed) {
+        pending.delete(id);
+        entry.settle({ id, error: ERR.rejected });
+      }
+    }
+    refreshBadge();
+
     const site = await siteOf(origin);
     if (!site) return;
     // The site stays on its network if it connects again.
@@ -160,7 +309,7 @@ export function createRouter(deps: RouterDeps) {
       createdAt: deps.now(),
     };
     return new Promise<Answer>((settle) => {
-      pending.set(approval.id, { approval, settle });
+      pending.set(approval.id, { approval, settle, claimed: false });
       refreshBadge();
       void deps.openApprovals();
     });
@@ -288,7 +437,7 @@ export function createRouter(deps: RouterDeps) {
       default: {
         if (!READ_ONLY.has(method)) return fail(ERR.unsupported);
         const network = evmNetwork(await chainOf(origin)) ?? EVM_NETWORKS[0];
-        return deps.rpc(network?.rpc ?? '', method, args);
+        return boundedRpc(origin, network?.rpc ?? '', method, args);
       }
     }
   }
@@ -344,11 +493,17 @@ export function createRouter(deps: RouterDeps) {
   return {
     /** A website's call; resolves with its result or rejects with a ProviderError. */
     async fromPage(origin: string, from: string | undefined | Caller, request: PageRequest) {
-      if (typeof request.method !== 'string') return fail(ERR.invalid);
+      if (typeof request.method !== 'string' || request.method.length > 128)
+        return fail(ERR.invalid);
+      const release = admitPageRequest(origin);
       const caller: Caller = typeof from === 'object' ? from : { icon: from };
-      return request.namespace === 'solana'
-        ? solana(origin, caller, request.method, request.params)
-        : evm(origin, caller, request.method, request.params);
+      try {
+        return await (request.namespace === 'solana'
+          ? solana(origin, caller, request.method, request.params)
+          : evm(origin, caller, request.method, request.params));
+      } finally {
+        release();
+      }
     },
 
     /** The oldest request still waiting, for the approval window. */
@@ -366,6 +521,18 @@ export function createRouter(deps: RouterDeps) {
       pending.delete(answer.id);
       refreshBadge();
       entry.settle(answer);
+      return true;
+    },
+
+    /**
+     * Atomically crosses the approval boundary for a still-pending request. The UI
+     * must call this only after the owner confirms and before signing or any side effect.
+     * A successful claim is treated as user-approved; a later disconnect won't revoke it.
+     */
+    claim(id: string) {
+      const entry = pending.get(id);
+      if (!entry) return false;
+      entry.claimed = true;
       return true;
     },
 

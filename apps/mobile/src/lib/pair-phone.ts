@@ -1,5 +1,8 @@
 import type { PairChannel, PairSlot } from '@honey-wallet/api-client';
 import {
+  clearPairBytes,
+  clearPairOfferSecrets,
+  clearPairSession,
   createPairOffer,
   encodeNonce,
   openPayload,
@@ -58,18 +61,25 @@ export const startPairing = (direction: PairDirection = 'toBrowser'): PairOffer 
 
 /** Waits for the phone to scan and answer. Returns the session and the code to compare. */
 export async function waitForPhone(offer: PairOffer, signal: AbortSignal): Promise<PairSession> {
-  const pair = mailbox(offer);
-  const commitment = await waitFor(pair, 'commit', signal);
-  await api.pairSend(pair, 'nonce', { data: encodeNonce(offer.nonce) });
-  const phone = openReveal(await waitFor(pair, 'reveal', signal), commitment);
-  return pairSession(offer.secretKey, phone.publicKey, {
-    channel: offer.channel,
-    extensionKey: offer.publicKey,
-    phoneKey: phone.publicKey,
-    extensionNonce: offer.nonce,
-    phoneNonce: phone.nonce,
-    direction: offer.direction,
-  });
+  let phone: ReturnType<typeof openReveal> | undefined;
+  try {
+    const pair = mailbox(offer);
+    const commitment = await waitFor(pair, 'commit', signal);
+    await api.pairSend(pair, 'nonce', { data: encodeNonce(offer.nonce) });
+    phone = openReveal(await waitFor(pair, 'reveal', signal), commitment);
+    return pairSession(offer.secretKey, phone.publicKey, {
+      channel: offer.channel,
+      extensionKey: offer.publicKey,
+      phoneKey: phone.publicKey,
+      extensionNonce: offer.nonce,
+      phoneNonce: phone.nonce,
+      direction: offer.direction,
+    });
+  } finally {
+    clearPairOfferSecrets(offer);
+    clearPairBytes(phone?.nonce);
+    clearPairBytes(phone?.publicKey);
+  }
 }
 
 /** After the codes matched: waits for the phone to send the wallet, and opens it. */
@@ -78,7 +88,12 @@ export async function receiveWallet(
   session: PairSession,
   signal: AbortSignal,
 ): Promise<PairPayload> {
-  return openPayload(session.key, await waitFor(mailbox(offer), 'payload', signal));
+  try {
+    return openPayload(session.key, await waitFor(mailbox(offer), 'payload', signal));
+  } finally {
+    clearPairSession(session);
+    clearPairOfferSecrets(offer);
+  }
 }
 
 /**
@@ -86,8 +101,13 @@ export async function receiveWallet(
  * browser's recovery phrase and its wallets' names, encrypted for that phone alone.
  */
 export async function sendWallet(offer: PairOffer, session: PairSession) {
-  const wallet = await readPrimaryWallet();
-  if (!wallet) throw new Error('There’s no recovery phrase in this browser to send.');
-  const data = sealPayload(session.key, { v: 1, ...wallet }, getRandomBytes);
-  await api.pairSend(mailbox(offer), 'payload', { data });
+  try {
+    const wallet = await readPrimaryWallet();
+    if (!wallet) throw new Error('There’s no recovery phrase in this browser to send.');
+    const data = sealPayload(session.key, { v: 1, ...wallet }, getRandomBytes);
+    await api.pairSend(mailbox(offer), 'payload', { data });
+  } finally {
+    clearPairSession(session);
+    clearPairOfferSecrets(offer);
+  }
 }

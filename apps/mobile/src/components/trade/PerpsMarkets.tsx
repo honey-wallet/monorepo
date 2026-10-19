@@ -7,6 +7,7 @@ import { MenuDropdown } from '@/components/motion/MenuDropdown';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
+import { LivePerpPrices } from '@/components/trade/LivePerpPrices';
 import { MarketIcon } from '@/components/trade/MarketIcon';
 import { PerpPositionCard } from '@/components/trade/PerpPositionCard';
 import { Chip } from '@/components/wallet/Chip';
@@ -27,6 +28,7 @@ import {
   usePerpsUi,
   useSavedPerps,
 } from '@/lib/perps';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 type Category = (typeof PERP_CATEGORIES)[number] | 'Saved';
@@ -43,7 +45,7 @@ const SORT_ICON: Record<PerpSort, IconName> = {
  * Perps on the Trade tab, after Uniswap's: category filters, a one-time intro, and
  * every market by volume. Tapping a market opens its page, where Long/Short live.
  */
-export function PerpsMarkets({
+function DemoPerpsMarkets({
   query = '',
   onClearQuery,
 }: {
@@ -448,3 +450,8 @@ const useStyles = makeStyles((c) => ({
     fontWeight: '500',
   },
 }));
+
+export function PerpsMarkets(props: { query?: string; onClearQuery?: () => void }) {
+  const wallet = useActiveWallet();
+  return wallet.demo ? <DemoPerpsMarkets {...props} /> : <LivePerpPrices query={props.query} />;
+}

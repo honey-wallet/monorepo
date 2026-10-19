@@ -15,6 +15,7 @@ import { Sticky } from '@/components/motion/Sticky';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { LiveSwapQuotes } from '@/components/trade/LiveSwapQuotes';
 import { PerpsMarkets } from '@/components/trade/PerpsMarkets';
 import { PredictFeed } from '@/components/trade/PredictFeed';
 import { SwapReview } from '@/components/trade/SwapReview';
@@ -49,12 +50,12 @@ import {
   holdingAmount,
   priceOf,
 } from '@/lib/mock-wallet';
-import { type Multisig, useSigner } from '@/lib/multisig';
+import { type Multisig, useActiveMultisig, useSigner } from '@/lib/multisig';
 import { goBackOr } from '@/lib/navigation';
 import type { TradeMode } from '@/lib/settings';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
 import { showDemoToast } from '@/lib/toast';
-import { useTradeModes } from '@/lib/trade-modes';
+import { SHARED_WALLET_MODES, useTradeTabs } from '@/lib/trade-modes';
 import { EXPIRIES, type Expiry, useTradePrefs } from '@/lib/trade-prefs';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
@@ -67,10 +68,13 @@ import { makeStyles, useTheme } from '@/theme';
  */
 export default function TradeScreen() {
   const styles = useStyles();
+  const { wallet } = useWalletView();
   // `?mode=Perps` opens a specific product, e.g. from a deep link.
   const params = useLocalSearchParams<{ mode?: TradeMode }>();
-  // A shared wallet only swaps; products it can't use can't be opened, even by link.
-  const tabs = useTradeModes();
+  // Every chosen product has a tab; a shared wallet's Perps and Predict say it only swaps.
+  // const tabs = useTradeModes();
+  const tabs = useTradeTabs();
+  const multisig = useActiveMultisig();
   const [picked, setPicked] = useState<TradeMode>(
     params.mode && tabs.includes(params.mode) ? params.mode : tabs[0],
   );
@@ -83,7 +87,9 @@ export default function TradeScreen() {
   }, [params.mode]);
   // If the open tab was just hidden, fall back to the first one still shown.
   const mode = tabs.includes(picked) ? picked : tabs[0];
+  const sharedOnly = !!multisig && !SHARED_WALLET_MODES.includes(mode);
   const [query, setQuery] = useState('');
+  const liveSwap = mode === 'Swap' && !wallet.demo;
   return (
     // Trade is a focused flow with no tab bar; Back returns to where you came from. Its
     // top bar matches Search's: a search field, then the balance and settings.
@@ -91,30 +97,36 @@ export default function TradeScreen() {
       <View style={styles.top}>
         <HeaderIconButton bare icon="chevronLeft" label="Back" onPress={() => goBackOr('/home')} />
         <View style={styles.flex}>
-          <SearchField
-            value={mode === 'Swap' ? '' : query}
-            onChangeText={setQuery}
-            placeholder={mode === 'Swap' ? 'Search tokens' : 'Search markets'}
-            // On Swap, searching means picking the token to buy.
-            onFocus={
+          {liveSwap ? (
+            <Text style={styles.detailValue}>Swap</Text>
+          ) : (
+            <SearchField
+              value={mode === 'Swap' ? '' : query}
+              onChangeText={setQuery}
+              placeholder={mode === 'Swap' ? 'Search tokens' : 'Search markets'}
+              // On Swap, searching means picking the token to buy.
+              onFocus={
+                mode === 'Swap'
+                  ? () => {
+                      Keyboard.dismiss();
+                      tap();
+                      router.push({ pathname: '/token-picker', params: { side: 'buy' } });
+                    }
+                  : undefined
+              }
+            />
+          )}
+        </View>
+        {!liveSwap && (
+          <HeaderActions
+            settingsLabel={`${mode} settings`}
+            onSettings={() =>
               mode === 'Swap'
-                ? () => {
-                    Keyboard.dismiss();
-                    tap();
-                    router.push({ pathname: '/token-picker', params: { side: 'buy' } });
-                  }
-                : undefined
+                ? router.push('/swap-settings')
+                : router.push({ pathname: '/trade-settings', params: { mode } })
             }
           />
-        </View>
-        <HeaderActions
-          settingsLabel={`${mode} settings`}
-          onSettings={() =>
-            mode === 'Swap'
-              ? router.push('/swap-settings')
-              : router.push({ pathname: '/trade-settings', params: { mode } })
-          }
-        />
+        )}
       </View>
       {/* The products you've chosen, sharing the row equally; edit them from settings.
           With a single product there's nothing to switch between, so no tabs. */}
@@ -126,11 +138,22 @@ export default function TradeScreen() {
         </Sticky>
       )}
       <ContentSwap id={mode} index={tabs.indexOf(mode)} fill={mode === 'Swap'}>
-        {mode === 'Swap' && <SwapForm />}
-        {mode === 'Perps' && <PerpsMarkets query={query} onClearQuery={() => setQuery('')} />}
-        {mode === 'Futures' && <FuturesForm />}
-        {mode === 'Options' && <OptionsForm />}
-        {mode === 'Predict' && <PredictFeed query={query} onClearQuery={() => setQuery('')} />}
+        {mode === 'Swap' && (wallet.demo ? <SwapForm /> : <LiveSwapQuotes />)}
+        {sharedOnly ? (
+          <EmptyState
+            icon="multisig"
+            title={`${wallet.label} can only swap`}
+            hint={`${mode} needs quick calls as prices move, which a round of approvals can’t keep up with. Switch to your own wallet to use it.`}
+            action={{ label: 'Switch wallet', onPress: () => router.push('/wallets') }}
+          />
+        ) : (
+          <>
+            {mode === 'Perps' && <PerpsMarkets query={query} onClearQuery={() => setQuery('')} />}
+            {mode === 'Futures' && <FuturesForm />}
+            {mode === 'Options' && <OptionsForm />}
+            {mode === 'Predict' && <PredictFeed query={query} onClearQuery={() => setQuery('')} />}
+          </>
+        )}
       </ContentSwap>
     </TabScreen>
   );
@@ -181,8 +204,9 @@ function SwapForm() {
     : empty
       ? 0
       : holdingAmount(sell, pair.sell.chain);
-  // Nothing at all to swap from (a new wallet, or an unfunded shared one).
-  const nothing = multisig ? !multisig.holdings.some((h) => h.amount > 0) : empty;
+  // Nothing at all to swap from (a new wallet, or an unfunded shared one); the form
+  // shows anyway now (see below).
+  // const nothing = multisig ? !multisig.holdings.some((h) => h.amount > 0) : empty;
   const bridging = pair.sell.chain !== pair.buy.chain;
   // You type either side: what you sell (in the token or in dollars), or exactly what
   // you want to get, and the other side is worked out. Below, `value` is always the
@@ -271,6 +295,9 @@ function SwapForm() {
     updateSwap({ sell: pair.buy, buy: pair.sell });
   };
 
+  // An empty wallet still gets the form, so you can try it out (review); its button
+  // then says Buy (or Receive) instead of Review swap.
+  /*
   if (nothing) {
     return (
       <EmptyState
@@ -289,6 +316,7 @@ function SwapForm() {
       />
     );
   }
+  */
 
   return (
     <View ref={root} style={styles.flex} onLayout={fit}>

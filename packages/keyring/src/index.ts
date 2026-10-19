@@ -64,6 +64,19 @@ export function mnemonicToSeed(phrase: string): Promise<Uint8Array> {
   return seedOf(normalizeMnemonic(phrase));
 }
 
+/** Derives from a mnemonic and always clears its temporary seed buffer afterward. */
+export async function withMnemonicSeed<T>(
+  phrase: string,
+  derive: (seed: Uint8Array) => T | Promise<T>,
+): Promise<T> {
+  const seed = await mnemonicToSeed(phrase);
+  try {
+    return await derive(seed);
+  } finally {
+    seed.fill(0);
+  }
+}
+
 /** The private key for account `index` on one chain. */
 export function privateKeyFor(seed: Uint8Array, chain: ChainFamily, index = 0): Uint8Array {
   const path = PATHS[chain](index);
@@ -75,13 +88,27 @@ export function privateKeyFor(seed: Uint8Array, chain: ChainFamily, index = 0): 
 
 /** Account `index`'s address on every chain. */
 export function deriveAddresses(seed: Uint8Array, index = 0): Addresses {
-  const pub = (chain: ChainFamily) => secp256k1.getPublicKey(privateKeyFor(seed, chain, index));
+  const evmPublicKey = (chain: ChainFamily) => {
+    const privateKey = privateKeyFor(seed, chain, index);
+    try {
+      return secp256k1.getPublicKey(privateKey);
+    } finally {
+      privateKey.fill(0);
+    }
+  };
+  const solanaPrivateKey = privateKeyFor(seed, 'solana', index);
+  let solanaPublicKey: Uint8Array;
+  try {
+    solanaPublicKey = ed25519.getPublicKey(solanaPrivateKey);
+  } finally {
+    solanaPrivateKey.fill(0);
+  }
   return {
-    evm: evmAddress(pub('evm')),
-    bitcoin: bitcoinAddress(pub('bitcoin')),
-    solana: base58.encode(ed25519.getPublicKey(privateKeyFor(seed, 'solana', index))),
-    tron: tronAddress(pub('tron')),
-    xrp: xrpAddress(pub('xrp')),
+    evm: evmAddress(evmPublicKey('evm')),
+    bitcoin: bitcoinAddress(evmPublicKey('bitcoin')),
+    solana: base58.encode(solanaPublicKey),
+    tron: tronAddress(evmPublicKey('tron')),
+    xrp: xrpAddress(evmPublicKey('xrp')),
   };
 }
 
@@ -155,6 +182,62 @@ function concat(a: Uint8Array, b: Uint8Array) {
 }
 
 export * from './backup';
+export * from './bunk';
+export * from './bunk-backup';
+export * from './bunk-bitcoin';
+export * from './bunk-bitcoin-approval';
+export * from './bunk-bitcoin-discovery';
+export * from './bunk-bitcoin-fees';
+export * from './bunk-bitcoin-history';
+export * from './bunk-bitcoin-journal';
+export * from './bunk-bitcoin-observe';
+export * from './bunk-bitcoin-submit';
+export * from './bunk-evm';
+export * from './bunk-evm-observe';
+export * from './bunk-evm-sign';
+export * from './bunk-evm-v2';
+export * from './bunk-evm-v2-journal';
+export * from './bunk-evm-v2-sign';
+export * from './bunk-evm-v2-store';
+export * from './bunk-evm-v3';
+export * from './bunk-evm-v3-account';
+export * from './bunk-evm-v3-discovery';
+export * from './bunk-evm-v3-sign';
+export * from './bunk-indexeddb-store';
+export * from './bunk-journal-key';
+export * from './bunk-recovery-hints';
+export * from './bunk-recovery-resolve';
+export * from './bunk-release-registry';
+export {
+  BUNK_SOLANA_DERIVATION_VERSION,
+  BUNK_SOLANA_ED25519,
+  BUNK_SOLANA_INSTRUCTIONS,
+  BUNK_SOLANA_SYSTEM,
+  type BunkSolanaAccount,
+  type BunkSolanaAction,
+  type BunkSolanaHash,
+  type BunkSolanaInstruction,
+  type BunkSolanaKey,
+  type BunkSolanaKeyRef,
+  type BunkSolanaMeta,
+  type BunkSolanaPrepared,
+  type BunkSolanaScope,
+  type BunkSolanaState,
+  bunkSolanaAddressBytes,
+  bunkSolanaDigest,
+  bunkSolanaKeyPath,
+  bunkSolanaPrecompile,
+  bunkSolanaSpent,
+  bunkSolanaWallet,
+  decodeBunkSolanaState,
+  deriveBunkSolanaKey,
+  prepareBunkSolanaExecution,
+  prepareBunkSolanaInitialization,
+  prepareBunkSolanaRecovery,
+} from './bunk-solana';
+export * from './bunk-solana-discovery';
+export * from './bunk-solana-journal';
+export * from './bunk-solana-observe';
 export * from './local-vault';
 export * from './networks';
 export * from './pairing';

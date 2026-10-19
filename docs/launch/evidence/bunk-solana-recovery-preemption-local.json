@@ -1,0 +1,13 @@
+{
+  "scope": "OPEN protocol blocker characterization, not a recovery acceptance pass",
+  "case": "known_recovery_target_preemption_blocks_fixed_certificate",
+  "testedIncomingRoles": ["next owner", "next recovery"],
+  "result": "ordinary successor preemption succeeds; unchanged fixed recovery certificate fails; epoch remains zero",
+  "sourceArtifactSha256": {
+    "contracts/bunk-solana/src/lib.rs": "121d80516f5aed1e3e79c1f749839db0458e2c703cfaffbcb3699f85cebacffc",
+    "contracts/bunk-solana/tests/runtime.rs": "7457d6c0282548f0c7e6b905b726955e68dbe264392005fc5f309dfc8a9d1d29",
+    "contracts/bunk-solana/target/deploy/honey_bunk_solana.so": "b34079503c5cf62e67171010d43622dd1c505e44e780fe915af6967daedb4b69"
+  },
+  "log": "/private/tmp/honey-solana-recovery-preemption.log",
+  "output": "   Compiling honey-bunk-solana v0.1.0 (/Users/swayam/Desktop/fun/honey wallet/contracts/bunk-solana)\n    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.90s\n     Running unittests src/lib.rs (target/debug/deps/honey_bunk_solana-7dc84424b78ba795)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/runtime.rs (target/debug/deps/runtime-2995b4d511e1192e)\n\nrunning 1 test\ntest known_recovery_target_preemption_blocks_fixed_certificate ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 17 filtered out; finished in 0.14s\n\n"
+}

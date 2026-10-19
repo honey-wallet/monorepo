@@ -1,0 +1,47 @@
+{
+  "authenticatedPrincipalCount": 15,
+  "authenticatedRequestsPerPrincipal": [
+    400, 400, 400, 399, 399, 399, 399, 399, 399, 399, 399, 399, 399, 399, 399
+  ],
+  "clientFrameCountTotal": 0,
+  "closedDuringRun": 0,
+  "connectedAfterRamp": 0,
+  "framesDuringSoak": 0,
+  "generator": "external-process",
+  "httpAuthenticated": true,
+  "httpCompleted": 5988,
+  "httpCompletedAtDeadline": 5988,
+  "httpCompletedRpsAtDeadline": 99.8,
+  "httpErrors": 0,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 5988,
+  "httpIssuedRpsAtDeadline": 99.8,
+  "httpLatencyMicrosFirst100k": {
+    "max": 273197,
+    "p50": 1024,
+    "p95": 6863,
+    "p99": 46315
+  },
+  "httpLatencySamples": 5988,
+  "httpObservedRpsIncludingDrain": 99.7956632547087,
+  "httpRoute": "/api/v1/me",
+  "httpSchedulerMaxLagMicros": 67862,
+  "httpSchedulerSkippedSlots": 12,
+  "httpTargetRps": 100,
+  "minimumFramesPerClientDuringSoak": 0,
+  "minimumLifetimeFramesForAnyClient": 0,
+  "profileOnly": true,
+  "rampMs": 0,
+  "runId": "f9054927-774e-448c-96a5-e0d43b7afa8e",
+  "schemaVersion": 2,
+  "serverProcessSample": null,
+  "soakSeconds": 60,
+  "targetWebSockets": 0,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClientDuringSoak": 0
+  },
+  "tls": false,
+  "totalFrames": 0
+}

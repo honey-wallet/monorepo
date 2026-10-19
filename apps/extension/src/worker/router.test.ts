@@ -7,7 +7,9 @@ const EVM = '0xCD2a3d9F938E13CD947Ec05AbC7FE734Df8DD826';
 const OTHER = '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB';
 const SOL = '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV';
 
-function setup() {
+function setup(
+  options: { rpc?: (url: string, method: string, params: unknown) => Promise<unknown> } = {},
+) {
   const store = new Map<string, unknown>();
   const events: { origin: string; reply: PageReply }[] = [];
   const rpcCalls: { url: string; method: string; params: unknown }[] = [];
@@ -24,7 +26,7 @@ function setup() {
     },
     rpc: async (url, method, params) => {
       rpcCalls.push({ url, method, params });
-      return '0x10';
+      return options.rpc ? options.rpc(url, method, params) : '0x10';
     },
     emit: (origin, reply) => events.push({ origin, reply }),
     badge: (count) => badges.push(count),
@@ -107,6 +109,39 @@ describe('connecting', () => {
       namespace: 'evm',
       data: [],
     });
+  });
+
+  it('revokes an unclaimed approval when its origin disconnects', async () => {
+    const t = setup();
+    await t.connect();
+    const signing = t.call('personal_sign', ['0x6869', EVM]);
+    const approval = await t.nextApproval();
+
+    const disconnecting = t.router.disconnect(SITE);
+    // disconnect revokes synchronously before its first storage await, so a stale
+    // approval view cannot claim while disconnect persistence is still in flight.
+    expect(t.router.claim(approval.id)).toBe(false);
+    await disconnecting;
+
+    await expect(signing).rejects.toEqual(ERR.rejected);
+    expect(t.router.next()).toBeNull();
+    expect(t.router.claim(approval.id)).toBe(false);
+  });
+
+  it('lets a claimed approval finish if disconnect races after owner confirmation', async () => {
+    const t = setup();
+    await t.connect();
+    const signing = t.call('personal_sign', ['0x6869', EVM]);
+    const approval = await t.nextApproval();
+
+    // Claim is the atomic boundary after owner confirmation and before signing.
+    expect(t.router.claim(approval.id)).toBe(true);
+    // A resumed approval UI re-authenticates before repeating this idempotent claim.
+    expect(t.router.claim(approval.id)).toBe(true);
+    await t.router.disconnect(SITE);
+    expect(t.router.next()?.id).toBe(approval.id);
+    t.router.answer({ id: approval.id, result: '0xsig' });
+    await expect(signing).resolves.toBe('0xsig');
   });
 });
 
@@ -236,6 +271,95 @@ describe('networks', () => {
       params: [],
     });
     await expect(t.call('debug_traceTransaction', [])).rejects.toEqual(ERR.unsupported);
+  });
+
+  it('bounds log ranges and rejects unbounded log scans before calling the node', async () => {
+    const t = setup();
+    await expect(t.call('eth_getLogs', [{ fromBlock: '0x0', toBlock: 'latest' }])).rejects.toEqual({
+      ...ERR.invalid,
+      message: 'Read request is too large or expensive.',
+    });
+    await expect(
+      t.call('eth_getLogs', [{ fromBlock: '0x1', toBlock: '0x7d1' }]),
+    ).rejects.toMatchObject({ code: -32602 });
+    expect(await t.call('eth_getLogs', [{ fromBlock: '0x1', toBlock: '0x7d0' }])).toBe('0x10');
+    expect(t.rpcCalls).toHaveLength(1);
+  });
+
+  it('caps read payload size and per-origin read rate', async () => {
+    const t = setup();
+    await expect(
+      t.call('eth_call', [{ data: `0x${'ab'.repeat(70_000)}` }, 'latest']),
+    ).rejects.toMatchObject({
+      code: -32602,
+    });
+    for (let i = 0; i < 20; i++) await t.call('eth_blockNumber');
+    await expect(t.call('eth_blockNumber')).rejects.toEqual({
+      ...ERR.busy,
+      message: 'Too many network reads. Try again shortly.',
+    });
+    expect(t.rpcCalls).toHaveLength(20);
+  });
+
+  it('rejects excess in-flight reads instead of queuing unbounded work', async () => {
+    const releases: ((value: unknown) => void)[] = [];
+    const t = setup({ rpc: () => new Promise((resolve) => releases.push(resolve)) });
+    const active = Array.from({ length: 4 }, () => t.call('eth_blockNumber'));
+    for (let i = 0; i < 20 && releases.length < 4; i++) await Promise.resolve();
+    expect(releases).toHaveLength(4);
+    await expect(t.call('eth_blockNumber')).rejects.toMatchObject({ code: -32005 });
+    for (const release of releases) release('0x10');
+    await Promise.all(active);
+  });
+
+  it('applies a global rate limit across distinct origins', async () => {
+    const t = setup();
+    for (let origin = 0; origin < 6; origin++) {
+      for (let request = 0; request < 20; request++) {
+        await t.router.fromPage(`https://site-${origin}.example`, undefined, {
+          id: request,
+          namespace: 'evm',
+          method: 'eth_blockNumber',
+        });
+      }
+    }
+    await expect(
+      t.router.fromPage('https://seventh.example', undefined, {
+        id: 1,
+        namespace: 'evm',
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toMatchObject({ code: -32005 });
+    expect(t.rpcCalls).toHaveLength(120);
+  });
+
+  it('bounds all page calls before storage or provider work', async () => {
+    const t = setup();
+    for (let request = 0; request < 120; request++) await t.call('eth_chainId');
+    await expect(t.call('eth_chainId')).rejects.toMatchObject({ code: -32005 });
+  });
+
+  it('caps global in-flight reads across distinct origins', async () => {
+    const releases: ((value: unknown) => void)[] = [];
+    const t = setup({ rpc: () => new Promise((resolve) => releases.push(resolve)) });
+    const active = Array.from({ length: 24 }, (_, index) =>
+      t.router.fromPage(`https://site-${Math.floor(index / 4)}.example`, undefined, {
+        id: index,
+        namespace: 'evm',
+        method: 'eth_blockNumber',
+      }),
+    );
+    for (let i = 0; i < 30 && releases.length < 24; i++) await Promise.resolve();
+    expect(releases).toHaveLength(24);
+    await expect(
+      t.router.fromPage('https://overflow.example', undefined, {
+        id: 25,
+        namespace: 'evm',
+        method: 'eth_blockNumber',
+      }),
+    ).rejects.toMatchObject({ code: -32005 });
+    for (const release of releases) release('0x10');
+    await Promise.all(active);
   });
 });
 

@@ -1,5 +1,8 @@
 import type { PairChannel } from '@honey-wallet/api-client';
 import {
+  clearPairAnswerSecrets,
+  clearPairBytes,
+  clearPairSession,
   createPairAnswer,
   decodeNonce,
   encodeReveal,
@@ -48,28 +51,35 @@ export async function phoneHandshake(uri: string, signal: AbortSignal) {
   if (!offer) throw new Error('That isn’t a Honey pairing code');
   const pair: PairChannel = { channel: offer.channel, token: offer.token };
   const answer = createPairAnswer(getRandomBytes);
-  await api.pairSend(pair, 'commit', { data: answer.commitment });
+  let extensionNonce: Uint8Array | undefined;
+  try {
+    await api.pairSend(pair, 'commit', { data: answer.commitment });
 
-  const deadline = Date.now() + TIMEOUT_MS;
-  let nonce: string | null = null;
-  while (!nonce) {
-    // Not signal.throwIfAborted(): React Native's AbortSignal doesn't have it.
-    if (signal.aborted) throw new Error('Pairing stopped');
-    if (Date.now() > deadline) throw new Error('Your browser didn’t answer. Scan a new code.');
-    nonce = (await api.pairReceive(pair, 'nonce', { signal }))?.data ?? null;
-    if (!nonce) await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+    const deadline = Date.now() + TIMEOUT_MS;
+    let nonce: string | null = null;
+    while (!nonce) {
+      // Not signal.throwIfAborted(): React Native's AbortSignal doesn't have it.
+      if (signal.aborted) throw new Error('Pairing stopped');
+      if (Date.now() > deadline) throw new Error('Your browser didn’t answer. Scan a new code.');
+      nonce = (await api.pairReceive(pair, 'nonce', { signal }))?.data ?? null;
+      if (!nonce) await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+    }
+    extensionNonce = decodeNonce(nonce);
+    await api.pairSend(pair, 'reveal', { data: encodeReveal(answer) });
+
+    const session = pairSession(answer.secretKey, offer.publicKey, {
+      channel: offer.channel,
+      extensionKey: offer.publicKey,
+      phoneKey: answer.publicKey,
+      extensionNonce,
+      phoneNonce: answer.nonce,
+      direction: offer.direction,
+    });
+    return { pair, session, direction: offer.direction };
+  } finally {
+    clearPairAnswerSecrets(answer);
+    clearPairBytes(extensionNonce);
   }
-  await api.pairSend(pair, 'reveal', { data: encodeReveal(answer) });
-
-  const session = pairSession(answer.secretKey, offer.publicKey, {
-    channel: offer.channel,
-    extensionKey: offer.publicKey,
-    phoneKey: answer.publicKey,
-    extensionNonce: decodeNonce(nonce),
-    phoneNonce: answer.nonce,
-    direction: offer.direction,
-  });
-  return { pair, session, direction: offer.direction };
 }
 
 /** Which way a scanned code moves the wallet, or null if it isn't a pairing code. */
@@ -84,13 +94,17 @@ export async function receiveFromBrowser(
   session: PairSession,
   signal: AbortSignal,
 ) {
-  const deadline = Date.now() + TIMEOUT_MS;
-  while (Date.now() < deadline) {
-    // Not signal.throwIfAborted(): React Native's AbortSignal doesn't have it.
-    if (signal.aborted) throw new Error('Pairing stopped');
-    const message = await api.pairReceive(pair, 'payload', { signal });
-    if (message) return openPayload(session.key, message.data);
-    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+  try {
+    const deadline = Date.now() + TIMEOUT_MS;
+    while (Date.now() < deadline) {
+      // Not signal.throwIfAborted(): React Native's AbortSignal doesn't have it.
+      if (signal.aborted) throw new Error('Pairing stopped');
+      const message = await api.pairReceive(pair, 'payload', { signal });
+      if (message) return openPayload(session.key, message.data);
+      await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+    }
+    throw new Error('Your browser didn’t send the wallet. Scan a new code.');
+  } finally {
+    clearPairSession(session);
   }
-  throw new Error('Your browser didn’t send the wallet. Scan a new code.');
 }

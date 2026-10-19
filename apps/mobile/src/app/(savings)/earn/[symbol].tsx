@@ -8,11 +8,12 @@ import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/S
 import { TextSwap } from '@/components/motion/TextSwap';
 import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
+import { DemoMoneyNotice } from '@/components/savings/DemoMoneyNotice';
+import { LiveEarnSheet } from '@/components/savings/LiveEarnMarkets';
 import { FailurePage } from '@/components/sheets/FailurePage';
 import { closeSheet, SHEET, SheetHeader, SheetScreen, StatRow } from '@/components/sheets/Sheet';
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
-import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { success, tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
@@ -24,13 +25,19 @@ import {
   TOKENS,
   VAULTS,
 } from '@/lib/mock-wallet';
-import { propose, useSigner } from '@/lib/multisig';
+import { useSigner } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
 
 /** Earn sheet after Uniswap's: headline rate, vault facts, details on demand, Deposit. */
 export default function EarnSheet() {
+  const { wallet } = useWalletView();
+  const { symbol } = useLocalSearchParams<{ symbol: string }>();
+  return wallet.demo ? <DemoEarnSheet /> : <LiveEarnSheet symbol={symbol} />;
+}
+
+function DemoEarnSheet() {
   const { symbol = 'USDC' } = useLocalSearchParams<{ symbol: string }>();
   const styles = useStyles();
   const c = useTheme();
@@ -39,8 +46,6 @@ export default function EarnSheet() {
   // What was just deposited, shown on the closing page.
   const [deposited, setDeposited] = useState<string | null>(null);
   const outcome = useFailure('earn');
-  const signer = useSigner();
-  const [proposalId, setProposalId] = useState<string | null>(null);
   const vault = Object.hasOwn(VAULTS, symbol) ? VAULTS[symbol] : undefined;
   // The vault's live numbers: rate, deposits, liquidity, what it's exposed to.
   const loading = useFirstLoad(LOADS.earn(symbol));
@@ -62,6 +67,7 @@ export default function EarnSheet() {
   return (
     // Each page ends with its own main button, so the buttons swap with the pages.
     <SheetScreen>
+      <DemoMoneyNotice />
       <ContentSwap
         id={deposited ? 'done' : outcome.failure ? 'failed' : depositing ? 'deposit' : 'info'}
         index={deposited || outcome.failure ? 2 : depositing ? 1 : 0}
@@ -80,16 +86,11 @@ export default function EarnSheet() {
               closeSheet();
             }}
           />
-        ) : deposited && proposalId ? (
-          <LiveProposedPage
-            proposalId={proposalId}
-            onDone={() => finishDemo('nothing was deposited')}
-          />
         ) : deposited ? (
           <SuccessPage
-            title="Deposited"
+            title="Demo deposit simulation"
             amount={{ symbol, text: `${deposited} ${symbol}` }}
-            detail={`Now earning ${vault.apy.toFixed(2)}% APY`}
+            detail={`Example only · ${vault.apy.toFixed(2)}% APY · no funds were deposited`}
             onDone={() => finishDemo('nothing was deposited')}
           />
         ) : depositing ? (
@@ -100,17 +101,6 @@ export default function EarnSheet() {
             onDeposit={(amount) => {
               if (outcome.attempt()) return;
               success();
-              // From a shared wallet the deposit is proposed (or, under the limit, made).
-              if (signer.multisig) {
-                const value = Number(amount) || 0;
-                const { proposal, executed } = propose(signer.walletId, {
-                  type: 'earnDeposit',
-                  symbol,
-                  amount: value,
-                  usd: value * priceOf(symbol),
-                });
-                if (!executed) setProposalId(proposal.id);
-              }
               setDeposited(amount);
             }}
           />

@@ -4,8 +4,10 @@ import { AppState } from 'react-native';
 let prompts = 0;
 export const isAuthenticatingOwner = () => prompts > 0;
 
-/** Authenticate with biometrics or the device passcode; backgrounding cancels the result. */
-export async function confirmOwner(reason: string, requireDeviceLock = false): Promise<boolean> {
+/** Authenticate with biometrics or the device passcode; backgrounding cancels the result.
+ * Sensitive actions fail closed unless the caller explicitly opts out.
+ */
+export async function confirmOwner(reason: string, requireDeviceLock = true): Promise<boolean> {
   let cancelled = AppState.currentState === 'background';
   const sub = AppState.addEventListener('change', (state) => {
     if (state === 'background') cancelled = true;

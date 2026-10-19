@@ -1,0 +1,6 @@
+{
+  "generator": "@noble/curves 2.4.0 / @noble/hashes 2.4.0; PUBLIC TEST KEY integer 1, never use for funds",
+  "message": "localhost:5173 wants you to sign in with your Ethereum account:\n0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf\n\nSign in to Honey Wallet. This does not authorize transactions.\n\nURI: http://localhost:5173\nVersion: 1\nChain ID: 1\nNonce: 00000000000040008000000000000001\nIssued At: 2026-10-18T12:00:00Z\nExpiration Time: 2026-10-18T12:05:00Z\nRequest ID: 00000000-0000-4000-8000-000000000001",
+  "hash": "24a7f7ddbb5439b61ecc33d8274252e87040861cb4c6f90fc94be17a8b911cb6",
+  "signature": "02af54f82e1c4bbadcfe37986fcbe64c682b7ce9ecd502e6b2aea389f90c13647cca6ce9706d2fe0f6a589476beeaaade59af1b308731b255241ab789df44c061c"
+}

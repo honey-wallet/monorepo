@@ -1,0 +1,1959 @@
+{
+  "scope": "Public-fixture local Bitcoin Core regtest construction/signature/CPFP/reorg, UTXO and spent/received history acceptance; no production signer, journal restoration or public-network activation",
+  "coreVersion": 310100,
+  "binarySha256": "d55c12b0b02001cc16b1481c4075361dcba193100a8143924abda911174c09ec",
+  "network": "regtest",
+  "connections": 0,
+  "genesis": "0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206",
+  "feePolicy": {
+    "observedAndSelected": {
+      "observation": {
+        "checkpoint": {
+          "network": "regtest",
+          "height": 101,
+          "blockhash": "32addbae36c28ee28f17e45f7a0a2037977765698e29ae57a4b0bfacb905e381"
+        },
+        "blockTime": 1792397675,
+        "requestedBlocks": 6,
+        "mode": "conservative",
+        "minimumRelaySatPerKvB": "100",
+        "minimumMempoolSatPerKvB": "100",
+        "incrementalRelaySatPerKvB": "100",
+        "estimate": {
+          "status": "unavailable",
+          "blocks": 0,
+          "errors": ["Insufficient data or no feerate found"]
+        },
+        "signingAuthorized": false
+      },
+      "selection": {
+        "source": "explicit-fallback",
+        "feeRateSatPerKvB": "1000",
+        "estimatedFeeSatoshis": "1000",
+        "maxVbytes": 1000,
+        "maxFeeSatoshis": "1000",
+        "signingAuthorized": false
+      }
+    },
+    "missingEstimateRejected": {
+      "rejected": "explicit fallback required"
+    },
+    "rateCapRejected": {
+      "rejected": "fee rate exceeds cap"
+    },
+    "totalCapRejected": {
+      "rejected": "estimated fee exceeds cap"
+    },
+    "selectedRateUsedByAcceptedParent": true
+  },
+  "parent": {
+    "prepared": {
+      "transaction": {
+        "version": 2,
+        "lockTime": 102,
+        "inputs": [
+          {
+            "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+            "vout": 0,
+            "satoshis": "160000",
+            "publicKey": "03d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e",
+            "sequence": 4294967294
+          },
+          {
+            "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+            "vout": 1,
+            "satoshis": "20000",
+            "publicKey": "03d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e",
+            "sequence": 4294967294
+          },
+          {
+            "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+            "vout": 3,
+            "satoshis": "110000",
+            "publicKey": "036130589cecb5424ce8902fea2fb4f256f4e217d2f41d2b165a9f91f0d40e716c",
+            "sequence": 4294967294
+          }
+        ],
+        "outputs": [
+          {
+            "satoshis": "200000",
+            "scriptPubKey": "5120c3516b38604753a0a9a731d318cd1398e0b4ed89363fcf79e8a0587f210054bc"
+          },
+          {
+            "satoshis": "89710",
+            "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb"
+          }
+        ]
+      },
+      "selected": [
+        {
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 0,
+          "satoshis": "160000",
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415"
+        },
+        {
+          "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "vout": 1,
+          "satoshis": "20000",
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415"
+        },
+        {
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 3,
+          "satoshis": "110000",
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad"
+        }
+      ],
+      "changeAddress": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+      "changeIndex": 3,
+      "changeSatoshis": "89710",
+      "feeSatoshis": "290",
+      "maxVbytes": 290,
+      "unsignedTransaction": "0200000003f6a711b27e02b59c8f1b605e8e01f38fd1b13000273ace1e649218b417f8c1330000000000feffffffb19288c8d3b13849e645b953143d817b9c9550fd31c2bf46fa9f0720c28a2a1b0100000000fefffffff6a711b27e02b59c8f1b605e8e01f38fd1b13000273ace1e649218b417f8c1330300000000feffffff02400d030000000000225120c3516b38604753a0a9a731d318cd1398e0b4ed89363fcf79e8a0587f210054bc6e5e010000000000160014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb66000000",
+      "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+      "signatureDigests": [
+        "3c80caeb8a34b3897b9bb4b4cd46db3c815e50f2ba5f1399f7cab0aad3af2ddd",
+        "bed8d47c62d2bd2f32efa04410b3d58d5aee0b95a2f1c8939164104f4dcd610d",
+        "00e83da14f37ee20ea55d087eeb95f9d8dfe7226663d7b3d3cc41e21032bc47e"
+      ],
+      "signingAuthorized": false
+    },
+    "signed": {
+      "rawTransaction": "02000000000103f6a711b27e02b59c8f1b605e8e01f38fd1b13000273ace1e649218b417f8c1330000000000feffffffb19288c8d3b13849e645b953143d817b9c9550fd31c2bf46fa9f0720c28a2a1b0100000000fefffffff6a711b27e02b59c8f1b605e8e01f38fd1b13000273ace1e649218b417f8c1330300000000feffffff02400d030000000000225120c3516b38604753a0a9a731d318cd1398e0b4ed89363fcf79e8a0587f210054bc6e5e010000000000160014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb02483045022100f0da0f44e94d6a91fdaeccb145670f3a49dd366356f906f4cd2873c90ff3f83102207d4d38118870cd69c68addbf543780f6da1d92df1a64c526ba185ccfc866a01b012103d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e024730440220386efeff36086892260a1a38a4c5c2f0dd0b27d11d26cedb6df2ecdfb15928ff022028c94d027f1939d12616363c905993c88f75808fc3038e8377a6a1f03792978d012103d0616236adcc0f6805a2d284e94865022da6bedc3f31b1628888285ead59147e02483045022100f16de3bfa85b8f8bc850aeacacf5c28e6bb15d52dd1509abf8bc8f8984e0cc9002202869a0933ccbd82c02d2e0f4acf6ef1b569cc877f758691f69b44a1ac329b5400121036130589cecb5424ce8902fea2fb4f256f4e217d2f41d2b165a9f91f0d40e716c66000000",
+      "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+      "wtxid": "7a9db96cd5c1c72003ec781c45700513e2f497e39eb21c42454c502e281af8bb",
+      "weight": 1153,
+      "vbytes": 289
+    }
+  },
+  "parentAcceptance": {
+    "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+    "wtxid": "7a9db96cd5c1c72003ec781c45700513e2f497e39eb21c42454c502e281af8bb",
+    "allowed": true,
+    "vsize": 289,
+    "fees": {
+      "base": "0.00000290",
+      "effective-feerate": "0.00001003",
+      "effective-includes": ["7a9db96cd5c1c72003ec781c45700513e2f497e39eb21c42454c502e281af8bb"]
+    }
+  },
+  "child": {
+    "prepared": {
+      "transaction": {
+        "version": 2,
+        "lockTime": 102,
+        "inputs": [
+          {
+            "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+            "vout": 1,
+            "satoshis": "89710",
+            "publicKey": "0355d64a189b7b02be8e8da716cf150d08696dfe490ca02e829b72f3e804886ad8",
+            "sequence": 4294967294
+          }
+        ],
+        "outputs": [
+          {
+            "satoshis": "15000",
+            "scriptPubKey": "00140203e1e025c8255b1675768b0ab9d240c170c204"
+          },
+          {
+            "satoshis": "72849",
+            "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8"
+          }
+        ]
+      },
+      "selected": [
+        {
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vout": 1,
+          "satoshis": "89710",
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb"
+        }
+      ],
+      "changeAddress": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+      "changeIndex": 4,
+      "changeSatoshis": "72849",
+      "feeSatoshis": "1861",
+      "maxVbytes": 141,
+      "unsignedTransaction": "0200000001f3903b56acc12716799c78d4af3836b953b298828350a38fb41af8722feb7c7e0100000000feffffff02983a0000000000001600140203e1e025c8255b1675768b0ab9d240c170c204911c0100000000001600149e79ce9b6762ceaa258047b2fc718d7d581025e866000000",
+      "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+      "signatureDigests": ["91b46dc05562953b87d43064d13fd651fca8484c131a9911d2c969e7ff517277"],
+      "signingAuthorized": false
+    },
+    "signed": {
+      "rawTransaction": "02000000000101f3903b56acc12716799c78d4af3836b953b298828350a38fb41af8722feb7c7e0100000000feffffff02983a0000000000001600140203e1e025c8255b1675768b0ab9d240c170c204911c0100000000001600149e79ce9b6762ceaa258047b2fc718d7d581025e802473044022018f35f5f43650dbed8d49dc342b95c9be70b2d933765359721f761a76694e62e022045688d920dbd0807562dd063a2d05b8b96be77b0c3b91dce39657c89ce40134301210355d64a189b7b02be8e8da716cf150d08696dfe490ca02e829b72f3e804886ad866000000",
+      "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+      "wtxid": "28b9e05fc899489a5e43e679699406661bf6129619fb1e520f1cda1628d876f0",
+      "weight": 561,
+      "vbytes": 141
+    },
+    "cpfp": {
+      "observation": {
+        "network": "regtest",
+        "accountIndex": 0,
+        "checkpoint": {
+          "network": "regtest",
+          "height": 102,
+          "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1"
+        },
+        "blockTime": 1792397675,
+        "inputs": [
+          {
+            "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+            "vout": 1,
+            "ownerIndex": 3,
+            "satoshis": "89710",
+            "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+            "confirmations": 0,
+            "coinbase": false,
+            "status": "unconfirmed"
+          }
+        ],
+        "unconfirmedTransactions": [
+          {
+            "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+            "wtxid": "7a9db96cd5c1c72003ec781c45700513e2f497e39eb21c42454c502e281af8bb",
+            "vbytes": 289,
+            "weight": 1153,
+            "feeSatoshis": "290",
+            "parents": []
+          }
+        ],
+        "ancestorVbytes": 289,
+        "ancestorFeeSatoshis": "290",
+        "inventoryComplete": false,
+        "signingAuthorized": false
+      },
+      "budget": {
+        "feeSatoshis": "1861",
+        "feeRateSatPerKvB": "13192",
+        "childMaxVbytes": 141,
+        "ancestorVbytes": 289,
+        "ancestorFeeSatoshis": "290",
+        "packageMaxVbytes": 430,
+        "packageFeeSatoshis": "2151",
+        "signingAuthorized": false
+      }
+    }
+  },
+  "childAcceptance": {
+    "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+    "wtxid": "28b9e05fc899489a5e43e679699406661bf6129619fb1e520f1cda1628d876f0",
+    "allowed": true,
+    "vsize": 141,
+    "fees": {
+      "base": "0.00001861",
+      "effective-feerate": "0.00013198",
+      "effective-includes": ["28b9e05fc899489a5e43e679699406661bf6129619fb1e520f1cda1628d876f0"]
+    }
+  },
+  "wrongAmountRejected": {
+    "txid": "070d6cb8b82fc1d1b3ee7ce57924dac912ff613f513e0e125c27ca529bb96970",
+    "wtxid": "5ba478d2e48f6bdf56f6eb8edbc30c20b56600905a02b19edcd8a254842eda11",
+    "allowed": false,
+    "reject-reason": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)",
+    "reject-details": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation), input 0 of 070d6cb8b82fc1d1b3ee7ce57924dac912ff613f513e0e125c27ca529bb96970 (wtxid 5ba478d2e48f6bdf56f6eb8edbc30c20b56600905a02b19edcd8a254842eda11), spending 33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6:0"
+  },
+  "changedRecipientRejected": {
+    "txid": "8c09ac43c47f02e1386294ec9fe0dd9436c9e9185ab1bdfdda15a72227d2eca1",
+    "wtxid": "4cbf84802b8d700c38d6c316deab3f12dded5dfc13ce0fd7e45cc9aa64ed6b89",
+    "allowed": false,
+    "reject-reason": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation)",
+    "reject-details": "mempool-script-verify-flag-failed (Signature must be zero for failed CHECK(MULTI)SIG operation), input 0 of 8c09ac43c47f02e1386294ec9fe0dd9436c9e9185ab1bdfdda15a72227d2eca1 (wtxid 4cbf84802b8d700c38d6c316deab3f12dded5dfc13ce0fd7e45cc9aa64ed6b89), spending 33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6:0"
+  },
+  "reorgedBlock": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+  "replacementBlock": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+  "identicalRebroadcast": true,
+  "inputObservation": {
+    "pending": {
+      "network": "regtest",
+      "accountIndex": 0,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 102,
+        "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1"
+      },
+      "blockTime": 1792397675,
+      "inputs": [
+        {
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 0,
+          "ownerIndex": 0,
+          "satoshis": "160000",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "status": "unavailable",
+          "confirmations": null,
+          "coinbase": null
+        },
+        {
+          "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "vout": 1,
+          "ownerIndex": 0,
+          "satoshis": "20000",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "status": "unavailable",
+          "confirmations": null,
+          "coinbase": null
+        },
+        {
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 3,
+          "ownerIndex": 2,
+          "satoshis": "110000",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "status": "unavailable",
+          "confirmations": null,
+          "coinbase": null
+        },
+        {
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vout": 1,
+          "ownerIndex": 3,
+          "satoshis": "89710",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "confirmations": 0,
+          "coinbase": false,
+          "status": "unconfirmed"
+        }
+      ],
+      "unconfirmedTransactions": [
+        {
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "wtxid": "7a9db96cd5c1c72003ec781c45700513e2f497e39eb21c42454c502e281af8bb",
+          "vbytes": 289,
+          "weight": 1153,
+          "feeSatoshis": "290",
+          "parents": []
+        }
+      ],
+      "ancestorVbytes": 289,
+      "ancestorFeeSatoshis": "290",
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "twoAncestors": {
+      "network": "regtest",
+      "accountIndex": 0,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 102,
+        "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1"
+      },
+      "blockTime": 1792397675,
+      "inputs": [
+        {
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vout": 1,
+          "ownerIndex": 3,
+          "satoshis": "89710",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "status": "unavailable",
+          "confirmations": null,
+          "coinbase": null
+        },
+        {
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vout": 1,
+          "ownerIndex": 4,
+          "satoshis": "72849",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "confirmations": 0,
+          "coinbase": false,
+          "status": "unconfirmed"
+        }
+      ],
+      "unconfirmedTransactions": [
+        {
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "wtxid": "28b9e05fc899489a5e43e679699406661bf6129619fb1e520f1cda1628d876f0",
+          "vbytes": 141,
+          "weight": 561,
+          "feeSatoshis": "1861",
+          "parents": ["7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3"]
+        },
+        {
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "wtxid": "7a9db96cd5c1c72003ec781c45700513e2f497e39eb21c42454c502e281af8bb",
+          "vbytes": 289,
+          "weight": 1153,
+          "feeSatoshis": "290",
+          "parents": []
+        }
+      ],
+      "ancestorVbytes": 430,
+      "ancestorFeeSatoshis": "2151",
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "mined": {
+      "network": "regtest",
+      "accountIndex": 0,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 103,
+        "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c"
+      },
+      "blockTime": 1792397675,
+      "inputs": [
+        {
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vout": 1,
+          "ownerIndex": 4,
+          "satoshis": "72849",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "confirmations": 1,
+          "coinbase": false,
+          "status": "confirmed"
+        }
+      ],
+      "unconfirmedTransactions": [],
+      "ancestorVbytes": 0,
+      "ancestorFeeSatoshis": "0",
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "reorged": {
+      "network": "regtest",
+      "accountIndex": 0,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 102,
+        "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1"
+      },
+      "blockTime": 1792397675,
+      "inputs": [
+        {
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vout": 1,
+          "ownerIndex": 4,
+          "satoshis": "72849",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "confirmations": 0,
+          "coinbase": false,
+          "status": "unconfirmed"
+        }
+      ],
+      "unconfirmedTransactions": [
+        {
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "wtxid": "28b9e05fc899489a5e43e679699406661bf6129619fb1e520f1cda1628d876f0",
+          "vbytes": 141,
+          "weight": 561,
+          "feeSatoshis": "1861",
+          "parents": ["7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3"]
+        },
+        {
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "wtxid": "7a9db96cd5c1c72003ec781c45700513e2f497e39eb21c42454c502e281af8bb",
+          "vbytes": 289,
+          "weight": 1153,
+          "feeSatoshis": "290",
+          "parents": []
+        }
+      ],
+      "ancestorVbytes": 430,
+      "ancestorFeeSatoshis": "2151",
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    }
+  },
+  "discovery": {
+    "funded": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 102,
+        "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1"
+      },
+      "blockTime": 1792397675,
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "coins": [
+            {
+              "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+              "vout": 1,
+              "satoshis": "20000",
+              "ownerIndex": 0,
+              "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "available"
+            },
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 0,
+              "satoshis": "160000",
+              "ownerIndex": 0,
+              "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "180000",
+          "available": true
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 2,
+              "satoshis": "90000",
+              "ownerIndex": 1,
+              "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "90000",
+          "available": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 3,
+              "satoshis": "110000",
+              "ownerIndex": 2,
+              "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "110000",
+          "available": true
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "pendingSpend": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 102,
+        "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1"
+      },
+      "blockTime": 1792397675,
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "coins": [
+            {
+              "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+              "vout": 1,
+              "satoshis": "20000",
+              "ownerIndex": 0,
+              "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "mempool-spent"
+            },
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 0,
+              "satoshis": "160000",
+              "ownerIndex": 0,
+              "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "mempool-spent"
+            }
+          ],
+          "confirmedSatoshis": "180000",
+          "available": false
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 2,
+              "satoshis": "90000",
+              "ownerIndex": 1,
+              "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "90000",
+          "available": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 3,
+              "satoshis": "110000",
+              "ownerIndex": 2,
+              "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "mempool-spent"
+            }
+          ],
+          "confirmedSatoshis": "110000",
+          "available": false
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "mined": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 103,
+        "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c"
+      },
+      "blockTime": 1792397675,
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 2,
+              "satoshis": "90000",
+              "ownerIndex": 1,
+              "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 2,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "90000",
+          "available": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "coins": [
+            {
+              "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+              "vout": 1,
+              "satoshis": "72849",
+              "ownerIndex": 4,
+              "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+              "height": 103,
+              "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "72849",
+          "available": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "reorganizedCheckpoint": {
+      "rejected": "checkpoint reorganized"
+    },
+    "replacement": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 103,
+        "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6"
+      },
+      "blockTime": 1792397676,
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 2,
+              "satoshis": "90000",
+              "ownerIndex": 1,
+              "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 2,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "90000",
+          "available": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "coins": [
+            {
+              "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+              "vout": 1,
+              "satoshis": "72849",
+              "ownerIndex": 4,
+              "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+              "height": 103,
+              "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+              "confirmations": 1,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "72849",
+          "available": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "immature": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 104,
+        "blockhash": "196e8179309d9879750980aeb413e279703d134e1735f4d5b21fafc4123037c3"
+      },
+      "blockTime": 1792397676,
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 2,
+              "satoshis": "90000",
+              "ownerIndex": 1,
+              "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 3,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "90000",
+          "available": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "coins": [
+            {
+              "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+              "vout": 1,
+              "satoshis": "72849",
+              "ownerIndex": 4,
+              "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+              "height": 103,
+              "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+              "confirmations": 2,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "72849",
+          "available": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "coins": [
+            {
+              "txid": "82d73712e8bfcc32fdf10d96b281844f2446e973a433939632c026c80f99b558",
+              "vout": 0,
+              "satoshis": "5000000000",
+              "ownerIndex": 5,
+              "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+              "height": 104,
+              "blockhash": "196e8179309d9879750980aeb413e279703d134e1735f4d5b21fafc4123037c3",
+              "confirmations": 1,
+              "coinbase": true,
+              "status": "immature"
+            }
+          ],
+          "confirmedSatoshis": "5000000000",
+          "available": false
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "mature": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 203,
+        "blockhash": "2053fc097ef8b765bb852c8cac7bb694721f98bd00cc5957257577250f3d401d"
+      },
+      "blockTime": 1792397692,
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "coins": [
+            {
+              "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+              "vout": 2,
+              "satoshis": "90000",
+              "ownerIndex": 1,
+              "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+              "height": 102,
+              "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+              "confirmations": 102,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "90000",
+          "available": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "coins": [],
+          "confirmedSatoshis": "0",
+          "available": false
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "coins": [
+            {
+              "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+              "vout": 1,
+              "satoshis": "72849",
+              "ownerIndex": 4,
+              "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+              "height": 103,
+              "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+              "confirmations": 101,
+              "coinbase": false,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "72849",
+          "available": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "coins": [
+            {
+              "txid": "82d73712e8bfcc32fdf10d96b281844f2446e973a433939632c026c80f99b558",
+              "vout": 0,
+              "satoshis": "5000000000",
+              "ownerIndex": 5,
+              "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+              "height": 104,
+              "blockhash": "196e8179309d9879750980aeb413e279703d134e1735f4d5b21fafc4123037c3",
+              "confirmations": 100,
+              "coinbase": true,
+              "status": "available"
+            }
+          ],
+          "confirmedSatoshis": "5000000000",
+          "available": true
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    }
+  },
+  "history": {
+    "mined": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 103,
+        "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c"
+      },
+      "blockTime": 1792397675,
+      "coverage": {
+        "fromHeight": 0,
+        "toHeight": 103,
+        "nextHeight": null
+      },
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "activityObserved": false
+        }
+      ],
+      "events": [
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 0
+        },
+        {
+          "ownerIndex": 1,
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "satoshis": "90000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 2
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 3
+        },
+        {
+          "ownerIndex": 4,
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "satoshis": "72849",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vin": 0,
+          "prevoutTxid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 0,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 0
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 1,
+          "prevoutTxid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 2,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 3
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "earlyWindow": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 103,
+        "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c"
+      },
+      "blockTime": 1792397675,
+      "coverage": {
+        "fromHeight": 0,
+        "toHeight": 101,
+        "nextHeight": 102
+      },
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "activityObserved": false
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "activityObserved": false
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "activityObserved": false
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "activityObserved": false
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "activityObserved": false
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "activityObserved": false
+        }
+      ],
+      "events": [],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "laterWindow": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 103,
+        "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c"
+      },
+      "blockTime": 1792397675,
+      "coverage": {
+        "fromHeight": 102,
+        "toHeight": 103,
+        "nextHeight": null
+      },
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "activityObserved": false
+        }
+      ],
+      "events": [
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 0
+        },
+        {
+          "ownerIndex": 1,
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "satoshis": "90000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 2
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 2
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 3
+        },
+        {
+          "ownerIndex": 4,
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "satoshis": "72849",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vin": 0,
+          "prevoutTxid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 0,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 0
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 1,
+          "prevoutTxid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": {
+            "blockhash": "4be1e0a641285ccca0469defe6cb693ba40a60205b734b7c86f9cc27e5b3412c",
+            "height": 103,
+            "confirmations": 1
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 2,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 3
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "reorganizedCheckpoint": {
+      "rejected": "checkpoint reorganized"
+    },
+    "reorged": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 102,
+        "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1"
+      },
+      "blockTime": 1792397675,
+      "coverage": {
+        "fromHeight": 0,
+        "toHeight": 102,
+        "nextHeight": null
+      },
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "activityObserved": false
+        }
+      ],
+      "events": [
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 0
+        },
+        {
+          "ownerIndex": 1,
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "satoshis": "90000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 2
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 1
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 3
+        },
+        {
+          "ownerIndex": 4,
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "satoshis": "72849",
+          "location": null,
+          "type": "receive",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": null,
+          "type": "receive",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": null,
+          "type": "spend",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vin": 0,
+          "prevoutTxid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": null,
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 0,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 0
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": null,
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 1,
+          "prevoutTxid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": null,
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 2,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 3
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    },
+    "lateDepositToUsedOwner": {
+      "accountIndex": 0,
+      "startOwnerIndex": 0,
+      "count": 6,
+      "nextOwnerIndex": 6,
+      "checkpoint": {
+        "network": "regtest",
+        "height": 203,
+        "blockhash": "2053fc097ef8b765bb852c8cac7bb694721f98bd00cc5957257577250f3d401d"
+      },
+      "blockTime": 1792397692,
+      "coverage": {
+        "fromHeight": 0,
+        "toHeight": 203,
+        "nextHeight": null
+      },
+      "candidates": [
+        {
+          "ownerIndex": 0,
+          "address": "bcrt1qjp7ttsm23hawtjk6xm6y8hylgx7s29q4r7gffc",
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 1,
+          "address": "bcrt1qj0xflgu29erykrlr2w8mly4ete0tecj49hsg7g",
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 2,
+          "address": "bcrt1q9hl9th2d0t79hpf7dqt0hd6lkkn0akad4t33qp",
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 3,
+          "address": "bcrt1qkvyv8h28sx3rry0f4v4zce7pzv0zu9xt0wyxla",
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 4,
+          "address": "bcrt1qneuuaxm8vt825fvqg7e0cuvd04vpqf0gkzcmfv",
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "activityObserved": true
+        },
+        {
+          "ownerIndex": 5,
+          "address": "bcrt1q44v4gs8p567tj6v67fyy4vrkaug094nq7pdj87",
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "activityObserved": true
+        }
+      ],
+      "events": [
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 102
+          },
+          "type": "receive",
+          "txid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 102
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 0
+        },
+        {
+          "ownerIndex": 1,
+          "scriptPubKey": "001493cc9fa38a2e464b0fe3538fbf92b95e5ebce255",
+          "satoshis": "90000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 102
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 2
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": {
+            "blockhash": "0bef405c2dce46fab130e5d03edfbb29dc4fdc60d105fbada1595f768801c9f1",
+            "height": 102,
+            "confirmations": 102
+          },
+          "type": "receive",
+          "txid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "vout": 3
+        },
+        {
+          "ownerIndex": 4,
+          "scriptPubKey": "00149e79ce9b6762ceaa258047b2fc718d7d581025e8",
+          "satoshis": "72849",
+          "location": {
+            "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+            "height": 103,
+            "confirmations": 101
+          },
+          "type": "receive",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": {
+            "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+            "height": 103,
+            "confirmations": 101
+          },
+          "type": "receive",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vout": 1
+        },
+        {
+          "ownerIndex": 5,
+          "scriptPubKey": "0014ad595440e1a6bcb9699af2484ab076ef10f2d660",
+          "satoshis": "5000000000",
+          "location": {
+            "blockhash": "196e8179309d9879750980aeb413e279703d134e1735f4d5b21fafc4123037c3",
+            "height": 104,
+            "confirmations": 100
+          },
+          "type": "receive",
+          "txid": "82d73712e8bfcc32fdf10d96b281844f2446e973a433939632c026c80f99b558",
+          "vout": 0
+        },
+        {
+          "ownerIndex": 3,
+          "scriptPubKey": "0014b308c3dd4781a23191e9ab2a2c67c1131e2e14cb",
+          "satoshis": "89710",
+          "location": {
+            "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+            "height": 103,
+            "confirmations": 101
+          },
+          "type": "spend",
+          "txid": "58bf46bc6be22deb1523d0f1f161b459cae413ecea2062aeacfdfa7df0f74e47",
+          "vin": 0,
+          "prevoutTxid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "160000",
+          "location": {
+            "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+            "height": 103,
+            "confirmations": 101
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 0,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 0
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "20000",
+          "location": {
+            "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+            "height": 103,
+            "confirmations": 101
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 1,
+          "prevoutTxid": "1b2a8ac220079ffa46bfc231fd50959c7b813d1453b945e64938b1d3c88892b1",
+          "prevoutVout": 1
+        },
+        {
+          "ownerIndex": 2,
+          "scriptPubKey": "00142dfe55dd4d7afc5b853e6816fbb75fb5a6fedbad",
+          "satoshis": "110000",
+          "location": {
+            "blockhash": "057419eb1b1ce353c702945b471eaee8d611f620cdbcb2ec5b30540c5cd568c6",
+            "height": 103,
+            "confirmations": 101
+          },
+          "type": "spend",
+          "txid": "7e7ceb2f72f81ab48fa350838298b253b93638afd4789c791627c1ac563b90f3",
+          "vin": 2,
+          "prevoutTxid": "33c1f817b41892641ece3a270030b1d18ff3018e5e601b8f9cb5027eb211a7f6",
+          "prevoutVout": 3
+        },
+        {
+          "ownerIndex": 0,
+          "scriptPubKey": "0014907cb5c36a8dfae5cada36f443dc9f41bd051415",
+          "satoshis": "30000",
+          "location": null,
+          "type": "receive",
+          "txid": "c40ccc16aba74050e67cffe2ed8c43a2deaa69635b1543a0403a0f99f3b04ed9",
+          "vout": 1
+        }
+      ],
+      "inventoryComplete": false,
+      "signingAuthorized": false
+    }
+  },
+  "unselectedInputPreserved": true,
+  "allKnownSelectedOwnerCoinsSpent": true,
+  "workDirectory": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-bitcoin-regtest-4xbjsftp",
+  "sourcesSha256": {
+    "packages/keyring/src/bunk.ts": "6f30f3edec4918ddeddc4b64ec65474ba75d0e04f88c98b0dacde7bd2d9fe8ec",
+    "packages/keyring/src/bunk-bitcoin.ts": "9163f703a6b4e1c32e5ef37117180c3c255342f40725642ee25910dc663480f7",
+    "packages/keyring/src/bunk-bitcoin.test.ts": "b8e233e3a52ce2518b1a727c1418b8fcbe97200dbe5eba885b9864ef18cdb81c",
+    "packages/keyring/src/bunk-bitcoin-discovery.ts": "ed34a04ca9b62bf419c8bb02054b34c979a64e134ca9ff422f486697c9940aa3",
+    "packages/keyring/src/bunk-bitcoin-discovery.test.ts": "b02e08d7eeb1237291b186b4fe6fccc3def20b755ee06995d011bf1a71c93bd0",
+    "packages/keyring/src/bunk-bitcoin-history.ts": "ec0d4cb3a92427697c51345f2fb8a113a6279be482e3fe3d6cd039fced97174d",
+    "packages/keyring/src/bunk-bitcoin-history.test.ts": "97ac16c3ec6655a87ffee92cff9958caf41fb746fce054b10c60b87b88104656",
+    "packages/keyring/src/bunk-bitcoin-fees.ts": "0faaf57782c573452260eb5d1f9f479de878bd896caa08cf0de4be6771eec9f3",
+    "packages/keyring/src/bunk-bitcoin-fees.test.ts": "c43493bdc1c27c6bbf9e6805efa5ebac521b4b980df9dadb6681988480195b11",
+    "packages/keyring/src/bunk-bitcoin-rpc.ts": "8ef43d16d90ebda1dd327d30ef034ff4478a268b3234275b68bd06ad3c197b1a",
+    "packages/keyring/src/bunk-bitcoin-observe.ts": "f5e8f349f1cfcd8e105c8071e4719c76b599ebcb3b6cd224dabc4c30d3e29135",
+    "packages/keyring/src/bunk-bitcoin-observe.test.ts": "fbb27b82e3512dc43a58a926e336980433fdbdf1f5e362f88dc4f92d615bd886",
+    "packages/keyring/tests/fixtures/bunk-bitcoin-client.mjs": "d470a41ca9cbded2663a8bb718e54d7854e8e31ab0ded6371275ccde48faee73",
+    "packages/keyring/scripts/bunk-bitcoin-regtest.mjs": "1d91357afc0e6e7617a2da54df8913a34025cdfd131f3a2e3fe28b9b492bbee8",
+    "packages/keyring/scripts/bunk-bitcoin-regtest.py": "a0b2626f9fea4024d7b2c488698bac3d34d38f19f9aff60e0759dffd6fc31093",
+    "packages/keyring/package.json": "d3f8e700b8b84f9d68f99b33887e6fcddc7e08b2f204da1f0b4db4b782baf96c",
+    "pnpm-lock.yaml": "d7f4b8f33108bbe838989a962531951c2256d8697c1854ef17b945f8604931d3"
+  },
+  "sourcesRechecked": true,
+  "bundleSha256": "6437d1cc456ee15dcf9f821ad617c8fb8b2ac893b48fbf1535ea874b77b1dedc"
+}

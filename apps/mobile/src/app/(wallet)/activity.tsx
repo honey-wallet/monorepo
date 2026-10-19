@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
+import { OperationHistory } from '@/components/activity/OperationHistory';
 import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
@@ -61,6 +62,22 @@ export default function ActivityScreen() {
     tap();
     router.push({ pathname: '/proposal/[id]', params: { id } });
   };
+
+  if (!wallet.demo && wallet.kind === 'wallet') {
+    return (
+      <TabScreen title="Activity">
+        <View style={styles.live}>
+          {wallet.watchOnly ? (
+            <Text style={styles.liveNote}>
+              On-chain activity for watched addresses is not connected yet.
+            </Text>
+          ) : (
+            <OperationHistory key={wallet.id} />
+          )}
+        </View>
+      </TabScreen>
+    );
+  }
 
   return (
     // The same top bar as Search: a search field, then the balance and settings.
@@ -272,6 +289,8 @@ function ActivityRow({ activity: a }: { activity: Activity }) {
 }
 
 const useStyles = makeStyles((c) => ({
+  live: { padding: 20 },
+  liveNote: { fontSize: 15, color: c.textSecondary },
   flex: {
     flex: 1,
   },

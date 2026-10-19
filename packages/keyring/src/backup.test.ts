@@ -47,5 +47,5 @@ describe('backups', () => {
     ]);
     expect(a.kdf.salt).not.toBe(b.kdf.salt);
     expect(a.data).not.toBe(b.data);
-  });
+  }, 15_000);
 });

@@ -20,6 +20,11 @@ export async function answerApproval(answer: Answer): Promise<boolean> {
   return (await wc()).wcRouter.answer(answer);
 }
 
+/** Atomically confirms this request is still pending before an approval side effect. */
+export async function claimApproval(id: string): Promise<boolean> {
+  return (await wc()).wcRouter.claim(id);
+}
+
 export async function connectedSites(): Promise<Site[]> {
   return (await wc()).wcRouter.sites();
 }
@@ -32,6 +37,10 @@ export async function disconnectSite(origin: string) {
 export async function forgetSites() {
   await (await wc()).forgetApps();
 }
+
+/** Only the browser extension has a toolbar popup to expand. */
+export const inPopup = false;
+export async function expandView() {}
 
 /** While the approval screen is open, new requests queue in it instead of opening another. */
 export function keepWorkerAwake(): () => void {

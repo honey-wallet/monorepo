@@ -99,7 +99,9 @@ export function Keypad({
   // Short windows (the extension's 600px popup, small phones) get shorter keys, so the
   // amount above keeps its room.
   const { height } = useWindowDimensions();
-  const keyHeight = fixed ?? (height < 700 ? 46 : 64);
+  // const keyHeight = fixed ?? (height < 700 ? 46 : 64);
+  // A caller's fixed height too, or the perps order's amount slid under its price.
+  const keyHeight = height < 700 ? Math.min(fixed ?? 42, 42) : (fixed ?? 64);
   return (
     <View style={styles.pad}>
       {KEYS.map((key) => (

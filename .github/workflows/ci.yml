@@ -20,6 +20,21 @@ jobs:
   rust:
     name: Rust (fmt, clippy, test)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: honey
+          POSTGRES_PASSWORD: honey_ci_only
+          POSTGRES_DB: honey
+        ports:
+          - 5432:5432
+        options: --health-cmd "pg_isready -U honey -d honey" --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install toolchain from rust-toolchain.toml
@@ -28,6 +43,55 @@ jobs:
       - run: cargo fmt --all --check
       - run: cargo clippy --all-targets --locked
       - run: cargo test --locked
+      # Use the fixture server's matching client version, independent of runner packages.
+      - name: Configure PostgreSQL backup clients
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/honey-pg-tools"
+          for tool in pg_dump pg_restore; do
+            cat > "$RUNNER_TEMP/honey-pg-tools/$tool" <<'CLIENT'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          exec docker exec -i -e PGHOST -e PGPORT -e PGUSER -e PGPASSWORD -e PGDATABASE -e PGCONNECT_TIMEOUT "$POSTGRES_CONTAINER" "$(basename "$0")" "$@"
+          CLIENT
+            chmod 700 "$RUNNER_TEMP/honey-pg-tools/$tool"
+          done
+          echo "$RUNNER_TEMP/honey-pg-tools" >> "$GITHUB_PATH"
+          echo "POSTGRES_CONTAINER=$POSTGRES_CONTAINER" >> "$GITHUB_ENV"
+      - name: PostgreSQL and Redis integration
+        env:
+          TEST_DATABASE_URL: postgres://honey:honey_ci_only@127.0.0.1:5432/honey?sslmode=disable
+          TEST_REDIS_URL: redis://127.0.0.1:6379
+        run: |
+          cargo test --locked \
+            --test infrastructure --test durability --test preparations \
+            --test sealed_preparations --test swap_reviews --test across_quotes --test across_execution_http \
+            --test submissions --test redis_application --test price_stream \
+            --test trace_export --test rpc_budget --test auth_cleanup --test recovery_auth \
+            --test swap_quotes --test polymarket_catalog -- --ignored
+          cargo test --locked --lib providers::transport::integration -- --ignored
+          cargo test --locked --lib earn_catalog::tests -- --ignored
+          cargo test --locked --lib providers::uniswap:: -- --ignored
+          cargo test --locked --lib providers::uniswap_execution::tests::persistence -- --ignored
+          cargo test --locked --lib uniswap_service:: -- --ignored
+          cargo test --locked --lib providers::bridge_status:: -- --ignored
+          cargo test --locked --lib providers::across_evidence:: -- --ignored
+          cargo test --locked --lib providers::across_quotes:: -- --ignored
+          cargo test --locked --lib bridge_monitor:: -- --ignored
+          cargo test --locked --lib across_settlement:: -- --ignored
+
+  telemetry:
+    name: Telemetry configuration and alert rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Validate collector
+        run: docker run --rm --network none --read-only -v "$PWD/ops/observability/collector.yaml:/etc/otelcol/config.yaml:ro" otel/opentelemetry-collector:0.163.1 validate --config=/etc/otelcol/config.yaml
+      - name: Validate Prometheus and alert behavior
+        run: |
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=128m --entrypoint promtool -v "$PWD/ops/observability:/etc/prometheus:ro" prom/prometheus:v3.15.0 check config /etc/prometheus/prometheus.yaml
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=128m --entrypoint promtool -v "$PWD/ops/observability:/etc/prometheus:ro" prom/prometheus:v3.15.0 test rules /etc/prometheus/alerts.test.yaml
 
   js:
     name: JS (lint, typecheck, test, build)

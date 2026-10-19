@@ -1,23 +1,20 @@
-import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, useFirstLoad } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { FailurePage } from '@/components/sheets/FailurePage';
-import { closeSheet, SHEET, SheetScreen } from '@/components/sheets/Sheet';
-import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
-import { FlowTray, InlineTray } from '@/components/sheets/Tray';
-import { OrderBar } from '@/components/trade/OrderBar';
+import { SHEET, SheetScreen } from '@/components/sheets/Sheet';
+import { FlowTray } from '@/components/sheets/Tray';
+import { ExecutionUnavailable } from '@/components/trade/ExecutionUnavailable';
 import { MarketIcon } from '@/components/trade/PredictFeed';
 import type { Side } from '@/components/trade/TradeForm';
 import { applyKey, Keypad, TypedAmount, trimNumber } from '@/components/wallet/Keypad';
 import { EmptyState } from '@/components/wallet/parts';
-import { success, tap } from '@/lib/haptics';
+import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatUsd } from '@/lib/mock-wallet';
 import { leaveSheetTo } from '@/lib/navigation';
-import { followFix, useFailure } from '@/lib/outcomes';
 import { PREDICT_MARKETS, predictMarket, TRADING_CASH, yesPrice } from '@/lib/predict';
 import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
@@ -26,11 +23,12 @@ import { makeStyles, useTheme } from '@/theme';
 
 /** Quick amounts, added to what's typed, as Polymarket's +$1 / +$5 / +$10 / +$100. */
 const QUICK = [1, 5, 10, 100];
+const unavailableAction = () => undefined;
 
 /**
  * Buy into a prediction market, after Polymarket's trade sheet: Buy (or Sell) at the
  * top, the market and the answer you're backing, a big dollar amount you type, Yes or
- * No with their prices, quick amounts, and what you'd win. Ends on the success burst.
+ * No with their prices and quick amounts. Execution remains unavailable.
  */
 function PredictOrderSheet() {
   const { predictPrice } = useTradePrefs();
@@ -48,11 +46,8 @@ function PredictOrderSheet() {
   const [side, setSide] = useState<Side>(
     params.side && sides.includes(params.side) ? params.side : sides[0],
   );
-  const [mode, setMode] = useState<'Buy' | 'Sell'>('Buy');
   const [amount, setAmount] = useState('');
-  const [bought, setBought] = useState(false);
-  const result = useFailure('predict');
-  // Prices come from the markets feed; your cash, from the wallet.
+  // Market data and balance are local samples; no prediction venue execution exists.
   const view = useWalletView();
   const pricesLoading = useFirstLoad(LOADS.predictFeed);
   const cashLoading = useFirstLoad(LOADS.balances(view.wallet.id));
@@ -75,7 +70,7 @@ function PredictOrderSheet() {
     );
   }
 
-  // A new wallet has no cash to trade until its first deposit.
+  // Placeholder balance for the visual preview only; no wallet funds are read here.
   const cash = view.empty ? 0 : TRADING_CASH;
   const value = Number(amount) || 0;
   const yes = yesPrice(market, outcome?.id);
@@ -84,37 +79,11 @@ function PredictOrderSheet() {
   const up = side === sides[0];
   const tone = up ? c.success : c.error;
   const tooMuch = value > cash + 1e-9;
-  const what = outcome ? outcome.label : market.question;
 
   return (
     <FlowTray>
       <SheetScreen size="fill">
         <View style={styles.flex}>
-          {/* Back, and Buy or Sell as a small pill toggle (review: bring the toggle back). */}
-          {/*
-          <OrderBar>
-            <Text style={styles.orderTitle}>{`Buy ${side}`}</Text>
-          </OrderBar>
-          */}
-          <OrderBar>
-            <View style={styles.modes} accessibilityRole="radiogroup">
-              {(['Buy', 'Sell'] as const).map((m) => (
-                <PressableScale
-                  key={m}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: mode === m }}
-                  onPress={() => {
-                    tap();
-                    setMode(m);
-                  }}
-                  style={[styles.mode, mode === m && styles.modeActive]}
-                >
-                  <Text style={[styles.modeLabel, mode === m && styles.modeLabelActive]}>{m}</Text>
-                </PressableScale>
-              ))}
-            </View>
-          </OrderBar>
-
           {/* The market and the answer you're backing */}
           <View style={styles.market}>
             <MarketIcon market={market} size={44} />
@@ -128,165 +97,87 @@ function PredictOrderSheet() {
               </Text>
             </View>
           </View>
-          {/* What Buy (or Sell) means here, in one line (review: "why Buy?"). */}
           <Text style={styles.explain}>
-            {mode === 'Buy'
-              ? `You buy ${side} shares at ${formatShare(price, predictPrice)} each. Each pays $1 if ${side} is right; sell any time before it closes.`
-              : `You sell ${side} shares you hold at ${formatShare(price, predictPrice)} each, any time before the market closes.`}
+            {`Sample ${side} share price: ${formatShare(price, predictPrice)}. Real market terms and settlement are not available.`}
           </Text>
 
-          {mode === 'Sell' ? (
-            <View style={styles.flex}>
-              <EmptyState
-                icon="predict"
-                title="No shares to sell"
-                hint={`Buy ${sides[0]} or ${sides[1]} first; you can sell them here any time before the market closes.`}
-                action={{ label: `Buy ${side}`, onPress: () => setMode('Buy') }}
-              />
-            </View>
-          ) : cash <= 0 ? (
-            <View style={styles.flex}>
-              <EmptyState
-                icon="wallet"
-                title="No cash to trade yet"
-                hint="Add USDC to your wallet, then come back to back an answer."
-                action={{
-                  label: 'Add money',
-                  onPress: () =>
-                    router.replace({ pathname: '/buy-cash', params: { symbol: 'USDC' } }),
-                }}
-              />
-            </View>
-          ) : (
-            <>
-              <View style={styles.amountArea}>
-                <TypedAmount value={amount} prefix="$" size={56} />
-                {cashLoading && !value ? (
-                  <View style={styles.hintLine}>
-                    <SkeletonBar width={110} height={12} />
-                  </View>
-                ) : (
-                  <Text
-                    style={[
-                      styles.hint,
-                      value > 0 && !tooMuch && styles.win,
-                      tooMuch && styles.error,
-                    ]}
-                  >
-                    {tooMuch
-                      ? `You have ${formatUsd(cash)} to trade`
-                      : value
-                        ? `To win ${formatUsd(shares)}`
-                        : `${formatUsd(cash)} available`}
-                  </Text>
-                )}
+          <View style={styles.amountArea}>
+            <TypedAmount value={amount} prefix="$" size={56} />
+            {cashLoading && !value ? (
+              <View style={styles.hintLine}>
+                <SkeletonBar width={110} height={12} />
               </View>
+            ) : (
+              <Text
+                style={[styles.hint, value > 0 && !tooMuch && styles.win, tooMuch && styles.error]}
+              >
+                {tooMuch
+                  ? `Amount exceeds sample balance ${formatUsd(cash)}`
+                  : value
+                    ? `Illustrative payout ${formatUsd(shares)}`
+                    : `Sample balance ${formatUsd(cash)}`}
+              </Text>
+            )}
+          </View>
 
-              {/* Yes or No, each with its price */}
-              <View style={styles.sides}>
-                {sides.map((s, i) => {
-                  const active = s === side;
-                  const color = i === 0 ? c.success : c.error;
-                  return (
-                    <PressableScale
-                      key={s}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: active }}
-                      onPress={() => {
-                        tap();
-                        setSide(s);
-                      }}
-                      style={[styles.side, active && { backgroundColor: `${color}22` }]}
-                    >
-                      {pricesLoading ? (
-                        <View style={styles.sidePrice}>
-                          <Text style={[styles.sideLabel, active && { color }]}>{s}</Text>
-                          <SkeletonBar width={32} height={12} />
-                        </View>
-                      ) : (
-                        <Text style={[styles.sideLabel, active && { color }]}>
-                          {s} {formatShare(i === 0 ? yes : 1 - yes, predictPrice)}
-                        </Text>
-                      )}
-                    </PressableScale>
-                  );
-                })}
-              </View>
+          {/* Yes or No, each with its price */}
+          <View style={styles.sides}>
+            {sides.map((s, i) => {
+              const active = s === side;
+              const color = i === 0 ? c.success : c.error;
+              return (
+                <PressableScale
+                  key={s}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: active }}
+                  onPress={() => {
+                    tap();
+                    setSide(s);
+                  }}
+                  style={[styles.side, active && { backgroundColor: `${color}22` }]}
+                >
+                  {pricesLoading ? (
+                    <View style={styles.sidePrice}>
+                      <Text style={[styles.sideLabel, active && { color }]}>{s}</Text>
+                      <SkeletonBar width={32} height={12} />
+                    </View>
+                  ) : (
+                    <Text style={[styles.sideLabel, active && { color }]}>
+                      {s} {formatShare(i === 0 ? yes : 1 - yes, predictPrice)}
+                    </Text>
+                  )}
+                </PressableScale>
+              );
+            })}
+          </View>
 
-              <View style={styles.quick}>
-                {QUICK.map((q) => (
-                  <PressableScale
-                    key={q}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Add $${q}`}
-                    onPress={() => {
-                      tap();
-                      setAmount((a) => trimNumber((Number(a) || 0) + q, 2));
-                    }}
-                    style={styles.chip}
-                  >
-                    <Text style={styles.chipLabel}>+${q}</Text>
-                  </PressableScale>
-                ))}
-              </View>
-
-              <Keypad keyHeight={54} onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
-              <PillButton
-                label={!value ? 'Enter an amount' : tooMuch ? 'Not enough cash' : `Buy ${side}`}
-                disabled={!value || tooMuch}
+          <View style={styles.quick}>
+            {QUICK.map((q) => (
+              <PressableScale
+                key={q}
+                accessibilityRole="button"
+                accessibilityLabel={`Add $${q}`}
                 onPress={() => {
-                  if (result.attempt()) return;
-                  success();
-                  setBought(true);
+                  tap();
+                  setAmount((a) => trimNumber((Number(a) || 0) + q, 2));
                 }}
-                style={styles.cta}
-              />
-            </>
-          )}
+                style={styles.chip}
+              >
+                <Text style={styles.chipLabel}>+${q}</Text>
+              </PressableScale>
+            ))}
+          </View>
+
+          <Keypad keyHeight={54} onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
+          <ExecutionUnavailable message="Markets, prices, and balance figures are samples. Order placement and settlement are not available." />
+          <PillButton
+            label="Trading unavailable"
+            disabled
+            onPress={unavailableAction}
+            style={styles.cta}
+          />
         </View>
       </SheetScreen>
-      {/* The result rises in a tray over the order (Family's pattern). */}
-      <InlineTray
-        onClose={() =>
-          result.failure ? result.clear() : finishDemo(`bought ${side} on “${market.question}”`)
-        }
-      >
-        {result.failure ? (
-          <SheetScreen>
-            <FailurePage
-              compact
-              failure={result.failure}
-              rows={[
-                { label: 'Buying', value: `${side} · ${formatUsd(value)}` },
-                { label: 'Market', value: what },
-              ]}
-              onRetry={() => {
-                tap();
-                if (result.failure && followFix(result.failure)) return;
-                result.clear();
-              }}
-              onClose={() => {
-                tap();
-                closeSheet();
-              }}
-            />
-          </SheetScreen>
-        ) : bought ? (
-          <SheetScreen>
-            <SuccessPage
-              compact
-              title={`Bought ${side}`}
-              detail={what}
-              rows={[
-                { label: 'Shares', value: shares.toFixed(2) },
-                { label: 'Avg. price', value: formatShare(price, predictPrice) },
-                { label: 'To win', value: formatUsd(shares) },
-              ]}
-              onDone={() => finishDemo(`bought ${side} on “${market.question}”`)}
-            />
-          </SheetScreen>
-        ) : null}
-      </InlineTray>
     </FlowTray>
   );
 }
@@ -300,33 +191,6 @@ const useStyles = makeStyles((c) => ({
     color: c.textSecondary,
     fontSize: 14,
     lineHeight: 19,
-  },
-  orderTitle: {
-    color: c.text,
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  modes: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  mode: {
-    height: 34,
-    paddingHorizontal: 16,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modeActive: {
-    backgroundColor: c.raised,
-  },
-  modeLabel: {
-    color: c.textSecondary,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  modeLabelActive: {
-    color: c.text,
   },
   market: {
     marginTop: 18,
@@ -346,6 +210,8 @@ const useStyles = makeStyles((c) => ({
   },
   amountArea: {
     flex: 1,
+    // The amount keeps its room in a short window (the 600px popup).
+    minHeight: 88,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,

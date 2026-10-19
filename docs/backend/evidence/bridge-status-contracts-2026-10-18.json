@@ -1,0 +1,17 @@
+{
+  "verifiedDate": "2026-10-18",
+  "kind": "public-documentation-observation",
+  "authenticatedProviderAcceptance": false,
+  "relay": {
+    "source": "https://api.relay.link/documentation/json",
+    "sha256": "0dc3e5820b75bd7f059bf31000c03a4df53e71a08ff8d88e84347915681f59a7",
+    "infoVersion": "1.0.0",
+    "pathsChecked": ["/intents/status/v3", "/quote/v2"]
+  },
+  "across": {
+    "source": "https://docs.across.to/api-reference/deposit/status/get",
+    "machineReadableSchemaPinned": false,
+    "note": "Status reference inspected. Guessed docs.across.to/openapi.json returned HTTP 404; no authenticated response fixture."
+  },
+  "scope": "Schema/documentation evidence only. Local tests use synthetic responses; no funds moved."
+}

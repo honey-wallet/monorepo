@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-19",
+  "scope": "isolated local synthetic fixtures; no production or financial broadcasts",
+  "postgres": "17.10 (disposable postgres:17-alpine container)",
+  "clients": [
+    "Homebrew PostgreSQL 18.6",
+    "container PostgreSQL 17.10 via CI-style wrapper; internal port adapted to 5432"
+  ],
+  "checks": {
+    "logical_backup_restore": {
+      "status": "passed",
+      "test": "logical_backup_restores_encrypted_unknown_operations_without_broadcast",
+      "duration_seconds": 1.43,
+      "assertions": [
+        "distinct destination database",
+        "unknown operation and encrypted signed hashes preserved",
+        "historical key decrypts; wrong/missing key rejected",
+        "foreign owner rejected",
+        "wallet guard and dispatch journal preserved",
+        "same signed resubmission idempotent",
+        "duplicate dispatch rejected",
+        "post-backup marker absent"
+      ]
+    },
+    "matching_container_client_restore": {
+      "status": "passed",
+      "duration_seconds": 1.78
+    },
+    "offline_auth_reset": {
+      "status": "passed",
+      "test": "offline_restore_invalidates_all_auth_without_deleting_ownership_or_replay_evidence"
+    },
+    "submission_suite": {
+      "status": "passed",
+      "tests": 12,
+      "note": "An obsolete terminal-job fixture expectation failed initially; now verifies no successor job and rejection of the prior terminal lease."
+    },
+    "price_sequence_rollback": {
+      "status": "passed",
+      "test": "markets::tests::restored_lower_sequence_ages_existing_frame_without_replacing_prices"
+    },
+    "repository_checks": {
+      "status": "passed after final Across integration fix",
+      "commands": ["pnpm lint", "pnpm typecheck", "pnpm test"],
+      "test_tasks": 7
+    },
+    "ci_workflow": {
+      "status": "YAML parsed and shell syntax checked; container-client path locally exercised",
+      "hosted_execution": "not run"
+    },
+    "across_settlement": {
+      "status": "passed",
+      "legacy_tests": 4,
+      "typed_service_schema_tests": 1,
+      "assertions": [
+        "attachment",
+        "source finality",
+        "settlement",
+        "owner-bound delivery and monitor recovery",
+        "unchanged canonical intent JSON and hash"
+      ],
+      "limitation": "relational signed rows seeded; verifier uses deterministic loopback receipts; no real bridge broadcast"
+    },
+    "across_http_create": {
+      "status": "passed",
+      "tests": 1
+    },
+    "across_parser_adversarial": {
+      "status": "passed",
+      "tests": 1
+    }
+  },
+  "limitations": [
+    "not a production RTO/RPO measurement",
+    "no PITR/WAL/object-storage restore exercised",
+    "no managed PostgreSQL/Redis failover or old-replica fencing exercised",
+    "no real-provider reconciliation or funds moved",
+    "broader repository diff security scan still partial"
+  ]
+}

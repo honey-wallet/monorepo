@@ -1,0 +1,211 @@
+{
+  "scope": "disposable local Anvil fork and database; simulated finality; no public broadcasts",
+  "chainId": 31337,
+  "evidence": [
+    {
+      "operation": "0ca59faf-7c14-4321-816e-254be75d383d",
+      "state": "succeeded",
+      "emptyBlocksMinedForLocalFinality": "64",
+      "recovery": {
+        "operation": {
+          "id": "0ca59faf-7c14-4321-816e-254be75d383d",
+          "walletId": "013f8561-8cef-4311-a277-a3a5b68ed055",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "6"
+        },
+        "intentAvailable": true,
+        "preparation": {
+          "hash": "48968920157c86e90c2e193db33dfddfcb97af25ce675f5435ab77463ad43c8a",
+          "provider": "aave_v3",
+          "chainId": "31337",
+          "expiresAtMs": 1792316932898,
+          "expired": false,
+          "stepCount": 2,
+          "registryRevision": "local-fork-observed-test-only",
+          "feePolicyRevision": "local-fork-zero-fees-test-only"
+        },
+        "executionAvailable": false,
+        "submission": {
+          "operationId": "0ca59faf-7c14-4321-816e-254be75d383d",
+          "transactionHashes": [
+            "0xddf18fecfeb800ef2da54f93fb5ada7af63ae797069ce5ef4eb8581c58e364e3",
+            "0x95cbb01a1bd997a9ea6c2b542a25a26e78684a327a5c51647051d45e4600f6b6"
+          ]
+        },
+        "reconciliation": {
+          "checkedAtMs": 1792316825694,
+          "headNumber": "26218410",
+          "headHash": "0x6ec8b038ab5ef3992ba384395e707f0d16c1120865b880a06ca0beedd2cbf29e",
+          "finalizedNumber": "26218346",
+          "finalizedHash": "0xbd89d33055f4f384aeeb453332541705e317d63e0d0298b809dae0298ba4c993",
+          "transactions": [
+            {
+              "transactionHash": "0xddf18fecfeb800ef2da54f93fb5ada7af63ae797069ce5ef4eb8581c58e364e3",
+              "inclusion": {
+                "blockNumber": "26218345",
+                "blockHash": "0xdd5b102dcc17867100b4163d9101ccc565e8d3f94aec56f814a5eeb03df7ebe7",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "55558",
+                "effectiveGasPrice": "1040460853"
+              }
+            },
+            {
+              "transactionHash": "0x95cbb01a1bd997a9ea6c2b542a25a26e78684a327a5c51647051d45e4600f6b6",
+              "inclusion": {
+                "blockNumber": "26218346",
+                "blockHash": "0xbd89d33055f4f384aeeb453332541705e317d63e0d0298b809dae0298ba4c993",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "201989",
+                "effectiveGasPrice": "1035412622"
+              }
+            }
+          ]
+        }
+      },
+      "reconciliation": {
+        "checkedAtMs": 1792316825694,
+        "headNumber": "26218410",
+        "headHash": "0x6ec8b038ab5ef3992ba384395e707f0d16c1120865b880a06ca0beedd2cbf29e",
+        "finalizedNumber": "26218346",
+        "finalizedHash": "0xbd89d33055f4f384aeeb453332541705e317d63e0d0298b809dae0298ba4c993",
+        "transactions": [
+          {
+            "transactionHash": "0xddf18fecfeb800ef2da54f93fb5ada7af63ae797069ce5ef4eb8581c58e364e3",
+            "inclusion": {
+              "blockNumber": "26218345",
+              "blockHash": "0xdd5b102dcc17867100b4163d9101ccc565e8d3f94aec56f814a5eeb03df7ebe7",
+              "transactionIndex": "0",
+              "succeeded": true,
+              "finalized": true,
+              "gasUsed": "55558",
+              "effectiveGasPrice": "1040460853"
+            }
+          },
+          {
+            "transactionHash": "0x95cbb01a1bd997a9ea6c2b542a25a26e78684a327a5c51647051d45e4600f6b6",
+            "inclusion": {
+              "blockNumber": "26218346",
+              "blockHash": "0xbd89d33055f4f384aeeb453332541705e317d63e0d0298b809dae0298ba4c993",
+              "transactionIndex": "0",
+              "succeeded": true,
+              "finalized": true,
+              "gasUsed": "201989",
+              "effectiveGasPrice": "1035412622"
+            }
+          }
+        ]
+      },
+      "action": "supply",
+      "preparationHash": "48968920157c86e90c2e193db33dfddfcb97af25ce675f5435ab77463ad43c8a",
+      "sourceBlock": "26218344",
+      "transactions": [
+        {
+          "hash": "0xddf18fecfeb800ef2da54f93fb5ada7af63ae797069ce5ef4eb8581c58e364e3",
+          "blockNumber": "26218345",
+          "gasUsed": "55558",
+          "status": "0x1"
+        },
+        {
+          "hash": "0x95cbb01a1bd997a9ea6c2b542a25a26e78684a327a5c51647051d45e4600f6b6",
+          "blockNumber": "26218346",
+          "gasUsed": "201989",
+          "status": "0x1"
+        }
+      ],
+      "underlyingBalance": "9000000",
+      "aTokenBalance": "999999"
+    },
+    {
+      "operation": "c7decd97-1a50-4b55-9665-81612c0de0a4",
+      "state": "succeeded",
+      "emptyBlocksMinedForLocalFinality": "64",
+      "recovery": {
+        "operation": {
+          "id": "c7decd97-1a50-4b55-9665-81612c0de0a4",
+          "walletId": "013f8561-8cef-4311-a277-a3a5b68ed055",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "4"
+        },
+        "intentAvailable": true,
+        "preparation": {
+          "hash": "eeffd5ab0cf93123dff3412c265327243c8d52a71d6d304b9f5261fc9cdaf39d",
+          "provider": "aave_v3",
+          "chainId": "31337",
+          "expiresAtMs": 1792316946340,
+          "expired": false,
+          "stepCount": 1,
+          "registryRevision": "local-fork-observed-test-only",
+          "feePolicyRevision": "local-fork-zero-fees-test-only"
+        },
+        "executionAvailable": false,
+        "submission": {
+          "operationId": "c7decd97-1a50-4b55-9665-81612c0de0a4",
+          "transactionHashes": [
+            "0x35ea07a0ffaf07160163ce5d1104ad64fa561a948ba69335dcee8229cf81d5a5"
+          ]
+        },
+        "reconciliation": {
+          "checkedAtMs": 1792316838580,
+          "headNumber": "26218475",
+          "headHash": "0x573df2b16a7b16242cad1d08e1f91e9177303ec9d22226b611d9b5701bc9efd3",
+          "finalizedNumber": "26218411",
+          "finalizedHash": "0x5bd76f46356eb246d796a1b5cdd7330d29e49112b443342fadee98b5ecdb45c7",
+          "transactions": [
+            {
+              "transactionHash": "0x35ea07a0ffaf07160163ce5d1104ad64fa561a948ba69335dcee8229cf81d5a5",
+              "inclusion": {
+                "blockNumber": "26218411",
+                "blockHash": "0x5bd76f46356eb246d796a1b5cdd7330d29e49112b443342fadee98b5ecdb45c7",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "166198",
+                "effectiveGasPrice": "1000006030"
+              }
+            }
+          ]
+        }
+      },
+      "reconciliation": {
+        "checkedAtMs": 1792316838580,
+        "headNumber": "26218475",
+        "headHash": "0x573df2b16a7b16242cad1d08e1f91e9177303ec9d22226b611d9b5701bc9efd3",
+        "finalizedNumber": "26218411",
+        "finalizedHash": "0x5bd76f46356eb246d796a1b5cdd7330d29e49112b443342fadee98b5ecdb45c7",
+        "transactions": [
+          {
+            "transactionHash": "0x35ea07a0ffaf07160163ce5d1104ad64fa561a948ba69335dcee8229cf81d5a5",
+            "inclusion": {
+              "blockNumber": "26218411",
+              "blockHash": "0x5bd76f46356eb246d796a1b5cdd7330d29e49112b443342fadee98b5ecdb45c7",
+              "transactionIndex": "0",
+              "succeeded": true,
+              "finalized": true,
+              "gasUsed": "166198",
+              "effectiveGasPrice": "1000006030"
+            }
+          }
+        ]
+      },
+      "action": "withdraw",
+      "preparationHash": "eeffd5ab0cf93123dff3412c265327243c8d52a71d6d304b9f5261fc9cdaf39d",
+      "sourceBlock": "26218410",
+      "transactions": [
+        {
+          "hash": "0x35ea07a0ffaf07160163ce5d1104ad64fa561a948ba69335dcee8229cf81d5a5",
+          "blockNumber": "26218411",
+          "gasUsed": "166198",
+          "status": "0x1"
+        }
+      ],
+      "underlyingBalance": "9900000",
+      "aTokenBalance": "99998"
+    }
+  ]
+}

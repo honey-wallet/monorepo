@@ -1,0 +1,87 @@
+{
+  "scope": "V3 contract recovery-authority candidate with scalar probe; phrase-client proof recorded separately; app/device restore remains open",
+  "protocolVersion": 3,
+  "v3IntegrationTestsPassed": 43,
+  "totalSolidityTestsPassed": 121,
+  "rootLint": "passed",
+  "rootTypecheck": "5 tasks passed; 2 cached",
+  "rootTests": "7 tasks passed; 2 cached; 295 keyring tests executed; localhost fixtures permitted; explicitly ignored infrastructure suites not enabled",
+  "realBundlerEvidence": "bunk-bundler-local.json#seedRecoveryV3",
+  "sourceHashesRechecked": 62,
+  "artifactHashesRechecked": 95,
+  "liveProbe": {
+    "scope": "V3 Safe independent seed-recovery authority with public scalar fixtures; no seed client, app restore or production certification",
+    "factory": "0x336cb44ff973dc623de2a461715b0fc70cabe2c7",
+    "module": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+    "helper": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+    "account": "0xBfdbFb840B73cAC32d3019a63df79ECE895f9AD4",
+    "deploymentGas": "383210",
+    "transientBootstrap": true,
+    "verificationGasLimit": 500000,
+    "unstakedRejection": "RPC Request failed. unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002 unstaked factory accessed factory slot 0x0000000000000000000000000000000000000000000000000000000000000002",
+    "staleRejection": "RPC Request failed. AA24 signature error AA24 signature error",
+    "recoverySignatureCount": 1,
+    "recoveryDigest": "0xc8f9f710653e5e54274de123eb555eafce7bf6217e21c4160717d61339a1fc3c",
+    "recoveryTransactionHash": "0x3a808bc223855591767ceee9cd26c24e5848b537a5b0a044b55fbb75234721a5",
+    "resetMovedWalletFunds": false,
+    "resetChangedEntryPointNonce": false,
+    "distinctOwnerSignatures": {
+      "0xE57bFE9F44b819898F47BF37E5AF72a0783e1141": 1,
+      "0xfaE394561e33e242c551d15D4625309EA4c0B97f": 1,
+      "0xF1F6619B38A98d6De0800F1DefC0a6399eB6d30C": 1,
+      "0x811da72aCA31e56F770Fc33DF0e45fD08720E157": 1
+    },
+    "finalized": {
+      "number": "384",
+      "hash": "0xba0c88923e8e6f010b7ee9d76924ea3e87f502d3940364450aea36a1fc5886e5",
+      "owner": ["0xdaec5ee9f17873e87bb7c9fb5ca4458579734aa93da19c777d85e0793e9bc803", 1],
+      "recovery": ["0xbcdd6b0082242852a538c924cd251f14bd1b6be13940c08e39e5f5ddb7f23ff2", 1]
+    },
+    "cases": [
+      {
+        "hash": "0xbb9582bd46335f9b5b5784c999e64ec27a08927dcc5a50487e1b95ac67f04f0b",
+        "transactionHash": "0xd43f0f26c7feb1b040926733a039792b3f649431117f7d7ca050a58f8c53553d",
+        "event": "ActionExecuted"
+      },
+      {
+        "hash": "0x535186c3bb317d10ebfd9d74017418b440a4ed1114f9f78c2538de589fd660af",
+        "transactionHash": "0x01c49d9b6c048c52171e6833de0dead04b6020027c5d507f44d26b15fe93ac50",
+        "event": "ActionExecuted"
+      }
+    ]
+  },
+  "sizes": {
+    "BunkSeedRecoveryModule": {
+      "runtimeBytes": 11570,
+      "initBytes": 12710
+    },
+    "BunkSeedRecoveryFactory": {
+      "runtimeBytes": 8193,
+      "initBytes": 23624
+    },
+    "BunkSeedRecoverySetup": {
+      "runtimeBytes": 488,
+      "initBytes": 644
+    }
+  },
+  "sourcesSha256": {
+    "contracts/bunk-evm/src/BunkSeedRecoveryModule.sol": "54dc0c3a420737d204575b0af6c11209f0e7677eaba9bc4f9b58cc8513ec788b",
+    "contracts/bunk-evm/src/BunkSeedRecoveryFactory.sol": "d7698a59b0fd2b4f1ec26abaf79c261ab48262fb7d712aef035cc8548e687670",
+    "contracts/bunk-evm/src/BunkSeedRecoverySetup.sol": "e0e72159316a06ce52a9d74886ea1b10c3871810d2ebf1cd3a7617b9b2ccd1ed",
+    "contracts/bunk-evm/test/BunkSeedRecoveryIntegration.t.sol": "5c3f9ba23ba9627b35fe9bcc0821b0c04d7b86cef0a7b010242875b7d11d2622",
+    "contracts/bunk-evm/test/bundler/seed-recovery.mjs": "4106a0d66ac7aa8a1b1362878b9803a1a612b9ace0c9543e1dd7b486a99bedda",
+    "contracts/bunk-evm/test/bundler/run.py": "d20f0741234d234b17ef33822d984ba25940556e485297a4574b3f52eb26c0b5"
+  },
+  "githubWorkflowExecuted": false,
+  "limitations": [
+    "Offline phrase client, independent vectors and fresh-process recovery are implemented; full app/device restore remains open",
+    "Finalized observer, durable v3 coordinator and subsequent shared IndexedDB adapter are implemented; packaged app integration, relay funding and device handoff remain open.",
+    "Independent recovery authority/permanent certificate and caller-funded relay require review",
+    "Requires EIP-1153 and exact network/provider acceptance; local Alto 0.0.18 is not public-provider certification",
+    "Cannot undo completed actions or revoke another device that holds the same phrase"
+  ],
+  "keyringTestsPassed": 295,
+  "phraseClientEvidence": "bunk-v3-client-local.json",
+  "accountCoordinatorEvidence": "bunk-v3-account-local.json",
+  "subsequentBrowserEvidence": "bunk-browser-journal-local.json; this historical run and its hashes are unchanged"
+}

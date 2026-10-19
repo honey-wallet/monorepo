@@ -1,0 +1,306 @@
+{
+  "scope": "Version 2 Safe recovery candidate; local tests only, no production or shared-client certification",
+  "compiler": "solc 0.8.28, Cancun, optimizer 200",
+  "tests": {
+    "testAllOrdinaryLeavesCanBeReservedWithoutBurningRecovery()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 16715892
+        }
+      }
+    },
+    "testAtomicBatchFailurePreservesRotationButRollsBackActions()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 521378
+        }
+      }
+    },
+    "testCannotConsumeBeforeSignedStart()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 727090
+        }
+      }
+    },
+    "testDeadlineBoundaryExecutesAtDeadline()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 475648
+        }
+      }
+    },
+    "testDeploymentDomainAndIdentityBinding()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 589108
+        }
+      }
+    },
+    "testDirectAndSpoofedEntryPointCallsFail()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 396461
+        }
+      }
+    },
+    "testDirectProxyFactoryFirstClaimHasNoBootstrapRecord()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 674726
+        }
+      }
+    },
+    "testEntryPointExceptionRejectsOtherRecipientMethodValueOrEncoding()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 1061896
+        }
+      }
+    },
+    "testEnvelopeCannotExceedSignedLiabilityOrSwapPaymaster()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 458940
+        }
+      }
+    },
+    "testEnvelopeKeyCannotChangeOwnerApprovedScope()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 265625
+        }
+      }
+    },
+    "testEnvelopeKeyCannotLowerGasOrChangeCallsOrNonce()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 879869
+        }
+      }
+    },
+    "testExactSafeConfigurationAndNoReinitialization()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 273179
+        }
+      }
+    },
+    "testExpiredGrantRenewalRotatesWithoutExecutingExpiredAction()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 900770
+        }
+      }
+    },
+    "testFactoryFrontRunCanRemoveInitCodeWithoutNewOwnerSignature()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 995061
+        }
+      }
+    },
+    "testFeeRetryUsesOneOwnerSignatureAndFreshExactEnvelope()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 756848
+        }
+      }
+    },
+    "testFuzzCertificateMutationRejected(uint8)": {
+      "status": "Success",
+      "kind": {
+        "Fuzz": {
+          "first_case": {
+            "gas": 272100,
+            "stipend": 21204
+          },
+          "runs": 256,
+          "mean_gas": 255456,
+          "median_gas": 250896,
+          "failed_corpus_replays": 0
+        }
+      }
+    },
+    "testLiveRevertConsumesOwner()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 507073
+        }
+      }
+    },
+    "testMalformedAndOversizedAuthorizationFailsBeforeConsumption()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 554848
+        }
+      }
+    },
+    "testNextOwnerActsAfterExpiredRecovery()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 3802325
+        }
+      }
+    },
+    "testNoPrefundRecoveryCanRetryIdenticalBytesAfterFunding()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 650865
+        }
+      }
+    },
+    "testOrdinarySafeOwnerAndContractSignaturesCannotBypassRotation()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 363925
+        }
+      }
+    },
+    "testReservedLeafRecoversOnlyAfterExpiryWithIdenticalBytes()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 783303
+        }
+      }
+    },
+    "testReservedLeafRejectsExpiringGrant()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 398599
+        }
+      }
+    },
+    "testReservedLeafRejectsVariableFeesEvenWithinBudget()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 253849
+        }
+      }
+    },
+    "testRevokedSponsorshipFallsBackWithinSignedGasBudget()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 838357
+        }
+      }
+    },
+    "testSelfAdministrationAndUnapprovedModulesFail()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 307731
+        }
+      }
+    },
+    "testSelfFundedWithdrawalPreservesGasAccounting()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 511079
+        }
+      }
+    },
+    "testSequentialOwnersInOneBundleAndNoOldCommitmentReactivation()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 5495854
+        }
+      }
+    },
+    "testSignatureDomainRejectsDifferentChain()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 265649
+        }
+      }
+    },
+    "testSponsoredCounterfactualCreationAtBoundedVerificationGas()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 875170
+        }
+      }
+    },
+    "testSponsoredWithdrawalReturnsEntireGasDepositToSameSafe()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 585689
+        }
+      }
+    },
+    "testWrongAccountAndHighSSignaturesCannotAuthorize()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 801651
+        }
+      }
+    },
+    "testWrongMerkleLeafCannotUseAnotherProof()": {
+      "status": "Success",
+      "kind": {
+        "Unit": {
+          "gas": 273127
+        }
+      }
+    }
+  },
+  "totalContractTestsPassed": 78,
+  "existingV1SafeTestsPassed": 27,
+  "standaloneRecoveryTestsPassed": 18,
+  "sizes": {
+    "BunkRecoveryModule": {
+      "runtimeBytes": 9907,
+      "initcodeBytes": 11040
+    },
+    "BunkRecoveryFactory": {
+      "runtimeBytes": 7744,
+      "initcodeBytes": 21498
+    },
+    "BunkRecoverySetup": {
+      "runtimeBytes": 488,
+      "initcodeBytes": 644
+    }
+  },
+  "sourcesSha256": {
+    "contracts/bunk-evm/src/BunkRecoverySetup.sol": "3021e0e9d082de33f3c97a30935c99b6e4ad85f74d69029aa186d6526fc4dcda",
+    "contracts/bunk-evm/src/BunkRecoveryFactory.sol": "f0f3771252b591c82f2b82b2f148df789e01e8c5bf1e687d69c0bacde3c64032",
+    "contracts/bunk-evm/src/BunkRecoveryModule.sol": "37105a411ac89aa8c370cb463712cde40b94fba834e6773675ea651b421a3f39",
+    "contracts/bunk-evm/test/BunkRecoveryIntegration.t.sol": "48d83aa0cead726aaa4849861541e3481986e71136c757aecce7c42076a44b7a"
+  },
+  "realBundlerEvidence": "bunk-bundler-local.json#safeRecoveryV2",
+  "limitations": [
+    "V2 client/observer and independent derivation vectors pending",
+    "Durable pending-certificate backup and concurrent-device coordination unresolved",
+    "No public-provider/network acceptance or independent audit"
+  ]
+}

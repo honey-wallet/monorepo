@@ -1,4 +1,10 @@
-import type { PairOffer, PairPayload, PairSession } from '@honey-wallet/keyring';
+import {
+  clearPairOfferSecrets,
+  clearPairSession,
+  type PairOffer,
+  type PairPayload,
+  type PairSession,
+} from '@honey-wallet/keyring';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -52,6 +58,7 @@ function PairPhone() {
   const [offer, setOffer] = useState<PairOffer>(() => startPairing(direction));
   const [state, setState] = useState<State>({ step: 'scan' });
   const abort = useRef<AbortController | null>(null);
+  const sessions = useRef(new Set<PairSession>());
   const [noPhrase, setNoPhrase] = useState(false);
 
   // Only a recovery phrase can move to the phone (Apple, Google and email wallets have none here).
@@ -77,6 +84,11 @@ function PairPhone() {
     setState({ step: 'scan' });
     waitForPhone(offer, controller.signal)
       .then((session) => {
+        if (controller.signal.aborted) {
+          clearPairSession(session);
+          return;
+        }
+        sessions.current.add(session);
         tap();
         // The device the wallet leaves checks the code: here when sending, so type it;
         // when receiving, show it and wait for the phone.
@@ -86,18 +98,31 @@ function PairPhone() {
       .catch((error: unknown) => {
         if (!controller.signal.aborted) setState({ step: 'error', message: messageOf(error) });
       });
-    return () => controller.abort();
+    return () => {
+      controller.abort();
+      clearPairOfferSecrets(offer);
+      for (const session of sessions.current) clearPairSession(session);
+      sessions.current.clear();
+    };
   }, [offer]);
 
   const restart = () => {
     tap();
+    for (const session of sessions.current) clearPairSession(session);
+    sessions.current.clear();
+    clearPairOfferSecrets(offer);
     setOffer(startPairing(direction));
   };
 
   /** Browser to phone: the password, then the wallet goes, encrypted for that phone. */
   const give = async (session: PairSession) => {
     tap();
-    if (!(await confirmOwner('Send your wallet to your phone'))) return;
+    if (!(await confirmOwner('Send your wallet to your phone'))) {
+      clearPairSession(session);
+      sessions.current.delete(session);
+      setOffer(startPairing(direction));
+      return;
+    }
     setState({ step: 'sending', session });
     try {
       await sendWallet(offer, session);
@@ -109,6 +134,9 @@ function PairPhone() {
     } catch (error) {
       failure();
       setState({ step: 'error', message: messageOf(error) });
+    } finally {
+      clearPairSession(session);
+      sessions.current.delete(session);
     }
   };
 
@@ -123,6 +151,9 @@ function PairPhone() {
       if (controller.signal.aborted) return;
       failure();
       setState({ step: 'error', message: messageOf(error) });
+    } finally {
+      clearPairSession(session);
+      sessions.current.delete(session);
     }
   };
 
@@ -197,6 +228,8 @@ function PairPhone() {
           onMatch={() => give(state.session)}
           onGiveUp={() => {
             abort.current?.abort();
+            clearPairSession(state.session);
+            sessions.current.delete(state.session);
             setState({
               step: 'error',
               message:

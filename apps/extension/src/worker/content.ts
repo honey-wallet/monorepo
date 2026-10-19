@@ -15,6 +15,8 @@ import {
 
 let port: chrome.runtime.Port | null = null;
 const inFlight = new Set<number>();
+const MAX_IN_FLIGHT = 32;
+const MAX_REQUEST_BYTES = 128 * 1024;
 
 const toPage = (message: PageReply) =>
   window.postMessage({ source: FROM_CONTENT, ...message }, window.location.origin);
@@ -39,13 +41,28 @@ function connect() {
 window.addEventListener('message', (event: MessageEvent) => {
   if (event.source !== window || event.origin !== window.location.origin) return;
   const data = event.data as (PageRequest & { source?: string }) | undefined;
-  if (data?.source !== FROM_PAGE || typeof data.id !== 'number') return;
+  if (data?.source !== FROM_PAGE || !Number.isSafeInteger(data.id) || data.id < 0) return;
   const request: PageRequest = {
     id: data.id,
     namespace: data.namespace === 'solana' ? 'solana' : 'evm',
     method: String(data.method),
     params: data.params,
   };
+  let serializedBytes: number;
+  try {
+    serializedBytes = new TextEncoder().encode(JSON.stringify(request)).byteLength;
+  } catch {
+    toPage({ id: request.id, error: ERR.invalid });
+    return;
+  }
+  if (serializedBytes > MAX_REQUEST_BYTES) {
+    toPage({ id: request.id, error: ERR.invalid });
+    return;
+  }
+  if (inFlight.has(request.id) || inFlight.size >= MAX_IN_FLIGHT) {
+    toPage({ id: request.id, error: ERR.busy });
+    return;
+  }
   try {
     inFlight.add(request.id);
     connect().postMessage(request);

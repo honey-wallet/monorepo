@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "dependencies": [
+    {
+      "name": "safe",
+      "repository": "safe-global/safe-smart-account",
+      "commit": "bf943f80fec5ac647159d26161446ac5d716a294",
+      "sourceSha256": "27843ff88ee80f0c69e6838847fa506e90c1b85c62b116f945e5540c4b1b8b9d"
+    },
+    {
+      "name": "account-abstraction",
+      "repository": "eth-infinitism/account-abstraction",
+      "commit": "7af70c8993a6f42973f520ae0752386a5032abe7",
+      "sourceSha256": "d87b70c1cf3881e9661559b3c1daa74bcd8921896352a3835e863b53b61a9c68"
+    },
+    {
+      "name": "openzeppelin",
+      "repository": "OpenZeppelin/openzeppelin-contracts",
+      "commit": "dbb6104ce834628e473d2173bbc9d47f81a9eec3",
+      "sourceSha256": "d7cb2accbac9f177548ea98fc842bfe7fac8da2c75b642d6d1c5460fcfce38b7"
+    }
+  ]
+}

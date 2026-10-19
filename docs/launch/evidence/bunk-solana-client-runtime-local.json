@@ -1,0 +1,76 @@
+{
+  "scope": "Compiled SBF executed in LiteSVM 0.7.1/Agave 2.3.13, real precompile and transaction signature verification; no public deployment or validator-network certification",
+  "fixtureGenesisHex": "0707070707070707070707070707070707070707070707070707070707070707",
+  "sourcesSha256": {
+    "Cargo.lock": "158d2e3ce3cdd23bb09751b1b63252d42e9c57d7ee1a85278a1292d8b8d00a8d",
+    "Cargo.toml": "566042715d33b74b1d5835f5ca7cb312cdda25e68d20cca69cb6a3540a6c9a6f",
+    "build.rs": "e3356201be98c8fca53f5690e73c6a530b24d52414db77acd440ced00661e35e",
+    "scripts/acceptance.py": "3b5340210a110eee26557539e4d5d408bca9699d1476889c1bb1d1b002020afe",
+    "scripts/client.py": "bf9020ab62e0f2695655aa997f5515ed2f594a6beb038cef6e9b59b2cf523efe",
+    "scripts/validator.py": "089fe3de21753c8fc2de0da54d7d8f2c122cc8c308fed67ca82798f37228ac2b",
+    "scripts/vectors.py": "6d67af09ad3850f1707142f37911d07a6ec3702d0c76010c0cecfdad60461831",
+    "src/auth.rs": "bb821946e2ad5390bb533023eff8a5b21fc9643d2ecd1f732a461337fffd22dc",
+    "src/lib.rs": "121d80516f5aed1e3e79c1f749839db0458e2c703cfaffbcb3699f85cebacffc",
+    "src/state.rs": "444c8fe7cadb3203de5da01de869aacbd58589fd8ca8c4017a03fb718178e92b",
+    "tests/fixtures/v1.json": "06239607fd1dcd82fa6e7f4138fd3b871d2b41f8a3bb5e537d0eeada5f0b80a3",
+    "tests/invoker/Cargo.toml": "d1bfb4d5e29db221a0782b5ade76468cb55206104f55d2c90fe30ce63c3b0b07",
+    "tests/invoker/src/lib.rs": "c1aeabd1b94d7ac862e6052e84a83f38240c67cedd27ec338f925a9b7c3cfcda",
+    "tests/runtime.rs": "fba4e11eb7870c616013a357eb143b43d93debede9e8ed3ac2bab3722667ca1e"
+  },
+  "sourcesRechecked": true,
+  "artifacts": {
+    "honey_bunk_solana": {
+      "sha256": "b34079503c5cf62e67171010d43622dd1c505e44e780fe915af6967daedb4b69",
+      "bytes": 122048
+    },
+    "honey_bunk_test_invoker": {
+      "sha256": "d3f3808c77cb33829b70487cc738001f1323e2c70876f67da7265a19a3e685e9",
+      "bytes": 27000
+    }
+  },
+  "tools": {
+    "rust": "rustc 1.93.1 (01f6ddf75 2026-02-11)",
+    "sbf": "solana-cargo-build-sbf 3.1.11\nplatform-tools v1.52\nrustc 1.89.0",
+    "openssl": "OpenSSL 4.0.3 29 Sep 2026 (Library: OpenSSL 4.0.3 29 Sep 2026)"
+  },
+  "commands": [
+    ["python3", "scripts/vectors.py", "--check"],
+    ["cargo", "fmt", "--all", "--check"],
+    [
+      "cargo",
+      "build-sbf",
+      "--manifest-path",
+      "Cargo.toml",
+      "--sbf-out-dir",
+      "/Users/swayam/Desktop/fun/honey wallet/contracts/bunk-solana/target/deploy",
+      "--",
+      "--locked",
+      "--offline"
+    ],
+    [
+      "cargo",
+      "build-sbf",
+      "--manifest-path",
+      "tests/invoker/Cargo.toml",
+      "--sbf-out-dir",
+      "/Users/swayam/Desktop/fun/honey wallet/contracts/bunk-solana/target/deploy",
+      "--",
+      "--locked",
+      "--offline"
+    ],
+    [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--offline",
+      "--workspace",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    ["cargo", "test", "--locked", "--offline"]
+  ],
+  "logDirectory": "/var/folders/lb/64_ls18s45781gdg1jxlt98m0000gp/T/honey-solana-acceptance-lpjc5dmf",
+  "runtimeTestLog": "    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.34s\n     Running unittests src/lib.rs (target/debug/deps/honey_bunk_solana-7dc84424b78ba795)\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n     Running tests/runtime.rs (target/debug/deps/runtime-2995b4d511e1192e)\n\nrunning 17 tests\ntest compiled_wrapper_cannot_invoke_wallet_authorization_through_cpi ... ok\ntest real_spl_cpi_failure_rolls_back_then_exact_authorization_succeeds_after_funding ... ok\ntest prefunded_initialization_and_native_rotation_use_real_sbf ... ok\ntest cpi_rejects_self_call_writable_wallet_external_signers_and_duplicate_accounts ... ok\ntest independent_python_openssl_vectors_match_pda_encoding_digest_and_signatures ... ok\ntest old_and_cross_role_keys_cannot_be_successors ... ok\ntest rent_floor_and_exhaustion_fail_atomically ... ok\ntest expired_authorization_preserves_owner_until_independent_recovery ... ok\ntest forged_consumption_accounts_and_terminal_recovery_epoch_fail_atomically ... ok\ntest fixed_recovery_survives_ordinary_advance_and_revokes_old_generation ... ok\ntest later_transaction_failure_rolls_back_rotation_and_identical_authorization_retries ... ok\ntest owner_or_recovery_key_cannot_be_used_as_transport_payer ... ok\ntest successor_authorities_cannot_be_transport_payers ... ok\ntest forged_precompile_offsets_signatures_and_sysvars_do_not_authorize ... ok\ntest recovery_wrong_signer_successor_epoch_and_trailing_actions_fail ... ok\ntest initialization_requires_identity_network_pda_and_unique_authorities ... ok\ntest altered_action_fields_and_destination_fail_without_rotation ... ok\n\ntest result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s\n\n   Doc-tests honey_bunk_solana\n\nrunning 0 tests\n\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s\n\n"
+}

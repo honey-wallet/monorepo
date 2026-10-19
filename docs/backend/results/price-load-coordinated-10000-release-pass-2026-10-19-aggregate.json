@@ -1,0 +1,8 @@
+{
+  "runId": "c56ad8f7-4375-486b-9b1d-9b1d46b2d4a5",
+  "passed": true,
+  "errors": [],
+  "websocketConnections": 10000,
+  "httpIssued": 6000,
+  "httpCompletedAtDeadline": 6000
+}

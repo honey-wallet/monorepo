@@ -1,0 +1,180 @@
+{
+  "scope": "Bounded phrase-derived v3 discovery on isolated Geth/Alto, with real observer, funded undeployed address and unchanged signing journal; not complete asset/app/production recovery",
+  "completeRun": "bunk-discovery-bundler-local.json",
+  "sourceHashesRechecked": 70,
+  "artifactHashesRechecked": 95,
+  "discovery": {
+    "releaseKey": "1337:0x6151e501e8d7b05d83a68994b03f53b8e64fcd076c29c2b9e7783d84dfdb358b",
+    "startAccountIndex": 4,
+    "count": 3,
+    "nextAccountIndex": 7,
+    "inventoryComplete": false,
+    "signingAuthorized": false,
+    "candidates": [
+      {
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x7df40ad1a04203a0ec41d5377d232835af41767981f985c6b83f2a8520e37f6f",
+            "number": "736",
+            "timestamp": "1792377432"
+          },
+          "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+          "accountIndex": 4,
+          "status": "deployed",
+          "state": {
+            "account": "0x58fFEDa50EcDa382D45a443a742Ea085901B4faA",
+            "accountIndex": 4,
+            "ownerIndex": 1,
+            "commitment": "0xd544d5ece2ecfb7872bf68e3ec1219a1ab8524d653db89d3be2a2692553871e2",
+            "nonce": "1",
+            "recoveryCommitment": "0x5ebf281c1de308553985a9535ffaf456154598f5a15745fe734fd86da2ccee2f",
+            "epoch": 1,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        },
+        "nativeBalance": "1000000000000000000",
+        "entryPointDeposit": "500000000000000000"
+      },
+      {
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x7df40ad1a04203a0ec41d5377d232835af41767981f985c6b83f2a8520e37f6f",
+            "number": "736",
+            "timestamp": "1792377432"
+          },
+          "account": "0x0bB23f7C5433d040AA27d5aa774f19719e144E2a",
+          "accountIndex": 5,
+          "status": "undeployed"
+        },
+        "nativeBalance": "10000000000000000",
+        "entryPointDeposit": "20000000000000000"
+      },
+      {
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x7df40ad1a04203a0ec41d5377d232835af41767981f985c6b83f2a8520e37f6f",
+            "number": "736",
+            "timestamp": "1792377432"
+          },
+          "account": "0xc14F2eA3d1c7075a3e9e5943D9099c66a0A915aE",
+          "accountIndex": 6,
+          "status": "undeployed"
+        },
+        "nativeBalance": "0",
+        "entryPointDeposit": "0"
+      }
+    ]
+  },
+  "signingJournalRevisionUnchanged": 20,
+  "rootChecks": {
+    "command": "pnpm lint && pnpm typecheck && pnpm test",
+    "result": "passed",
+    "biomeFiles": 573,
+    "typecheckTasks": 5,
+    "typecheckTasksCached": 5,
+    "testTasks": 7,
+    "testTasksCached": 5,
+    "keyringTestsExecuted": 320,
+    "discoveryTests": 19,
+    "log": "/private/tmp/honey-bunk-discovery-root.log"
+  },
+  "limitations": [
+    "Controlled-observer unit tests are supplemented by this local-chain probe, not public-provider or independent security certification.",
+    "No production release registry/distribution, packaged app restore, token/NFT inventory, sparse-index backup format or Solana/Bitcoin discovery.",
+    "Discovery rejects authority mismatches; app must retain the failed range and offer explicit investigation/recovery rather than hide it as empty.",
+    "No signing authority is granted; explicit imports still require coordinator recovery even with surviving local history.",
+    "Browser persistence evidence remains its original separate snapshot; this run did not repeat Chrome/MV3/device tests.",
+    "Existing Solidity artifact proof is unchanged; this run rechecked all artifact hashes and all live probes."
+  ]
+}

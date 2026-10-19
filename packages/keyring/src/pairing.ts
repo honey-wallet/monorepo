@@ -82,6 +82,66 @@ export type PairPayload = {
   accounts: { index: number; label: string }[];
 };
 
+/** Best-effort overwrite for short-lived secret byte buffers. */
+export function clearPairBytes(bytes: Uint8Array | null | undefined): void {
+  bytes?.fill(0);
+}
+
+/** Retire the extension's one-time secret and nonce as soon as its handshake ends. */
+export function clearPairOfferSecrets(offer: PairOffer): void {
+  clearPairBytes(offer.secretKey);
+  clearPairBytes(offer.nonce);
+}
+
+/** Retire the phone's one-time secret and nonce after deriving its session. */
+export function clearPairAnswerSecrets(answer: PairAnswer): void {
+  clearPairBytes(answer.secretKey);
+  clearPairBytes(answer.nonce);
+}
+
+/** Retire a pairing session once payload encryption/decryption is complete or abandoned. */
+export function clearPairSession(session: PairSession): void {
+  clearPairBytes(session.key);
+}
+
+const MAX_PAIRED_ACCOUNTS = 256;
+const MAX_PAIRED_ACCOUNT_LABEL_LENGTH = 256;
+
+/** Checks the bounded, public account metadata carried beside a paired recovery phrase. */
+export function isPairAccountList(value: unknown): value is PairPayload['accounts'] {
+  if (!Array.isArray(value) || value.length > MAX_PAIRED_ACCOUNTS) return false;
+  const indexes = new Set<number>();
+  return value.every((account: unknown) => {
+    if (account === null || typeof account !== 'object') return false;
+    const { index, label } = account as Record<string, unknown>;
+    if (
+      Array.isArray(account) ||
+      Object.keys(account).length !== 2 ||
+      !Number.isSafeInteger(index) ||
+      (index as number) < 0 ||
+      (index as number) > 0x7fffffff ||
+      typeof label !== 'string' ||
+      label.length > MAX_PAIRED_ACCOUNT_LABEL_LENGTH
+    ) {
+      return false;
+    }
+    if (indexes.has(index as number)) return false;
+    indexes.add(index as number);
+    return true;
+  });
+}
+
+function isPairPayload(value: unknown): value is PairPayload {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const payload = value as Record<string, unknown>;
+  return (
+    payload.v === 1 &&
+    typeof payload.mnemonic === 'string' &&
+    isValidMnemonic(payload.mnemonic) &&
+    isPairAccountList(payload.accounts)
+  );
+}
+
 export type PairSession = {
   /** Encrypts and decrypts the payload. */
   key: Uint8Array;
@@ -95,17 +155,33 @@ export function createPairOffer(
   direction: PairDirection = 'toBrowser',
 ): PairOffer {
   const secretKey = random(32);
-  const publicKey = x25519.getPublicKey(secretKey);
-  const token = bytesToHex(random(16));
-  return {
-    token,
-    channel: channelFor(token),
-    secretKey,
-    publicKey,
-    nonce: random(NONCE_BYTES),
-    direction,
-    uri: `${SCHEME}?t=${token}&k=${b64.encode(publicKey)}${direction === 'toPhone' ? '&d=p' : ''}`,
-  };
+  let nonce: Uint8Array | undefined;
+  try {
+    if (secretKey.length !== 32) throw new Error('Bad pairing key length');
+    const publicKey = x25519.getPublicKey(secretKey);
+    const tokenBytes = random(16);
+    try {
+      if (tokenBytes.length !== 16) throw new Error('Bad pairing token length');
+      const token = bytesToHex(tokenBytes);
+      nonce = random(NONCE_BYTES);
+      if (nonce.length !== NONCE_BYTES) throw new Error('Bad pairing nonce length');
+      return {
+        token,
+        channel: channelFor(token),
+        secretKey,
+        publicKey,
+        nonce,
+        direction,
+        uri: `${SCHEME}?t=${token}&k=${b64.encode(publicKey)}${direction === 'toPhone' ? '&d=p' : ''}`,
+      };
+    } finally {
+      clearPairBytes(tokenBytes);
+    }
+  } catch (error) {
+    clearPairBytes(secretKey);
+    clearPairBytes(nonce);
+    throw error;
+  }
 }
 
 /** Reads a scanned QR code. Null if it isn't a (current) Honey pairing code. */
@@ -129,28 +205,59 @@ export function parsePairUri(
   }
 }
 
-const commitTo = (publicKey: Uint8Array, nonce: Uint8Array) =>
-  sha256(concat(utf8ToBytes('honey-pair-v2 commit'), publicKey, nonce));
+const commitTo = (publicKey: Uint8Array, nonce: Uint8Array) => {
+  const label = utf8ToBytes('honey-pair-v2 commit');
+  const preimage = concat(label, publicKey, nonce);
+  try {
+    return sha256(preimage);
+  } finally {
+    clearPairBytes(label);
+    clearPairBytes(preimage);
+  }
+};
 
 /** The phone's one-time key and nonce, and its commitment to them. */
 export function createPairAnswer(random: (bytes: number) => Uint8Array): PairAnswer {
   const secretKey = random(32);
-  const publicKey = x25519.getPublicKey(secretKey);
-  const nonce = random(NONCE_BYTES);
-  return { secretKey, publicKey, nonce, commitment: b64.encode(commitTo(publicKey, nonce)) };
+  let nonce: Uint8Array | undefined;
+  try {
+    if (secretKey.length !== 32) throw new Error('Bad pairing key length');
+    const publicKey = x25519.getPublicKey(secretKey);
+    nonce = random(NONCE_BYTES);
+    if (nonce.length !== NONCE_BYTES) throw new Error('Bad pairing nonce length');
+    const digest = commitTo(publicKey, nonce);
+    try {
+      return { secretKey, publicKey, nonce, commitment: b64.encode(digest) };
+    } finally {
+      clearPairBytes(digest);
+    }
+  } catch (error) {
+    clearPairBytes(secretKey);
+    clearPairBytes(nonce);
+    throw error;
+  }
 }
 
 export const encodeNonce = (nonce: Uint8Array) => b64.encode(nonce);
 
 export function decodeNonce(data: string): Uint8Array {
   const nonce = b64.decode(data);
-  if (nonce.length !== NONCE_BYTES) throw new Error('Bad pairing nonce');
+  if (nonce.length !== NONCE_BYTES) {
+    clearPairBytes(nonce);
+    throw new Error('Bad pairing nonce');
+  }
   return nonce;
 }
 
 /** The phone's `reveal` message: its public key and nonce. */
-export const encodeReveal = (answer: PairAnswer) =>
-  b64.encode(concat(answer.publicKey, answer.nonce));
+export const encodeReveal = (answer: PairAnswer) => {
+  const bytes = concat(answer.publicKey, answer.nonce);
+  try {
+    return b64.encode(bytes);
+  } finally {
+    clearPairBytes(bytes);
+  }
+};
 
 /** Opens the phone's `reveal`; throws unless it matches what the phone committed to. */
 export function openReveal(
@@ -158,15 +265,30 @@ export function openReveal(
   commitment: string,
 ): { publicKey: Uint8Array; nonce: Uint8Array } {
   const bytes = b64.decode(data);
-  if (bytes.length !== 32 + NONCE_BYTES) throw new Error('Bad pairing reveal');
+  if (bytes.length !== 32 + NONCE_BYTES) {
+    clearPairBytes(bytes);
+    throw new Error('Bad pairing reveal');
+  }
   const publicKey = bytes.slice(0, 32);
   const nonce = bytes.slice(32);
-  const expected = b64.decode(commitment);
-  const actual = commitTo(publicKey, nonce);
-  let diff = expected.length ^ actual.length;
-  for (let i = 0; i < actual.length; i++) diff |= (expected[i] ?? 0) ^ (actual[i] as number);
-  if (diff !== 0) throw new Error('The phone’s key doesn’t match what it committed to');
-  return { publicKey, nonce };
+  let expected: Uint8Array | undefined;
+  let actual: Uint8Array | undefined;
+  try {
+    expected = b64.decode(commitment);
+    actual = commitTo(publicKey, nonce);
+    let diff = expected.length ^ actual.length;
+    for (let i = 0; i < actual.length; i++) diff |= (expected[i] ?? 0) ^ (actual[i] as number);
+    if (diff !== 0) throw new Error('The phone’s key doesn’t match what it committed to');
+    return { publicKey, nonce };
+  } catch (error) {
+    clearPairBytes(publicKey);
+    clearPairBytes(nonce);
+    throw error;
+  } finally {
+    clearPairBytes(bytes);
+    clearPairBytes(expected);
+    clearPairBytes(actual);
+  }
 }
 
 /**
@@ -186,23 +308,48 @@ export function pairSession(
     direction?: PairDirection;
   },
 ): PairSession {
-  // Throws on low-order keys (an all-zero shared secret).
-  const shared = x25519.getSharedSecret(mySecretKey, theirPublicKey);
-  const bound = concat(
-    transcript.extensionKey,
-    transcript.phoneKey,
-    transcript.extensionNonce,
-    transcript.phoneNonce,
-  );
-  // Browser-to-phone gets its own labels; phone-to-browser keeps the original ones.
-  const prefix = transcript.direction === 'toPhone' ? 'honey-pair-v2 to-phone' : 'honey-pair-v2';
-  const derive = (label: string, length: number) =>
-    hkdf(sha256, shared, hexToBytes(transcript.channel), concat(utf8ToBytes(label), bound), length);
-  const n = new DataView(derive(`${prefix} code`, 4).buffer).getUint32(0);
-  return {
-    key: derive(`${prefix} key`, 32),
-    code: String(n % 1_000_000).padStart(6, '0'),
-  };
+  let shared: Uint8Array | undefined;
+  let bound: Uint8Array | undefined;
+  let salt: Uint8Array | undefined;
+  let codeBytes: Uint8Array | undefined;
+  let key: Uint8Array | undefined;
+  try {
+    // Throws on low-order keys (an all-zero shared secret).
+    shared = x25519.getSharedSecret(mySecretKey, theirPublicKey);
+    bound = concat(
+      transcript.extensionKey,
+      transcript.phoneKey,
+      transcript.extensionNonce,
+      transcript.phoneNonce,
+    );
+    salt = hexToBytes(transcript.channel);
+    // Browser-to-phone gets its own labels; phone-to-browser keeps the original labels.
+    const prefix = transcript.direction === 'toPhone' ? 'honey-pair-v2 to-phone' : 'honey-pair-v2';
+    const derive = (label: string, length: number) => {
+      const labelBytes = utf8ToBytes(label);
+      const info = concat(labelBytes, bound as Uint8Array);
+      try {
+        return hkdf(sha256, shared as Uint8Array, salt as Uint8Array, info, length);
+      } finally {
+        clearPairBytes(labelBytes);
+        clearPairBytes(info);
+      }
+    };
+    codeBytes = derive(`${prefix} code`, 4);
+    const n = new DataView(codeBytes.buffer, codeBytes.byteOffset, codeBytes.byteLength).getUint32(
+      0,
+    );
+    key = derive(`${prefix} key`, 32);
+    const result = { key, code: String(n % 1_000_000).padStart(6, '0') };
+    key = undefined;
+    return result;
+  } finally {
+    clearPairBytes(shared);
+    clearPairBytes(bound);
+    clearPairBytes(salt);
+    clearPairBytes(codeBytes);
+    clearPairBytes(key);
+  }
 }
 
 const AAD = utf8ToBytes('honey-pair-v2 payload');
@@ -213,15 +360,35 @@ export function sealPayload(
   random: (bytes: number) => Uint8Array,
 ): string {
   const nonce = random(24);
-  const sealed = xchacha20poly1305(key, nonce, AAD).encrypt(utf8ToBytes(JSON.stringify(payload)));
-  return b64.encode(concat(nonce, sealed));
+  let plain: Uint8Array | undefined;
+  let sealed: Uint8Array | undefined;
+  let envelope: Uint8Array | undefined;
+  try {
+    if (nonce.length !== 24) throw new Error('Bad pairing nonce length');
+    plain = utf8ToBytes(JSON.stringify(payload));
+    sealed = xchacha20poly1305(key, nonce, AAD).encrypt(plain);
+    envelope = concat(nonce, sealed);
+    return b64.encode(envelope);
+  } finally {
+    clearPairBytes(nonce);
+    clearPairBytes(plain);
+    clearPairBytes(sealed);
+    clearPairBytes(envelope);
+  }
 }
 
 /** Throws if the data was made with another key or changed on the way. */
 export function openPayload(key: Uint8Array, data: string): PairPayload {
   const bytes = b64.decode(data);
-  const plain = xchacha20poly1305(key, bytes.subarray(0, 24), AAD).decrypt(bytes.subarray(24));
-  const payload = JSON.parse(new TextDecoder().decode(plain)) as PairPayload;
-  if (payload.v !== 1 || !isValidMnemonic(payload.mnemonic)) throw new Error('Bad pairing payload');
-  return { ...payload, mnemonic: normalizeMnemonic(payload.mnemonic) };
+  let plain: Uint8Array | undefined;
+  try {
+    if (bytes.length <= 24) throw new Error('Bad pairing payload');
+    plain = xchacha20poly1305(key, bytes.subarray(0, 24), AAD).decrypt(bytes.subarray(24));
+    const payload: unknown = JSON.parse(new TextDecoder().decode(plain));
+    if (!isPairPayload(payload)) throw new Error('Bad pairing payload');
+    return { ...payload, mnemonic: normalizeMnemonic(payload.mnemonic) };
+  } finally {
+    clearPairBytes(plain);
+    clearPairBytes(bytes);
+  }
 }

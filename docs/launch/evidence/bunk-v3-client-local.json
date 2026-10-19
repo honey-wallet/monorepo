@@ -1,0 +1,227 @@
+{
+  "scope": "Offline v3 phrase client, fixed vectors, finalized observer and fresh-process recovery on isolated Osaka; no app activation or production certification",
+  "protocolVersion": 3,
+  "independentOracle": "Python/OpenSSL BIP32 plus Foundry ABI/Keccak/ECDSA; --check passed",
+  "vectors": 3,
+  "envelopesPerVector": 256,
+  "selectedLeaves": [0, 254, 255],
+  "targetedClientAndObserverTestsPassed": 96,
+  "keyringTestsPassed": 295,
+  "rootLint": "563 Biome files and Rust fmt/Clippy passed",
+  "rootTypecheck": "5 tasks passed; 2 cached",
+  "rootTests": "7 tasks passed; 2 cached; 295 keyring tests executed; localhost fixtures permitted; explicitly ignored infrastructure suites not enabled",
+  "realBundlerEvidence": "bunk-bundler-local.json#clientV3",
+  "sourceHashesRechecked": 62,
+  "artifactHashesRechecked": 95,
+  "sourcesSha256": {
+    "packages/keyring/src/bunk-evm-v3.ts": "1724313218e0c32d9177eb3026cf18f261f02f95f5eab1e6f1c2c0df350d323e",
+    "packages/keyring/src/bunk-evm-v3-sign.ts": "525a954a1a36d554bd1957852c97a57f916edd65be1cf59cc3d23a09a4bb2d16",
+    "packages/keyring/src/bunk-evm-v3.test.ts": "4da0d066bc4e3a8ca6dcd0987235315f534789fb1c52eb57278fa985b93f8392",
+    "packages/keyring/src/bunk-evm-observe.ts": "ef3939a8cc92f342a91e8bfa748ecda90939d917707ebf6eae219fbf6c6d71ec",
+    "packages/keyring/src/bunk-evm-observe.test.ts": "398bf3982d051b5f13a21dde5caf0adc04deeca34faab34f49cdf2bb8ce2ad67",
+    "packages/keyring/src/fixtures/bunk-evm-v3.json": "ad30435b4bcc588695f7d1c961b31a3aa30cdb8ba0f1f057f1041cea23efafa5",
+    "packages/keyring/scripts/bunk-evm-v3-vectors.py": "cace8576c80679a26f568a175fa2bc0d54e94137af10a4f1adba19a02c4bc674",
+    "contracts/bunk-evm/test/bundler/client-v3.mjs": "ef04c5d9f989f8208cd081ff788b8842683ecd9672a36de93bd6b2a92ab2fb22",
+    "contracts/bunk-evm/test/bundler/restore-v3.mjs": "2bbe88bfec6f12b709417cd599a757f8c7b7c9fbb6dd8fe8311f20d535f52764",
+    "contracts/bunk-evm/test/bundler/run.py": "d20f0741234d234b17ef33822d984ba25940556e485297a4574b3f52eb26c0b5"
+  },
+  "liveProbe": {
+    "scope": "Actual v3 phrase client and fresh-process recovery using finalized chain state without pending approval/journal; isolated Osaka, not app restore or production certification",
+    "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+    "accountIndex": 3,
+    "deploymentIdentity": "0x87B5e213f2731fA5c18a14295482c4e2c2fD0aea",
+    "keyScope": "0x6151e501e8d7b05d83a68994b03f53b8e64fcd076c29c2b9e7783d84dfdb358b",
+    "recoveryProcessInputs": [
+      "public RPC",
+      "verified local configuration",
+      "deployment identity/account index",
+      "public test phrase fixture"
+    ],
+    "recoveryReceivedPendingApproval": false,
+    "recoveryReceivedJournal": false,
+    "resetChangedWalletFunds": false,
+    "resetChangedEntryPointNonce": false,
+    "ownerAndEnvelopeKeysUsed": 6,
+    "recoveryDigest": "0xd24d057968356d1fe8efd0ce62e110eb32033e076e54487a9ff75ab292197c5a",
+    "recoveryTransactionHash": "0x6fe292a6f75d9706d74dd9425345776408f1ce6ad16a6c44ef2d7128a92d0aec",
+    "staleRejection": "RPC Request failed. AA24 signature error AA24 signature error",
+    "cases": [
+      {
+        "hash": "0x5cb9ae6e2aea10d25237e55e5a767c254b4b0c4f81a0d3e990eb0b49530474b5",
+        "transactionHash": "0xb413184855638eb0a82e576ce51f18640fb5dd61f7bbfc5d03f963e05fa77453",
+        "event": "ActionExecuted",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x42b6d6d0f77abe782e27d6aa48af03eef5f8efb2eaa6876f4852fe7d3ddb8a14",
+            "number": "448",
+            "timestamp": "1792374777"
+          },
+          "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+          "accountIndex": 3,
+          "status": "deployed",
+          "state": {
+            "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+            "accountIndex": 3,
+            "ownerIndex": 1,
+            "commitment": "0x2f7a8a02c26ddac17923a4f54e8f11ed163bb23041865fcf109271f924f2de89",
+            "nonce": "1",
+            "recoveryCommitment": "0x4889214b06c9af3c0e31e9289a31682ccdd86dc73a12be092d8c17da83396fdc",
+            "epoch": 0,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      },
+      {
+        "event": "SeedRecovery",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0xbeae49defbffc7d0fee73d933d3efdf8db3acb57f764588fbff95b5da9f22ddf",
+            "number": "512",
+            "timestamp": "1792374841"
+          },
+          "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+          "accountIndex": 3,
+          "status": "deployed",
+          "state": {
+            "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+            "accountIndex": 3,
+            "ownerIndex": 0,
+            "commitment": "0xf71d0560f6cc812d10763ae0cd65ec969ecee326df096203258489be99f7e008",
+            "nonce": "1",
+            "recoveryCommitment": "0xfaab8e4868a96adbc6003be47e7dc0d411a5cc5131a7abbcbda9fc1b297eb888",
+            "epoch": 1,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      },
+      {
+        "hash": "0x1a0aa9800df6f74ec3075a0f9b3d2c610e90e666783319a14fcab7764eacbc63",
+        "transactionHash": "0x2dbd1cbbc86f9d87f2ea9527a95b8248345bdb6d73e3392ace8ebf4f64e04f95",
+        "event": "ActionExecuted",
+        "observation": {
+          "config": {
+            "chainId": "1337",
+            "factory": {
+              "address": "0x336cb44fF973dC623de2A461715b0fC70caBE2C7",
+              "codeHash": "0xcca76d47d9d443fb7e076e19a321d2c7d248c80c6bc0b510e6248d827d8fb3cb"
+            },
+            "singleton": {
+              "address": "0x2946259E0334f33A064106302415aD3391BeD384",
+              "codeHash": "0xde26cb78c0047194efb5d5bdf8f159101c7e16ce4d3471505376020096bf10b8"
+            },
+            "proxyFactory": {
+              "address": "0xDe09E74d4888Bc4e65F589e8c13Bce9F71DdF4c7",
+              "codeHash": "0x674812a60ba0c8197502634325d4b1c7b9861cadc6fb876af1dec14d4d5b6d2b"
+            },
+            "entryPoint": {
+              "address": "0xF2E246BB76DF876Cef8b38ae84130F4F55De395b",
+              "codeHash": "0x5015ff2e79d2d254f83b6d9332d216cdb889eab5e78715d2de13a7d393c47219"
+            },
+            "module": {
+              "address": "0xb7664CdB66D44238731dB0824De27a2A20359f65",
+              "codeHash": "0xb804a793948211611f03d341a83768e82c8e583054177ceeb280d2ed85747e15"
+            },
+            "helper": {
+              "address": "0xcf4CD60948C2F6623D45df67ed19365debA03Ad2",
+              "codeHash": "0x273058937a6ca5b8b6806ab954fa5446035cd525b4f48ac9a5e18d40c0992869"
+            },
+            "proxyCreationCode": "0x6080604052348015600e575f5ffd5b50604051610163380380610163833981016040819052602b9160b2565b6001600160a01b038116608f5760405162461bcd60e51b815260206004820152602260248201527f496e76616c69642073696e676c65746f6e20616464726573732070726f766964604482015261195960f21b606482015260840160405180910390fd5b5f80546001600160a01b0319166001600160a01b039290921691909117905560dd565b5f6020828403121560c1575f5ffd5b81516001600160a01b038116811460d6575f5ffd5b9392505050565b607a806100e95f395ff3fe60806040525f80546001600160a01b03169035632cf35bc960e11b01602657805f5260205ff35b365f5f375f5f365f845af490503d5f5f3e80603f573d5ffd5b503d5ff3fea2646970667358221220b23bb82fb1d894c219ca3ce430c56fb9c84324204ccea93906744c1ba257551364736f6c634300081c0033",
+            "protocolVersion": 3
+          },
+          "protocolVersion": 3,
+          "block": {
+            "hash": "0x0e4080610ee9c3bccf09f2282d117bd068eaf4748a5f0ecd35241504b609d2e2",
+            "number": "544",
+            "timestamp": "1792374873"
+          },
+          "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+          "accountIndex": 3,
+          "status": "deployed",
+          "state": {
+            "account": "0xDBF5Aaa2aBaC21E3D2cf8D9EbAe645E05bF30C44",
+            "accountIndex": 3,
+            "ownerIndex": 1,
+            "commitment": "0x0116e5f019a6758cf9927892e3bde35cfabcfb048fae0897a8d1eb78e307e99b",
+            "nonce": "2",
+            "recoveryCommitment": "0xfaab8e4868a96adbc6003be47e7dc0d411a5cc5131a7abbcbda9fc1b297eb888",
+            "epoch": 1,
+            "protocolVersion": 3,
+            "deployed": true
+          }
+        }
+      }
+    ]
+  },
+  "limitations": [
+    "Trusted production registry, public RPC/bundler/network acceptance and independent security review remain required.",
+    "Durable v3 coordinator and subsequent shared IndexedDB adapter are implemented separately; packaged mobile/extension integration and full device restore flows remain open.",
+    "Lost first creation approval is covered by direct bootstrap/reset acceptance in the account-coordinator sidecar; relay funding and application flow remain open.",
+    "Database/backup rollback, account discovery and multi-device writer coordination remain open.",
+    "Recovery caller pays gas. A copied exact recovery certificate may trigger its fixed reset early; phrase theft is not mitigated.",
+    "Unchanged 121-test Solidity contract proof is recorded in the contract sidecar; this run rechecked all compiled-artifact hashes."
+  ],
+  "accountCoordinatorEvidence": "bunk-v3-account-local.json",
+  "subsequentBrowserEvidence": "bunk-browser-journal-local.json; this historical run and its hashes are unchanged"
+}

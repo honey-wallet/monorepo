@@ -1,0 +1,8 @@
+{
+  "runId": "98409035-be6d-4771-b627-2725a3214b19",
+  "passed": false,
+  "errors": ["WebSocket shard 10000 failed connection, close, or freshness gate"],
+  "websocketConnections": 9981,
+  "httpIssued": 6000,
+  "httpCompletedAtDeadline": 6000
+}

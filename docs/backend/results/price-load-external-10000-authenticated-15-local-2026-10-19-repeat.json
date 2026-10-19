@@ -1,0 +1,51 @@
+{
+  "authenticatedPrincipalCount": 15,
+  "authenticatedRequestsPerPrincipal": [
+    400, 400, 399, 399, 399, 399, 399, 399, 399, 399, 399, 399, 399, 399, 399
+  ],
+  "clientFrameCountTotal": 922147,
+  "closedDuringRun": 2290,
+  "connectedAfterRamp": 10000,
+  "framesDuringSoak": 544699,
+  "generator": "external-process",
+  "httpAuthenticated": true,
+  "httpCompleted": 5987,
+  "httpCompletedAtDeadline": 5987,
+  "httpCompletedRpsAtDeadline": 99.78333333333333,
+  "httpErrors": 322,
+  "httpInFlightAfterDrain": 0,
+  "httpInFlightAtDeadline": 0,
+  "httpIssuedAtDeadline": 5987,
+  "httpIssuedRpsAtDeadline": 99.78333333333333,
+  "httpLatencyMicrosFirst100k": {
+    "max": 4219995,
+    "p50": 1052,
+    "p95": 1000924,
+    "p99": 1005156
+  },
+  "httpLatencySamples": 5987,
+  "httpObservedRpsIncludingDrain": 99.76912731870328,
+  "httpRoute": "/api/v1/me",
+  "httpSchedulerMaxLagMicros": 25679,
+  "httpSchedulerSkippedSlots": 13,
+  "httpTargetRps": 100,
+  "minimumFramesPerClientDuringSoak": 36,
+  "minimumLifetimeFramesForAnyClient": 40,
+  "profileOnly": false,
+  "rampMs": 74176,
+  "runId": "c27e6379-1206-43d5-b40c-5cc7bb16ce88",
+  "schemaVersion": 2,
+  "serverProcessSample": {
+    "pid": "23833",
+    "ps": "%CPU RSS_KiB ELAPSED",
+    "sample": "22.9 150528 04:55"
+  },
+  "soakSeconds": 60,
+  "targetWebSockets": 10000,
+  "thresholds": {
+    "maxHttpErrors": 0,
+    "minFramesPerClientDuringSoak": 45
+  },
+  "tls": false,
+  "totalFrames": 922147
+}

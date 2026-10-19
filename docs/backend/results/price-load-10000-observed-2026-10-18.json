@@ -1,0 +1,19 @@
+{
+  "connectedAtEnd": 10000,
+  "frameLagBucketUpperMs": [5, 10, 25, 50, 100, 250, 500, 1000, 2000, 5000, "inf"],
+  "frameLagCounts": [24733, 48297, 191130, 413429, 6027, 26019, 3016, 4749, 0, 0, 0],
+  "httpErrors": 0,
+  "httpP95Micros": 2459,
+  "httpP99Micros": 27950,
+  "httpSuccess": 5807,
+  "rampMs": 21787,
+  "requestedUsers": 10000,
+  "sameProcessGenerator": true,
+  "soakFrames": 600000,
+  "soakSeconds": 60,
+  "syntheticIngress": true,
+  "tls": false,
+  "traceExport": true,
+  "traceSamplePerMille": 100,
+  "unexpectedDisconnects": 0
+}

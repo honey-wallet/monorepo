@@ -1,0 +1,168 @@
+{
+  "researchDate": "2026-10-18",
+  "routerRelease": "2.1.2",
+  "source": "Official GitHub tag resolved through GitHub API; dependency commits from its git tree. No deployment bytecode attestation.",
+  "files": [
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/UniversalRouter.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/UniversalRouter.sol",
+      "sha256": "a5cb4897d7d7218c70ac8bc3f2bfbc88a863914ef98e5311389b0de85ed47441"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/base/Dispatcher.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/base/Dispatcher.sol",
+      "sha256": "5f40089555d35d6ece37d61476c48280a8029062eb1dda17855eb7fe517a9882"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/libraries/Commands.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/libraries/Commands.sol",
+      "sha256": "688122afcc28bd7b03c489de8e26212277ad923f0e87016541129862c5ead0b3"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/libraries/Constants.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/libraries/Constants.sol",
+      "sha256": "24fc0680db504e08d642377618e36db024971514b0c4a89fb482e4c94335cc4a"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/modules/Payments.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/modules/Payments.sol",
+      "sha256": "7b7d86cac3e5822eb79d224a4079b4a5ade6b0898479e605f9b6c3a6fd882b1a"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/modules/uniswap/v2/V2SwapRouter.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/modules/uniswap/v2/V2SwapRouter.sol",
+      "sha256": "522a137478f1e48387c66206c61bddee8d298f2dd89e9830c1744570f521083d"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/modules/uniswap/v3/V3SwapRouter.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/modules/uniswap/v3/V3SwapRouter.sol",
+      "sha256": "b1b161b1643e99d1be99a775ed7f044c5058c29f2451d2fcccaa31e76b01a2b9"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/modules/uniswap/v4/V4SwapRouter.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/modules/uniswap/v4/V4SwapRouter.sol",
+      "sha256": "c78cbf4a2ce071939d78c6d4746b0ab8a72bed913b24cf22e914d6a07ece5eb2"
+    },
+    {
+      "repository": "permit2",
+      "commit": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+      "path": "src/AllowanceTransfer.sol",
+      "url": "https://github.com/Uniswap/permit2/blob/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219/src/AllowanceTransfer.sol",
+      "sha256": "7be95b655a59352a3007147a1b79f211fc819b9a615a92017acf7257ecb88276"
+    },
+    {
+      "repository": "permit2",
+      "commit": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+      "path": "src/EIP712.sol",
+      "url": "https://github.com/Uniswap/permit2/blob/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219/src/EIP712.sol",
+      "sha256": "cbb7df63c5839a3fbec78142222886da1614a4c7fcddcd8ba5ea176f9549d859"
+    },
+    {
+      "repository": "permit2",
+      "commit": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+      "path": "src/libraries/PermitHash.sol",
+      "url": "https://github.com/Uniswap/permit2/blob/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219/src/libraries/PermitHash.sol",
+      "sha256": "23f89633dbd02d8b52a33de3a915af5af73ff25e31f88b6cf994358f802efa60"
+    },
+    {
+      "repository": "permit2",
+      "commit": "cc56ad0f3439c502c246fc5cfcc3db92bb8b7219",
+      "path": "src/libraries/SignatureVerification.sol",
+      "url": "https://github.com/Uniswap/permit2/blob/cc56ad0f3439c502c246fc5cfcc3db92bb8b7219/src/libraries/SignatureVerification.sol",
+      "sha256": "1804b3d7b1183225419ec8ee45daf89174ff3668315d71d28111d5fcc179f8e4"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/V4Router.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/V4Router.sol",
+      "sha256": "fb02f27ececb6884c0f40ea31056965f600b4ccc063b5cba3fd77c2b770db389"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/base/BaseActionsRouter.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/base/BaseActionsRouter.sol",
+      "sha256": "e3ceda8c5bb24d3e439aef94d004fdce7956439bc74c5c5bcd86e2cb9455e813"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/base/DeltaResolver.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/base/DeltaResolver.sol",
+      "sha256": "a8577bd2bdf3be8ec950edd137bcc55887b75cc220f6d9a2860c96ae037b127b"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/interfaces/IV4Router.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/interfaces/IV4Router.sol",
+      "sha256": "a577e593bd1948ffcf9ce26964ae1e47bafcf6dffcd40baeb700bcb902367a53"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/libraries/ActionConstants.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/libraries/ActionConstants.sol",
+      "sha256": "8e88393dd8b50b25b818e2f6c246aae5cfe63106b56b6e0609869e599c81ec79"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/libraries/Actions.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/libraries/Actions.sol",
+      "sha256": "c5f2579951a1d7ca38b6f417db330965875f02efa812a5a487773a51b116e33d"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/libraries/CalldataDecoder.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/libraries/CalldataDecoder.sol",
+      "sha256": "93ee8bc3b166407c3f66227713849ba6560297a0ba4abed8ad6235ec02fc2ed3"
+    },
+    {
+      "repository": "v4-periphery",
+      "commit": "545a5d2a87228167edde48f3b9eda122d1e3c4d6",
+      "path": "src/libraries/PathKey.sol",
+      "url": "https://github.com/Uniswap/v4-periphery/blob/545a5d2a87228167edde48f3b9eda122d1e3c4d6/src/libraries/PathKey.sol",
+      "sha256": "0c00bae5a64829334a0b5d5541807faf7d18dff5a667cd74cadf9effaf5f0885"
+    },
+    {
+      "repository": "v4-core",
+      "commit": "59d3ecf53afa9264a16bba0e38f4c5d2231f80bc",
+      "path": "src/libraries/TickMath.sol",
+      "url": "https://github.com/Uniswap/v4-core/blob/59d3ecf53afa9264a16bba0e38f4c5d2231f80bc/src/libraries/TickMath.sol",
+      "sha256": "272d4f6d3ff9ae33596ebcdb84a71a3c2d4542ae8fb5c88ddf1aca8043f5d06b"
+    },
+    {
+      "repository": "v4-core",
+      "commit": "59d3ecf53afa9264a16bba0e38f4c5d2231f80bc",
+      "path": "src/PoolManager.sol",
+      "url": "https://github.com/Uniswap/v4-core/blob/59d3ecf53afa9264a16bba0e38f4c5d2231f80bc/src/PoolManager.sol",
+      "sha256": "3b6ab111dadf613e3cfd617e4b1c6ab75b5445cd15cbe52d7c6207fc02449717"
+    },
+    {
+      "repository": "universal-router",
+      "commit": "802fe4c18f47300e0f183e2a42e9146ec2ea9fc3",
+      "path": "contracts/modules/Permit2Payments.sol",
+      "url": "https://github.com/Uniswap/universal-router/blob/802fe4c18f47300e0f183e2a42e9146ec2ea9fc3/contracts/modules/Permit2Payments.sol",
+      "sha256": "667242c9b13ee58b3baee418ccb35b5353b36594fce8172b2173d9cea8cee622"
+    }
+  ]
+}

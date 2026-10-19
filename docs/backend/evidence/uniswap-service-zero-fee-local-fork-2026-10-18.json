@@ -1,0 +1,85 @@
+{
+  "scope": "Local chain31337 actual-contract HTTP/worker lifecycle; synthetic provider; simulated finality; no production acceptance",
+  "forkBlock": {
+    "number": "26218343",
+    "hash": "0x8dcb6d2609ae19485570b7b5f5270218febea23bc4d34bc3b1669922970b9c4d"
+  },
+  "registry": {
+    "chainId": 31337,
+    "router": {
+      "address": "0x23617e59a5925b2a4bf75d73ff6711cd0b29de85",
+      "codeHash": "0x55e6b334152096d60367d7ab24241948b31e8d0e66adc8b81cba049a19f9d2ac"
+    },
+    "permit2": {
+      "address": "0x000000000022d473030f116ddee9f6b43ac78ba3",
+      "codeHash": "0xc67d1657868aa5146eaf24fb879fb1fdec3d2d493b3683a61c9c2f4fb2851131"
+    },
+    "v2Factory": {
+      "address": "0x5c69bee701ef814a2b6a3edd4b1652cb9cc5aa6f",
+      "codeHash": "0xbab145d02e7005f0d84c6c1639d39b799b0ea16df99ebbdaf5a14d9da820b4e0"
+    },
+    "v3Factory": {
+      "address": "0x1f98431c8ad98523631ae4a59f267346ea31f984",
+      "codeHash": "0x4d7b8525cd5d14343fa67a732fba5b24cddba11620ca88392f4ec6c52f91fd69"
+    },
+    "poolManager": {
+      "address": "0x000000000004444c5dc75cb358380d2e3de08a90",
+      "codeHash": "0x785f1014552b7ce7d5fb7d0c970ca60edee94fd00425d7ca21609acac7ce1293"
+    },
+    "wrappedNative": {
+      "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      "codeHash": "0xd0a06b12ac47863b5c7be4185c2deaad1c61557033f56c7d4ea74429cbb25e23"
+    },
+    "tokens": [
+      {
+        "contract": {
+          "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+          "codeHash": "0xd80d4b7c890cb9d6a4893e6b52bc34b56b25335cb13716e0d1d31383e6b41505"
+        },
+        "decimals": 6,
+        "allowEmptyApprovalReturn": false,
+        "code": {
+          "kind": "usdc",
+          "implementation": {
+            "address": "0x43506849d7c04f9138d1a2050bbf3a0c054402dd",
+            "codeHash": "0xcdfb7d322961af3acae7a8f7ee8b69c205b36f576cc5b077f170c7eb8ecbe3ea"
+          }
+        }
+      },
+      {
+        "contract": {
+          "address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+          "codeHash": "0xd0a06b12ac47863b5c7be4185c2deaad1c61557033f56c7d4ea74429cbb25e23"
+        },
+        "decimals": 18,
+        "allowEmptyApprovalReturn": false,
+        "code": {
+          "kind": "direct"
+        }
+      }
+    ],
+    "registryRevision": "observed-local-router-212",
+    "feePolicyRevision": "local-zero-fees",
+    "maximumGasPerTransaction": 1500000,
+    "maximumQuoteBlockLag": 128
+  },
+  "operationId": "a0fb6e2a-8d9a-470e-b090-55f803482d19",
+  "planHash": "edbb57e936a5afe7edef87b5fb2f2eace0ccbed0f960fa247af66446fd625b06",
+  "reviewHash": "c3f84d6f0c4a9072d19f068ec74c8571077443c5ab9ded99c5cbb3c11c5bcd10",
+  "transactionHashes": [
+    "0x628e6e34647e813679b19385878f2daf32635a8e378e68ede0a0d24add0b21a3",
+    "0x2950a97d3fcf7da0ca9360c80bd0fa1317a1acc8e714a8a5ad21954d717d97cd"
+  ],
+  "spentRaw": "1000000",
+  "receivedRaw": "413588559259636",
+  "minimumOutputRaw": "409452673667039",
+  "simulatedFinalityBlocks": "64",
+  "quoteCalls": 1,
+  "buildCalls": 1,
+  "finalState": "succeeded",
+  "permitNonceConsumed": true,
+  "finiteAllowancesConsumed": true,
+  "signingRestartRecovered": true,
+  "submissionRestartRecovered": true,
+  "historyWithExecutionDisabled": true
+}

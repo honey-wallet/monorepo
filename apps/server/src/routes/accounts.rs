@@ -9,8 +9,8 @@ use axum::{
 
 use crate::{
     error::AppError,
-    exposure::{ExposureEvent, ReportExposure},
-    wallet::{Account, RecoveryStatus, RegisterAccount},
+    exposure::ExposureEvent,
+    wallet::{Account, RecoveryStatus},
 };
 
 pub fn router() -> Router {
@@ -24,9 +24,8 @@ pub fn router() -> Router {
         )
 }
 
-async fn register(Json(_req): Json<RegisterAccount>) -> Result<Json<Account>, AppError> {
-    // TODO: verify the address exists on `chain` via its adapter's
-    // `read_account`, then persist the mirrored state.
+async fn register() -> Result<(), AppError> {
+    // Disabled stub: do not deserialize unauthenticated input until implemented.
     Err(AppError::NotImplemented("accounts.register"))
 }
 
@@ -44,10 +43,6 @@ async fn list_exposure(Path(_id): Path<String>) -> Result<Json<Vec<ExposureEvent
     Err(AppError::NotImplemented("accounts.list_exposure"))
 }
 
-async fn report_exposure(
-    Path(_id): Path<String>,
-    Json(_req): Json<ReportExposure>,
-) -> Result<Json<ExposureEvent>, AppError> {
-    // TODO(spec §12): store and check for key-index reuse.
+async fn report_exposure(Path(_id): Path<String>) -> Result<(), AppError> {
     Err(AppError::NotImplemented("accounts.report_exposure"))
 }

@@ -1,0 +1,373 @@
+{
+  "scope": "local fork only; actual SIWE HTTP APIs and supervised worker; restart recovery; public fixture key; simulated finality",
+  "chainId": "31337",
+  "registry": {
+    "chainId": 31337,
+    "vault": {
+      "address": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+      "codeHash": "0xb87264448eb495fa597c09eb4a576b7d6f029cb98957d3cb2491904a39abd8e9"
+    },
+    "bundle": {
+      "address": "0x02912516d49de997db75b9d7858faae59209650b",
+      "codeHash": "0xa8ec5960bb20a33ed52e8248aed85ee3148135b185bba8bb74eb572a987fd4a5"
+    },
+    "asset": {
+      "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "codeHash": "0xd80d4b7c890cb9d6a4893e6b52bc34b56b25335cb13716e0d1d31383e6b41505"
+    },
+    "assetImplementation": {
+      "address": "0x43506849d7c04f9138d1a2050bbf3a0c054402dd",
+      "codeHash": "0xcdfb7d322961af3acae7a8f7ee8b69c205b36f576cc5b077f170c7eb8ecbe3ea"
+    },
+    "assetDecimals": 6,
+    "shareDecimals": 18,
+    "owner": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "curator": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "adapters": [
+      {
+        "address": "0x7ca32dcd9269b0beb21a4f364ded5cffcb7b3635",
+        "codeHash": "0x6742e053873a2f945bd03f0b65ee1bbdf994d1c07c93a4442611bff0faf22d4f"
+      }
+    ],
+    "adapterRegistry": "0x3696c5eAe4a7Ffd04Ea163564571E9CD8Ed9364e",
+    "liquidityAdapter": "0x7CA32dCD9269b0BeB21a4F364DED5cfFCB7b3635",
+    "liquidityDataHash": "0x17355f04cd924f0501baf4a71d849ad7f14e04b49356aa23a77f8ee1c63938d9",
+    "performanceFeeWad": "50000000000000000",
+    "managementFeePerSecondWad": "0",
+    "performanceFeeRecipient": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "managementFeeRecipient": "0xbA75546ACD56b3a9142f94F179b03970eE4283Fd",
+    "registryRevision": "observed-fork-morpho-v1",
+    "zeroFeePolicyRevision": "local-zero-referral-fees",
+    "maximumGasPerTransaction": 1500000
+  },
+  "rpcBudget": {
+    "scope": "local-aave-fork",
+    "intervalMs": 10,
+    "simulationCost": 10
+  },
+  "historyWithExecutionDisabled": {
+    "items": [
+      {
+        "operation": {
+          "id": "14cbf93a-6135-419e-a787-5ed1722b06fa",
+          "walletId": "1ee10187-62a6-4334-bb8b-ff59329c3146",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "9"
+        },
+        "createdAtMs": 1792322700275,
+        "updatedAtMs": 1792322721614
+      },
+      {
+        "operation": {
+          "id": "cc770b3d-60ff-4d3f-a2f4-c40626431e34",
+          "walletId": "1ee10187-62a6-4334-bb8b-ff59329c3146",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "9"
+        },
+        "createdAtMs": 1792322618725,
+        "updatedAtMs": 1792322641180
+      }
+    ],
+    "nextCursor": null
+  },
+  "evidence": [
+    {
+      "quote": {
+        "action": "deposit",
+        "amountRaw": "1000000",
+        "signer": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "chainId": "31337",
+        "vault": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+        "asset": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "assetBalanceRaw": "10000000",
+        "shareBalanceRaw": "0",
+        "previewAssetsRaw": "1000000",
+        "previewSharesRaw": "941825708799184568",
+        "registryRevision": "observed-fork-morpho-v1",
+        "feePolicyRevision": "local-zero-referral-fees",
+        "blockNumber": "26218344",
+        "blockHash": "0x24b4695c311e7c87a6c6b08e855486376cba4a615807d94c4096d720f395c8a7",
+        "observedAtMs": 1792322618719,
+        "expiresAtMs": 1792322648719
+      },
+      "intent": {
+        "vault": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+        "action": "deposit",
+        "amountRaw": "1000000",
+        "minimumSharesRaw": "940883883090385383",
+        "acknowledgeUnprotectedOutput": false,
+        "deadline": "1792323218",
+        "maximumNetworkFeeRaw": "1000000000000000"
+      },
+      "assetDelta": "-1000000",
+      "shareDelta": "941825668054109067",
+      "action": "deposit",
+      "signingRequest": {
+        "operationId": "cc770b3d-60ff-4d3f-a2f4-c40626431e34",
+        "operationVersion": "1",
+        "planHash": "43430d8e4dd20a97aafaf67db56682a73fa4916644d0b9746d9e252231b748de",
+        "prepared": {
+          "plan": {
+            "schemaVersion": 1,
+            "provider": "morpho_vault_v2",
+            "chainId": "31337",
+            "signer": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+            "intentHash": "89c3727ad324147fa239f75f15b203e0ec848b0c8398a5526082a74e9ab2e7f2",
+            "registryRevision": "observed-fork-morpho-v1",
+            "feePolicyRevision": "local-zero-referral-fees",
+            "quoteReference": null,
+            "expiresAtMs": 1792322742364,
+            "maximumNetworkFeeRaw": "675035292618012",
+            "maximumSpend": {
+              "assetAddress": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+              "amountRaw": "1000000",
+              "recipient": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+            },
+            "minimumReceive": {
+              "assetAddress": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+              "amountRaw": "940883883090385383",
+              "recipient": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+            },
+            "fees": [],
+            "simulation": {
+              "blockNumber": "26218344",
+              "blockHash": "0x24b4695c311e7c87a6c6b08e855486376cba4a615807d94c4096d720f395c8a7",
+              "callsHash": "77279ff6d83f57cf349820996e4e661d3586cbaf220ff3416ca7883229858240",
+              "observedAtMs": 1792322622364
+            },
+            "steps": [
+              {
+                "purpose": "approval",
+                "to": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+                "valueRaw": "0",
+                "data": "0x095ea7b300000000000000000000000002912516d49de997db75b9d7858faae59209650b00000000000000000000000000000000000000000000000000000000000f4240"
+              },
+              {
+                "purpose": "action",
+                "to": "0x02912516d49de997db75b9d7858faae59209650b",
+                "valueRaw": "0",
+                "data": "0x6bbba4e000000000000000000000000004422053addbc9bb2759b248b574e3fca76bc14500000000000000000000000000000000000000000000000000000000000f42400000000000000000000000000000000000000000000000000003c6a37cd70f9600000000000000000000000000000000000000000000000000000000000000e000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ad4ae92000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000"
+              }
+            ]
+          },
+          "firstNonce": "4928",
+          "gasLimits": ["76669", "541238"],
+          "maxFeePerGas": "1092454516",
+          "maxPriorityFeePerGas": "1000000000"
+        }
+      },
+      "includedVersion": "8",
+      "recovery": {
+        "operation": {
+          "id": "cc770b3d-60ff-4d3f-a2f4-c40626431e34",
+          "walletId": "1ee10187-62a6-4334-bb8b-ff59329c3146",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "9"
+        },
+        "intentAvailable": true,
+        "preparation": {
+          "hash": "43430d8e4dd20a97aafaf67db56682a73fa4916644d0b9746d9e252231b748de",
+          "provider": "morpho_vault_v2",
+          "chainId": "31337",
+          "expiresAtMs": 1792322742364,
+          "expired": false,
+          "stepCount": 2,
+          "registryRevision": "observed-fork-morpho-v1",
+          "feePolicyRevision": "local-zero-referral-fees"
+        },
+        "executionAvailable": false,
+        "submission": {
+          "operationId": "cc770b3d-60ff-4d3f-a2f4-c40626431e34",
+          "transactionHashes": [
+            "0x8bcc6397b7fcbb4616e7eac3e74b84228255d508fb1b3ce976bad8b6201a7219",
+            "0xd02fa3d8ac8647c713c31469b99ab262adf36af1a3ff02a4a2d0eb6685b5547a"
+          ]
+        },
+        "reconciliation": {
+          "checkedAtMs": 1792322641166,
+          "headNumber": "26218410",
+          "headHash": "0xcc228fb7e9f8ba084dd025335e6c0d84a75fffd58e33ebc01d3c3ebbaec47c20",
+          "finalizedNumber": "26218346",
+          "finalizedHash": "0xbe7abe7e0e2a1fceaac623c35995d2b3a0b28ed5f5b90f9822c5b584f22d41c4",
+          "transactions": [
+            {
+              "transactionHash": "0x8bcc6397b7fcbb4616e7eac3e74b84228255d508fb1b3ce976bad8b6201a7219",
+              "inclusion": {
+                "blockNumber": "26218345",
+                "blockHash": "0x54ae1ef3d2f511acdce0f5ee6f771bffe5309423c4c1f4d8d75667c83d591090",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "55558",
+                "effectiveGasPrice": "1040460853"
+              }
+            },
+            {
+              "transactionHash": "0xd02fa3d8ac8647c713c31469b99ab262adf36af1a3ff02a4a2d0eb6685b5547a",
+              "inclusion": {
+                "blockNumber": "26218346",
+                "blockHash": "0xbe7abe7e0e2a1fceaac623c35995d2b3a0b28ed5f5b90f9822c5b584f22d41c4",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "442699",
+                "effectiveGasPrice": "1035412622"
+              }
+            }
+          ]
+        }
+      },
+      "underlyingBalance": "9000000",
+      "simulatedFinalityBlocks": "64"
+    },
+    {
+      "quote": {
+        "action": "redeem",
+        "amountRaw": "941825668054109067",
+        "signer": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+        "chainId": "31337",
+        "vault": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+        "asset": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "assetBalanceRaw": "9000000",
+        "shareBalanceRaw": "941825668054109067",
+        "previewAssetsRaw": "1000000",
+        "previewSharesRaw": "941825668054109067",
+        "registryRevision": "observed-fork-morpho-v1",
+        "feePolicyRevision": "local-zero-referral-fees",
+        "blockNumber": "26218410",
+        "blockHash": "0xcc228fb7e9f8ba084dd025335e6c0d84a75fffd58e33ebc01d3c3ebbaec47c20",
+        "observedAtMs": 1792322700267,
+        "expiresAtMs": 1792322730267
+      },
+      "intent": {
+        "vault": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+        "action": "redeem",
+        "amountRaw": "941825668054109067",
+        "minimumSharesRaw": null,
+        "acknowledgeUnprotectedOutput": true,
+        "deadline": "1792323300",
+        "maximumNetworkFeeRaw": "1000000000000000"
+      },
+      "assetDelta": "1000000",
+      "shareDelta": "-941825668054109067",
+      "action": "redeem",
+      "signingRequest": {
+        "operationId": "14cbf93a-6135-419e-a787-5ed1722b06fa",
+        "operationVersion": "1",
+        "planHash": "305ead05a7179cc52bf82eb13b5280da2d84a871846d8ef28e6252fb3a4896ea",
+        "prepared": {
+          "plan": {
+            "schemaVersion": 1,
+            "provider": "morpho_vault_v2",
+            "chainId": "31337",
+            "signer": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf",
+            "intentHash": "ae1515bb2a7dbe4dce53f983e8481acac844367f40a36ebd01232c7482464864",
+            "registryRevision": "observed-fork-morpho-v1",
+            "feePolicyRevision": "local-zero-referral-fees",
+            "quoteReference": null,
+            "expiresAtMs": 1792322822164,
+            "maximumNetworkFeeRaw": "566031809999152",
+            "maximumSpend": {
+              "assetAddress": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+              "amountRaw": "941825668054109067",
+              "recipient": "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+            },
+            "minimumReceive": null,
+            "fees": [],
+            "simulation": {
+              "blockNumber": "26218410",
+              "blockHash": "0xcc228fb7e9f8ba084dd025335e6c0d84a75fffd58e33ebc01d3c3ebbaec47c20",
+              "callsHash": "bcdc47c9e45bfe532dc6a69f04f2654888816a5a0e4b8cbc831ef65f77af8ba5",
+              "observedAtMs": 1792322702164
+            },
+            "steps": [
+              {
+                "purpose": "approval",
+                "to": "0x04422053addbc9bb2759b248b574e3fca76bc145",
+                "valueRaw": "0",
+                "data": "0x095ea7b300000000000000000000000002912516d49de997db75b9d7858faae59209650b0000000000000000000000000000000000000000000000000d12097480b5cb8b"
+              },
+              {
+                "purpose": "action",
+                "to": "0x02912516d49de997db75b9d7858faae59209650b",
+                "valueRaw": "0",
+                "data": "0x932084a800000000000000000000000004422053addbc9bb2759b248b574e3fca76bc14500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000d12097480b5cb8b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000006ad4aee4"
+              }
+            ]
+          },
+          "firstNonce": "4930",
+          "gasLimits": ["65180", "500844"],
+          "maxFeePerGas": "1000013798",
+          "maxPriorityFeePerGas": "1000000000"
+        }
+      },
+      "includedVersion": "8",
+      "recovery": {
+        "operation": {
+          "id": "14cbf93a-6135-419e-a787-5ed1722b06fa",
+          "walletId": "1ee10187-62a6-4334-bb8b-ff59329c3146",
+          "action": "earn",
+          "state": "succeeded",
+          "version": "9"
+        },
+        "intentAvailable": true,
+        "preparation": {
+          "hash": "305ead05a7179cc52bf82eb13b5280da2d84a871846d8ef28e6252fb3a4896ea",
+          "provider": "morpho_vault_v2",
+          "chainId": "31337",
+          "expiresAtMs": 1792322822164,
+          "expired": false,
+          "stepCount": 2,
+          "registryRevision": "observed-fork-morpho-v1",
+          "feePolicyRevision": "local-zero-referral-fees"
+        },
+        "executionAvailable": false,
+        "submission": {
+          "operationId": "14cbf93a-6135-419e-a787-5ed1722b06fa",
+          "transactionHashes": [
+            "0x6520bb10126fec7ad7f9411ccd9084ca4a259ec77dd1f3c4020a8ff6ade663bd",
+            "0x0cf9d0bec197c4e7896aadc9242d5fdfcf4af96f8c57aa2989dc9dd888a4d6f3"
+          ]
+        },
+        "reconciliation": {
+          "checkedAtMs": 1792322721604,
+          "headNumber": "26218476",
+          "headHash": "0x71c3559dea8e823b4753d782b5e7a650b1779218cd295e1c0183da68b82344a6",
+          "finalizedNumber": "26218412",
+          "finalizedHash": "0xa162df206360f751e083c8a7a204ee86da5d7aa2e92f2de701ff658f7feda0bc",
+          "transactions": [
+            {
+              "transactionHash": "0x6520bb10126fec7ad7f9411ccd9084ca4a259ec77dd1f3c4020a8ff6ade663bd",
+              "inclusion": {
+                "blockNumber": "26218411",
+                "blockHash": "0xb19a5cb2c93b1154aa513b2a93ba45ac45830c9d508d4ced575b45449407db04",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "45984",
+                "effectiveGasPrice": "1000006037"
+              }
+            },
+            {
+              "transactionHash": "0x0cf9d0bec197c4e7896aadc9242d5fdfcf4af96f8c57aa2989dc9dd888a4d6f3",
+              "inclusion": {
+                "blockNumber": "26218412",
+                "blockHash": "0xa162df206360f751e083c8a7a204ee86da5d7aa2e92f2de701ff658f7feda0bc",
+                "transactionIndex": "0",
+                "succeeded": true,
+                "finalized": true,
+                "gasUsed": "409037",
+                "effectiveGasPrice": "1000005284"
+              }
+            }
+          ]
+        }
+      },
+      "underlyingBalance": "10000000",
+      "simulatedFinalityBlocks": "64"
+    }
+  ]
+}

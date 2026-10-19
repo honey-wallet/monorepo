@@ -1,18 +1,13 @@
-use axum::{Json, Router, routing::post};
+use axum::{Router, routing::post};
 
-use crate::{
-    error::AppError,
-    session_signatures::{SessionVerdict, VerifySessionSignature},
-};
+use crate::error::AppError;
 
 pub fn router() -> Router {
     Router::new().route("/session-signatures/verify", post(verify))
 }
 
-async fn verify(
-    Json(_req): Json<VerifySessionSignature>,
-) -> Result<Json<SessionVerdict>, AppError> {
-    // TODO(spec §9): dispatch to the chain adapter's
-    // `verify_session_signature`; enforce the domain-separator allowlist.
+async fn verify() -> Result<(), AppError> {
+    // Disabled stub: authenticate and validate the chain-specific domain before
+    // accepting or parsing a signature when implementation is added.
     Err(AppError::NotImplemented("session_signatures.verify"))
 }

@@ -4,7 +4,7 @@ import {
   decryptBackup,
   deriveAddresses,
   encryptBackup,
-  mnemonicToSeed,
+  withMnemonicSeed,
 } from '@honey-wallet/keyring';
 import type { Store } from './storage';
 
@@ -89,8 +89,9 @@ export function createVault(local: Store, session: Store, now = Date.now) {
     /** Each account with its address on every chain. */
     async accounts(mnemonic: string): Promise<AccountView[]> {
       const list = (await local.get<Account[]>(KEY.accounts)) ?? [];
-      const seed = await mnemonicToSeed(mnemonic);
-      return list.map((a) => ({ ...a, addresses: deriveAddresses(seed, a.index) }));
+      return withMnemonicSeed(mnemonic, (seed) =>
+        list.map((a) => ({ ...a, addresses: deriveAddresses(seed, a.index) })),
+      );
     },
 
     /** Forgets everything on this browser. The phone and backups are untouched. */
