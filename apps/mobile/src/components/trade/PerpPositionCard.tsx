@@ -82,7 +82,7 @@ export function PerpPositionCard({
         onPress={() => {
           tap();
           closePosition(position.id);
-          showToast(`${market.symbol} ${position.side.toLowerCase()} closed · ${signed}`);
+          showToast('Trade executed');
         }}
         style={styles.close}
       >

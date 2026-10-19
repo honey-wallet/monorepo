@@ -10,7 +10,7 @@ import { SheetRow, SheetScreen } from '@/components/sheets/Sheet';
 import { EmptyState } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { formatBalance, formatUsd, MARKET, RANGES, type Range, series } from '@/lib/mock-wallet';
-import { showToast } from '@/lib/toast';
+import { showErrorToast } from '@/lib/toast';
 import { useWalletView } from '@/lib/wallet-view';
 
 /**
@@ -48,7 +48,7 @@ export default function ShareTokenSheet() {
     setSharing(true);
     try {
       if (!(await Sharing.isAvailableAsync())) {
-        showToast("Sharing isn't available on this device");
+        showErrorToast('Sharing unavailable');
         return;
       }
       const uri = await captureRef(card, { format: 'png', quality: 1 });
@@ -58,7 +58,7 @@ export default function ShareTokenSheet() {
         UTI: 'public.png',
       });
     } catch {
-      showToast("Couldn't create the image. Try again.");
+      showErrorToast('Couldn’t create image');
     } finally {
       setSharing(false);
     }

@@ -52,7 +52,7 @@ import {
 } from '@/lib/multisig';
 import { demoOutcome } from '@/lib/outcomes';
 import { isWeb } from '@/lib/platform';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
 
@@ -112,7 +112,7 @@ export default function ProposalSheet() {
     const failed = demoOutcome('proposal');
     if (failed) {
       failure();
-      showToast(`${failed.title}. ${failed.safe}`);
+      showErrorToast(failed.title);
       return;
     }
     success();
@@ -121,14 +121,14 @@ export default function ProposalSheet() {
   };
   const onReject = () => {
     tap();
-    const outcome = reject(proposal.id);
+    const _outcome = reject(proposal.id);
     setJustSigned(true);
-    showToast(outcome === 'rejected' ? 'Proposal rejected' : 'You rejected it');
+    showToast('Transaction rejected');
   };
   const onCancel = () => {
     tap();
     cancel(proposal.id);
-    showToast('Proposal cancelled');
+    showToast('Transaction cancelled');
     closeSheet();
   };
 
@@ -149,9 +149,7 @@ export default function ProposalSheet() {
     // proposal's own. The browser has no share sheet.
     tap();
     const hash = executed ? ids.hash : ids.proposalHash;
-    void Clipboard.setStringAsync(hash).then(() =>
-      showToast(executed ? 'Transaction hash copied' : 'Proposal hash copied'),
-    );
+    void Clipboard.setStringAsync(hash).then(() => showToast('Hash copied'));
   };
 
   // Once you've signed, the usual next step is passing it on (or the receipt): Share

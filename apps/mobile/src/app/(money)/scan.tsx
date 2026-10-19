@@ -13,7 +13,7 @@ import { SCREEN } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { goBackOr } from '@/lib/navigation';
 import { holdScannedOffer, offerDirection } from '@/lib/pair-offer';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { isWalletConnectUri, pairWalletConnect } from '@/lib/walletconnect';
 import { isEvmAddress } from '@/lib/wallets';
 import { holdWatchedAddress } from '@/lib/watch-scan';
@@ -43,7 +43,7 @@ export default function ScanScreen() {
     if (purpose === 'watch') {
       const address = data.replace(/^ethereum:/i, '').split(/[?@]/)[0];
       if (!isEvmAddress(address)) {
-        showToast('Scan an EVM wallet address');
+        showErrorToast('Not an EVM address');
         handled.current = false;
         return;
       }
@@ -54,7 +54,7 @@ export default function ScanScreen() {
     // From onboarding (no wallet yet): only Honey for Chrome's "Send wallet to phone" code.
     if (purpose === 'pair') {
       if (offerDirection(data) !== 'toPhone') {
-        showToast('In the browser extension, open Settings › Send wallet to phone');
+        showToast('Send it from the extension');
         handled.current = false;
         return;
       }
@@ -64,16 +64,14 @@ export default function ScanScreen() {
     }
     // From the setup checklist: only Honey for Chrome's "Pair with your phone" code.
     if (purpose === 'extension' && offerDirection(data) !== 'toBrowser') {
-      showToast('In the browser extension, choose I already have a wallet › Pair with your phone');
+      showToast('Pair from the extension');
       handled.current = false;
       return;
     }
     if (isWalletConnectUri(data)) {
       router.back();
-      showToast('Connecting to the site…');
-      pairWalletConnect(data.trim()).catch(() =>
-        showToast('That code expired. Get a new one from the site'),
-      );
+      showToast('Connecting…');
+      pairWalletConnect(data.trim()).catch(() => showErrorToast('Code expired'));
       return;
     }
     if (parsePairUri(data)) {
@@ -94,7 +92,7 @@ export default function ScanScreen() {
     if (picked.canceled) return;
     const [code] = await scanFromURLAsync(picked.assets[0].uri, ['qr']);
     if (code) onCode(code.data);
-    else showToast('No QR code found in that photo');
+    else showErrorToast('No QR code found');
   };
 
   const close = () => goBackOr('/home');

@@ -6,7 +6,8 @@ import { tap } from '@/lib/haptics';
  * showed (the name is older than the behaviour): it then sits above the tray's footer
  * buttons, and keeps that place while the tray closes rather than jumping.
  */
-export type Toast = { id: number; message: string; top: boolean };
+/** `error`: something didn't work; it shows a warning instead of the check. */
+export type Toast = { id: number; message: string; top: boolean; error?: boolean };
 
 /** Newest first. Up to three stay visible, stacked; a fourth sends the oldest out. */
 const MAX_STACK = 3;
@@ -30,10 +31,15 @@ function set(next: Toast[]) {
 }
 
 /** Shows a short confirmation, e.g. "Address copied", then hides it. */
-export function showToast(message: string, ms = 1800) {
+export function showToast(message: string, ms = 1800, error = false) {
   const id = nextId++;
-  set([{ id, message, top: traysOpen > 0 }, ...toasts].slice(0, MAX_STACK));
+  set([{ id, message, top: traysOpen > 0, error }, ...toasts].slice(0, MAX_STACK));
   setTimeout(() => set(toasts.filter((t) => t.id !== id)), ms);
+}
+
+/** The same pill when something failed: a few words, a warning icon (review: errors showed a check). */
+export function showErrorToast(message: string, ms = 2400) {
+  showToast(message, ms, true);
 }
 
 /** Removes a toast early, e.g. when it's swiped away. */
@@ -47,7 +53,9 @@ export function dismissToast(id: number) {
  */
 export function showDemoToast(what: string) {
   tap();
-  showToast(`Demo: ${what}`);
+  // review: a few words, like every toast. Before: showToast(`Demo: ${what}`)
+  void what;
+  showToast('Demo only, nothing sent');
 }
 
 /** The toasts on screen, newest first. */

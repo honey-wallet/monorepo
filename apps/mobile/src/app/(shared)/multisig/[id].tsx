@@ -73,7 +73,7 @@ export default function MultisigScreen() {
     if (!member) return;
     tap();
     const { proposal } = propose(id, { type: 'removeMember', memberId, name: member.name });
-    showToast(`Proposed: remove ${member.name}`);
+    showToast('Removal proposed');
     router.push({ pathname: '/proposal/[id]', params: { id: proposal.id } });
   };
   const viewOnline = () => {

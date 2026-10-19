@@ -1,6 +1,6 @@
 import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { isWalletConnectUri, pairWalletConnect } from '@/lib/walletconnect';
 
 /**
@@ -12,11 +12,11 @@ export default function WalletConnectLink() {
   const { uri } = useLocalSearchParams<{ uri?: string }>();
   useEffect(() => {
     if (!uri || !isWalletConnectUri(uri)) {
-      if (uri) showToast('That isn’t a WalletConnect link');
+      if (uri) showErrorToast('Not a WalletConnect link');
       return;
     }
-    showToast('Connecting to the site…');
-    pairWalletConnect(uri).catch(() => showToast('That link expired. Get a new one from the site'));
+    showToast('Connecting…');
+    pairWalletConnect(uri).catch(() => showErrorToast('Link expired'));
   }, [uri]);
   return <Redirect href="/home" />;
 }

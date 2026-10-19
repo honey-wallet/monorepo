@@ -170,7 +170,7 @@ function nameFromEmail(email: string) {
 export function markFunded(usd?: number) {
   if (onboarding.get().funded) return;
   onboarding.set((s) => ({ ...s, funded: true }));
-  showToast(usd ? `$${usd.toFixed(2)} arrived. You're all set` : 'Money arrived. You’re all set');
+  showToast(usd ? `Received $${usd.toFixed(2)}` : 'Money received');
 }
 
 /** Ticks off a setup step; the last one unlocks the fee credit. */
@@ -180,7 +180,7 @@ export function completeStep(step: SetupStep) {
   const done = [...state.done, step];
   const finished = doneCount({ method: state.method, done }) === setupSteps(state.method).length;
   onboarding.set({ ...state, done, credit: finished ? SETUP_REWARD_USD : state.credit });
-  if (finished) showToast(`$${SETUP_REWARD_USD} off network fees unlocked`);
+  if (finished) showToast(`$${SETUP_REWARD_USD} fee credit unlocked`);
 }
 
 /**

@@ -4,7 +4,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { Chip } from '@/components/wallet/Chip';
 import { success } from '@/lib/haptics';
-import { showToast } from '@/lib/toast';
+import { showErrorToast } from '@/lib/toast';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
@@ -45,7 +45,7 @@ export function PhraseQuiz({ words, onPass }: { words: string[]; onPass: () => v
   const pick = (index: number, word: string, answer: string) => {
     if (picked[index]) return;
     if (word !== answer) {
-      showToast(`That’s not word #${index + 1}. Check what you wrote down`);
+      showErrorToast(`Word ${index + 1} is wrong`);
       return;
     }
     const next = { ...picked, [index]: word };
