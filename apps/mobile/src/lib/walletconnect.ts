@@ -8,7 +8,7 @@ import { Core } from '@walletconnect/core';
 import { buildApprovedNamespaces, getSdkError } from '@walletconnect/utils';
 import { getRandomBytes } from 'expo-crypto';
 import { router as nav } from 'expo-router';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 
 /**
  * Websites on the phone, through WalletConnect: scan a site's QR (or paste its link) and
@@ -180,7 +180,7 @@ async function start(): Promise<IWalletKit | null> {
       const session = await walletkit.approveSession({ id, namespaces });
       topics[session.topic] = { key, caller };
       await saveTopics();
-      showToast(`Connected to ${new URL(key).host}`);
+      showToast('Site connected');
     } catch (error) {
       await router.disconnect(key);
       const rejected = providerError(error).code === 4001;
@@ -190,7 +190,7 @@ async function start(): Promise<IWalletKit | null> {
           reason: getSdkError(rejected ? 'USER_REJECTED' : 'UNSUPPORTED_NAMESPACE_KEY'),
         })
         .catch(() => {});
-      if (!rejected) showToast('Couldn’t connect to that site');
+      if (!rejected) showErrorToast('Couldn’t connect');
     }
   });
 

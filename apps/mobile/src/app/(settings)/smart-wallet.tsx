@@ -27,14 +27,14 @@ export default function SmartWalletScreen() {
   // Whether a wallet is smart is read from its account on chain.
   const loading = useFirstLoad(LOADS.smartWallets);
 
-  const toggle = (id: string, label: string) => {
+  const toggle = (id: string, _label: string) => {
     tap();
     const turningOn = inactive.has(id);
     const next = new Set(inactive);
     if (turningOn) next.delete(id);
     else next.add(id);
     setInactive(next);
-    showToast(`Smart wallet ${turningOn ? 'on' : 'off'} for ${label}`);
+    showToast(`Smart wallet ${turningOn ? 'on' : 'off'}`);
   };
 
   return (

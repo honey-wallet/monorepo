@@ -28,8 +28,8 @@ function handleResponse(response: Notifications.NotificationResponse) {
   if (consumedResponses.has(key)) return;
   consumedResponses.add(key);
   if (response.actionIdentifier === ACTION_REJECT) {
-    const outcome = reject(id);
-    showToast(outcome === 'rejected' ? 'Proposal rejected' : 'You rejected it');
+    const _outcome = reject(id);
+    showToast('Transaction rejected');
     return;
   }
   router.push({ pathname: '/proposal/[id]', params: { id } });

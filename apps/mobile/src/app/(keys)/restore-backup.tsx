@@ -15,7 +15,7 @@ import { tap } from '@/lib/haptics';
 import { finishOnboarding } from '@/lib/onboarding';
 import { getProfile } from '@/lib/profile';
 import { updateSettings } from '@/lib/settings';
-import { showToast } from '@/lib/toast';
+import { showErrorToast, showToast } from '@/lib/toast';
 import { importMnemonic, startWithMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
@@ -44,7 +44,7 @@ export default function RestoreBackupSheet() {
         setWrong(false);
       }
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Couldn’t open that file');
+      showErrorToast(error instanceof Error ? error.message : 'Couldn’t open file');
     }
   };
 
@@ -70,7 +70,7 @@ export default function RestoreBackupSheet() {
     } catch (error) {
       setBusy(false);
       if (error instanceof WrongPasswordError) setWrong(true);
-      else showToast(error instanceof Error ? error.message : 'Couldn’t restore this backup');
+      else showErrorToast(error instanceof Error ? error.message : 'Couldn’t restore backup');
     }
   };
 

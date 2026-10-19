@@ -414,11 +414,7 @@ function NftDetail({
 
             {/* Two equal actions along the bottom, like every other page's footer */}
             <Animated.View style={[styles.actions, { bottom: insets.bottom + 12 }, info]}>
-              <Action
-                icon="send"
-                label="Send"
-                onPress={() => showToast('Sending NFTs is coming soon')}
-              />
+              <Action icon="send" label="Send" onPress={() => showToast('Coming soon')} />
               <Action
                 icon="link"
                 label="Share"

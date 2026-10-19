@@ -129,7 +129,7 @@ export default function TokenScreen() {
               {
                 label: 'Hide token',
                 icon: 'eyeSlash',
-                onPress: () => showToast(`${symbol} hidden from your balance`),
+                onPress: () => showToast(`${symbol} hidden`),
               },
             ]}
           />
