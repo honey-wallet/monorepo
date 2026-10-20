@@ -24,7 +24,7 @@
     "@honey-wallet/api-client": "workspace:*",
     "@honey-wallet/extension": "workspace:*",
     "@honey-wallet/keyring": "workspace:*",
-    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-async-storage/async-storage": "3.1.1",
     "@react-native-community/netinfo": "12.0.1",
     "@reown/walletkit": "1.6.0",
     "@scure/base": "2.4.0",
