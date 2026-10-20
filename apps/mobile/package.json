@@ -30,7 +30,7 @@
     "@scure/base": "2.4.0",
     "@walletconnect/core": "2.25.0",
     "@walletconnect/react-native-compat": "2.25.0",
-    "@walletconnect/types": "2.25.0",
+    "@walletconnect/types": "2.26.0",
     "@walletconnect/utils": "2.25.0",
     "expo": "~57.0.30",
     "expo-alternate-app-icons": "^8.0.0",
