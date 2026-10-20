@@ -41,8 +41,14 @@ import { hostOf, multisigOf, propose, useMultisigState } from '@/lib/multisig';
 import { goBackOr } from '@/lib/navigation';
 import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
-import { type AddedWallet, allWallets, useWallets } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import {
+  type AddedWallet,
+  allWallets,
+  isFixtureWallet,
+  isMainWallet,
+  useWallets,
+} from '@/lib/wallets';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /**
  * Honey for Chrome's approval window: a website asked to connect, sign or send, and this
@@ -147,7 +153,7 @@ function useSigners(): Signer[] {
   return useMemo(
     () =>
       allWallets(profile.name, added).flatMap((wallet): Signer[] => {
-        if (wallet.watchOnly || wallet.demo) return [];
+        if (wallet.watchOnly || isFixtureWallet(wallet)) return [];
         const m = multisigOf(shared, wallet.id);
         if (m) {
           const safe = m.protocol === 'safe';
@@ -427,7 +433,7 @@ function Request({ approval, onAnswered }: { approval: Approval; onAnswered: () 
 
 function WalletAvatar({ wallet, size }: { wallet: AddedWallet; size: number }) {
   const profile = useProfile();
-  return wallet.id === 'main' ? (
+  return isMainWallet(wallet) ? (
     <Avatar name={wallet.label} size={size} uri={profile.photo} seed={profile.avatarSeed} />
   ) : (
     <Avatar name={wallet.label} size={size} seed={wallet.id} />
@@ -827,12 +833,12 @@ const useStyles = makeStyles((c) => ({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 999,
-    backgroundColor: c.raised,
+    backgroundColor: c.card,
   },
   favicon: {
     width: 18,
     height: 18,
-    borderRadius: 4,
+    ...radius(4),
   },
   chipText: {
     flexShrink: 1,
@@ -862,7 +868,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     paddingHorizontal: 16,
     paddingVertical: 4,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   walletValue: {
@@ -879,8 +885,8 @@ const useStyles = makeStyles((c) => ({
   message: {
     padding: 14,
     gap: 6,
-    borderRadius: 16,
-    backgroundColor: c.raised,
+    ...radius(16),
+    backgroundColor: c.card,
   },
   messageText: {
     color: c.text,
@@ -914,14 +920,14 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     gap: 10,
     padding: 12,
-    borderRadius: 14,
+    ...radius(14),
     backgroundColor: `${c.error}18`,
   },
   scamAlert: {
     marginBottom: 12,
     padding: 12,
     gap: 12,
-    borderRadius: 14,
+    ...radius(14),
     backgroundColor: `${c.error}18`,
   },
   scamLine: {

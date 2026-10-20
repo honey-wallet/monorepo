@@ -30,7 +30,7 @@ import {
   useSavedPerps,
 } from '@/lib/perps';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type Category = (typeof PERP_CATEGORIES)[number] | 'Saved';
 
@@ -358,7 +358,7 @@ const useStyles = makeStyles((c) => ({
   feature: {
     width: FEATURE_WIDTH,
     padding: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   featureHead: {
@@ -445,7 +445,7 @@ const useStyles = makeStyles((c) => ({
   badge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 6,
+    ...radius(6),
     overflow: 'hidden',
     color: c.accentText,
     backgroundColor: c.accentSurface,

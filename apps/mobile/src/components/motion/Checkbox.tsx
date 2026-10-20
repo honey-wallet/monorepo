@@ -15,7 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { tap } from '@/lib/haptics';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const BOX = { duration: DURATION.quick, easing: EASE.smoothOut } as const;
@@ -116,7 +116,7 @@ const useStyles = makeStyles((c) => ({
   box: {
     width: SIZE,
     height: SIZE,
-    borderRadius: 7,
+    ...radius(7),
     borderWidth: 2,
     borderColor: c.divider,
     overflow: 'hidden',

@@ -33,7 +33,7 @@ import {
 import { isWeb } from '@/lib/platform';
 import { type SearchSort, useSectionPrefs } from '@/lib/section-prefs';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
 
 type Sort = SearchSort;
@@ -476,7 +476,7 @@ const useStyles = makeStyles((c) => ({
     height: FAVORITE_HEIGHT,
     padding: 14,
     gap: 6,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   favoriteName: {
@@ -505,7 +505,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   stableSymbol: {

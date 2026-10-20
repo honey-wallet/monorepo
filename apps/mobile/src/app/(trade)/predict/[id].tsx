@@ -34,7 +34,7 @@ import {
 } from '@/lib/predict';
 import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const CHART_HEIGHT = 236;
 const GUTTER = 20;
@@ -363,7 +363,7 @@ const useStyles = makeStyles((c) => ({
     paddingHorizontal: GUTTER - 8,
   },
   outcomes: {
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   outcome: {

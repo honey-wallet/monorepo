@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { randomAvatarSeed } from '@/components/Avatar';
 import { forgetSavedBackendSession } from '@/lib/backend-session';
 import { forgetSites } from '@/lib/dapp';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { isWeb } from '@/lib/platform';
 import { setProfile } from '@/lib/profile';
 import { createStore } from '@/lib/store';
@@ -171,7 +172,7 @@ function nameFromEmail(email: string) {
 export function markDemoFunded() {
   if (onboarding.get().funded) return;
   onboarding.set((s) => ({ ...s, funded: true }));
-  showToast('Demo balance updated');
+  showToast(demoLabel('Demo balance updated', 'Balance updated'));
 }
 
 /** Ticks off a setup step; the last one unlocks the fee credit. */

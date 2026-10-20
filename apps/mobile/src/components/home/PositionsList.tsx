@@ -46,7 +46,7 @@ import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { useTradeModes } from '@/lib/trade-modes';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 /** How often an open pool's price ticks. */
@@ -570,7 +570,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 20,
+    ...radius(20),
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: c.card,
@@ -609,7 +609,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 14,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 20,
+    ...radius(20),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -731,7 +731,7 @@ const useStyles = makeStyles((c) => ({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    borderRadius: 2,
+    ...radius(2),
     backgroundColor: c.textSecondary,
     opacity: 0.45,
   },
@@ -751,7 +751,7 @@ const useStyles = makeStyles((c) => ({
     right: 0,
     top: 0,
     bottom: 0,
-    borderRadius: 2,
+    ...radius(2),
   },
   earnRow: {
     flexDirection: 'row',

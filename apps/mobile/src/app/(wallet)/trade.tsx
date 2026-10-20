@@ -61,7 +61,7 @@ import { showDemoToast } from '@/lib/toast';
 import { SHARED_WALLET_MODES, useTradeTabs } from '@/lib/trade-modes';
 import { EXPIRIES, type Expiry, useTradePrefs } from '@/lib/trade-prefs';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /**
  * Trading, kept simple: Swap (which also bridges across networks), Perps and
@@ -104,7 +104,7 @@ function TradeScreen() {
   return (
     // Trade is a focused flow with no tab bar; Back returns to where you came from. Its
     // top bar matches Search's: a search field, then the balance and settings.
-    <TabScreen tabBar={false}>
+    <TabScreen tabBar={false} scroll={!isWeb}>
       <View style={styles.top}>
         <HeaderIconButton bare icon="chevronLeft" label="Back" onPress={() => goBackOr('/home')} />
         <View style={styles.flex}>
@@ -350,6 +350,8 @@ function SwapForm() {
                   prefix={unit === 'usd' ? '$' : ''}
                   size={40}
                   align="left"
+                  onChangeText={setAmount}
+                  maxDecimals={unit === 'usd' ? 2 : 8}
                 />
               ) : (
                 <TextSwap
@@ -429,7 +431,7 @@ function SwapForm() {
               style={styles.flex}
             >
               {side === 'buy' ? (
-                <TypedAmount value={amount} size={40} align="left" />
+                <TypedAmount value={amount} size={40} align="left" onChangeText={setAmount} />
               ) : (
                 <TextSwap
                   text={out ? Number(out.toPrecision(6)).toString() : '0'}
@@ -457,51 +459,57 @@ function SwapForm() {
         </View>
       </View>
 
-      <PanelReveal open={quoted} style={styles.details}>
-        {isWeb ? (
-          // One line, the route and its cost; tap for the rest (review: in the popup the
-          // full panel pushed Review swap off the bottom).
-          <>
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityState={{ expanded: detailsOpen }}
-              accessibilityLabel="Swap details"
-              scaleTo={1}
-              onPress={() => {
-                tap();
-                setDetailsOpen((v) => !v);
-              }}
-              style={styles.detailRow}
-            >
-              <Text style={styles.meta}>{route}</Text>
-              <View style={styles.detailSummary}>
-                <Text style={styles.detailValue}>{networkCost}</Text>
-                <AccordionChevron open={detailsOpen} size={11} color={c.textSecondary} />
-              </View>
-            </PressableScale>
-            <Accordion open={detailsOpen}>
-              <View style={styles.detailMore}>
-                <DetailRow label="Network cost" value={networkCost} />
-                <DetailRow label="Max slippage" value="Auto · 5.5%" />
-                <DetailRow label="Price impact" value="<0.01%" />
-              </View>
-            </Accordion>
-          </>
-        ) : (
-          <>
-            <DetailRow label="Route" value={route} />
-            <DetailRow label="Network cost" value={networkCost} />
-            <DetailRow label="Max slippage" value="Auto · 5.5%" />
-            <DetailRow label="Price impact" value="<0.01%" />
-          </>
-        )}
-      </PanelReveal>
+      {/* In the browser the closed panel still took its room, a gap above the chips: mount it only with a quote. */}
+      {isWeb && !quoted ? null : (
+        <PanelReveal open={quoted} style={styles.details}>
+          {isWeb ? (
+            // One line, the route and its cost; tap for the rest (review: in the popup the
+            // full panel pushed Review swap off the bottom).
+            <>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityState={{ expanded: detailsOpen }}
+                accessibilityLabel="Swap details"
+                scaleTo={1}
+                onPress={() => {
+                  tap();
+                  setDetailsOpen((v) => !v);
+                }}
+                style={styles.detailRow}
+              >
+                <Text style={styles.meta}>{route}</Text>
+                <View style={styles.detailSummary}>
+                  <Text style={styles.detailValue}>{networkCost}</Text>
+                  <AccordionChevron open={detailsOpen} size={11} color={c.textSecondary} />
+                </View>
+              </PressableScale>
+              <Accordion open={detailsOpen}>
+                <View style={styles.detailMore}>
+                  <DetailRow label="Network cost" value={networkCost} />
+                  <DetailRow label="Max slippage" value="Auto · 5.5%" />
+                  <DetailRow label="Price impact" value="<0.01%" />
+                </View>
+              </Accordion>
+            </>
+          ) : (
+            <>
+              <DetailRow label="Route" value={route} />
+              <DetailRow label="Network cost" value={networkCost} />
+              <DetailRow label="Max slippage" value="Auto · 5.5%" />
+              <DetailRow label="Price impact" value="<0.01%" />
+            </>
+          )}
+        </PanelReveal>
+      )}
 
       {/* As in Uniswap: cards at the top, keypad and button at the bottom, open space
           between. When the quote details open there's less room, so the keys shrink to
           fit (down to a floor) rather than pushing the button off the bottom. */}
       {/* No open space in the browser: with no keypad there, it was just a gap (review). */}
-      {isWeb ? null : (
+      {/* In the browser the spacer pins the chips and button to the bottom of the popup. */}
+      {isWeb ? (
+        <View style={styles.flex} />
+      ) : (
         <View style={styles.flex} onLayout={(e) => setSpare(e.nativeEvent.layout.height)} />
       )}
       <PercentChips
@@ -511,6 +519,7 @@ function SwapForm() {
         style={styles.percents}
       />
       <Keypad
+        input
         keyHeight={keyHeight}
         onKey={(key) =>
           setAmount((v) => applyKey(v, key, side === 'sell' && unit === 'usd' ? 2 : 8))
@@ -716,7 +725,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     padding: 16,
     gap: 10,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   stacked: {
@@ -757,7 +766,7 @@ const useStyles = makeStyles((c) => ({
     paddingVertical: 12,
     paddingHorizontal: 16,
     gap: 6,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   detailSummary: {
@@ -803,7 +812,7 @@ const useStyles = makeStyles((c) => ({
     zIndex: 1,
     width: 44,
     height: 44,
-    borderRadius: 14,
+    ...radius(14),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.raised,

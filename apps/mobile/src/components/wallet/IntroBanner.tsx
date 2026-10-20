@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icon';
 import { LearnMore } from '@/components/motion/LearnMore';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { tap } from '@/lib/haptics';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 /**
@@ -87,7 +87,7 @@ const useStyles = makeStyles((c) => ({
     padding: 12,
     // More room right of the close button, so it doesn't hug the edge.
     paddingRight: 20,
-    borderRadius: 18,
+    ...radius(18),
     backgroundColor: c.card,
   },
   open: {
@@ -99,7 +99,7 @@ const useStyles = makeStyles((c) => ({
   graphic: {
     width: 56,
     height: 56,
-    borderRadius: 14,
+    ...radius(14),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,

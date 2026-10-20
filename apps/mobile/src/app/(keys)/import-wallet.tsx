@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useRef, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
@@ -10,12 +10,13 @@ import { KeyGlyph, PhraseGlyph } from '@/components/onboarding/icons';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
+import { takeScannedKey } from '@/lib/key-scan';
 import { finishOnboarding } from '@/lib/onboarding';
 import { HERE, isWeb } from '@/lib/platform';
 import { showErrorToast, showToast } from '@/lib/toast';
 import { importMnemonic, importPrivateKey, isValidMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Splits a typed or pasted phrase into lowercase words. */
 function wordsOf(text: string) {
@@ -39,6 +40,13 @@ export default function ImportWalletSheet() {
   const isKey = kind === 'key';
   // A private key is one field; a phrase is one cell per word, like the paper it's copied from.
   const [keyText, setKeyText] = useState('');
+  // A key read by the scanner comes back here when the scanner closes.
+  useFocusEffect(
+    useCallback(() => {
+      const key = takeScannedKey();
+      if (key) setKeyText(key);
+    }, []),
+  );
   const [target, setTarget] = useState<12 | 24>(12);
   const [slots, setSlots] = useState<string[]>(() => Array(24).fill(''));
   const cells = useRef<(TextInput | null)[]>([]);
@@ -274,6 +282,18 @@ export default function ImportWalletSheet() {
         onPress={submit}
         style={[styles.cta, isWeb && styles.ctaWeb]}
       />
+      {isKey ? (
+        <PillButton
+          label="Scan QR"
+          variant="secondary"
+          disabled={busy}
+          onPress={() => {
+            tap();
+            router.push({ pathname: '/scan', params: { purpose: 'key' } });
+          }}
+          style={styles.scan}
+        />
+      ) : null}
     </SheetScreen>
   );
 }
@@ -303,10 +323,10 @@ const useStyles = makeStyles((c) => ({
   field: {
     marginTop: 18,
     padding: 14,
-    borderRadius: 18,
+    ...radius(18),
     borderWidth: 1,
     borderColor: 'transparent',
-    backgroundColor: c.raised,
+    backgroundColor: c.card,
   },
   fieldError: {
     borderColor: c.error,
@@ -380,13 +400,13 @@ const useStyles = makeStyles((c) => ({
   },
   cellWeb: {
     height: 40,
-    borderRadius: 14,
+    ...radius(14),
   },
   cellDense: {
     height: 34,
     gap: 4,
     paddingLeft: 10,
-    borderRadius: 12,
+    ...radius(12),
   },
   cellNumberDense: {
     width: 18,
@@ -402,11 +422,11 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 8,
     paddingLeft: 14,
-    borderRadius: 16,
+    ...radius(16),
     borderWidth: 1,
     borderColor: 'transparent',
-    // Raised, not card: on the tray's own surface a card-coloured cell vanishes in dark mode.
-    backgroundColor: c.raised,
+    // Card grey like every field: sheets are page-coloured in both themes, so it reads.
+    backgroundColor: c.card,
   },
   cellError: {
     borderColor: c.error,
@@ -452,6 +472,9 @@ const useStyles = makeStyles((c) => ({
   },
   ruleWeb: {
     marginTop: 12,
+  },
+  scan: {
+    marginTop: 10,
   },
   ctaWeb: {
     marginTop: 14,

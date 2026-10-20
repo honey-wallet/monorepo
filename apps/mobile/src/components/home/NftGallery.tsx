@@ -48,7 +48,7 @@ import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { chainSymbol, formatUsd } from '@/lib/mock-wallet';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, squircle, useTheme } from '@/theme';
 import { DURATION, EASE, SPRING } from '@/theme/motion';
 
 const COLUMNS = 3;
@@ -311,6 +311,7 @@ function NftDetail({
     const scale = (s + (1 - s) * p) * shrink;
     return {
       borderRadius: TILE_RADIUS / s + (DETAIL_RADIUS - TILE_RADIUS / s) * p,
+      ...squircle,
       transform: [
         { translateX: dx * (1 - p) },
         { translateY: dy * (1 - p) + drag.value },
@@ -412,9 +413,9 @@ function NftDetail({
               </GestureDetector>
             </Animated.View>
 
-            {/* Two equal actions along the bottom, like every other page's footer */}
+            {/* One primary and one secondary, like ActionFooter (Buy honey, Sell grey) */}
             <Animated.View style={[styles.actions, { bottom: insets.bottom + 12 }, info]}>
-              <Action icon="send" label="Send" onPress={() => showToast('Coming soon')} />
+              <Action icon="send" label="Send" primary onPress={() => showToast('Coming soon')} />
               <Action
                 icon="link"
                 label="Share"
@@ -428,9 +429,20 @@ function NftDetail({
   );
 }
 
-function Action({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
+function Action({
+  icon,
+  label,
+  primary,
+  onPress,
+}: {
+  icon: IconName;
+  label: string;
+  primary?: boolean;
+  onPress: () => void;
+}) {
   const styles = useStyles();
   const c = useTheme();
+  const color = primary ? c.onPrimary : c.text;
   return (
     <PressableScale
       accessibilityRole="button"
@@ -438,10 +450,10 @@ function Action({ icon, label, onPress }: { icon: IconName; label: string; onPre
         tap();
         onPress();
       }}
-      style={styles.action}
+      style={[styles.action, { backgroundColor: primary ? c.primary : c.raised }]}
     >
-      <Icon name={icon} size={15} color={c.accentText} />
-      <Text style={styles.actionLabel}>{label}</Text>
+      <Icon name={icon} size={15} color={color} />
+      <Text style={[styles.actionLabel, { color }]}>{label}</Text>
     </PressableScale>
   );
 }
@@ -457,7 +469,7 @@ const useStyles = makeStyles((c) => ({
     gap: GAP,
   },
   art: {
-    borderRadius: TILE_RADIUS,
+    ...radius(TILE_RADIUS),
     overflow: 'hidden',
     backgroundColor: c.card,
   },
@@ -524,7 +536,7 @@ const useStyles = makeStyles((c) => ({
   group: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 16,
+    ...radius(16),
     backgroundColor: c.card,
   },
   groupTitle: {
@@ -554,10 +566,8 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: c.accentSurface,
   },
   actionLabel: {
-    color: c.accentText,
     fontSize: 15,
     fontWeight: '500',
   },

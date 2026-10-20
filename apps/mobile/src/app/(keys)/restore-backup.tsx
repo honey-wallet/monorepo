@@ -18,7 +18,7 @@ import { updateSettings } from '@/lib/settings';
 import { showErrorToast, showToast } from '@/lib/toast';
 import { importMnemonic, startWithMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
 /**
@@ -170,10 +170,9 @@ export default function RestoreBackupSheet() {
         </View>
       </View>
 
-      <TextSwap
-        text={wrong ? 'That password doesn’t open this backup. Try again.' : ' '}
-        style={styles.error}
-      />
+      {wrong ? (
+        <TextSwap text="That password doesn’t open this backup. Try again." style={styles.error} />
+      ) : null}
     </SheetScreen>
   );
 }
@@ -228,7 +227,7 @@ const useStyles = makeStyles((c) => ({
   },
   card: {
     marginTop: 24,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   step: {

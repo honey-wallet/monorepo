@@ -18,7 +18,7 @@ import { aaveDisplayAmount, aaveRawAmount, signReviewedAave } from '@/lib/aave-e
 import { api } from '@/lib/api';
 import { backendSession, backendSessionToken } from '@/lib/backend-session';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 type Pending = {
   key: string;
@@ -409,10 +409,10 @@ function AaveExecutionForWallet() {
   );
 }
 const useStyles = makeStyles((c) => ({
-  card: { backgroundColor: c.card, borderRadius: 20, padding: 18, gap: 12 },
+  card: { backgroundColor: c.card, ...radius(20), padding: 18, gap: 12 },
   title: { fontSize: 17, color: c.text },
   note: { fontSize: 15, lineHeight: 21, color: c.textSecondary },
   address: { fontSize: 12, color: c.textSecondary },
-  input: { backgroundColor: c.raised, borderRadius: 12, padding: 12, color: c.text, fontSize: 18 },
+  input: { backgroundColor: c.raised, ...radius(12), padding: 12, color: c.text, fontSize: 18 },
   error: { fontSize: 15, color: c.error },
 }));

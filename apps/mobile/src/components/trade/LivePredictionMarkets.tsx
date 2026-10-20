@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from 'react';
 import { AppState, Pressable, Text, View } from 'react-native';
 import { api } from '@/lib/api';
 import { predictionMarketRows } from '@/lib/polymarket-discovery';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 type LoadState = 'loading' | 'ready' | 'error' | 'paused';
 
@@ -163,7 +163,7 @@ const useStyles = makeStyles((c) => ({
   section: { padding: 20, gap: 12 },
   heading: { color: c.text, fontSize: 18, fontWeight: '600' },
   note: { color: c.textSecondary, fontSize: 14, lineHeight: 20 },
-  card: { backgroundColor: c.card, borderRadius: 16, padding: 16, gap: 6 },
+  card: { backgroundColor: c.card, ...radius(16), padding: 16, gap: 6 },
   question: { color: c.text, fontSize: 16, lineHeight: 22 },
   meta: { color: c.textSecondary, fontSize: 13 },
   more: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },

@@ -3,7 +3,7 @@ import { TextInput, View } from 'react-native';
 import { Swap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { EyeIcon } from '@/components/onboarding/icons';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** A password box with a show/hide eye, on the raised surface used by fields in trays. */
 export function PasswordField({
@@ -69,10 +69,10 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     paddingLeft: 16,
     paddingRight: 14,
-    borderRadius: 16,
+    ...radius(16),
     borderWidth: 1,
     borderColor: 'transparent',
-    backgroundColor: c.raised,
+    backgroundColor: c.card,
   },
   fieldError: {
     borderColor: c.error,

@@ -17,7 +17,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { tap } from '@/lib/haptics';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, squircle, useTheme } from '@/theme';
 import { DISTANCE, DURATION, EASE, SPRING } from '@/theme/motion';
 
 const OPEN = SPRING.ui;
@@ -76,6 +76,7 @@ export function PlusMenuMorph({
     width: interpolate(progress.value, [0, 1], [BUTTON, MENU_WIDTH]),
     height: interpolate(progress.value, [0, 1], [BUTTON, height]),
     borderRadius: interpolate(progress.value, [0, 1], [BUTTON / 2, 20]),
+    ...squircle,
   }));
   const plus = useAnimatedStyle(() => ({
     opacity: interpolate(shown.value, [0, 0.5], [1, 0], 'clamp'),
@@ -191,7 +192,7 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderRadius: 14,
+    ...radius(14),
   },
   rowPressed: {
     backgroundColor: `${c.accentText}1A`,

@@ -21,8 +21,10 @@ import {
   importPairedWallet,
   importPrivateKey,
   loadAccounts,
+  privateKeyOf,
   readPrimaryMnemonic,
   startWithMnemonic,
+  upgradeNearAccounts,
 } from '@/lib/vault';
 
 const phrase =
@@ -61,4 +63,19 @@ it('catches accounts added after the confirmation screen loaded', async () => {
   await createAccount('Second');
   await expect(eraseVault([first.id])).rejects.toThrow('every wallet');
   expect((await loadAccounts()).length).toBe(2);
+});
+
+it('adds NEAR to legacy phrase wallets, preserving existing addresses and raw EVM keys', async () => {
+  const account = await startWithMnemonic(phrase, 'Primary');
+  const imported = await importPrivateKey('1'.repeat(64), 'EVM');
+  const expected = account.addresses.near;
+  const { near: _near, ...legacy } = account.addresses;
+  storage.set('honey.accounts', JSON.stringify([{ ...account, addresses: legacy }, imported]));
+  await upgradeNearAccounts();
+  await upgradeNearAccounts();
+  const accounts = await loadAccounts();
+  expect(accounts[0]?.addresses).toEqual({ ...legacy, near: expected });
+  expect(accounts[1]?.addresses).toEqual(imported.addresses);
+  expect((await privateKeyOf(account.id, 'near')).length).toBe(32);
+  await expect(privateKeyOf(imported.id, 'near')).rejects.toThrow('only works on EVM');
 });

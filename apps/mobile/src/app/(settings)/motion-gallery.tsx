@@ -43,7 +43,7 @@ import { PushedScreen, SCREEN, TokenIcon } from '@/components/wallet/parts';
 import { SearchField } from '@/components/wallet/SearchField';
 import { describeFailure, FLOW_FAILURES } from '@/lib/outcomes';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Counts up every `ms`, so each demo replays on its own without taps. */
 function useTick(ms: number) {
@@ -719,7 +719,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     padding: 16,
     gap: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   cardHead: {
@@ -735,7 +735,7 @@ const useStyles = makeStyles((c) => ({
   hint: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 8,
+    ...radius(8),
     overflow: 'hidden',
     color: c.accentText,
     backgroundColor: c.accentSurface,
@@ -798,14 +798,14 @@ const useStyles = makeStyles((c) => ({
   inset: {
     alignSelf: 'stretch',
     padding: 12,
-    borderRadius: 14,
+    ...radius(14),
     backgroundColor: c.raised,
   },
   field: {
     alignSelf: 'stretch',
     padding: 12,
     gap: 2,
-    borderRadius: 14,
+    ...radius(14),
     borderWidth: 1,
     borderColor: c.error,
   },
@@ -819,7 +819,7 @@ const useStyles = makeStyles((c) => ({
     height: 140,
     padding: 18,
     justifyContent: 'flex-end',
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.accentSurface,
   },
 }));

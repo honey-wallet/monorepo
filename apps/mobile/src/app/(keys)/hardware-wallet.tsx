@@ -21,7 +21,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { SHEET, SheetScreen } from '@/components/sheets/Sheet';
 import { EmptyState } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 type Stage = 'steps' | 'searching' | 'none';
@@ -206,7 +206,7 @@ const useStyles = makeStyles((c) => ({
   tile: {
     width: 60,
     height: 60,
-    borderRadius: 18,
+    ...radius(18),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,

@@ -19,7 +19,7 @@ import { wordlist } from '@scure/bip39/wordlists/english.js';
  * so this is the only place that knows the paths.
  */
 
-export type ChainFamily = 'evm' | 'bitcoin' | 'solana' | 'tron' | 'xrp';
+export type ChainFamily = 'evm' | 'bitcoin' | 'solana' | 'near' | 'tron' | 'xrp';
 
 export type Addresses = Record<ChainFamily, string>;
 
@@ -31,6 +31,8 @@ export const PATHS: Record<ChainFamily, (index: number) => string> = {
   bitcoin: (i) => `m/84'/0'/0'/0/${i}`,
   // Phantom and Solflare. ed25519 only supports hardened steps (SLIP-10).
   solana: (i) => `m/44'/501'/${i}'/0'`,
+  // NEAR seed phrase / near-cli default, with one hardened account per index.
+  near: (i) => `m/44'/397'/${i}'`,
   tron: (i) => `m/44'/195'/0'/0/${i}`,
   xrp: (i) => `m/44'/144'/0'/0/${i}`,
 };
@@ -79,8 +81,10 @@ export async function withMnemonicSeed<T>(
 
 /** The private key for account `index` on one chain. */
 export function privateKeyFor(seed: Uint8Array, chain: ChainFamily, index = 0): Uint8Array {
+  if (!Number.isSafeInteger(index) || index < 0 || index >= 0x80000000)
+    throw new Error('Invalid account index');
   const path = PATHS[chain](index);
-  if (chain === 'solana') return slip10Ed25519(seed, path);
+  if (chain === 'solana' || chain === 'near') return slip10Ed25519(seed, path);
   const key = HDKey.fromMasterSeed(seed).derive(path).privateKey;
   if (!key) throw new Error(`No private key at ${path}`);
   return key;
@@ -103,10 +107,18 @@ export function deriveAddresses(seed: Uint8Array, index = 0): Addresses {
   } finally {
     solanaPrivateKey.fill(0);
   }
+  const nearPrivateKey = privateKeyFor(seed, 'near', index);
+  let nearPublicKey: Uint8Array;
+  try {
+    nearPublicKey = ed25519.getPublicKey(nearPrivateKey);
+  } finally {
+    nearPrivateKey.fill(0);
+  }
   return {
     evm: evmAddress(evmPublicKey('evm')),
     bitcoin: bitcoinAddress(evmPublicKey('bitcoin')),
     solana: base58.encode(solanaPublicKey),
+    near: bytesToHex(nearPublicKey),
     tron: tronAddress(evmPublicKey('tron')),
     xrp: xrpAddress(evmPublicKey('xrp')),
   };
@@ -239,6 +251,7 @@ export * from './bunk-solana-discovery';
 export * from './bunk-solana-journal';
 export * from './bunk-solana-observe';
 export * from './local-vault';
+export * from './near';
 export * from './networks';
 export * from './pairing';
 export * from './sign';

@@ -1,11 +1,13 @@
+import { Redirect } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, AppState, Image, Text, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SheetScreen } from '@/components/sheets/Sheet';
 import { type AppIconName, changeAppIcon, getAppIcon, supportsAppIcons } from '@/lib/app-icon';
 import { tap } from '@/lib/haptics';
+import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const OPTIONS = [
   // Honey is the dark icon, the default; Light is the white one.
@@ -24,6 +26,12 @@ const OPTIONS = [
 ] as const;
 
 export default function AppIconSheet() {
+  // Browsers have no app icon: a deep link lands back where it can go.
+  if (isWeb) return <Redirect href="/settings" />;
+  return <AppIconSheetContent />;
+}
+
+function AppIconSheetContent() {
   const styles = useStyles();
   const c = useTheme();
   const [selected, setSelected] = useState(getAppIcon);
@@ -106,14 +114,11 @@ const useStyles = makeStyles((c) => ({
   options: {
     flexDirection: 'row',
     gap: 14,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: c.divider,
-    marginTop: 12,
+    paddingTop: 8,
   },
   option: { flex: 1, gap: 10, alignItems: 'center' },
-  outline: { width: '100%', aspectRatio: 1, padding: 4, borderWidth: 2, borderRadius: 27 },
-  icon: { width: '100%', height: '100%', borderRadius: 20 },
+  outline: { width: '100%', aspectRatio: 1, padding: 4, borderWidth: 2, ...radius(27) },
+  icon: { width: '100%', height: '100%', ...radius(20) },
   label: { fontSize: 13, color: c.textSecondary },
   pending: {
     position: 'absolute',
@@ -121,7 +126,7 @@ const useStyles = makeStyles((c) => ({
     left: 4,
     right: 4,
     bottom: 4,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
     opacity: 0.85,
     alignItems: 'center',

@@ -13,7 +13,7 @@ import { LOADS } from '@/lib/loads';
 import { RECENT_RECIPIENTS, shortAddress } from '@/lib/mock-wallet';
 import { isWeb } from '@/lib/platform';
 import { isEvmAddress } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Send, step one: pick who to pay. */
 export default function SendSheet() {
@@ -126,8 +126,8 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: c.raised,
+    ...radius(14),
+    backgroundColor: c.card,
   },
   input: {
     flex: 1,

@@ -87,6 +87,7 @@ const ICONS = {
   gas: { ios: 'fuelpump.fill', android: 'local_gas_station', web: 'local_gas_station' },
   box: { ios: 'shippingbox.fill', android: 'inventory_2', web: 'inventory_2' },
   lock: { ios: 'lock.fill', android: 'lock', web: 'lock' },
+  shieldLock: { ios: 'lock.shield', android: 'security', web: 'security' },
   book: { ios: 'book.fill', android: 'menu_book', web: 'menu_book' },
   trash: { ios: 'trash', android: 'delete', web: 'delete' },
   warning: { ios: 'exclamationmark.triangle.fill', android: 'warning', web: 'warning' },

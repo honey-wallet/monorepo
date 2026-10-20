@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, it } from 'vitest';
-import { DEMO_BALANCE_NOTICE, DEMO_DEPOSIT_NOTICE } from '../src/lib/demo-money-copy';
+import { DEMO_BALANCE_NOTICE, DEMO_DEPOSIT_NOTICE, demoLabel } from '../src/lib/demo-money-copy';
 
 const source = (path: string) =>
   readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
@@ -21,15 +21,15 @@ it('labels demo savings balances and both simulated deposit outcomes', () => {
   const buy = source('../src/app/(money)/buy-cash.tsx');
   expect(savings).toContain('<DemoMoneyNotice />');
   expect(earn).toContain('<DemoMoneyNotice />');
-  expect(earn).toContain('title="Demo deposit simulation"');
+  expect(earn).toContain("demoLabel('Demo deposit simulation', 'Deposited')");
   expect(earn).toContain('no funds were deposited');
   expect(add).toContain('<DemoMoneyNotice />');
   expect(add).toContain('<DemoMoneyNotice deposit />');
-  expect(add).toContain('title="Demo addition simulation"');
+  expect(add).toContain("demoLabel('Demo addition simulation', 'Added to savings')");
   expect(add).toContain('your wallet balance was not changed');
   expect(buy).toContain('if (!wallet.demo)');
   expect(buy).toContain('<DemoMoneyNotice deposit />');
-  expect(buy).toContain("title={selling ? 'Demo sale simulation' : 'Demo purchase simulation'}");
+  expect(buy).toContain("selling ? 'Demo sale simulation' : 'Demo purchase simulation'");
   expect(buy).toContain('markDemoFunded()');
   expect(buy).not.toContain('markFunded(');
 });
@@ -39,16 +39,22 @@ it('keeps Home balance and holdings clearly labeled while demo data is visible',
   expect(home).toContain(
     'The balances and holdings shown here are illustrative examples, not real assets.',
   );
-  expect(home).toContain('{empty ? null : (');
+  expect(home).toContain('{empty || !SHOW_DEMO_LABELS ? null : (');
   expect(home).toContain('styles.demoDisclosure');
 });
 
 it('never marks onboarding funded from opening the receive screen', () => {
   const receive = source('../src/app/(money)/receive.tsx');
   const onboarding = source('../src/lib/onboarding.ts');
-  expect(receive).toContain('if (wallet.demo)');
+  expect(receive).toContain('if (isFixtureWallet(wallet))');
   expect(receive).not.toMatch(/markFunded|simulateDemoDeposit/);
   expect(onboarding).not.toContain('simulateDemoDeposit');
   expect(onboarding).not.toMatch(/arrived\. You're all set|Money arrived/);
-  expect(onboarding).toContain("showToast('Demo balance updated')");
+  expect(onboarding).toContain("showToast(demoLabel('Demo balance updated', 'Balance updated'))");
+});
+
+it('hides demo labels unless EXPO_PUBLIC_SHOW_DEMO_LABELS=1', () => {
+  expect(demoLabel('Demo wallet', 'Receive crypto')).toBe(
+    process.env.EXPO_PUBLIC_SHOW_DEMO_LABELS === '1' ? 'Demo wallet' : 'Receive crypto',
+  );
 });

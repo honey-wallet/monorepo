@@ -9,7 +9,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** A rounded block of rows, with an optional quiet title above it. */
 export function DetailGroup({ title, children }: { title?: string; children: ReactNode }) {
@@ -98,7 +98,7 @@ const useStyles = makeStyles((c) => ({
   group: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   pill: {

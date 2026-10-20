@@ -50,6 +50,22 @@ export default function SmartWalletScreen() {
         />
       }
     >
+      <PressableRow
+        accessibilityRole="button"
+        accessibilityLabel="Bunk mode"
+        onPress={() => {
+          tap();
+          router.push('/bunk-mode');
+        }}
+        style={styles.row}
+      >
+        <Icon name="shield" size={22} color={c.accentText} />
+        <View style={styles.flex}>
+          <Text style={styles.name}>Bunk mode</Text>
+          <Text style={styles.address}>A new key for every transaction</Text>
+        </View>
+        <Icon name="chevronRight" size={15} color={c.textSecondary} />
+      </PressableRow>
       {wallets.map((w) => {
         const active = !inactive.has(w.id);
         return (

@@ -6,7 +6,7 @@ import { closeSheet, SheetScreen } from '@/components/sheets/Sheet';
 import { Chip } from '@/components/wallet/Chip';
 import { NetworkGrid, TokenIcon } from '@/components/wallet/parts';
 // import { CHAINS } from '@/lib/mock-wallet';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Every EVM chain shares the Ethereum address (lib/receive.ts), so these all work. */
 const NETWORKS = [
@@ -69,7 +69,7 @@ const useStyles = makeStyles((c) => ({
   icon: {
     width: 48,
     height: 48,
-    borderRadius: 14,
+    ...radius(14),
     marginBottom: 14,
     alignItems: 'center',
     justifyContent: 'center',

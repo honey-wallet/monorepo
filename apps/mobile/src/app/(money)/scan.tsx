@@ -11,6 +11,7 @@ import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SCREEN } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
+import { holdScannedKey } from '@/lib/key-scan';
 import { goBackOr } from '@/lib/navigation';
 import { holdScannedOffer, offerDirection } from '@/lib/pair-offer';
 import { showErrorToast, showToast } from '@/lib/toast';
@@ -48,6 +49,18 @@ export default function ScanScreen() {
         return;
       }
       holdWatchedAddress(address);
+      router.back();
+      return;
+    }
+    // From Import with a private key: hand the key back in memory, never as a param.
+    if (purpose === 'key') {
+      const key = data.trim();
+      if (!/^(0x)?[0-9a-fA-F]{64}$/.test(key)) {
+        showErrorToast('Not a private key');
+        handled.current = false;
+        return;
+      }
+      holdScannedKey(key);
       router.back();
       return;
     }

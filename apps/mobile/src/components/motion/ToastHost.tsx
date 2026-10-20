@@ -24,7 +24,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { Icon } from '@/components/Icon';
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { dismissToast, type Toast, useToasts } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE, lazy, SPRING } from '@/theme/motion';
 
 /** The toast floats this far above the tab bar, so it never covers it. */
@@ -223,7 +223,7 @@ const useStyles = makeStyles((c) => ({
     gap: 8,
     paddingHorizontal: 16,
     height: TOAST_HEIGHT,
-    borderRadius: 22,
+    ...radius(22),
     maxWidth: 340,
     backgroundColor: c.raised,
     borderWidth: 1,

@@ -1,8 +1,9 @@
 import type { Addresses } from '@honey-wallet/keyring';
 import { ADDRESS, BALANCE, otherWallets, type Wallet } from '@/lib/mock-wallet';
-import { useProfile } from '@/lib/profile';
+import { getProfile, useProfile } from '@/lib/profile';
 import { createStore } from '@/lib/store';
-import { loadAccounts, type VaultAccount } from '@/lib/vault';
+import { TEST_MODE } from '@/lib/test-mode';
+import { createAccount, loadAccounts, upgradeNearAccounts, type VaultAccount } from '@/lib/vault';
 
 /**
  * A wallet added this session. Watched addresses can be viewed but not spent from;
@@ -41,7 +42,10 @@ const fromVault = (account: VaultAccount): AddedWallet => ({
 export const walletLoad = createStore({ ready: false, error: false });
 export async function hydrateWallets() {
   try {
-    const accounts = await loadAccounts();
+    await upgradeNearAccounts();
+    let accounts = await loadAccounts();
+    // Test mode behaves like the real app: with no wallet yet, make the main one silently.
+    if (needsTestWallet(accounts)) accounts = [await createAccount(getProfile().name)];
     wallets.set((prev) => ({
       activeId: prev.activeId === 'main' && accounts.length ? accounts[0].id : prev.activeId,
       added: [
@@ -55,6 +59,19 @@ export async function hydrateWallets() {
   }
 }
 
+/** Test mode only: true when the vault has no wallet, so one is created at launch. */
+export function needsTestWallet(accounts: VaultAccount[], testMode: boolean = TEST_MODE) {
+  return testMode && accounts.length === 0;
+}
+
+/**
+ * The user's main wallet: the sample one when nothing has keys here, otherwise the first
+ * wallet created or imported on this device.
+ */
+export function isMainWallet(wallet: AddedWallet, added: AddedWallet[] = wallets.get().added) {
+  return wallet.id === 'main' || wallet.id === added.find((w) => w.addresses)?.id;
+}
+
 /** Adds a wallet whose keys were just saved to the vault, and switches to it. */
 export function addVaultWallet(account: VaultAccount) {
   wallets.set((prev) => ({ activeId: account.id, added: [...prev.added, fromVault(account)] }));
@@ -62,14 +79,36 @@ export function addVaultWallet(account: VaultAccount) {
 }
 
 /** The user's own wallet plus the others, as one list. */
-export function allWallets(name: string, added: AddedWallet[]): AddedWallet[] {
-  if (added.some((wallet) => wallet.addresses)) return added;
+export function allWallets(
+  name: string,
+  added: AddedWallet[],
+  testMode: boolean = TEST_MODE,
+): AddedWallet[] {
+  if (added.some((wallet) => wallet.addresses)) {
+    return testMode ? withSampleMoney(name, added) : added;
+  }
   return [
     { demo: true, id: 'main', kind: 'wallet', label: name, address: ADDRESS, usd: BALANCE },
     ...otherWallets(name).map((wallet) => ({ ...wallet, demo: true })),
     ...added,
   ];
 }
+
+/**
+ * Test mode: the user's real wallets (real addresses, real keys) hold the sample portfolio
+ * instead of their on-chain balances, and the sample shared wallets are listed too. Sample
+ * wallets take the fixture flows, which end on success pages and never sign anything.
+ */
+function withSampleMoney(name: string, added: AddedWallet[]): AddedWallet[] {
+  const own = added.map((w) => (w.watchOnly ? w : { ...w, demo: true }));
+  const shared = otherWallets(name)
+    .filter((w) => w.kind === 'multisig' && !added.some((a) => a.id === w.id))
+    .map((w) => ({ ...w, demo: true }));
+  return [...own, ...shared];
+}
+
+/** A built-in sample wallet with no keys on this device (not one of the user's own). */
+export const isFixtureWallet = (wallet: AddedWallet) => !!wallet.demo && !wallet.addresses;
 
 export function setActiveWallet(id: string) {
   wallets.set((prev) => ({ ...prev, activeId: id }));

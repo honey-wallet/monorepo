@@ -11,6 +11,7 @@ import { MarketIcon } from '@/components/trade/PredictFeed';
 import type { Side } from '@/components/trade/TradeForm';
 import { applyKey, Keypad, TypedAmount, trimNumber } from '@/components/wallet/Keypad';
 import { EmptyState } from '@/components/wallet/parts';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatUsd } from '@/lib/mock-wallet';
@@ -19,7 +20,7 @@ import { PREDICT_MARKETS, predictMarket, TRADING_CASH, yesPrice } from '@/lib/pr
 import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Quick amounts, added to what's typed, as Polymarket's +$1 / +$5 / +$10 / +$100. */
 const QUICK = [1, 5, 10, 100];
@@ -98,7 +99,10 @@ function PredictOrderSheet() {
             </View>
           </View>
           <Text style={styles.explain}>
-            {`Sample ${side} share price: ${formatShare(price, predictPrice)}. Real market terms and settlement are not available.`}
+            {demoLabel(
+              `Sample ${side} share price: ${formatShare(price, predictPrice)}. Real market terms and settlement are not available.`,
+              `${formatShare(price, predictPrice)} a share, pays $1 if ${side} wins.`,
+            )}
           </Text>
 
           <View style={styles.amountArea}>
@@ -112,10 +116,19 @@ function PredictOrderSheet() {
                 style={[styles.hint, value > 0 && !tooMuch && styles.win, tooMuch && styles.error]}
               >
                 {tooMuch
-                  ? `Amount exceeds sample balance ${formatUsd(cash)}`
+                  ? demoLabel(
+                      `Amount exceeds sample balance ${formatUsd(cash)}`,
+                      `You have ${formatUsd(cash)} to trade`,
+                    )
                   : value
-                    ? `Illustrative payout ${formatUsd(shares)}`
-                    : `Sample balance ${formatUsd(cash)}`}
+                    ? demoLabel(
+                        `Illustrative payout ${formatUsd(shares)}`,
+                        `To win ${formatUsd(shares)}`,
+                      )
+                    : demoLabel(
+                        `Sample balance ${formatUsd(cash)}`,
+                        `${formatUsd(cash)} available`,
+                      )}
               </Text>
             )}
           </View>
@@ -171,7 +184,7 @@ function PredictOrderSheet() {
           <Keypad keyHeight={54} onKey={(key) => setAmount((a) => applyKey(a, key, 2))} />
           <ExecutionUnavailable message="Markets, prices, and balance figures are samples. Order placement and settlement are not available." />
           <PillButton
-            label="Trading unavailable"
+            label={demoLabel('Trading unavailable', `Buy ${side}`)}
             disabled
             onPress={unavailableAction}
             style={styles.cta}
@@ -242,13 +255,13 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     gap: 8,
     padding: 4,
-    borderRadius: 16,
+    ...radius(16),
     backgroundColor: c.card,
   },
   side: {
     flex: 1,
     height: 42,
-    borderRadius: 12,
+    ...radius(12),
     alignItems: 'center',
     justifyContent: 'center',
   },

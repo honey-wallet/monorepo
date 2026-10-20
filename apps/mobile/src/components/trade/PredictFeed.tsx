@@ -16,11 +16,11 @@ import { LikeButton } from '@/components/motion/LikeButton';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonBar, SkeletonReveal, useFirstLoad } from '@/components/motion/Skeleton';
 import { ExecutionUnavailable } from '@/components/trade/ExecutionUnavailable';
-import { LivePredictionMarkets } from '@/components/trade/LivePredictionMarkets';
 import type { Side } from '@/components/trade/TradeForm';
 import { Chip } from '@/components/wallet/Chip';
 import { IntroBanner } from '@/components/wallet/IntroBanner';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
+import { SHOW_DEMO_LABELS } from '@/lib/demo-money-copy';
 import { openGuide, useGuideOnFirstVisit } from '@/lib/guides';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
@@ -35,7 +35,7 @@ import {
   useSavedMarkets,
 } from '@/lib/predict';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** "$41.00M" → "$41M", "$2.40M" → "$2.4M". */
 const shortVolume = (n: number) => formatCompactUsd(n).replace(/\.?0+([A-Z]?)$/, '$1');
@@ -84,8 +84,7 @@ export function PredictFeed({
 
   return (
     <View>
-      <LivePredictionMarkets />
-      <Text style={styles.previewHeading}>Sample preview</Text>
+      {SHOW_DEMO_LABELS ? <Text style={styles.previewHeading}>Sample preview</Text> : null}
       <ExecutionUnavailable message="The preview below uses sample markets and prices. Trading and settlement are not available." />
       <ScrollView
         horizontal
@@ -276,7 +275,7 @@ export function MarketIcon({ market, size = 40 }: { market: PredictMarket; size?
   const c = useTheme();
   if (market.symbol) return <TokenIcon symbol={market.symbol} size={size} />;
   return (
-    <View style={[styles.iconSquare, { width: size, height: size, borderRadius: size / 4 }]}>
+    <View style={[styles.iconSquare, { width: size, height: size, ...radius(size / 4) }]}>
       <Icon name={market.icon ?? 'predict'} size={size / 2} color={c.accentText} />
     </View>
   );
@@ -423,7 +422,7 @@ const useStyles = makeStyles((c) => ({
     marginBottom: 12,
     padding: 16,
     gap: 12,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   skeletonLines: {
@@ -438,7 +437,7 @@ const useStyles = makeStyles((c) => ({
   iconSquare: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    ...radius(10),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,
@@ -471,7 +470,7 @@ const useStyles = makeStyles((c) => ({
   bigButton: {
     flex: 1,
     height: 46,
-    borderRadius: 14,
+    ...radius(14),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -498,7 +497,7 @@ const useStyles = makeStyles((c) => ({
   smallButton: {
     height: 34,
     paddingHorizontal: 14,
-    borderRadius: 10,
+    ...radius(10),
     alignItems: 'center',
     justifyContent: 'center',
   },

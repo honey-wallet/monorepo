@@ -14,7 +14,7 @@ import { closeSheet, SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { askForNotifications, notificationsAllowed } from '@/lib/push';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 const PREVIEW = [
@@ -120,7 +120,7 @@ const useStyles = makeStyles((c) => ({
   iconTile: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    ...radius(12),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.raised,
@@ -185,13 +185,13 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 11,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   appIcon: {
     width: 40,
     height: 40,
-    borderRadius: 10,
+    ...radius(10),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.accentSurface,

@@ -7,7 +7,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { tap } from '@/lib/haptics';
 import { doneCount, SETUP_REWARD_USD, setupSteps, useOnboarding } from '@/lib/onboarding';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Quick amounts for a first purchase; each goes straight to the review. */
 const AMOUNTS = [25, 50, 100];
@@ -149,7 +149,7 @@ const useStyles = makeStyles((c) => ({
   },
   card: {
     padding: 20,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   title: {
@@ -206,7 +206,7 @@ const useStyles = makeStyles((c) => ({
     minHeight: 64,
     marginHorizontal: -8,
     paddingHorizontal: 8,
-    borderRadius: 14,
+    ...radius(14),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

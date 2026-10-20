@@ -23,7 +23,7 @@ import { memberName, PURPOSES, propose, useMultisig, useProposals, YOU } from '@
 import { useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import { allWallets, useWallets } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Safe's app knows networks by short name; elsewhere its home page. */
 const SAFE_PREFIX: Record<number, string> = { 1: 'eth', 8453: 'base', 10: 'oeth', 42161: 'arb1' };
@@ -258,7 +258,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     marginTop: 4,
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   cardTop: {

@@ -9,7 +9,6 @@ import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { Copyable, DetailGroup, ExplorerLink, StatusPill } from '@/components/sheets/Details';
 import { closeSheet, SheetScreen, StatRow } from '@/components/sheets/Sheet';
-import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
@@ -69,7 +68,6 @@ export default function ActivitySheet() {
   return (
     <SheetScreen
       title={TITLE[activity.kind]}
-      right={<HeaderShortcut icon="share" label="Share transaction" onPress={share} />}
       footer={
         <View style={styles.actions}>
           <PillButton

@@ -11,7 +11,7 @@ import { riseIn } from '@/components/wallet/Guide';
 import { Sparkline } from '@/components/wallet/parts';
 import { formatPrice, formatUsd, series } from '@/lib/mock-wallet';
 import { candles, liquidationPrice, type PerpMarket, perpMarket } from '@/lib/perps';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const EXAMPLE_MARGIN = 500;
 const EXAMPLE_LEVERAGE = 5;
@@ -169,7 +169,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     padding: 10,
-    borderRadius: 12,
+    ...radius(12),
   },
   picked: {
     backgroundColor: c.divider,
@@ -182,7 +182,7 @@ const useStyles = makeStyles((c) => ({
   badge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 6,
+    ...radius(6),
     overflow: 'hidden',
     color: c.accentText,
     backgroundColor: c.accentSurface,
@@ -265,7 +265,7 @@ const useStyles = makeStyles((c) => ({
   close: {
     marginTop: 14,
     height: 40,
-    borderRadius: 12,
+    ...radius(12),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.primary,

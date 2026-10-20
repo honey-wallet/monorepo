@@ -3,6 +3,7 @@ import {
   Pressable,
   type StyleProp,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
   type ViewStyle,
@@ -11,7 +12,7 @@ import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { keypress, tap } from '@/lib/haptics';
 import { isWeb } from '@/lib/platform';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { PRESS_SCALE } from '@/theme/motion';
 
 export type Key = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | '0' | 'back';
@@ -85,6 +86,15 @@ export function applyKey(value: string, key: Key, maxDecimals = 8): string {
   return value + key;
 }
 
+/** Typed or pasted text → a clean amount string, by the same rules as the keypad. */
+export function sanitizeAmount(text: string, maxDecimals = 8): string {
+  let out = '';
+  for (const ch of text.replace(/,/g, '.')) {
+    if (/^[0-9]$/.test(ch) || ch === '.') out = applyKey(out, ch as Key, maxDecimals);
+  }
+  return out;
+}
+
 /**
  * A 3×4 number pad for amounts, as in Uniswap's swap and send. `keyHeight` is
  * smaller on screens that also show a form, such as Swap, so everything fits.
@@ -92,9 +102,12 @@ export function applyKey(value: string, key: Key, maxDecimals = 8): string {
 export function Keypad({
   onKey,
   keyHeight: fixed,
+  input,
 }: {
   onKey: (key: Key) => void;
   keyHeight?: number;
+  /** In the browser, a real text field on the screen takes the typing: render nothing. */
+  input?: boolean;
 }) {
   const styles = useStyles();
   const c = useTheme();
@@ -104,7 +117,8 @@ export function Keypad({
   // const keyHeight = fixed ?? (height < 700 ? 46 : 64);
   // A caller's fixed height too, or the perps order's amount slid under its price.
   const keyHeight = height < 700 ? Math.min(fixed ?? 42, 42) : (fixed ?? 64);
-  useComputerKeys(onKey);
+  useComputerKeys(onKey, !(isWeb && input));
+  if (isWeb && input) return null;
   // The browser has a real keyboard: no on-screen keys, just a line saying to type, so
   // the form's button stays in view in the popup (review: Review swap was off-screen).
   if (isWeb) return <Text style={styles.typeHint}>Type an amount</Text>;
@@ -139,11 +153,11 @@ export function Keypad({
 const typing: object[] = [];
 
 /** Digits, a point and Backspace from the computer's keyboard, in the browser only. */
-function useComputerKeys(onKey: (key: Key) => void) {
+function useComputerKeys(onKey: (key: Key) => void, enabled = true) {
   const latest = useRef(onKey);
   latest.current = onKey;
   useEffect(() => {
-    if (!isWeb) return;
+    if (!isWeb || !enabled) return;
     const me = {};
     typing.push(me);
     const onDown = (e: KeyboardEvent) => {
@@ -169,7 +183,7 @@ function useComputerKeys(onKey: (key: Key) => void) {
       window.removeEventListener('keydown', onDown);
       typing.splice(typing.indexOf(me), 1);
     };
-  }, []);
+  }, [enabled]);
 }
 
 /**
@@ -183,8 +197,13 @@ export function TypedAmount({
   size = 56,
   placeholder = '0',
   align = 'center',
+  onChangeText,
+  maxDecimals = 8,
 }: {
   value: string;
+  /** Browser only: render a real decimal text field that reports cleaned amounts. */
+  onChangeText?: (value: string) => void;
+  maxDecimals?: number;
   prefix?: string;
   size?: number;
   placeholder?: string;
@@ -192,7 +211,30 @@ export function TypedAmount({
   align?: 'center' | 'left';
 }) {
   const styles = useStyles();
+  const c = useTheme();
   const text = value ? prefix + value : prefix + placeholder;
+  if (isWeb && onChangeText) {
+    return (
+      <View style={[styles.amount, align === 'left' && styles.amountLeft]}>
+        {prefix ? (
+          <Text style={[styles.amountChar, { fontSize: size }, !value && styles.placeholder]}>
+            {prefix}
+          </Text>
+        ) : null}
+        <TextInput
+          value={value}
+          onChangeText={(t) => onChangeText(sanitizeAmount(t, maxDecimals))}
+          placeholder={placeholder}
+          placeholderTextColor={c.placeholder}
+          inputMode="decimal"
+          autoFocus
+          selectionColor={c.primary}
+          accessibilityLabel="Amount"
+          style={[styles.amountChar, styles.amountInput, { fontSize: size }]}
+        />
+      </View>
+    );
+  }
   return (
     <View style={[styles.amount, align === 'left' && styles.amountLeft]}>
       <Text
@@ -242,7 +284,7 @@ const useStyles = makeStyles((c) => ({
     height: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+    ...radius(20),
   },
   keyDown: {
     backgroundColor: c.raised,
@@ -264,6 +306,13 @@ const useStyles = makeStyles((c) => ({
   },
   amountLeft: {
     justifyContent: 'flex-start',
+  },
+  amountInput: {
+    flex: 1,
+    minWidth: 0,
+    padding: 0,
+    // The amount is the focus; a browser focus ring around it reads as a form field.
+    ...(isWeb ? ({ outlineStyle: 'none' } as object) : null),
   },
   amountChar: {
     color: c.text,

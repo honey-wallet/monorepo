@@ -38,7 +38,7 @@ import { CHAINS, type Chain, chainSymbol, formatUsd, type Token } from '@/lib/mo
 import { goBackOr } from '@/lib/navigation';
 import { HIDDEN_AMOUNT, toggleHideBalance, useSettings } from '@/lib/settings';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 /**
@@ -94,7 +94,7 @@ export function TokenIcon({
           right: -3,
           bottom: -3,
           padding: 2,
-          borderRadius: badge / 3,
+          ...radius(badge / 3),
           backgroundColor: ring ?? c.card,
         }}
       >
@@ -478,6 +478,18 @@ export function PushedScreen({
   const rule = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, RULE_FADE], [0, 1], Extrapolation.CLAMP),
   }));
+  // And one over the footer while content runs on beneath it, so a cut-off section
+  // reads as "more below" rather than a sliver.
+  const contentH = useSharedValue(0);
+  const viewportH = useSharedValue(0);
+  const footerRule = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      contentH.value - viewportH.value - scrollY.value,
+      [0, RULE_FADE],
+      [0, 1],
+      Extrapolation.CLAMP,
+    ),
+  }));
   return (
     // Section headers marked `Sticky` pin just under the header as they scroll up.
     <StickyArea
@@ -495,6 +507,12 @@ export function PushedScreen({
           // stays put, so dragging a chart on it scrubs instead of moving the page.
           alwaysBounceVertical={false}
           keyboardShouldPersistTaps="handled"
+          onLayout={(e) => {
+            viewportH.value = e.nativeEvent.layout.height;
+          }}
+          onContentSizeChange={(_w, h) => {
+            contentH.value = h;
+          }}
           contentContainerStyle={[{ paddingBottom: bottom }, contentStyle]}
         >
           {children}
@@ -505,6 +523,9 @@ export function PushedScreen({
       {overlay}
       {footer && (
         <View style={[styles.screenFooter, { paddingBottom: insets.bottom + SCREEN.footerBottom }]}>
+          {scroll ? (
+            <Animated.View pointerEvents="none" style={[styles.footerRule, footerRule]} />
+          ) : null}
           {footer}
         </View>
       )}
@@ -615,6 +636,14 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.canvas,
   },
   headerRule: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: c.divider,
+  },
+  footerRule: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     height: StyleSheet.hairlineWidth,
     backgroundColor: c.divider,
   },

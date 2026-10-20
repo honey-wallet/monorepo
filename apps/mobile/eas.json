@@ -1,0 +1,36 @@
+{
+  "cli": {
+    "version": "=25.2.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "environment": "preview",
+      "node": "22.22.3",
+      "pnpm": "10.26.0",
+      "env": {
+        "HONEY_UPDATE_CHANNEL": "preview",
+        "EXPO_PUBLIC_TEST_MODE": "0"
+      },
+      "android": { "buildType": "apk" }
+    },
+    "preview-simulator": {
+      "extends": "preview",
+      "ios": { "simulator": true }
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "environment": "production",
+      "node": "22.22.3",
+      "pnpm": "10.26.0",
+      "autoIncrement": true,
+      "env": {
+        "HONEY_UPDATE_CHANNEL": "production",
+        "EXPO_PUBLIC_TEST_MODE": "0"
+      }
+    }
+  }
+}

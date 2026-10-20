@@ -12,6 +12,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "doctor": "expo-doctor",
+    "eas": "pnpm dlx eas-cli@25.2.0",
+    "update:preview": "HONEY_UPDATE_CHANNEL=preview pnpm eas update --channel preview --environment preview",
+    "update:production": "HONEY_UPDATE_CHANNEL=production pnpm eas update --channel production --environment production",
     "clean": "rm -rf .expo dist",
     "icons": "node scripts/gen-app-icons.mjs"
   },
@@ -55,6 +58,7 @@
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
+    "expo-updates": "~57.0.26",
     "qrcode-generator": "^2.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",

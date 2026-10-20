@@ -3,7 +3,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useErrorShake } from '@/components/motion/ErrorShake';
 import { failure, success } from '@/lib/haptics';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
 const LENGTH = 6;
@@ -114,7 +114,7 @@ const useStyles = makeStyles((c) => ({
   box: {
     width: 45,
     height: 54,
-    borderRadius: 12,
+    ...radius(12),
     borderWidth: 1.5,
     borderColor: c.divider,
     alignItems: 'center',

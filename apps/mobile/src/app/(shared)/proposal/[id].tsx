@@ -53,7 +53,7 @@ import {
 import { demoOutcome } from '@/lib/outcomes';
 import { isWeb } from '@/lib/platform';
 import { showErrorToast, showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
 
 /** A new signature's tick: grows from half size as it fades in (small icons need the
@@ -661,7 +661,7 @@ const useStyles = makeStyles((c) => ({
   group: {
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   groupHead: {

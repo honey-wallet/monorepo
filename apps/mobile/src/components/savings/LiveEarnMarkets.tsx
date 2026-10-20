@@ -6,7 +6,7 @@ import { SkeletonBar } from '@/components/motion/Skeleton';
 import { SheetHeader, SheetScreen } from '@/components/sheets/Sheet';
 import { TabScreen } from '@/components/wallet/TabScreen';
 import { api } from '@/lib/api';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 import { AaveExecution } from './AaveExecution';
 import { MorphoExecution } from './MorphoExecution';
 
@@ -123,7 +123,7 @@ export function LiveEarnMarkets({ symbol }: { symbol?: string }) {
 const useStyles = makeStyles((c) => ({
   section: { padding: 20, gap: 12 },
   heading: { color: c.textSecondary, fontSize: 15 },
-  card: { backgroundColor: c.card, borderRadius: 20, padding: 18, gap: 8 },
+  card: { backgroundColor: c.card, ...radius(20), padding: 18, gap: 8 },
   title: { color: c.text, fontSize: 17 },
   rate: { color: c.text, fontSize: 24, fontVariant: ['tabular-nums'] },
   note: { color: c.textSecondary, fontSize: 15, lineHeight: 21 },

@@ -1,3 +1,4 @@
+import { Redirect } from 'expo-router';
 import { useState } from 'react';
 import { Keyboard, Text, TextInput, View } from 'react-native';
 import { PressableScale } from '@/components/motion/PressableScale';
@@ -9,14 +10,21 @@ import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { addJar, JAR_TOKENS, usdValue } from '@/lib/jars';
 import { formatUsd } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { useSectionPrefs } from '@/lib/section-prefs';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const STABLE = new Set(['USDC', 'USDT']);
 
 /** New Honey Jar: a name, a token and a goal. */
 export default function NewJarSheet() {
+  // Savings is phone-only for launch: a deep link lands back where it can go.
+  if (isWeb) return <Redirect href="/home" />;
+  return <NewJarSheetContent />;
+}
+
+function NewJarSheetContent() {
   const styles = useStyles();
   const c = useTheme();
   const [name, setName] = useState('');
@@ -99,8 +107,8 @@ const useStyles = makeStyles((c) => ({
     height: 52,
     justifyContent: 'center',
     paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: c.raised,
+    ...radius(14),
+    backgroundColor: c.card,
   },
   input: {
     color: c.text,

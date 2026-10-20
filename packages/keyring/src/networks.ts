@@ -115,3 +115,18 @@ export const SOLANA_MAINNET = {
   rpc: 'https://api.mainnet-beta.solana.com',
   explorer: 'https://solscan.io',
 } as const;
+
+export const NEAR_NETWORKS = {
+  mainnet: {
+    name: 'NEAR',
+    rpc: 'https://rpc.mainnet.near.org',
+    explorer: 'https://nearblocks.io',
+  },
+  testnet: {
+    name: 'NEAR Testnet',
+    rpc: 'https://rpc.testnet.near.org',
+    explorer: 'https://testnet.nearblocks.io',
+  },
+} as const;
+
+export type NearNetwork = keyof typeof NEAR_NETWORKS;

@@ -6,7 +6,7 @@ import { SheetScreen } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { leaveSheetTo } from '@/lib/navigation';
 // import { isWeb } from '@/lib/platform';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Buy (or sell) sheet: with cash, or by swapping what you already hold. */
 export default function BuySheet() {
@@ -81,7 +81,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 14,
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   text: {

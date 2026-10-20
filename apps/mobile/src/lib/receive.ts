@@ -19,6 +19,7 @@ const FAMILIES: Record<ChainFamily, Omit<ReceiveAddress, 'family' | 'address' | 
   evm: { title: 'Ethereum & Base', name: 'Ethereum, Base and other EVM networks', symbol: 'ETH' },
   bitcoin: { title: 'Bitcoin', name: 'Bitcoin', symbol: 'BTC' },
   solana: { title: 'Solana', name: 'Solana', symbol: 'SOL' },
+  near: { title: 'NEAR', name: 'NEAR Mainnet', symbol: 'NEAR' },
   tron: { title: 'Tron', name: 'Tron', symbol: 'TRX' },
   xrp: { title: 'XRP Ledger', name: 'XRP Ledger', symbol: 'XRP' },
 };

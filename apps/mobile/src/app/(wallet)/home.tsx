@@ -54,6 +54,7 @@ import {
 } from '@/components/wallet/parts';
 import { TAB_BAR_HEIGHT } from '@/components/wallet/TabBar';
 import { useCopy } from '@/lib/copy';
+import { SHOW_DEMO_LABELS } from '@/lib/demo-money-copy';
 // import { expandView, inPopup } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
@@ -66,8 +67,8 @@ import { useProfile } from '@/lib/profile';
 import { HIDDEN_AMOUNT, updateSettings, useSettings } from '@/lib/settings';
 import { useTabReselect } from '@/lib/tab-reselect';
 import { useWalletView } from '@/lib/wallet-view';
-import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { isMainWallet, useActiveWallet } from '@/lib/wallets';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
 
 const ACTIONS: { label: string; icon: IconName; href: Href }[] = [
@@ -102,7 +103,7 @@ export default function HomeScreen() {
   const [showHidden, setShowHidden] = useState(false);
   const unread = useUnreadNotifications();
   const wallet = useActiveWallet();
-  const isMain = wallet.id === 'main';
+  const isMain = isMainWallet(wallet);
   const multisig = useMultisig(wallet.id);
   // Each wallet's balances arrive once; switching back to one shows them straight away.
   const loading = useFirstLoad(LOADS.balances(wallet.id));
@@ -261,7 +262,7 @@ export default function HomeScreen() {
             </SkeletonReveal>
           </Rise>
 
-          {empty ? null : (
+          {empty || !SHOW_DEMO_LABELS ? null : (
             <View style={[styles.gutterMargin, styles.demoDisclosure]} accessibilityRole="text">
               <Text style={styles.demoDisclosureText}>
                 The balances and holdings shown here are illustrative examples, not real assets.
@@ -669,8 +670,8 @@ const useStyles = makeStyles((c) => ({
     marginTop: 8,
     paddingHorizontal: 12,
     paddingVertical: 9,
-    borderRadius: 12,
-    backgroundColor: c.raised,
+    ...radius(12),
+    backgroundColor: c.card,
   },
   demoDisclosureText: {
     color: c.textSecondary,
@@ -792,7 +793,7 @@ const useStyles = makeStyles((c) => ({
   action: {
     height: 82,
     padding: 12,
-    borderRadius: 18,
+    ...radius(18),
     justifyContent: 'space-between',
     backgroundColor: c.accentSurface,
   },
@@ -805,7 +806,7 @@ const useStyles = makeStyles((c) => ({
   // approvals one above it.
   promo: {
     marginTop: 12,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
     overflow: 'hidden',
   },

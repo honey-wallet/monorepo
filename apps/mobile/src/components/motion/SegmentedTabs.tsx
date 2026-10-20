@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { tap } from '@/lib/haptics';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const SLIDE = { duration: DURATION.fast, easing: EASE.inOut };
@@ -103,7 +103,7 @@ const useStyles = makeStyles((c) => ({
     alignSelf: 'flex-start',
     gap: 3,
     padding: 3,
-    borderRadius: 48,
+    ...radius(48),
     backgroundColor: c.tabsBar,
   },
   bare: {
@@ -123,7 +123,7 @@ const useStyles = makeStyles((c) => ({
     top: 3,
     bottom: 3,
     left: 0,
-    borderRadius: 48,
+    ...radius(48),
     backgroundColor: c.tabsPill,
   },
   tab: {

@@ -19,6 +19,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { LOAD_DELAY, SkeletonBar } from '@/components/motion/Skeleton';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { FailurePage } from '@/components/sheets/FailurePage';
+import { SheetHeader } from '@/components/sheets/Sheet';
 import { SuccessPage } from '@/components/sheets/SuccessPage';
 import { InlineTray } from '@/components/sheets/Tray';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
@@ -27,7 +28,7 @@ import { success, tap } from '@/lib/haptics';
 import type { Chain } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 export type SwapLeg = { amount: string; symbol: string; chain: Chain; usd: string };
 
@@ -115,9 +116,7 @@ export function SwapReview({
           <ContentSwap id={step} index={STEPS.indexOf(step)}>
             {step === 'review' && (
               <View>
-                <Text style={styles.kicker} accessibilityRole="header">
-                  You're swapping
-                </Text>
+                <SheetHeader title="Review swap" />
                 <Leg leg={pay} />
                 <View style={styles.arrow}>
                   <Icon name="arrowDown" size={14} color={c.textSecondary} />
@@ -461,7 +460,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 22,
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   stepRow: {
@@ -503,11 +502,6 @@ const useStyles = makeStyles((c) => ({
   proposed: {
     paddingTop: 8,
   },
-  kicker: {
-    marginBottom: 12,
-    color: c.textSecondary,
-    fontSize: 15,
-  },
   actions: {
     marginTop: 18,
     flexDirection: 'row',
@@ -516,7 +510,7 @@ const useStyles = makeStyles((c) => ({
   back: {
     width: 64,
     height: 56,
-    borderRadius: 18,
+    ...radius(18),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.raised,
@@ -524,7 +518,7 @@ const useStyles = makeStyles((c) => ({
   swap: {
     flex: 1,
     height: 56,
-    borderRadius: 18,
+    ...radius(18),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

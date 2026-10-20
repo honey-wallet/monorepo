@@ -16,7 +16,7 @@ import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import type { Chain } from '@/lib/mock-wallet';
 import { showDemoToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 /**
@@ -247,7 +247,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 24,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   extra: {

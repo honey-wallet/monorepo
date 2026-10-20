@@ -29,7 +29,7 @@ import {
 import { showToast } from '@/lib/toast';
 import { importPairedWallet, readPrimaryWallet } from '@/lib/vault';
 import { addVaultWallet, setActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type State =
   | { step: 'missing' }
@@ -482,10 +482,10 @@ const useStyles = makeStyles((c) => ({
     marginTop: 20,
     gap: 14,
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     // review: in dark a card is the sheet's own colour; raise it so it shows.
     // backgroundColor: c.card,
-    backgroundColor: c.card === c.sheet ? c.raised : c.card,
+    backgroundColor: c.card,
   },
   rule: {
     flexDirection: 'row',
@@ -521,7 +521,7 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     gap: 10,
     padding: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   noteText: {

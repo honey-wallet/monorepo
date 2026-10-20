@@ -22,7 +22,7 @@ import { useSigner } from '@/lib/multisig';
 import { type TokenRef, updateSwap, useSwap } from '@/lib/swap';
 import { useWalletView } from '@/lib/wallet-view';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, LAYOUT_MOVE } from '@/theme/motion';
 
 const POPULAR = ['USDC', 'USDT', 'ETH', 'BTC', 'SOL'];
@@ -229,7 +229,7 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
     padding: 14,
     marginBottom: 12,
-    borderRadius: 16,
+    ...radius(16),
     backgroundColor: c.accentSurface,
   },
   tipTitle: {

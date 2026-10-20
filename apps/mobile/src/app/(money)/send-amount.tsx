@@ -41,7 +41,7 @@ import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
 import { txReceipt } from '@/lib/tx-receipt';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type Page = 'pick' | 'amount' | 'review' | 'sent' | 'failed';
 /** In slide order: the token list sits to the left of the amount, so it opens from there. */
@@ -280,7 +280,7 @@ export default function SendAmountSheet() {
                       }}
                       style={styles.pill}
                     >
-                      <TokenIcon symbol={symbol} chain={chain} size={26} ring={c.sheet} />
+                      <TokenIcon symbol={symbol} chain={chain} size={26} ring={c.card} />
                       <View>
                         <Text style={styles.pillLabel}>{symbol}</Text>
                         <Text style={styles.pillChain}>{chain}</Text>
@@ -512,7 +512,7 @@ const useStyles = makeStyles((c) => ({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   toLabel: {

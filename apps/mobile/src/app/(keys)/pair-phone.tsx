@@ -25,7 +25,7 @@ import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { hasPrimaryMnemonic, importPairedWallet } from '@/lib/vault';
 import { addVaultWallet, setActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type State =
   | { step: 'scan' }
@@ -402,7 +402,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 20,
     alignSelf: 'center',
     padding: 16,
-    borderRadius: 24,
+    ...radius(24),
     backgroundColor: '#FFFFFF',
   },
   expired: {

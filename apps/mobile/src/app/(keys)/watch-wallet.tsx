@@ -15,7 +15,7 @@ import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { addWallet, demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
 import { takeWatchedAddress } from '@/lib/watch-scan';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Watch an address: follow its balance and activity without its keys. */
 export default function WatchWalletSheet() {
@@ -180,10 +180,10 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 14,
-    borderRadius: 14,
+    ...radius(14),
     borderWidth: 1,
-    borderColor: c.raised,
-    backgroundColor: c.raised,
+    borderColor: c.card,
+    backgroundColor: c.card,
   },
   fieldError: {
     borderColor: c.error,

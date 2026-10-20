@@ -45,7 +45,7 @@ import {
 import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { LAYOUT_MOVE } from '@/theme/motion';
 
 const CHART_HEIGHT = 230;
@@ -503,7 +503,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 18,
+    ...radius(18),
     backgroundColor: c.card,
   },
   earnIcon: {

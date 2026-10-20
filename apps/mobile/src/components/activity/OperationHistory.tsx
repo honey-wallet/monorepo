@@ -12,7 +12,7 @@ import { Copyable } from '@/components/sheets/Details';
 import { api } from '@/lib/api';
 import { backendSession, backendSessionToken } from '@/lib/backend-session';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 const labels: Record<OperationRecovery['operation']['state'], string> = {
   created: 'Preparing',
@@ -320,7 +320,7 @@ function ScopedHistory({
   );
 }
 const useStyles = makeStyles((c) => ({
-  card: { backgroundColor: c.card, borderRadius: 20, padding: 18, gap: 12 },
+  card: { backgroundColor: c.card, ...radius(20), padding: 18, gap: 12 },
   item: { gap: 8 },
   title: { fontSize: 17, color: c.text },
   note: { fontSize: 15, lineHeight: 21, color: c.textSecondary },

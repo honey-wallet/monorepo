@@ -51,6 +51,8 @@ const exported = spawnSync(
       EXPO_PUBLIC_TARGET: 'extension',
       // `pnpm build --e2e` adds the screenshot runs' test hook (see app/_layout.tsx).
       EXPO_PUBLIC_E2E: process.argv.includes('--e2e') ? '1' : '0',
+      // Test mode: the real app with fake money (see apps/mobile/src/lib/test-mode.ts).
+      EXPO_PUBLIC_TEST_MODE: process.env.EXPO_PUBLIC_TEST_MODE === '1' ? '1' : '0',
       CI: '1',
     },
   },

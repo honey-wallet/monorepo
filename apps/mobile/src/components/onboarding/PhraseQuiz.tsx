@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icon';
 import { Chip } from '@/components/wallet/Chip';
 import { success } from '@/lib/haptics';
 import { showErrorToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
 const QUESTIONS = 3;
@@ -91,7 +91,7 @@ const useStyles = makeStyles((c) => ({
   },
   card: {
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   head: {

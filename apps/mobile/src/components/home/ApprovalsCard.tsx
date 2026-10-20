@@ -19,7 +19,7 @@ import {
   YOU,
 } from '@/lib/multisig';
 import { createStore } from '@/lib/store';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const openProposal = (id: string) => {
   tap();
@@ -202,7 +202,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     marginTop: 12,
     padding: 14,
-    borderRadius: 18,
+    ...radius(18),
     backgroundColor: c.card,
   },
   head: {
@@ -251,7 +251,7 @@ const useStyles = makeStyles((c) => ({
   nudge: {
     marginTop: 12,
     padding: 14,
-    borderRadius: 20,
+    ...radius(20),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

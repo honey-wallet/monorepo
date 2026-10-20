@@ -7,6 +7,7 @@ import { PriceChart } from '@/components/charts/PriceChart';
 import { Accordion } from '@/components/motion/Accordion';
 import { LikeButton } from '@/components/motion/LikeButton';
 import { NumberPopIn } from '@/components/motion/NumberPopIn';
+import { PressableRow } from '@/components/motion/PressableRow';
 import { SegmentedTabs } from '@/components/motion/SegmentedTabs';
 import {
   SkeletonBar,
@@ -33,10 +34,17 @@ import {
   type Range,
   series,
 } from '@/lib/mock-wallet';
-import { candles, perpMarket, toggleSavedPerp, usePerpPositions, useSavedPerps } from '@/lib/perps';
+import {
+  candles,
+  PERP_MARKETS,
+  perpMarket,
+  toggleSavedPerp,
+  usePerpPositions,
+  useSavedPerps,
+} from '@/lib/perps';
 import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const CHART_HEIGHT = 240;
 
@@ -66,6 +74,15 @@ function PerpScreen() {
     [market, range],
   );
   const bars = useMemo(() => (market ? candles(market, range) : []), [market, range]);
+  const related = useMemo(
+    () =>
+      market
+        ? PERP_MARKETS.filter((m) => m.category === market.category && m.symbol !== market.symbol)
+            .sort((a, b) => b.volume - a.volume)
+            .slice(0, 4)
+        : [],
+    [market],
+  );
 
   if (!market) {
     return (
@@ -220,6 +237,53 @@ function PerpScreen() {
           text={`A perpetual tracks the price of ${market.name} with no expiry date. You put up margin, choose leverage and gain or lose as the price moves: go long if you think it will rise, short if you think it will fall. If it moves too far against you, the position closes at its liquidation price and the margin is lost. Funding is paid every hour between longs and shorts to keep the price in line with ${market.name}'s.`}
         />
       </View>
+
+      {/* What funding costs at today's rate, worked out on $1,000 so the % reads as money. */}
+      <View style={[styles.section, styles.gutter]}>
+        <Text style={styles.heading}>How funding works</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardText}>
+            {`At ${market.funding.toFixed(4)}% an hour, a $1,000 ${market.funding >= 0 ? 'long pays' : 'short pays'} about $${Math.abs(market.funding * 10).toFixed(2)} an hour, and the other side receives it. The rate changes every hour.`}
+          </Text>
+          <Text style={styles.cardText}>
+            {`Leverage multiplies losses as well as gains: at ${market.maxLeverage}x, a ${(100 / market.maxLeverage).toFixed(1)}% move against you can liquidate the position.`}
+          </Text>
+        </View>
+      </View>
+
+      {/* Other markets in the same category, busiest first. */}
+      {related.length ? (
+        <View style={[styles.section, styles.gutter]}>
+          <Text style={styles.heading}>{`More ${market.category.toLowerCase()} perps`}</Text>
+          {related.map((m) => (
+            <PressableRow
+              key={m.symbol}
+              accessibilityRole="button"
+              accessibilityLabel={`${m.name}, ${formatPrice(m.price)}`}
+              onPress={() => {
+                tap();
+                router.push({ pathname: '/perp/[symbol]', params: { symbol: m.symbol } });
+              }}
+              style={styles.related}
+            >
+              <MarketIcon market={m} size={36} />
+              <View style={styles.flex}>
+                <Text style={styles.relatedSymbol}>{m.symbol}</Text>
+                <Text style={styles.tileHint}>{formatCompactUsd(m.volume)} Vol</Text>
+              </View>
+              <View style={styles.relatedEnd}>
+                <Text style={styles.relatedPrice}>{formatPrice(m.price)}</Text>
+                <Change value={m.change} />
+              </View>
+            </PressableRow>
+          ))}
+        </View>
+      ) : null}
+
+      <Text style={[styles.gutter, styles.disclaimer]}>
+        Perps are high risk. Prices and funding come from the market and can move fast. Only trade
+        what you can afford to lose.
+      </Text>
     </PushedScreen>
   );
 }
@@ -296,7 +360,7 @@ const useStyles = makeStyles((c) => ({
   badge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 6,
+    ...radius(6),
     overflow: 'hidden',
     color: c.accentText,
     backgroundColor: c.accentSurface,
@@ -338,7 +402,7 @@ const useStyles = makeStyles((c) => ({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderRadius: 20,
+    ...radius(20),
     overflow: 'hidden',
     backgroundColor: c.card,
   },
@@ -369,6 +433,43 @@ const useStyles = makeStyles((c) => ({
   tileHint: {
     color: c.textSecondary,
     fontSize: 12,
+  },
+  card: {
+    padding: 16,
+    gap: 10,
+    ...radius(20),
+    backgroundColor: c.card,
+  },
+  cardText: {
+    color: c.text,
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  related: {
+    minHeight: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  relatedSymbol: {
+    color: c.text,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  relatedEnd: {
+    alignItems: 'flex-end',
+  },
+  relatedPrice: {
+    color: c.text,
+    fontSize: 16,
+    fontWeight: '600',
+    fontVariant: ['tabular-nums'],
+  },
+  disclaimer: {
+    marginTop: 28,
+    color: c.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
   },
   // Same line boxes as the value (19pt) and hint (12pt) text, so the tiles keep their height.
   tileValueSkeleton: {

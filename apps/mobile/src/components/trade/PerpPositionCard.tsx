@@ -6,7 +6,7 @@ import { tap } from '@/lib/haptics';
 import { formatPrice, formatUsd } from '@/lib/mock-wallet';
 import { closePosition, type PerpPosition, perpMarket, positionStats } from '@/lib/perps';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /**
  * An open perps position, after FOMO's position rows: the market with a "5x Long"
@@ -108,7 +108,7 @@ const useStyles = makeStyles((c) => ({
   },
   card: {
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   head: {
@@ -129,7 +129,7 @@ const useStyles = makeStyles((c) => ({
   badge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 6,
+    ...radius(6),
     overflow: 'hidden',
     fontSize: 12,
     fontWeight: '600',

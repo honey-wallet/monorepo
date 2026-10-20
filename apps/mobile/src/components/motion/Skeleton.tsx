@@ -16,7 +16,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 // A slow, shallow breath: enough to read as "loading" without flickering.
@@ -295,7 +295,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     padding: 16,
     gap: 10,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   paragraph: {

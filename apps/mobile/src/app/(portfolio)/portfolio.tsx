@@ -21,6 +21,7 @@ import { TextSoftSwap } from '@/components/motion/TextSoftSwap';
 import { TextSwap } from '@/components/motion/TextSwap';
 import { ActionFooter } from '@/components/sheets/ActionFooter';
 import { EmptyState, PushedScreen } from '@/components/wallet/parts';
+import { SHOW_DEMO_LABELS } from '@/lib/demo-money-copy';
 import { LOADS } from '@/lib/loads';
 import {
   BALANCE,
@@ -36,14 +37,16 @@ import {
   TOKEN_INFO,
   TOKENS,
 } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import { useWalletView } from '@/lib/wallet-view';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
-const CHART_HEIGHT = 190;
+// Shorter in the extension popup so the page ends at a clean boundary.
+const CHART_HEIGHT = isWeb ? 150 : 190;
 type Scope = 'all' | 'month' | 'week';
 type Grouping = 'Tokens' | 'Networks';
 
@@ -176,7 +179,7 @@ export default function PortfolioScreen() {
           </View>
         )}
       </View>
-      {empty ? null : (
+      {empty || !SHOW_DEMO_LABELS ? null : (
         <View style={[styles.gutter, styles.sampleNotice]} accessibilityRole="text">
           <Text style={styles.sampleNoticeText}>
             Sample portfolio data. The balances, allocation, and performance below are illustrative
@@ -332,8 +335,8 @@ const useStyles = makeStyles((c) => ({
   sampleNotice: {
     marginTop: 8,
     paddingVertical: 9,
-    borderRadius: 12,
-    backgroundColor: c.raised,
+    ...radius(12),
+    backgroundColor: c.card,
   },
   sampleNoticeText: {
     color: c.textSecondary,
@@ -399,7 +402,7 @@ const useStyles = makeStyles((c) => ({
   },
   perfCard: {
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   perfLabel: {

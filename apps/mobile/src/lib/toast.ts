@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
 
 /**
@@ -55,7 +56,7 @@ export function showDemoToast(what: string) {
   tap();
   // review: a few words, like every toast. Before: showToast(`Demo: ${what}`)
   void what;
-  showToast('Demo only, nothing sent');
+  showToast(demoLabel('Demo only, nothing sent', 'Done'));
 }
 
 /** The toasts on screen, newest first. */

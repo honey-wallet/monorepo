@@ -13,13 +13,14 @@ import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { TokenIcon } from '@/components/wallet/parts';
 import { QRCode } from '@/components/wallet/QRCode';
 import { useCopy } from '@/lib/copy';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
 import { handleFor } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
 import { EVM_LOGOS, receiveAddresses } from '@/lib/receive';
-import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { isFixtureWallet, isMainWallet, useActiveWallet } from '@/lib/wallets';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const QR_SIZE = 240;
 
@@ -38,16 +39,16 @@ export default function MyQRSheet() {
   // The wallet in use; a shared wallet's code says which network it's on.
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
-  const isMain = wallet.id === 'main';
+  const isMain = isMainWallet(wallet);
   // One chain's address (from Receive's list); otherwise the EVM one.
   const list = receiveAddresses(wallet);
   const entry = list.find((e) => e.family === chain) ?? list[0];
   const address = entry?.address ?? wallet.address;
   const { copied, copy } = useCopy(address);
 
-  if (wallet.demo)
+  if (isFixtureWallet(wallet))
     return (
-      <SheetScreen title="Demo wallet">
+      <SheetScreen title={demoLabel('Demo wallet', 'My QR')}>
         <Text style={{ color: c.text }}>Create or import a wallet before receiving funds.</Text>
       </SheetScreen>
     );
@@ -186,7 +187,7 @@ const useStyles = makeStyles((c) => ({
   },
   qrCenter: {
     padding: 6,
-    borderRadius: 40,
+    ...radius(40),
     backgroundColor: c.sheet,
   },
   addressBox: {
@@ -195,7 +196,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 6,
     padding: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   addressLabelRow: {

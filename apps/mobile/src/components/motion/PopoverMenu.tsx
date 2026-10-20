@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/Icon';
 import { tap } from '@/lib/haptics';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 import { PressableRow } from './PressableRow';
 
@@ -122,7 +122,7 @@ const useStyles = makeStyles((c) => ({
     marginHorizontal: 8,
     paddingHorizontal: 14,
     // Keeps the press highlight inside the menu's rounded corners.
-    borderRadius: 16,
+    ...radius(16),
   },
   label: {
     color: c.text,

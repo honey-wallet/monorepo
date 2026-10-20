@@ -49,7 +49,7 @@ import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { askForNotifications } from '@/lib/push';
 import { demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type Page = 'name' | 'network' | 'members' | 'rule' | 'review' | 'done' | 'failed';
 const PAGES: Page[] = ['name', 'network', 'members', 'rule', 'review', 'done', 'failed'];
@@ -701,7 +701,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 16,
     padding: 16,
     gap: 16,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   howRow: {
@@ -731,7 +731,7 @@ const useStyles = makeStyles((c) => ({
   card: {
     marginBottom: 10,
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
@@ -760,8 +760,8 @@ const useStyles = makeStyles((c) => ({
     height: 52,
     justifyContent: 'center',
     paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: c.raised,
+    ...radius(14),
+    backgroundColor: c.card,
   },
   addField: {
     marginTop: 16,

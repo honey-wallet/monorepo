@@ -16,7 +16,7 @@ import {
 } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type Page = 'settings' | 'slippage' | 'options';
 const ORDER: Page[] = ['settings', 'slippage', 'options'];
@@ -56,7 +56,10 @@ export default function SwapSettingsSheet() {
   };
 
   return (
-    <SheetScreen footer={<PillButton label={saved ? 'Saved' : 'Save'} morph onPress={save} />}>
+    <SheetScreen
+      inlineHeader
+      footer={<PillButton label={saved ? 'Saved' : 'Save'} morph onPress={save} />}
+    >
       <ContentSwap id={page} index={ORDER.indexOf(page)}>
         {page === 'settings' && (
           <View>
@@ -167,7 +170,7 @@ const useStyles = makeStyles((c) => ({
   auto: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 8,
+    ...radius(8),
     overflow: 'hidden',
     color: c.accentText,
     backgroundColor: c.accentSurface,

@@ -23,11 +23,12 @@ import { showToast } from '@/lib/toast';
 import {
   type AddedWallet,
   allWallets,
+  isMainWallet,
   setActiveWallet,
   useActiveWallet,
   useWallets,
 } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Wallet switcher, presented as a sheet over the home screen. */
 export default function WalletsSheet() {
@@ -276,7 +277,7 @@ function WalletAvatar({
   profile: Profile;
   size: number;
 }) {
-  return wallet.id === 'main' ? (
+  return isMainWallet(wallet) ? (
     <Avatar name={wallet.label} size={size} uri={profile.photo} seed={profile.avatarSeed} />
   ) : (
     <Avatar name={wallet.label} size={size} seed={wallet.id} />
@@ -446,7 +447,7 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'center',
     backgroundColor: c.raised,
     borderWidth: 2,
-    borderColor: c.card,
+    borderColor: c.sheet,
   },
   // The faces in "+N more", overlapped, as wide as a wallet's avatar.
   moreFaces: {
@@ -455,7 +456,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
   },
   moreFace: {
-    borderRadius: 13,
+    ...radius(13),
     borderWidth: 2,
     borderColor: c.sheet,
   },

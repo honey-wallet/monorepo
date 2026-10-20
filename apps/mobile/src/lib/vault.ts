@@ -5,6 +5,7 @@ import {
   evmAddressFromPrivateKey,
   isPairAccountList,
   isValidMnemonic,
+  nearAddressOfKey,
   normalizeMnemonic,
   privateKeyFor,
   withMnemonicSeed,
@@ -64,6 +65,28 @@ export async function loadAccounts(): Promise<VaultAccount[]> {
   const json = await read(KEY.accounts);
   return json ? (JSON.parse(json) as VaultAccount[]) : [];
 }
+
+/** Add NEAR to pre-existing phrase wallets once, without changing any existing address. */
+export const upgradeNearAccounts = serial(async (): Promise<void> => {
+  const accounts = await loadAccounts();
+  let changed = false;
+  for (const account of accounts) {
+    if (account.source.kind !== 'phrase' || account.addresses.near) continue;
+    const phrase = await read(KEY.seed(account.source.seedId));
+    if (!phrase) continue;
+    const index = account.source.index;
+    account.addresses.near = await withMnemonicSeed(phrase, (seed) => {
+      const key = privateKeyFor(seed, 'near', index);
+      try {
+        return nearAddressOfKey(key);
+      } finally {
+        key.fill(0);
+      }
+    });
+    changed = true;
+  }
+  if (changed) await write(KEY.accounts, JSON.stringify(accounts));
+});
 
 async function saveAccount(account: VaultAccount) {
   const accounts = await loadAccounts();
@@ -176,7 +199,7 @@ export const importPairedWallet = serial(
  * website asked for after the user approved it. Never stored or kept: callers use it
  * and drop it. An imported private key only has an EVM side.
  */
-export async function privateKeyOf(accountId: string, chain: 'evm' | 'solana') {
+export async function privateKeyOf(accountId: string, chain: 'evm' | 'solana' | 'near') {
   const account = (await loadAccounts()).find((a) => a.id === accountId);
   if (!account) throw new Error('That wallet isn’t on this device');
   if (account.source.kind === 'key') {
@@ -234,6 +257,8 @@ export const eraseVault = serial(async (confirmedAccountIds: readonly string[]) 
   for (const account of accounts) {
     if (account.source.kind === 'phrase') seeds.add(account.source.seedId);
     else await remove(KEY.privateKey(account.id));
+    await remove(`honey.near.mainnet.${account.id}`);
+    await remove(`honey.near.testnet.${account.id}`);
   }
   const primary = await read(KEY.primary);
   if (primary) seeds.add(primary);

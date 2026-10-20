@@ -15,7 +15,7 @@ import { EmptyState } from '@/components/wallet/parts';
 import { api } from '@/lib/api';
 import { backendSession, backendSessionToken } from '@/lib/backend-session';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 /** Live quotes never enter the scripted demo review or acquire a wallet key. */
 export function LiveSwapQuotes() {
@@ -246,13 +246,13 @@ function WalletSwapQuotes() {
   );
 }
 const useStyles = makeStyles((c) => ({
-  card: { padding: 18, gap: 14, backgroundColor: c.card, borderRadius: 20 },
+  card: { padding: 18, gap: 14, backgroundColor: c.card, ...radius(20) },
   group: { gap: 8 },
   title: { fontSize: 17, color: c.text },
   note: { fontSize: 14, lineHeight: 20, color: c.textSecondary },
-  input: { backgroundColor: c.raised, padding: 12, borderRadius: 12, fontSize: 18, color: c.text },
+  input: { backgroundColor: c.raised, padding: 12, ...radius(12), fontSize: 18, color: c.text },
   tokens: { flexDirection: 'row', gap: 8 },
-  token: { padding: 10, borderWidth: 1, borderColor: c.raised, borderRadius: 12 },
+  token: { padding: 10, borderWidth: 1, borderColor: c.raised, ...radius(12) },
   selected: { borderColor: c.text },
   tokenLabel: { color: c.text, fontSize: 15 },
   error: { color: c.error, fontSize: 14 },

@@ -13,8 +13,8 @@ import { tap } from '@/lib/haptics';
 import { handleFor, shortAddress } from '@/lib/mock-wallet';
 import { setProfile, useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
-import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { isFixtureWallet, useActiveWallet } from '@/lib/wallets';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const AVATAR = 104;
 const MAX_NAME = 32;
@@ -31,7 +31,7 @@ export default function ProfileEditSheet() {
   const [name, setName] = useState(profile.name);
   const [photo, setPhoto] = useState(profile.photo);
   const [seed, setSeed] = useState(profile.avatarSeed);
-  const { copied, copy } = useCopy(wallet.demo ? '' : wallet.address, 'Address copied');
+  const { copied, copy } = useCopy(isFixtureWallet(wallet) ? '' : wallet.address, 'Address copied');
 
   const trimmed = name.trim();
   const changed =
@@ -227,7 +227,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 16,
-    borderRadius: 20,
+    ...radius(20),
     borderWidth: 1,
     borderColor: 'transparent',
     backgroundColor: c.card,
@@ -272,7 +272,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   addressWell: {

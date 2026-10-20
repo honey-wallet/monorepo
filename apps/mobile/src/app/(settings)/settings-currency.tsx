@@ -4,9 +4,30 @@ import { tap } from '@/lib/haptics';
 import { CURRENCIES, updateSettings, useSettings } from '@/lib/settings';
 import { makeStyles } from '@/theme';
 
-/** Each currency's flag: its code's first two letters are the country (EUR's are the EU). */
-const flagOf = (code: string) =>
-  String.fromCodePoint(...[...code.slice(0, 2)].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65));
+/**
+ * Each currency's flag, written out as literal emoji like the language list. Building
+ * them at runtime from regional-indicator code points rendered as missing-glyph boxes
+ * in the iOS Release build, while the same literal flags render fine.
+ */
+const FLAGS: Record<string, string> = {
+  USD: '🇺🇸',
+  ARS: '🇦🇷',
+  AUD: '🇦🇺',
+  BRL: '🇧🇷',
+  CAD: '🇨🇦',
+  CNY: '🇨🇳',
+  EUR: '🇪🇺',
+  GBP: '🇬🇧',
+  HKD: '🇭🇰',
+  IDR: '🇮🇩',
+  INR: '🇮🇳',
+  JPY: '🇯🇵',
+  KRW: '🇰🇷',
+  MXN: '🇲🇽',
+  NZD: '🇳🇿',
+  SGD: '🇸🇬',
+  CHF: '🇨🇭',
+};
 
 /**
  * Local currency picker: each currency's flag and full name, with the ISO code in grey
@@ -29,7 +50,7 @@ export default function CurrencySheet() {
           key={code}
           leading={
             <Text style={styles.flag} accessible={false}>
-              {flagOf(code)}
+              {FLAGS[code] ?? '🏳️'}
             </Text>
           }
           title={name}

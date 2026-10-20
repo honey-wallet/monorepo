@@ -2,7 +2,7 @@ import { deriveAddresses, type PairPayload, withMnemonicSeed } from '@honey-wall
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { shortAddress } from '@/lib/mock-wallet';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 /** A payload with no names is the phrase's first wallet. */
 const accountsOf = (payload: PairPayload) =>
@@ -55,10 +55,10 @@ const useStyles = makeStyles((c) => ({
     marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 20,
+    ...radius(20),
     // review: in dark a card is the sheet's own colour; raise it so it shows.
     // backgroundColor: c.card,
-    backgroundColor: c.card === c.sheet ? c.raised : c.card,
+    backgroundColor: c.card,
   },
   row: {
     flexDirection: 'row',

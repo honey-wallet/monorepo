@@ -13,7 +13,7 @@ import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatPrice } from '@/lib/mock-wallet';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const CHIP_PAD = 3;
@@ -261,7 +261,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 12,
-    borderRadius: 16,
+    ...radius(16),
   },
   marketLabel: {
     color: c.text,
@@ -287,7 +287,7 @@ const useStyles = makeStyles((c) => ({
     height: 46,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 14,
+    ...radius(14),
     borderWidth: 1,
     borderColor: c.divider,
   },
@@ -299,7 +299,7 @@ const useStyles = makeStyles((c) => ({
   chips: {
     flexDirection: 'row',
     padding: CHIP_PAD,
-    borderRadius: 14,
+    ...radius(14),
     backgroundColor: c.raised,
   },
   chipPill: {
@@ -307,7 +307,7 @@ const useStyles = makeStyles((c) => ({
     top: CHIP_PAD,
     bottom: CHIP_PAD,
     left: CHIP_PAD,
-    borderRadius: 11,
+    ...radius(11),
     backgroundColor: c.accentSurface,
   },
   chip: {
@@ -334,7 +334,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 12,
     padding: 16,
     gap: 10,
-    borderRadius: 20,
+    ...radius(20),
   },
   cardLabel: {
     color: c.textSecondary,

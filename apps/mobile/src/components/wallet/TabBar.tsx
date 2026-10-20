@@ -18,7 +18,7 @@ import { PressableScale } from '@/components/motion/PressableScale';
 import { tap } from '@/lib/haptics';
 import { isWeb } from '@/lib/platform';
 import { reselectTab } from '@/lib/tab-reselect';
-import { makeStyles, type Palette, useTheme } from '@/theme';
+import { makeStyles, type Palette, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 type TabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['tabBar']>>[0];
@@ -220,7 +220,7 @@ const useStyles = makeStyles((c) => ({
     top: PAD,
     bottom: PAD,
     left: PAD,
-    borderRadius: 25,
+    ...radius(25),
     backgroundColor: c.navPill,
   },
   tab: {

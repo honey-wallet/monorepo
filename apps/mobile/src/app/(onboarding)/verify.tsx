@@ -8,7 +8,7 @@ import { StepScreen } from '@/components/onboarding/StepScreen';
 import { failure } from '@/lib/haptics';
 import { finishOnboarding } from '@/lib/onboarding';
 import { settings } from '@/lib/settings';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
 const LENGTH = 6;
@@ -151,7 +151,7 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
     maxWidth: 45,
     aspectRatio: 45 / 54,
-    borderRadius: 12,
+    ...radius(12),
     borderWidth: 1.5,
     borderColor: c.divider,
     alignItems: 'center',

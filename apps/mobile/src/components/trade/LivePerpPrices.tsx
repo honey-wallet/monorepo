@@ -3,7 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { AppState, Text, View } from 'react-native';
 import { api } from '@/lib/api';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 /** Public venue prices, isolated from the demo chart, positions and order calculator. */
 export function LivePerpPrices({ query = '', symbol }: { query?: string; symbol?: string }) {
@@ -93,7 +93,7 @@ export function LivePerpPrices({ query = '', symbol }: { query?: string; symbol?
 }
 const useStyles = makeStyles((c) => ({
   section: { padding: 20, gap: 12 },
-  card: { backgroundColor: c.card, borderRadius: 20, padding: 18, gap: 8 },
+  card: { backgroundColor: c.card, ...radius(20), padding: 18, gap: 8 },
   label: { color: c.textSecondary, fontSize: 15, lineHeight: 21 },
   symbol: { color: c.text, fontSize: 17 },
   price: { color: c.text, fontSize: 22, fontVariant: ['tabular-nums'] },

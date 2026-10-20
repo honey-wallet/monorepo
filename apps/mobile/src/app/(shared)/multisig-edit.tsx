@@ -27,7 +27,7 @@ import {
 } from '@/lib/multisig';
 import { showToast } from '@/lib/toast';
 import { demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type Kind = 'rule' | 'limit' | 'member';
 
@@ -265,8 +265,8 @@ const useStyles = makeStyles((c) => ({
     height: 52,
     justifyContent: 'center',
     paddingHorizontal: 14,
-    borderRadius: 14,
-    backgroundColor: c.raised,
+    ...radius(14),
+    backgroundColor: c.card,
   },
   input: {
     color: c.text,

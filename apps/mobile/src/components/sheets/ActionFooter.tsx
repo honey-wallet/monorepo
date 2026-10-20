@@ -4,7 +4,7 @@ import { IconSwap } from '@/components/motion/IconSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SCREEN } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const BUTTON_HEIGHT = 54;
 
@@ -106,7 +106,7 @@ const useStyles = makeStyles((c) => ({
   button: {
     flex: 1,
     height: BUTTON_HEIGHT,
-    borderRadius: 18,
+    ...radius(18),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -117,7 +117,7 @@ const useStyles = makeStyles((c) => ({
   square: {
     width: BUTTON_HEIGHT,
     height: BUTTON_HEIGHT,
-    borderRadius: 18,
+    ...radius(18),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.raised,

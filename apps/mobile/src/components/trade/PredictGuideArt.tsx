@@ -19,7 +19,7 @@ import { Gauge } from '@/components/trade/PredictFeed';
 import { GUIDE_ART_HEIGHT, riseIn } from '@/components/wallet/Guide';
 import { PREDICT_MARKETS, predictMarket, yesPrice } from '@/lib/predict';
 import { formatShare, useTradePrefs } from '@/lib/trade-prefs';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 /** The live market every step uses as its worked example, and the sample stake. */
@@ -250,7 +250,7 @@ function Piece({
           top: 0,
           width: wide ? 8 : 5,
           height: wide ? 4 : 7,
-          borderRadius: 1,
+          ...radius(1),
           backgroundColor: color,
         },
         style,
@@ -287,7 +287,7 @@ const useStyles = makeStyles((c) => ({
   },
   card: {
     padding: 14,
-    borderRadius: 18,
+    ...radius(18),
     backgroundColor: c.raised,
     borderWidth: 1,
     borderColor: c.divider,
@@ -304,7 +304,7 @@ const useStyles = makeStyles((c) => ({
   },
   ghostButton: {
     height: 26,
-    borderRadius: 8,
+    ...radius(8),
     backgroundColor: c.divider,
   },
   focus: {
@@ -332,7 +332,7 @@ const useStyles = makeStyles((c) => ({
   button: {
     flex: 1,
     height: 40,
-    borderRadius: 12,
+    ...radius(12),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -391,7 +391,7 @@ const useStyles = makeStyles((c) => ({
   stepButton: {
     width: 26,
     height: 26,
-    borderRadius: 8,
+    ...radius(8),
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: c.divider,

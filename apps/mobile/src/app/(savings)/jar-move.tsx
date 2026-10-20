@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { PillButton } from '@/components/onboarding/PillButton';
@@ -14,6 +14,7 @@ import { moveJar, usdValue, useJars } from '@/lib/jars';
 import { formatUsd } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { isWeb } from '@/lib/platform';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles } from '@/theme';
 
@@ -22,6 +23,12 @@ import { makeStyles } from '@/theme';
  * like any other payment.
  */
 export default function JarMoveSheet() {
+  // Savings is phone-only for launch: a deep link lands back where it can go.
+  if (isWeb) return <Redirect href="/home" />;
+  return <JarMoveSheetContent />;
+}
+
+function JarMoveSheetContent() {
   const { id = '', mode = 'add' } = useLocalSearchParams<{
     id: string;
     mode?: 'add' | 'withdraw';

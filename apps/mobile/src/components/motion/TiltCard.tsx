@@ -14,6 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { squircle } from '@/theme';
 import { DURATION, EASE, SPRING } from '@/theme/motion';
 
 const MAX = 14;
@@ -88,7 +89,7 @@ export function TiltCard({
         }}
         style={style}
       >
-        <Animated.View style={[{ borderRadius: radius, overflow: 'hidden' }, card]}>
+        <Animated.View style={[{ borderRadius: radius, ...squircle, overflow: 'hidden' }, card]}>
           {children}
           <Animated.View
             pointerEvents="none"

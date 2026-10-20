@@ -21,7 +21,7 @@ import { completeStep } from '@/lib/onboarding';
 import { updateSettings, useSettings } from '@/lib/settings';
 import { showErrorToast, showToast } from '@/lib/toast';
 import { hasPrimaryMnemonic } from '@/lib/vault';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
 /**
@@ -114,11 +114,8 @@ export default function CloudBackupScreen() {
       }
     >
       <Text style={styles.body}>
-        Your recovery phrase is locked with a password on this device, then saved to {where}. To
-        restore on a new phone, pick the backup file and enter the password. After saving, select
-        the saved file to verify it. This covers only your primary phrase. Imported phrases and
-        private keys need their own original recovery copies; wallet labels and account indexes are
-        not included.
+        Locked with a password, saved to {where}. You'll need both to restore. Covers your primary
+        phrase only.
       </Text>
       <View style={styles.row}>
         <Text style={styles.label}>Recovery phrase</Text>
@@ -277,7 +274,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     paddingVertical: 16,
-    borderRadius: 20,
+    ...radius(20),
     borderWidth: 2,
     borderColor: 'transparent',
     backgroundColor: c.card,
@@ -305,7 +302,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     padding: 12,
-    borderRadius: 16,
+    ...radius(16),
     backgroundColor: c.card,
   },
   tipText: {
@@ -315,7 +312,7 @@ const useStyles = makeStyles((c) => ({
     lineHeight: 18,
   },
   card: {
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
     paddingHorizontal: 16,
   },

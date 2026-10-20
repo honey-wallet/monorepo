@@ -44,8 +44,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
 import { ContentSwap } from '@/components/motion/ContentSwap';
 import { PressableScale } from '@/components/motion/PressableScale';
+import { isWeb } from '@/lib/platform';
 import { trayOpened } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE, SPRING } from '@/theme/motion';
 
 /** Gap between the tray and the screen's sides and bottom. */
@@ -53,6 +54,11 @@ export const TRAY_INSET = 10;
 const RADIUS = 40;
 /** The close button's corner of the tray, kept clear by tray headers. */
 export const TRAY_CLOSE = { size: 32, top: 18, right: 20 } as const;
+/**
+ * Only the extension shows the close button: a popup has no swipe and little room to click
+ * outside. On the phone a tray closes the iOS way, by dragging it down or tapping outside.
+ */
+export const TRAY_SHOWS_CLOSE = isWeb;
 const ENTER = { duration: DURATION.slow, easing: EASE.sheet } as const;
 const EXIT = {
   duration: DURATION.fast,
@@ -223,7 +229,7 @@ function TrayFrame({
                 <View onLayout={onContent}>{children}</View>
               </Animated.ScrollView>
             </GestureDetector>
-            {dismissible ? (
+            {dismissible && TRAY_SHOWS_CLOSE ? (
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel="Close"
@@ -364,7 +370,7 @@ const useStyles = makeStyles((c) => ({
     position: 'absolute',
     left: TRAY_INSET,
     right: TRAY_INSET,
-    borderRadius: RADIUS,
+    ...radius(RADIUS),
     borderCurve: 'continuous',
     overflow: 'hidden',
     backgroundColor: c.sheet,

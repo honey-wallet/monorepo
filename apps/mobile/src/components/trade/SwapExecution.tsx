@@ -23,7 +23,7 @@ import { api } from '@/lib/api';
 import { backendSession, backendSessionToken } from '@/lib/backend-session';
 import { signReviewedSwap, signReviewedSwapPermit } from '@/lib/uniswap-execution';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 type Pending = {
   key: string;
@@ -402,9 +402,9 @@ export function SwapExecution({ quote }: { quote: SwapQuote | null }) {
   );
 }
 const useStyles = makeStyles((c) => ({
-  card: { backgroundColor: c.card, borderRadius: 20, padding: 16, gap: 12 },
+  card: { backgroundColor: c.card, ...radius(20), padding: 16, gap: 12 },
   title: { color: c.text, fontSize: 17, fontWeight: '600' },
   note: { color: c.textSecondary, fontSize: 13, lineHeight: 19 },
-  input: { backgroundColor: c.raised, borderRadius: 12, padding: 12, color: c.text },
+  input: { backgroundColor: c.raised, ...radius(12), padding: 12, color: c.text },
   error: { color: c.text, fontSize: 13 },
 }));

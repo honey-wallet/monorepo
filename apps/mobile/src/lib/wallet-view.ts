@@ -1,6 +1,7 @@
 import { BALANCE, BALANCE_CHANGE, TOKENS, type Token, tokenName } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { useOnboarding } from '@/lib/onboarding';
+import { TEST_MODE } from '@/lib/test-mode';
 import { useActiveWallet } from '@/lib/wallets';
 
 /**
@@ -12,7 +13,7 @@ export function useWalletView() {
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
   const { funded } = useOnboarding();
-  if (!multisig && (!wallet.demo || (wallet.id === 'main' && !funded))) {
+  if (!multisig && (!wallet.demo || (wallet.id === 'main' && !funded && !TEST_MODE))) {
     return { wallet, multisig, usd: 0, change: 0, tokens: [] as Token[], empty: true };
   }
   if (!multisig) {

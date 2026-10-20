@@ -6,7 +6,7 @@ import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { isWeb } from '@/lib/platform';
 import { EVM_LOGOS, type ReceiveAddress } from '@/lib/receive';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** What each network takes, in a few words. */
 const SUBTITLES: Partial<Record<ChainFamily, string>> = {
@@ -77,10 +77,10 @@ const useStyles = makeStyles((c) => ({
   list: {
     paddingVertical: 4,
     paddingHorizontal: 14,
-    borderRadius: 20,
+    ...radius(20),
     // review: in dark a card is the sheet's own colour, so its padding read as a gap.
     // backgroundColor: c.card,
-    backgroundColor: c.card === c.sheet ? c.raised : c.card,
+    backgroundColor: c.card,
   },
   row: {
     flexDirection: 'row',
@@ -105,7 +105,7 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'center',
   },
   stacked: {
-    borderRadius: 14,
+    ...radius(14),
     borderWidth: 2,
     borderColor: c.card,
   },

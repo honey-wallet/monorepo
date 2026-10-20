@@ -1,0 +1,24 @@
+{
+  "source": "Generated offline with near-api-js 7.3.1 and near-seed-phrase 0.2.1; public BIP-39 test phrase",
+  "phrase": "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
+  "accounts": [
+    {
+      "index": 0,
+      "publicKey": "ed25519:6j4b6zUaty6fD1awqcGCCU9JYGCWYUgdJhQrzfZhqE25",
+      "address": "5510e2b44cae6eb807e3e0e45d579dda058c274abcba15e5cb84636f5d1ee412"
+    },
+    {
+      "index": 1,
+      "publicKey": "ed25519:51ZftJ8qPN8mJ3oqgQb3fqPbotQVZfTC4mxLgwz34FTK",
+      "address": "3b93b03253b9715213ec314eb50ecc99d25602ccb5b059f91f51d24710d54326"
+    }
+  ],
+  "transfer": {
+    "receiverId": "alice.near",
+    "nonce": "123456789",
+    "amount": "1234567890123456789012345",
+    "blockHashBytes": 7,
+    "unsignedHex": "4000000035353130653262343463616536656238303765336530653435643537396464613035386332373461626362613135653563623834363336663564316565343132005510e2b44cae6eb807e3e0e45d579dda058c274abcba15e5cb84636f5d1ee41215cd5b07000000000a000000616c6963652e6e6561720707070707070707070707070707070707070707070707070707070707070707010000000379dfe23d44a6360f6e05010000000000",
+    "signedBase64": "QAAAADU1MTBlMmI0NGNhZTZlYjgwN2UzZTBlNDVkNTc5ZGRhMDU4YzI3NGFiY2JhMTVlNWNiODQ2MzZmNWQxZWU0MTIAVRDitEyubrgH4+DkXVed2gWMJ0q8uhXly4Rjb10e5BIVzVsHAAAAAAoAAABhbGljZS5uZWFyBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcBAAAAA3nf4j1EpjYPbgUBAAAAAAAAHKr7yNMXoIVV69d0xEWwfGXXstgB0K7hFO89sWBsytYVqpHw/POqUwYCsif8aSmqpbCJyBf7lMWYksJcYdQ6CQ=="
+  }
+}

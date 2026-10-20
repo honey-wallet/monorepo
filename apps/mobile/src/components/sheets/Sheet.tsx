@@ -16,7 +16,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { SkeletonRow } from '@/components/motion/Skeleton';
-import { TRAY_CLOSE, useInTray } from '@/components/sheets/Tray';
+import { TRAY_CLOSE, TRAY_SHOWS_CLOSE, useInTray } from '@/components/sheets/Tray';
 import { useActiveMultisig } from '@/lib/multisig';
 import { goBackOr, leaveSheetTo } from '@/lib/navigation';
 import { isWeb } from '@/lib/platform';
@@ -62,6 +62,8 @@ type SheetScreenProps = {
   /** Buttons at the bottom, e.g. a `PillButton`; wrap several in a row yourself. */
   footer?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
+  /** In a tray, the page draws its own `SheetHeader` (paged trays): line it up with the close button. */
+  inlineHeader?: boolean;
   children: ReactNode;
 };
 
@@ -78,6 +80,7 @@ export function SheetScreen({
   sticky,
   footer,
   contentStyle,
+  inlineHeader,
   children,
 }: SheetScreenProps) {
   const insets = useSafeAreaInsets();
@@ -88,14 +91,18 @@ export function SheetScreen({
   const fill = !inTray && (size === 'fill' || !!scroll);
   const clear = useStatusBarClearance(fill);
   const header = title ? <SheetHeader title={title} onBack={onBack} right={right} /> : null;
-  const footerView = footer ? <View style={styles.footer}>{footer}</View> : null;
+  // In the extension popup a tall tray scrolls; keep its buttons pinned to the card's
+  // bottom edge (CSS sticky) instead of scrolling them under it.
+  const footerView = footer ? (
+    <View style={[styles.footer, inTray && isWeb && styles.trayFooterWeb]}>{footer}</View>
+  ) : null;
   // iOS sizes fitted sheets clear of the home indicator itself; adding the inset
   // again left a tall gap under the buttons.
   const bottom = (fill || Platform.OS !== 'ios' ? insets.bottom : 0) + SHEET.bottom;
   // A tray floats above the home indicator and has no grabber: its header lines up
   // with the close button, and the footer gets the room a sheet's home indicator took.
   const top = inTray
-    ? header
+    ? header || inlineHeader
       ? TRAY_HEADER_TOP
       : scroll && sticky
         ? TRAY_SEARCH_TOP
@@ -500,12 +507,24 @@ const useStyles = makeStyles((c) => ({
   footer: {
     marginTop: SHEET.footerGap,
   },
+  trayFooterWeb: {
+    // react-native-web passes `sticky` through to CSS.
+    position: 'sticky' as ViewStyle['position'],
+    bottom: 0,
+    zIndex: 1,
+    backgroundColor: c.sheet,
+    paddingTop: 8,
+    marginTop: SHEET.footerGap - 8,
+    paddingBottom: TRAY_BOTTOM,
+    marginBottom: -TRAY_BOTTOM,
+  },
   header: {
     height: 44,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // Full-height sheets: the gutter equals TRAY_CLOSE.right, so the web close button sits where a tray's does.
   side: {
     width: 32,
   },
@@ -516,10 +535,10 @@ const useStyles = makeStyles((c) => ({
   // icons, then the tray's own close button.
   trayHeader: {
     gap: 10,
-    paddingRight: TRAY_CLOSE.size + TRAY_CLOSE.right - SHEET.gutter + 8,
+    paddingRight: TRAY_SHOWS_CLOSE ? TRAY_CLOSE.size + TRAY_CLOSE.right - SHEET.gutter + 8 : 0,
   },
   trayClear: {
-    paddingRight: TRAY_CLOSE.size + TRAY_CLOSE.right - SHEET.gutter + 8,
+    paddingRight: TRAY_SHOWS_CLOSE ? TRAY_CLOSE.size + TRAY_CLOSE.right - SHEET.gutter + 8 : 0,
   },
   trayBack: {
     width: TRAY_CLOSE.size,
@@ -529,19 +548,19 @@ const useStyles = makeStyles((c) => ({
     justifyContent: 'center',
     backgroundColor: c.raised,
   },
-  trayTitle: {
-    flex: 1,
-    color: c.text,
-    fontSize: 19,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
   title: {
     flex: 1,
     textAlign: 'center',
     color: c.text,
     fontSize: 18,
     fontWeight: '600',
+  },
+  trayTitle: {
+    flex: 1,
+    color: c.text,
+    fontSize: 19,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   section: {
     marginTop: 16,

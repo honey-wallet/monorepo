@@ -16,8 +16,8 @@ import {
   walletLinks,
 } from '@/lib/backend-session';
 import { loadAccounts, type VaultAccount } from '@/lib/vault';
-import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles } from '@/theme';
+import { isFixtureWallet, useActiveWallet } from '@/lib/wallets';
+import { makeStyles, radius } from '@/theme';
 
 const EXTENSION_TARGET = process.env.EXPO_PUBLIC_TARGET === 'extension';
 
@@ -52,21 +52,58 @@ export default function WalletSignInScreen() {
       cancelled = true;
     };
   }, [state.profile?.userId]);
-  const eligible = !wallet.demo && !wallet.watchOnly && wallet.kind === 'wallet';
+  const eligible = !isFixtureWallet(wallet) && !wallet.watchOnly && wallet.kind === 'wallet';
+  // The main actions are pinned at the bottom; the text above scrolls.
+  const footer = state.profile ? (
+    linkState.review ? null : (
+      <PillButton
+        label="Sign out of Honey account"
+        onPress={() => void forgetSavedBackendSession()}
+        style={styles.flex}
+      />
+    )
+  ) : state.review ? (
+    <View style={styles.actions}>
+      <PillButton
+        label={state.busy ? 'Signing in…' : 'Sign in'}
+        disabled={state.busy}
+        onPress={() => void approveBackendSignIn()}
+      />
+      <PillButton label="Cancel" variant="secondary" onPress={() => clearBackendSession()} />
+    </View>
+  ) : (
+    <View style={styles.actions}>
+      {state.resumeAvailable ? (
+        <>
+          <PillButton
+            label={state.busy ? 'Resuming…' : 'Resume Honey session'}
+            disabled={state.busy || !eligible}
+            onPress={() => void resumeBackendSession()}
+          />
+          <PillButton
+            label="Forget saved Honey session"
+            variant="secondary"
+            disabled={state.busy}
+            onPress={() => void forgetSavedBackendSession()}
+          />
+        </>
+      ) : null}
+      <PillButton
+        label={state.busy ? 'Preparing…' : 'Review sign-in'}
+        disabled={state.busy || !eligible}
+        onPress={() => void prepareBackendSignIn()}
+      />
+    </View>
+  );
   return (
-    <PushedScreen title="Wallet sign-in">
+    <PushedScreen title="Wallet sign-in" footer={footer}>
       <View style={styles.content}>
         <Text style={styles.body}>
           Sign in with this wallet to access your Honey account. This signature does not approve a
           transaction or a token allowance.
         </Text>
-        {EXTENSION_TARGET ? (
-          <Text style={styles.body}>
-            The backend must allow this exact Chrome extension origin in AUTH_ADDITIONAL_ORIGINS and
-            CORS_ALLOWED_ORIGINS. Extension sessions are access-only, expire after 15 minutes, and
-            require a new sign-in after expiry or when the popup is backgrounded. Your browser
-            password confirms the sign-in.
-          </Text>
+        {EXTENSION_TARGET && !state.profile ? (
+          <Text style={styles.body}>Sessions last 15 minutes.</Text>
         ) : null}
         <Text selectable style={styles.body}>
           {wallet.address}
@@ -131,10 +168,6 @@ export default function WalletSignInScreen() {
                 {linkState.error}
               </Text>
             ) : null}
-            <PillButton
-              label="Sign out of Honey account"
-              onPress={() => void forgetSavedBackendSession()}
-            />
           </>
         ) : state.review ? (
           <>
@@ -142,37 +175,8 @@ export default function WalletSignInScreen() {
             <Text selectable style={styles.message}>
               {state.review.challenge.message}
             </Text>
-            <PillButton
-              label={state.busy ? 'Signing in…' : 'Sign in'}
-              disabled={state.busy}
-              onPress={() => void approveBackendSignIn()}
-            />
-            <PillButton label="Cancel" variant="secondary" onPress={() => clearBackendSession()} />
           </>
-        ) : (
-          <>
-            {state.resumeAvailable ? (
-              <>
-                <PillButton
-                  label={state.busy ? 'Resuming…' : 'Resume Honey session'}
-                  disabled={state.busy || !eligible}
-                  onPress={() => void resumeBackendSession()}
-                />
-                <PillButton
-                  label="Forget saved Honey session"
-                  variant="secondary"
-                  disabled={state.busy}
-                  onPress={() => void forgetSavedBackendSession()}
-                />
-              </>
-            ) : null}
-            <PillButton
-              label={state.busy ? 'Preparing…' : 'Review sign-in'}
-              disabled={state.busy || !eligible}
-              onPress={() => void prepareBackendSignIn()}
-            />
-          </>
-        )}
+        ) : null}
         {!eligible ? (
           <Text style={styles.body}>Choose a wallet with keys on this device.</Text>
         ) : null}
@@ -187,13 +191,15 @@ export default function WalletSignInScreen() {
 }
 const useStyles = makeStyles((c) => ({
   content: { padding: 20, gap: 20 },
+  actions: { flex: 1, gap: 10 },
+  flex: { flex: 1 },
   body: { color: c.textSecondary, fontSize: 15, lineHeight: 22 },
   message: {
     color: c.text,
     fontSize: 13,
     lineHeight: 20,
     backgroundColor: c.card,
-    borderRadius: 20,
+    ...radius(20),
     padding: 16,
   },
   error: { color: c.error, fontSize: 15 },

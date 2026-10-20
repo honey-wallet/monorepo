@@ -12,6 +12,7 @@ import { MarketIcon } from '@/components/trade/MarketIcon';
 import { OrderBar } from '@/components/trade/OrderBar';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
 import { Change, EmptyState } from '@/components/wallet/parts';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatPrice, formatUsd } from '@/lib/mock-wallet';
@@ -20,7 +21,7 @@ import { TRADING_CASH } from '@/lib/predict';
 import { useTradeModeAllowed } from '@/lib/trade-modes';
 import { PERP_LEVERAGE_STEPS, useTradePrefs } from '@/lib/trade-prefs';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Trading fee on the position's size (placeholder, Hyperliquid-like taker fee). */
 const FEE = 0.00045;
@@ -132,10 +133,19 @@ function PerpOrderSheet() {
             <TypedAmount value={amount} prefix="$" size={64} />
             <Text style={[styles.hint, tooMuch && styles.error]}>
               {tooMuch
-                ? `Amount exceeds sample balance ${formatUsd(cash)}`
+                ? demoLabel(
+                    `Amount exceeds sample balance ${formatUsd(cash)}`,
+                    `You have ${formatUsd(cash)} to trade`,
+                  )
                 : value
-                  ? `${formatUsd(size)} illustrative size · Liq. ${formatPrice(liquidation)}`
-                  : `${multiple}x ${side.toLowerCase()} preview · ${market.name}`}
+                  ? demoLabel(
+                      `${formatUsd(size)} illustrative size · Liq. ${formatPrice(liquidation)}`,
+                      `${formatUsd(size)} position · Liq. ${formatPrice(liquidation)}`,
+                    )
+                  : demoLabel(
+                      `${multiple}x ${side.toLowerCase()} preview · ${market.name}`,
+                      `${multiple}x ${side.toLowerCase()} on ${market.name}`,
+                    )}
             </Text>
           </View>
 
@@ -146,13 +156,23 @@ function PerpOrderSheet() {
             {cashLoading ? (
               <SkeletonBar width={100} height={12} />
             ) : (
-              <Text style={styles.meta}>Sample balance {formatUsd(cash)}</Text>
+              <Text style={styles.meta}>
+                {demoLabel(`Sample balance ${formatUsd(cash)}`, `${formatUsd(cash)} available`)}
+              </Text>
             )}
-            <Text style={styles.meta}>Illustrative fee {formatUsd(size * FEE)}</Text>
+            <Text style={styles.meta}>
+              {demoLabel(
+                `Illustrative fee ${formatUsd(size * FEE)}`,
+                `Fee ${formatUsd(size * FEE)}`,
+              )}
+            </Text>
           </View>
           <ExecutionUnavailable message="Prices and balance figures are indicative previews; account balance and fees are not verified. Hyperliquid order placement is unavailable, so no funds will move or position open." />
           <PillButton
-            label="Order placement unavailable"
+            label={demoLabel(
+              'Order placement unavailable',
+              `${side} ${market.symbol} · ${multiple}x`,
+            )}
             disabled
             onPress={unavailableAction}
             style={styles.cta}
@@ -192,7 +212,7 @@ const useStyles = makeStyles((c) => ({
   sides: {
     flexDirection: 'row',
     padding: 3,
-    borderRadius: 19,
+    ...radius(19),
     backgroundColor: c.card,
   },
   orderTitle: {

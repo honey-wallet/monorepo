@@ -32,15 +32,9 @@ export default function SmartWalletInfoSheet() {
         align="center"
         first={<Text style={styles.title}>Smart wallets</Text>}
         second={
-          <View>
-            <Text style={styles.body}>
-              Smart wallets give you faster, low-cost transactions using smart contracts. Your keys
-              still never leave this device.
-            </Text>
-            <Text style={styles.body}>
-              Wallets already using smart wallet features in another app won't be affected.
-            </Text>
-          </View>
+          <Text style={styles.body}>
+            Faster, cheaper transactions. Your keys never leave this device.
+          </Text>
         }
       />
     </SheetScreen>

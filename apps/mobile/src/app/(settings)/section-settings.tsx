@@ -74,7 +74,10 @@ export default function SectionSettingsSheet() {
     >
       {section === 'search' && (
         <>
-          <SheetField label="Sort tokens by" hint="How Top tokens is ordered when Search opens.">
+          <SheetField
+            label="Sort tokens by"
+            hint={isWeb ? undefined : 'How Top tokens is ordered when Search opens.'}
+          >
             {/* review: pills, like the network ones below and Search's own.
             <OptionChips
               options={SORTS.map((s) => s.label)}
@@ -97,7 +100,10 @@ export default function SectionSettingsSheet() {
               ))}
             </View>
           </SheetField>
-          <SheetField label="Network" hint="Search starts filtered to this network.">
+          <SheetField
+            label="Network"
+            hint={isWeb ? undefined : 'Search starts filtered to this network.'}
+          >
             {/* review: the same network chips as Search itself, logo and name.
             <OptionChips
               options={NETWORKS}

@@ -5,7 +5,7 @@ import { closeSheet, SheetScreen, SheetSection, SheetText } from '@/components/s
 import { Chip } from '@/components/wallet/Chip';
 import { tap } from '@/lib/haptics';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const TOPICS = ['Account', 'Transactions', 'Security', 'Other'] as const;
 type Topic = (typeof TOPICS)[number];
@@ -29,10 +29,7 @@ export default function ContactSheet() {
       title="Contact us"
       footer={<PillButton label="Send" disabled={!ready} onPress={send} />}
     >
-      <SheetText lead>
-        We usually reply within a day. Never share your recovery phrase — Honey will never ask for
-        it.
-      </SheetText>
+      <SheetText lead>We reply within a day.</SheetText>
 
       <SheetSection title="Topic" />
       <View style={styles.chips}>
@@ -55,7 +52,7 @@ export default function ContactSheet() {
       <TextInput
         value={message}
         onChangeText={setMessage}
-        placeholder="Tell us what's going on"
+        placeholder="Tell us what's going on. Never share your recovery phrase."
         placeholderTextColor={c.placeholder}
         multiline
         textAlignVertical="top"
@@ -74,9 +71,9 @@ const useStyles = makeStyles((c) => ({
     gap: 8,
   },
   input: {
-    minHeight: 130,
+    minHeight: 96,
     padding: 14,
-    borderRadius: 16,
+    ...radius(16),
     color: c.text,
     fontSize: 16,
     lineHeight: 22,

@@ -13,7 +13,7 @@ import { formatUsd } from '@/lib/mock-wallet';
 import { leaveSheetTo } from '@/lib/navigation';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Ways to add money, drawn as home's honey action tiles. */
 const DEPOSITS: { icon: IconName; label: string; hint: string; href: Href }[] = [
@@ -152,7 +152,7 @@ const useStyles = makeStyles((c) => ({
     flex: 1,
     height: 104,
     padding: 14,
-    borderRadius: 18,
+    ...radius(18),
     justifyContent: 'space-between',
     backgroundColor: c.accentSurface,
   },

@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { type ReactNode, useState } from 'react';
 import { Linking, Pressable, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
@@ -15,6 +15,7 @@ import { closeSheet, SHEET, SheetHeader, SheetScreen, StatRow } from '@/componen
 import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
 import { applyKey, Keypad, PercentChips, TypedAmount } from '@/components/wallet/Keypad';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { success, tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import {
@@ -27,11 +28,18 @@ import {
 } from '@/lib/mock-wallet';
 import { useSigner } from '@/lib/multisig';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { isWeb } from '@/lib/platform';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Earn sheet after Uniswap's: headline rate, vault facts, details on demand, Deposit. */
 export default function EarnSheet() {
+  // Savings is phone-only for launch: a deep link lands back where it can go.
+  if (isWeb) return <Redirect href="/home" />;
+  return <EarnSheetContent />;
+}
+
+function EarnSheetContent() {
   const { wallet } = useWalletView();
   const { symbol } = useLocalSearchParams<{ symbol: string }>();
   return wallet.demo ? <DemoEarnSheet /> : <LiveEarnSheet symbol={symbol} />;
@@ -88,9 +96,12 @@ function DemoEarnSheet() {
           />
         ) : deposited ? (
           <SuccessPage
-            title="Demo deposit simulation"
+            title={demoLabel('Demo deposit simulation', 'Deposited')}
             amount={{ symbol, text: `${deposited} ${symbol}` }}
-            detail={`Example only · ${vault.apy.toFixed(2)}% APY · no funds were deposited`}
+            detail={demoLabel(
+              `Example only · ${vault.apy.toFixed(2)}% APY · no funds were deposited`,
+              `Earning ${vault.apy.toFixed(2)}% APY`,
+            )}
             onDone={() => finishDemo('nothing was deposited')}
           />
         ) : depositing ? (
@@ -328,7 +339,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 22,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   cell: {
@@ -368,7 +379,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
   },
   exposureCoin: {
-    borderRadius: 14,
+    ...radius(14),
     borderWidth: 2,
     borderColor: c.card,
   },

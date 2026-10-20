@@ -19,7 +19,7 @@ import { SHEET, StatRow } from '@/components/sheets/Sheet';
 import { Appear, AT } from '@/components/sheets/SuccessPage';
 import { failure as failureBuzz } from '@/lib/haptics';
 import type { Failure } from '@/lib/outcomes';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const DISC = 72;
@@ -150,7 +150,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 10,
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    ...radius(16),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -174,7 +174,7 @@ const useStyles = makeStyles((c) => ({
     marginTop: 24,
     paddingHorizontal: 14,
     paddingVertical: 6,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   extra: {

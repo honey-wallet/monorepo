@@ -7,7 +7,7 @@ import { tap } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import { HIDDEN_AMOUNT, useSettings } from '@/lib/settings';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 /**
  * Top-right of the Trade, Savings and Search tabs: your balance in dollars (opens
@@ -35,7 +35,7 @@ export function HeaderActions({
         <PressableScale
           accessibilityRole="button"
           accessibilityLabel={
-            hideBalance ? 'Balance hidden. Deposit more' : `Balance ${balance}. Deposit more`
+            hideBalance ? 'Balance hidden. Deposit' : `Balance ${balance}. Deposit`
           }
           scaleTo={0.97}
           onPress={() => {
@@ -44,7 +44,10 @@ export function HeaderActions({
           }}
           style={styles.balance}
         >
-          <Text style={styles.balanceText}>{balance}</Text>
+          <Text style={styles.balanceText} numberOfLines={1}>
+            {balance}
+          </Text>
+          <Text style={styles.deposit}>Deposit</Text>
         </PressableScale>
       ) : null}
       <HeaderShortcut icon="settings" label={settingsLabel} onPress={onSettings} />
@@ -58,16 +61,23 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 16,
   },
+  // Two lines like a wallet card: what you hold, and the way to add more.
   balance: {
-    height: HEADER_BUTTON,
+    minHeight: HEADER_BUTTON,
     justifyContent: 'center',
     paddingHorizontal: 12,
-    borderRadius: HEADER_BUTTON / 2,
+    paddingVertical: 4,
+    ...radius(14),
     backgroundColor: c.raised,
   },
   balanceText: {
     color: c.text,
     fontSize: 15,
     fontWeight: '600',
+  },
+  deposit: {
+    color: c.primary,
+    fontSize: 13,
+    fontWeight: '700',
   },
 }));

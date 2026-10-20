@@ -33,6 +33,7 @@ export function TabScreen({
   leading,
   right,
   tabBar = true,
+  scroll = true,
   children,
 }: {
   title?: string;
@@ -40,6 +41,8 @@ export function TabScreen({
   right?: ReactNode;
   /** False on screens that hide the tab bar (Trade), so the bottom isn't padded for it. */
   tabBar?: boolean;
+  /** False for a page laid out to fit (Trade in the extension popup): no scroll or bounce. */
+  scroll?: boolean;
   children: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
@@ -80,6 +83,7 @@ export function TabScreen({
           onScroll={onScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
+          scrollEnabled={scroll}
           contentContainerStyle={{
             paddingTop: title ? BAR_GAP : insets.top + 12,
             flexGrow: 1,

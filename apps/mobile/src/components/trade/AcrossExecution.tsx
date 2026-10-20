@@ -22,7 +22,7 @@ import { signReviewedAcross } from '@/lib/across-execution';
 import { api } from '@/lib/api';
 import { backendSession, backendSessionToken } from '@/lib/backend-session';
 import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 type Pending = {
   key: string;
@@ -449,6 +449,6 @@ const useStyles = makeStyles((c) => ({
   group: { gap: 10 },
   title: { fontSize: 15, color: c.textSecondary },
   note: { fontSize: 13, lineHeight: 19, color: c.textSecondary },
-  input: { backgroundColor: c.raised, borderRadius: 12, padding: 12, color: c.text },
+  input: { backgroundColor: c.raised, ...radius(12), padding: 12, color: c.text },
   error: { color: c.error, fontSize: 13 },
 }));

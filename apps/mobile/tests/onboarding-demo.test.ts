@@ -37,6 +37,6 @@ it('marks only the demo onboarding view as funded and never claims money arrived
   markDemoFunded();
 
   expect(useOnboarding().funded).toBe(true);
-  expect(state.toast).toHaveBeenCalledWith('Demo balance updated');
+  expect(state.toast).toHaveBeenCalledWith('Balance updated');
   expect(state.toast).not.toHaveBeenCalledWith(expect.stringMatching(/arrived/i));
 });

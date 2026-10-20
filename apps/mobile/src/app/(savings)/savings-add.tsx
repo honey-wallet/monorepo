@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
@@ -14,12 +14,14 @@ import { finishDemo, SuccessPage } from '@/components/sheets/SuccessPage';
 import { FlowTray, InlineTray } from '@/components/sheets/Tray';
 import { applyKey, Keypad, TypedAmount } from '@/components/wallet/Keypad';
 import { TokenIcon } from '@/components/wallet/parts';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { success, tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatUsd, VAULTS } from '@/lib/mock-wallet';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { isWeb } from '@/lib/platform';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Years ahead the projection looks, matching the Savings chart. */
 const AHEAD = 10;
@@ -40,6 +42,12 @@ type Page = (typeof PAGES)[number];
  * to pay, then the success burst.
  */
 export default function SavingsAddSheet() {
+  // Savings is phone-only for launch: a deep link lands back where it can go.
+  if (isWeb) return <Redirect href="/home" />;
+  return <SavingsAddSheetContent />;
+}
+
+function SavingsAddSheetContent() {
   const { wallet } = useWalletView();
   return wallet.demo ? <DemoSavingsAddSheet /> : <LiveEarnSheet />;
 }
@@ -132,9 +140,12 @@ function DemoSavingsAddSheet() {
                 <SheetScreen>
                   <SuccessPage
                     compact
-                    title="Demo addition simulation"
+                    title={demoLabel('Demo addition simulation', 'Added to savings')}
                     amount={{ symbol: 'USDC', text: `${amount.toLocaleString('en-US')} USDC` }}
-                    detail="No funds were added and your wallet balance was not changed."
+                    detail={demoLabel(
+                      'No funds were added and your wallet balance was not changed.',
+                      undefined,
+                    )}
                     rows={[
                       { label: 'Earning', value: apy },
                       { label: 'Paid with', value: METHODS[method].label },
@@ -268,7 +279,7 @@ const useStyles = makeStyles((c) => ({
   methods: {
     paddingHorizontal: 14,
     paddingVertical: 4,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   well: {

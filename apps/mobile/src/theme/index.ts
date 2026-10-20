@@ -1,4 +1,4 @@
-import { StyleSheet, useColorScheme } from 'react-native';
+import { Platform, StyleSheet, useColorScheme } from 'react-native';
 import { useSettings } from '@/lib/settings';
 
 /** Honey design tokens. Base values come from the brand palette. */
@@ -56,7 +56,8 @@ const dark: Palette = {
   card: '#1B1B1B', // Charcoal
   raised: '#262626', // Raised / hover
   skeleton: 'rgba(246, 243, 235, 0.09)',
-  sheet: '#1B1B1B',
+  // Sheets match the page, like light mode, so c.card fills read on them.
+  sheet: '#131313',
   divider: '#2C2C2C',
   primary: '#F3C969', // Honey
   primaryTint: '#3B301C',
@@ -121,4 +122,22 @@ export function makeStyles<T extends StyleSheet.NamedStyles<T>>(factory: (c: Pal
     }
     return styles;
   };
+}
+
+/**
+ * Apple's continuous (squircle) corner curve. iOS uses `borderCurve`; web uses the CSS
+ * `corner-shape` property, which React Native's types don't know yet. Skip it on circles
+ * and capsules, where the curve has no effect.
+ */
+type Squircle = { borderCurve?: 'continuous' };
+
+export const squircle: Squircle = Platform.select<Squircle>({
+  ios: { borderCurve: 'continuous' },
+  web: { cornerShape: 'squircle' } as Squircle,
+  default: {},
+});
+
+/** A rounded corner of radius `r` with the continuous curve: `...radius(20)`. */
+export function radius(r: number): { borderRadius: number } & Squircle {
+  return { borderRadius: r, ...squircle };
 }

@@ -12,7 +12,7 @@ import Animated, {
   withDelay,
   withTiming,
 } from 'react-native-reanimated';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const IN_DUR = 125;
@@ -69,7 +69,7 @@ const useStyles = makeStyles((c) => ({
     overflow: 'hidden',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 8,
+    ...radius(8),
     color: c.canvas,
     backgroundColor: c.text,
     fontSize: 13,

@@ -1,3 +1,4 @@
+import { Redirect } from 'expo-router';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -12,6 +13,7 @@ import {
   // SheetText, (its description is commented out below)
 } from '@/components/sheets/Sheet';
 import { tap } from '@/lib/haptics';
+import { isWeb } from '@/lib/platform';
 import {
   AVAILABLE_TRADE_MODES,
   TRADE_MODE_INFO,
@@ -26,6 +28,12 @@ const ROW_HEIGHT = 64;
 
 /** Choose which products show on the Trade tab, and in what order. Changes apply live. */
 export default function TradeTabsSheet() {
+  // Nothing to arrange with a single trade product: a deep link lands back where it can go.
+  if (isWeb || AVAILABLE_TRADE_MODES.length <= 1) return <Redirect href="/trade" />;
+  return <TradeTabsSheetContent />;
+}
+
+function TradeTabsSheetContent() {
   const styles = useStyles();
   // Products switched off for now (Futures, Options) aren't offered here.
   const tradeTabs = useSettings().tradeTabs.filter((m) => AVAILABLE_TRADE_MODES.includes(m));

@@ -28,7 +28,7 @@ import { usePreventScreenCapture } from '@/lib/screen-capture';
 import { showErrorToast } from '@/lib/toast';
 import { startWithMnemonic } from '@/lib/vault';
 import { addVaultWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 /** Phrases are 12 words here (24-word imports are shown from Settings too). */
@@ -368,7 +368,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 10,
     paddingHorizontal: 14,
-    borderRadius: 16,
+    ...radius(16),
     backgroundColor: c.card,
   },
   index: {

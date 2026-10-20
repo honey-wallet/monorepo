@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import Animated, {
@@ -23,9 +23,10 @@ import { tap } from '@/lib/haptics';
 import { type Jar, jarProgress, usdValue, useJars } from '@/lib/jars';
 import { LOADS } from '@/lib/loads';
 import { EARN, formatAmount, formatUsd, VAULTS } from '@/lib/mock-wallet';
+import { isWeb } from '@/lib/platform';
 import { useSectionPrefs } from '@/lib/section-prefs';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, EASE } from '@/theme/motion';
 
 const STABLE = new Set(['USDC', 'USDT']);
@@ -40,6 +41,12 @@ function formatJarAmount(symbol: string, amount: number) {
 
 /** The piggy bank: Honey Jars for crypto set aside for goals, and ways to earn on it. */
 export default function SavingsScreen() {
+  // Savings is phone-only for launch: a deep link lands back where it can go.
+  if (isWeb) return <Redirect href="/home" />;
+  return <SavingsScreenContent />;
+}
+
+function SavingsScreenContent() {
   const { wallet } = useWalletView();
   return wallet.demo ? <DemoSavingsScreen /> : <LiveSavingsScreen />;
 }
@@ -308,7 +315,7 @@ const useStyles = makeStyles((c) => ({
   },
   card: {
     padding: 16,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   earnCard: {
@@ -377,7 +384,7 @@ const useStyles = makeStyles((c) => ({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   newJarIcon: {

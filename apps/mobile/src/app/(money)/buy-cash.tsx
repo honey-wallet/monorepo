@@ -19,12 +19,14 @@ import { FlowTray, InlineTray } from '@/components/sheets/Tray';
 import { applyKey, Keypad, TypedAmount } from '@/components/wallet/Keypad';
 import { LiveProposedPage } from '@/components/wallet/MultisigParts';
 import { EmptyState, TokenIcon } from '@/components/wallet/parts';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { success, tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatBalance, formatPrice, formatUsd, MARKET, marketOf } from '@/lib/mock-wallet';
 import { type ProposalAction, propose, useSigner } from '@/lib/multisig';
 import { markDemoFunded, useOnboarding } from '@/lib/onboarding';
 import { followFix, useFailure } from '@/lib/outcomes';
+import { isWeb } from '@/lib/platform';
 import { txReceipt } from '@/lib/tx-receipt';
 import { useWalletView } from '@/lib/wallet-view';
 import { makeStyles, useTheme } from '@/theme';
@@ -301,12 +303,18 @@ function DemoBuyCashSheet() {
                 <SheetScreen>
                   <SuccessPage
                     compact
-                    title={selling ? 'Demo sale simulation' : 'Demo purchase simulation'}
+                    title={demoLabel(
+                      selling ? 'Demo sale simulation' : 'Demo purchase simulation',
+                      selling ? 'Sold' : 'Bought',
+                    )}
                     amount={{
                       symbol,
                       text: `${formatBalance(selling ? tokenValue : (value - fee) / price)} ${symbol}`,
                     }}
-                    detail="Simulation only. No transaction was sent and no real-wallet balance changed."
+                    detail={demoLabel(
+                      'Simulation only. No transaction was sent and no real-wallet balance changed.',
+                      undefined,
+                    )}
                     rows={[
                       {
                         label: selling ? 'You get' : 'You paid',
@@ -447,7 +455,9 @@ const useStyles = makeStyles((c) => ({
   amountArea: {
     flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    // In the popup there's no keypad, so a centred amount floated in a tall empty band.
+    justifyContent: isWeb ? 'flex-start' : 'center',
+    paddingTop: isWeb ? 16 : 0,
     gap: 8,
   },
   convert: {

@@ -93,6 +93,55 @@ patches with upstream fixed releases when available and rerun these regressions.
 
 Put apps in `apps/` and libraries in `packages/`, and name them `@honey-wallet/<name>`. Give the package `typecheck` / `test` / `lint` / `build` scripts as appropriate, and Turborepo will pick it up automatically.
 
+### Mobile OTA releases
+
+`apps/mobile/eas.json` separates the `preview` and `production` channels and EAS
+environments. The `preview-simulator` profile uses the preview channel for iOS
+simulators. Native builds use Expo's `fingerprint` runtime policy so native dependency
+or configuration changes require a matching new binary. The Chrome extension uses
+its own packaged release and does not consume mobile OTA updates.
+
+Before the first release, log in with `pnpm eas login` from `apps/mobile`, link the
+correct Expo project, and set its UUID as `EAS_PROJECT_ID` in `.env.local` and both
+EAS environments (or persist the linked `extra.eas.projectId` in app.json).
+Configure these plain-text/public values in each EAS environment:
+
+- `EAS_PROJECT_ID`: the linked project's UUID.
+- `HONEY_UPDATE_CHANNEL`: `preview` or `production`, matching that environment.
+- `EXPO_PUBLIC_TEST_MODE=0`.
+- `EXPO_PUBLIC_API_URL`: that environment's HTTPS API URL.
+- `EXPO_PUBLIC_AUTH_ORIGIN` and `EXPO_PUBLIC_AUTH_CHAIN_ID`: exactly the server's
+  trusted relying-party identity, for example `https://wallet.example.com` and `eip155:1`.
+- `EXPO_PUBLIC_WALLETCONNECT_PROJECT_ID`: the public Reown project ID if WalletConnect is used.
+
+Use the same environment values for a binary and its OTA updates. EAS Update does
+not inherit `build.<profile>.env`; the update commands explicitly select the EAS
+environment. Release configuration rejects missing project/service settings and
+demo/E2E/extension targets. These values ship in the app; never put signing secrets here.
+
+From `apps/mobile`, after the account and project are configured:
+
+```sh
+pnpm eas build --profile preview --platform ios
+# Or: pnpm eas build --profile preview-simulator --platform ios
+# Or: pnpm eas build --profile preview --platform android
+pnpm update:preview --message "Describe the change"
+```
+
+Publishing an update is a release action. Test on an installed preview Release build:
+launch online to download, then fully close and reopen to apply. Check the update
+and matching runtime/channel in the Expo dashboard; verify the app still starts
+offline. Keep `ON_LOAD` checks and next-launch application so updates do not restart
+an active signing or recovery flow. Expo Go and Metro debug sessions do not prove OTA delivery.
+After preview validation, use `pnpm eas build --profile production --platform ios`
+(or Android) and `pnpm update:production --message "Describe the change"`.
+
+Existing binaries built without `expo-updates`, its update URL, runtime, and channel
+cannot gain OTA capability through an OTA update. They need one new installed binary.
+For local Xcode/Gradle releases, set `HONEY_UPDATE_CHANNEL` and the same release
+variables before regenerating the ignored native project with `pnpm exec expo prebuild`;
+do not manually patch Expo.plist or AndroidManifest.xml.
+
 ## Contributor License Agreement
 
 Before we can merge your first pull request, you need to sign the [Contributor License Agreement](CLA.md). A bot will comment on your PR with a link; signing takes a minute and covers all your future contributions.

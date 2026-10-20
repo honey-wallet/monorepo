@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { backendSession, backendSessionToken } from '@/lib/backend-session';
 import { hyperliquidAccountMatchesWallet } from '@/lib/hyperliquid-account';
 import { type AddedWallet, useActiveWallet } from '@/lib/wallets';
-import { makeStyles } from '@/theme';
+import { makeStyles, radius } from '@/theme';
 
 export function HyperliquidAccount() {
   const wallet = useActiveWallet();
@@ -192,11 +192,11 @@ function Value({ label, value }: { label: string; value: string }) {
 const useStyles = makeStyles((c) => ({
   section: { padding: 20, gap: 10 },
   label: { color: c.textSecondary, fontSize: 15 },
-  card: { backgroundColor: c.card, borderRadius: 20, padding: 16, gap: 12 },
+  card: { backgroundColor: c.card, ...radius(20), padding: 16, gap: 12 },
   body: { color: c.textSecondary, fontSize: 14, lineHeight: 20 },
   values: { gap: 10 },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   value: { color: c.text, fontSize: 15, fontVariant: ['tabular-nums'] },
-  position: { backgroundColor: c.raised, borderRadius: 14, padding: 12, gap: 4 },
+  position: { backgroundColor: c.raised, ...radius(14), padding: 12, gap: 4 },
   error: { color: c.error, fontSize: 14, lineHeight: 20 },
 }));

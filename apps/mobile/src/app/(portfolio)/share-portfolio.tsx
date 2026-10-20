@@ -16,6 +16,7 @@ import { Toggle } from '@/components/motion/Toggle';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetRow, SheetScreen } from '@/components/sheets/Sheet';
 import { EmptyState, Sparkline } from '@/components/wallet/parts';
+import { SHOW_DEMO_LABELS } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import {
@@ -30,7 +31,7 @@ import {
 import { useProfile } from '@/lib/profile';
 import { showErrorToast } from '@/lib/toast';
 import { useWalletView } from '@/lib/wallet-view';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 const CARD_WIDTH = 320;
 
@@ -153,9 +154,11 @@ export default function SharePortfolioSheet() {
           <View style={styles.chart}>
             <Sparkline data={data} width={CARD_WIDTH - 40} height={70} />
           </View>
-          <Text style={styles.footnote}>
-            Sample data · illustrative values, not wallet performance
-          </Text>
+          {SHOW_DEMO_LABELS ? (
+            <Text style={styles.footnote}>
+              Sample data · illustrative values, not wallet performance
+            </Text>
+          ) : null}
         </View>
       </SkeletonReveal>
 
@@ -183,7 +186,7 @@ const useStyles = makeStyles((c) => ({
     width: CARD_WIDTH,
     marginBottom: 12,
     padding: 20,
-    borderRadius: 24,
+    ...radius(24),
     backgroundColor: c.card,
     // In dark mode the card matched the sheet behind it; a hairline gives it an edge.
     borderWidth: 1,

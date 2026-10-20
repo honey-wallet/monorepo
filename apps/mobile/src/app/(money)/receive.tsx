@@ -13,14 +13,15 @@ import { ChainPicker } from '@/components/wallet/ChainPicker';
 import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { LabeledRule, TokenIcon } from '@/components/wallet/parts';
 import { useCopy } from '@/lib/copy';
+import { demoLabel } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { type ReceiveAddress, receiveAddresses } from '@/lib/receive';
-import { useActiveWallet } from '@/lib/wallets';
-import { makeStyles, useTheme } from '@/theme';
+import { isFixtureWallet, isMainWallet, useActiveWallet } from '@/lib/wallets';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Receive sheet: your address to copy or show as a QR code. */
 export default function ReceiveSheet() {
@@ -30,16 +31,16 @@ export default function ReceiveSheet() {
   // The wallet in use: a shared wallet receives at its own address, on its own network.
   const wallet = useActiveWallet();
   const multisig = useMultisig(wallet.id);
-  const isMain = wallet.id === 'main';
+  const isMain = isMainWallet(wallet);
   const { copied, copy } = useCopy(wallet.address);
   const [showExchange, setShowExchange] = useState(false);
   // Wallets with keys here have an address per chain; list them all, labelled.
   const list = receiveAddresses(wallet);
   const perChain = !multisig && list.length > 1;
 
-  if (wallet.demo)
+  if (isFixtureWallet(wallet))
     return (
-      <SheetScreen title="Demo wallet">
+      <SheetScreen title={demoLabel('Demo wallet', 'Receive crypto')}>
         <Text style={{ color: c.text }}>Create or import a wallet before receiving funds.</Text>
       </SheetScreen>
     );
@@ -200,7 +201,7 @@ const useStyles = makeStyles((c) => ({
   list: {
     paddingVertical: 4,
     paddingHorizontal: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   row: {
@@ -218,7 +219,7 @@ const useStyles = makeStyles((c) => ({
     alignItems: 'center',
     gap: 12,
     padding: 14,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   firstCard: {
@@ -268,7 +269,7 @@ const useStyles = makeStyles((c) => ({
     lineHeight: 21,
   },
   exchangeCard: {
-    borderRadius: 20,
+    ...radius(20),
     overflow: 'hidden',
     backgroundColor: c.card,
   },

@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icon';
 import { HoneyLogo } from '@/components/logo/HoneyLogo';
 import { TokenIcon } from '@/components/wallet/parts';
 import { formatPrice } from '@/lib/mock-wallet';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 // The card follows the theme: a light card with a hairline edge in light mode, a raised
 // one in dark, so it reads as an object in the tray rather than a hole in it.
@@ -145,16 +145,17 @@ const useStyles = makeStyles((c) => ({
   card: {
     width: SHARE_CARD_WIDTH,
     alignSelf: 'center',
-    marginTop: 4,
-    marginBottom: 12,
+    // With the sheet's 20px footer gap and tray bottom, every gap around the card is 20.
+    marginTop: 0,
+    marginBottom: 0,
     overflow: 'hidden',
     paddingTop: PAD,
     paddingBottom: PAD,
-    borderRadius: 28,
+    ...radius(28),
     borderCurve: 'continuous',
     borderWidth: 1,
     borderColor: c.divider,
-    backgroundColor: c.scheme === 'dark' ? c.raised : c.card,
+    backgroundColor: c.card,
   },
   top: {
     paddingHorizontal: PAD,

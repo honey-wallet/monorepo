@@ -85,7 +85,7 @@ const useStyles = makeStyles((c) => ({
     paddingLeft: 16,
     paddingRight: 12,
     borderRadius: 24,
-    backgroundColor: c.raised,
+    backgroundColor: c.card,
   },
   inputArea: {
     flex: 1,

@@ -17,7 +17,7 @@ import {
   useOnboarding,
 } from '@/lib/onboarding';
 import { isWeb } from '@/lib/platform';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /**
  * Finish setting up: four short steps that make the wallet safe and yours, and $5
@@ -145,13 +145,13 @@ const useStyles = makeStyles((c) => ({
     marginTop: 16,
     marginBottom: 12,
     padding: 4,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   step: {
     minHeight: 64,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    ...radius(16),
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

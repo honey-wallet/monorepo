@@ -9,7 +9,7 @@ import { TextSwap } from '@/components/motion/TextSwap';
 import { HeaderIconButton, PushedScreen } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
 import { showToast } from '@/lib/toast';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 type Item = { id: string; icon: IconName; title: string; hint: string; done: string };
 
@@ -136,7 +136,7 @@ const useStyles = makeStyles((c) => ({
     gap: 16,
     paddingVertical: 16,
     paddingHorizontal: 18,
-    borderRadius: 20,
+    ...radius(20),
     backgroundColor: c.card,
   },
   cardTitle: {

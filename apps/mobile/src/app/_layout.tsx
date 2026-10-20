@@ -196,12 +196,13 @@ export default function RootLayout() {
             <Stack.Screen name="(account)/sign-out" options={tray()} />
             <Stack.Screen name="(settings)/app-data" />
             <Stack.Screen name="(settings)/smart-wallet" />
+            <Stack.Screen name="(settings)/bunk-mode" />
             <Stack.Screen name="(keys)/recovery-phrase" />
             <Stack.Screen name="(keys)/icloud-backup" options={tray()} />
             <Stack.Screen name="(settings)/disclosures" />
             <Stack.Screen name="(settings)/help" />
             <Stack.Screen name="(settings)/settings-theme" options={tray()} />
-            <Stack.Screen name="(settings)/settings-app-icon" options={sheet('fitToContents')} />
+            <Stack.Screen name="(settings)/settings-app-icon" options={tray()} />
             <Stack.Screen name="(settings)/settings-currency" options={tray()} />
             <Stack.Screen name="(settings)/settings-language" options={tray()} />
             <Stack.Screen name="(settings)/settings-notifications" options={tray()} />
@@ -212,6 +213,7 @@ export default function RootLayout() {
             <Stack.Screen name="(settings)/settings-permissions" options={tray()} />
             <Stack.Screen name="(settings)/settings-about" options={tray()} />
             <Stack.Screen name="(settings)/smart-wallet-info" options={tray()} />
+            <Stack.Screen name="(settings)/bunk-mode-info" options={tray()} />
             <Stack.Screen name="(settings)/contact" options={tray()} />
           </Stack>
           <ToastHost />
