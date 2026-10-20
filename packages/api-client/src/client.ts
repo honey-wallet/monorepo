@@ -23,6 +23,12 @@ import {
   isMorphoQuote,
   isMorphoSigningRequest,
 } from './morpho';
+import {
+  isNearIntentsQuotePreview,
+  isNearIntentsQuoteRequest,
+  isNearIntentsTokens,
+  type NearIntentsQuoteRequest,
+} from './near-intents';
 import { isOperationPage, isOperationRecovery, OPERATION_ID } from './operations';
 import { isPolymarketCatalog, isPolymarketOrderBook } from './polymarket';
 import { isPriceSnapshot, type PriceStreamOptions, subscribePrices } from './prices';
@@ -55,6 +61,8 @@ import type {
   SwapIntent,
   SwapQuoteRequest,
   VersionInfo,
+  WaitlistResponse,
+  WaitlistSource,
 } from './types';
 
 export class ApiError extends Error {
@@ -165,6 +173,33 @@ export function createApiClient({ baseUrl, fetch: fetchImpl = fetch }: ApiClient
   const pairHeaders = ({ token }: PairChannel) => ({ 'X-Pair-Token': token });
 
   return {
+    nearIntentsTokens: (token: string, init?: RequestInit) =>
+      validated(
+        '/api/v1/bridges/near-intents/tokens',
+        isNearIntentsTokens,
+        authorized(token, { ...init, cache: 'no-store' }),
+      ),
+    nearIntentsQuotePreview: async (
+      token: string,
+      input: NearIntentsQuoteRequest,
+      init?: RequestInit,
+    ) => {
+      if (!isNearIntentsQuoteRequest(input))
+        throw new ApiError(400, 'bad_request', 'Invalid NEAR Intents quote request');
+      const request = { ...input };
+      const value = await validated(
+        '/api/v1/bridges/near-intents/quote',
+        isNearIntentsQuotePreview,
+        authorizedJson(token, request, { ...init, cache: 'no-store' }),
+      );
+      if (
+        value.originAsset !== request.originAsset ||
+        value.destinationAsset !== request.destinationAsset ||
+        value.amountIn !== request.amount
+      )
+        throw new ApiError(200, 'invalid_response', 'NEAR Intents quote identity mismatch');
+      return value;
+    },
     relayQuotePreview: (token: string, input: RelayQuoteRequest, init?: RequestInit) => {
       if (!isRelayQuoteRequest(input))
         throw new ApiError(400, 'bad_request', 'Invalid Relay quote request');
@@ -571,6 +606,11 @@ export function createApiClient({ baseUrl, fetch: fetchImpl = fetch }: ApiClient
     subscribePrices: (options: PriceStreamOptions) => subscribePrices(root, options),
     health: (init?: RequestInit) => request<Health>('/health', init),
     version: (init?: RequestInit) => request<VersionInfo>('/api/v1/version', init),
+    joinWaitlist: (email: string, source: WaitlistSource = 'web', init?: RequestInit) =>
+      request<WaitlistResponse>('/api/v1/waitlist', {
+        ...jsonRequest({ email, source }, init),
+        credentials: 'omit',
+      }),
     capabilities: async (init?: RequestInit): Promise<Capabilities> => {
       const value = await request<unknown>('/api/v1/capabilities', init);
       if (!isCapabilities(value))

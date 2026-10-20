@@ -3,6 +3,7 @@ import type { IconName } from '@/components/Icon';
 import { publishWaiting } from '@/lib/dapp';
 import { moveJar } from '@/lib/jars';
 import { type Chain, formatUsd } from '@/lib/mock-wallet';
+import { multisigDeployments } from '@/lib/multisig-deployments';
 import { persistence } from '@/lib/persistence';
 import { getProfile } from '@/lib/profile';
 import { notify } from '@/lib/push';
@@ -30,8 +31,6 @@ export type Member = {
   id: string;
   name: string;
   kind: MemberKind;
-  /** A Honey handle, e.g. "maya.honey". */
-  handle?: string;
   address: string;
 };
 
@@ -186,9 +185,17 @@ const person = (id: string, name: string, address: string): Member => ({
   id,
   name,
   kind: 'person',
-  handle: `${name.toLowerCase()}.honey`,
   address,
 });
+
+// The same five parties hold Team Treasury on Ethereum and on Base: two Safes, one wallet.
+const TEAM_MEMBERS: Member[] = [
+  you('You', '0x6B8e3f1A9c7D2b5E0a4F8c6d1B3e9A7f2C5d81e4'),
+  person('arjun', 'Arjun', '0x8a91F0c3B7a2D8e4f6A17b5C9d3E7f2a8B6c4100'),
+  person('lena', 'Lena', '0x3c7e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c42'),
+  person('kai', 'Kai', '0x5d2e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c43'),
+  person('sam', 'Sam', '0x9f1e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c44'),
+];
 
 type State = {
   multisigs: Record<string, Multisig>;
@@ -222,13 +229,7 @@ const store = createStore<State>(
         purpose: 'team',
         protocol: 'safe',
         network: { name: 'Ethereum', chainId: 1, native: 'ETH' },
-        members: [
-          you('You', '0x6B8e3f1A9c7D2b5E0a4F8c6d1B3e9A7f2C5d81e4'),
-          person('arjun', 'Arjun', '0x8a91F0c3B7a2D8e4f6A17b5C9d3E7f2a8B6c4100'),
-          person('lena', 'Lena', '0x3c7e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c42'),
-          person('kai', 'Kai', '0x5d2e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c43'),
-          person('sam', 'Sam', '0x9f1e91F0c3B7a2D8e4f67A1b5C9d3E7f2a8B6c44'),
-        ],
+        members: TEAM_MEMBERS,
         threshold: 3,
         dailyLimit: 250,
         spentToday: 40,
@@ -236,6 +237,17 @@ const store = createStore<State>(
           { symbol: 'USDC', chain: 'Ethereum', amount: 1200, usd: 1200 },
           { symbol: 'ETH', chain: 'Ethereum', amount: 0.0876, usd: 220.06 },
         ],
+      },
+      'team-base': {
+        walletId: 'team-base',
+        purpose: 'team',
+        protocol: 'safe',
+        network: { name: 'Base', chainId: 8453, native: 'ETH' },
+        members: TEAM_MEMBERS,
+        threshold: 3,
+        dailyLimit: 250,
+        spentToday: 0,
+        holdings: [{ symbol: 'USDC', chain: 'Base', amount: 310, usd: 310 }],
       },
     },
     proposals: [
@@ -366,6 +378,24 @@ export function multisigOf(state: State, walletId: string): Multisig | undefined
 export function useMultisig(walletId: string | undefined) {
   const state = store.useValue();
   return walletId ? state.multisigs[walletId] : undefined;
+}
+
+export type Deployment = { multisig: Multisig; address: string };
+
+/**
+ * A shared wallet on each chain it's deployed to (same members, a different address on
+ * each), this one first. A Safe's address is only valid on its own chain.
+ */
+export function useMultisigDeployments(walletId: string | undefined): Deployment[] {
+  const state = store.useValue();
+  const { added } = wallets.useValue();
+  const multisig = walletId ? state.multisigs[walletId] : undefined;
+  if (!multisig) return [];
+  const list = allWallets(getProfile().name, added);
+  return multisigDeployments(multisig, state.multisigs).flatMap((m) => {
+    const address = list.find((w) => w.id === m.walletId)?.address;
+    return address ? [{ multisig: m, address }] : [];
+  });
 }
 
 /** The shared wallet you're using, if the active wallet is one. */

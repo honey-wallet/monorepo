@@ -145,11 +145,6 @@ export function isEvmAddress(value: string) {
   return /^0x[0-9a-fA-F]{40}$/.test(value.trim());
 }
 
-/** True for a Honey handle, e.g. "maya.honey". */
-export function isHoneyHandle(value: string) {
-  return /^[^\s.]+\.honey$/i.test(value.trim());
-}
-
 /** The wallet currently shown on home, kept up to date as it changes. */
 export function useActiveWallet(): AddedWallet {
   const { activeId, added } = useWallets();

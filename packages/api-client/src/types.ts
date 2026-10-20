@@ -5,6 +5,13 @@ export interface Health {
   status: 'ok';
 }
 
+/** `POST /api/v1/waitlist`. Same body whether the email is new or already listed. */
+export interface WaitlistResponse {
+  status: 'joined';
+}
+
+export type WaitlistSource = 'web' | 'extension' | 'mobile';
+
 export interface VersionInfo {
   name: string;
   version: string;
@@ -901,3 +908,9 @@ export interface AcrossReview {
 export interface AcrossSigningRequest extends EvmSigningRequest<'across'> {
   review: AcrossReview;
 }
+// Provider-specific NEAR Intents response types mirror the server preview contract.
+export type {
+  NearIntentsQuotePreview,
+  NearIntentsQuoteRequest,
+  NearIntentsToken,
+} from './near-intents';

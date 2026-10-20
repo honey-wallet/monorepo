@@ -138,6 +138,11 @@ impl Identity {
             session_ttl_seconds: 900,
         })
     }
+    /// Shared identity database pool, for small public write paths such as the waitlist.
+    pub(crate) fn pool(&self) -> &PgPool {
+        &self.pool
+    }
+
     pub fn new(pool: PgPool, policy: AuthConfig) -> Result<Self, crate::config::ConfigError> {
         policy.domain()?;
         Ok(Self {

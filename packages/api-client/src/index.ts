@@ -44,6 +44,14 @@ export {
   morphoTransactionRequests,
   validateMorphoReview,
 } from './morpho';
+export {
+  isNearIntentsQuotePreview,
+  isNearIntentsQuoteRequest,
+  isNearIntentsTokens,
+  type NearIntentsQuotePreview,
+  type NearIntentsQuoteRequest,
+  type NearIntentsToken,
+} from './near-intents';
 export { isOperationPage, isOperationRecovery } from './operations';
 export { permit2TypedData, validateEmbeddedPermit, validatePermit2Quote } from './permit2';
 export { isPolymarketCatalog, isPolymarketOrderBook } from './polymarket';

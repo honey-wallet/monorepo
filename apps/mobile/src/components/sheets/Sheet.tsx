@@ -334,7 +334,8 @@ export function SheetText({
 
 type SheetRowProps = {
   title: string;
-  subtitle?: string;
+  /** Text, or an element such as a row of chain icons. */
+  subtitle?: ReactNode;
   icon?: IconName;
   /** A custom leading element (avatar, token logo) instead of `icon`. */
   leading?: ReactNode;
@@ -382,7 +383,13 @@ export function SheetRow({
         ))}
       <View style={styles.rowText}>
         <Text style={[styles.rowTitle, { color: tint }]}>{title}</Text>
-        {subtitle ? <Text style={styles.rowSubtitle}>{subtitle}</Text> : null}
+        {typeof subtitle === 'string' ? (
+          subtitle ? (
+            <Text style={styles.rowSubtitle}>{subtitle}</Text>
+          ) : null
+        ) : subtitle ? (
+          <View style={styles.rowSubtitleRow}>{subtitle}</View>
+        ) : null}
       </View>
       {value ? <Text style={styles.rowValue}>{value}</Text> : null}
       {accessory === 'chevron' ? (
@@ -607,6 +614,11 @@ const useStyles = makeStyles((c) => ({
   },
   rowTitle: {
     fontSize: 17,
+  },
+  rowSubtitleRow: {
+    marginTop: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   rowSubtitle: {
     marginTop: 3,

@@ -91,8 +91,7 @@ pub fn build_router_with_infrastructure(
         morpho: infrastructure.morpho().is_some(),
         uniswap_quotes: infrastructure.swaps().is_some(),
         uniswap_local_fork: infrastructure.uniswap().is_some(),
-        across_quotes: infrastructure.across().is_some(),
-        across_local_fork: infrastructure.across_execution().is_some(),
+        near_intents_quotes: infrastructure.near_intents().is_some(),
         relay_quotes: infrastructure.relay_quotes().is_some(),
         earn_catalog: infrastructure.earn().is_some(),
         authenticated_identity: identity.is_some(),
@@ -107,8 +106,7 @@ pub fn build_router_with_infrastructure(
             swaps: infrastructure.swaps().cloned(),
             uniswap: infrastructure.uniswap().cloned(),
             bridges: infrastructure.bridges().cloned(),
-            across: infrastructure.across().cloned(),
-            across_execution: infrastructure.across_execution().cloned(),
+            near_intents: infrastructure.near_intents().cloned(),
             relay_quotes: infrastructure.relay_quotes().cloned(),
             identity,
             redis: infrastructure.redis().cloned(),
@@ -128,8 +126,7 @@ struct RouterServices {
     swaps: Option<std::sync::Arc<providers::uniswap::UniswapQuotes>>,
     uniswap: Option<std::sync::Arc<uniswap_service::UniswapService>>,
     bridges: Option<std::sync::Arc<bridge_monitor::BridgeMonitor>>,
-    across: Option<std::sync::Arc<providers::across_quotes::AcrossQuotes>>,
-    across_execution: Option<std::sync::Arc<across_service::AcrossService>>,
+    near_intents: Option<std::sync::Arc<providers::near_intents::NearIntents>>,
     relay_quotes: Option<std::sync::Arc<providers::relay_quotes::RelayQuotes>>,
     identity: Option<identity::Identity>,
     redis: Option<redis_store::RedisStore>,
@@ -165,8 +162,7 @@ fn router(config: &Config, health: runtime::RuntimeHealth, services: RouterServi
         swaps,
         uniswap,
         bridges,
-        across,
-        across_execution,
+        near_intents,
         relay_quotes,
         identity,
         redis,
@@ -215,6 +211,11 @@ fn router(config: &Config, health: runtime::RuntimeHealth, services: RouterServi
             config.trusted_proxy_cidrs.clone(),
             redis.clone().map(pairing_store::PairingStore::new),
         ))
+        .merge(routes::waitlist::router(
+            identity.clone(),
+            config.trust_proxy_headers,
+            config.trusted_proxy_cidrs.clone(),
+        ))
         .merge(routes::identity::router_with_proxies(
             identity.clone(),
             config.trust_proxy_headers,
@@ -229,11 +230,7 @@ fn router(config: &Config, health: runtime::RuntimeHealth, services: RouterServi
     let private_api = Router::new()
         .merge(routes::operations::router(identity.clone(), work))
         .merge(routes::bridges::router(identity.clone(), bridges))
-        .merge(routes::across::router(
-            identity.clone(),
-            across,
-            across_execution,
-        ))
+        .merge(routes::near_intents::router(identity.clone(), near_intents))
         .merge(routes::relay_quotes::router(identity.clone(), relay_quotes))
         .merge(routes::aave::router(identity.clone(), aave))
         .merge(routes::morpho::router(identity.clone(), morpho))

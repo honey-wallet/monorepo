@@ -10,7 +10,7 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SheetHeader, SheetScreen } from '@/components/sheets/Sheet';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
-import { handleFor, shortAddress } from '@/lib/mock-wallet';
+import { shortAddress } from '@/lib/mock-wallet';
 import { setProfile, useProfile } from '@/lib/profile';
 import { showToast } from '@/lib/toast';
 import { isFixtureWallet, useActiveWallet } from '@/lib/wallets';
@@ -130,11 +130,7 @@ export default function ProfileEditSheet() {
       </View>
       <View style={styles.hintRow}>
         <TextSwap
-          text={
-            valid
-              ? `Your Honey name is ${handleFor(trimmed)}`
-              : 'Add a name so friends know it’s you'
-          }
+          text={valid ? 'Shown on your wallet' : 'Add a name so friends know it’s you'}
           style={[styles.hint, !valid && { color: c.error }]}
         />
         <Text style={styles.count}>

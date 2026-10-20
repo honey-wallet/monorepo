@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { TokenIcon } from '@/components/wallet/parts';
 import { tap } from '@/lib/haptics';
+import { shortAddress } from '@/lib/mock-wallet';
 import { isWeb } from '@/lib/platform';
 import { EVM_LOGOS, type ReceiveAddress } from '@/lib/receive';
 import { makeStyles, radius, useTheme } from '@/theme';
@@ -12,6 +13,7 @@ import { makeStyles, radius, useTheme } from '@/theme';
 const SUBTITLES: Partial<Record<ChainFamily, string>> = {
   solana: 'SOL and Solana tokens',
   bitcoin: 'BTC only',
+  near: 'NEAR only',
   tron: 'TRX and USDT on Tron',
 };
 
@@ -22,9 +24,12 @@ const SUBTITLES: Partial<Record<ChainFamily, string>> = {
 export function ChainPicker({
   entries,
   onPick,
+  showAddress = false,
 }: {
   entries: ReceiveAddress[];
   onPick: (family: ChainFamily) => void;
+  /** Subtitle each row with its short address and end it with a copy icon (Copy address). */
+  showAddress?: boolean;
 }) {
   const styles = useStyles();
   const c = useTheme();
@@ -62,10 +67,14 @@ export function ChainPicker({
               <Text style={styles.subtitle}>
                 {/* review: say how many EVM chains the one address covers. */}
                 {/* {evm ? 'Ethereum, Base and more' : SUBTITLES[entry.family]} */}
-                {evm ? 'Ethereum, Base and 200+ more' : SUBTITLES[entry.family]}
+                {showAddress
+                  ? shortAddress(entry.address)
+                  : evm
+                    ? 'Ethereum, Base and 200+ more'
+                    : SUBTITLES[entry.family]}
               </Text>
             </View>
-            <Icon name="chevronRight" size={14} color={c.textSecondary} />
+            <Icon name={showAddress ? 'copy' : 'chevronRight'} size={14} color={c.textSecondary} />
           </PressableRow>
         );
       })}

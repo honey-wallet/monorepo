@@ -130,6 +130,17 @@ describe('createApiClient', () => {
     expect(fetch).toHaveBeenCalledWith('http://api.test/api/v1/version', expect.anything());
   });
 
+  it('joins the waitlist with a JSON POST', async () => {
+    const fetch = mockFetch(200, { status: 'joined' });
+    const api = createApiClient({ baseUrl: 'http://api.test', fetch });
+
+    await expect(api.joinWaitlist('ada@example.com')).resolves.toEqual({ status: 'joined' });
+    const [url, init] = fetch.mock.calls[0] ?? [];
+    expect(url).toBe('http://api.test/api/v1/waitlist');
+    expect(init?.method).toBe('POST');
+    expect(JSON.parse(String(init?.body))).toEqual({ email: 'ada@example.com', source: 'web' });
+  });
+
   it('throws ApiError with the server error code', async () => {
     const fetch = mockFetch(404, { error: { code: 'not_found', message: 'resource not found' } });
     const api = createApiClient({ baseUrl: 'http://api.test', fetch });

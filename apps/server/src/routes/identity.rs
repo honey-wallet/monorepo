@@ -185,7 +185,7 @@ fn client_ip(state: &AuthState, request: &Request<axum::body::Body>) -> Result<I
     client_ip_from_request(state.trust_proxy, &state.trusted_proxy_cidrs, request)
 }
 
-fn client_ip_from_request(
+pub(crate) fn client_ip_from_request(
     trust_proxy: bool,
     trusted_proxy_cidrs: &[crate::config::TrustedProxyCidr],
     request: &Request<axum::body::Body>,
@@ -209,7 +209,7 @@ fn client_ip_from_request(
     }
 }
 
-fn client_bucket(ip: IpAddr) -> IpAddr {
+pub(crate) fn client_bucket(ip: IpAddr) -> IpAddr {
     match ip.to_canonical() {
         IpAddr::V6(v6) => {
             let mut segments = v6.segments();

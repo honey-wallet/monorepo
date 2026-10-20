@@ -12,6 +12,7 @@ import type { EvmChain } from '@/lib/evm-chains';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import {
+  type Deployment,
   describe,
   hasVoted,
   keyNoun,
@@ -26,7 +27,7 @@ import {
   useMultisig,
   useProposal,
 } from '@/lib/multisig';
-import { makeStyles, useTheme } from '@/theme';
+import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Networks with a coin logo of their own; the rest get a lettered badge. */
 const NETWORK_LOGO: Record<string, string> = { 1: 'ETH', 8453: 'BASE', solana: 'SOL' };
@@ -79,11 +80,10 @@ export const MEMBER_KIND_LABEL: Record<MemberKind, string> = {
 };
 
 /**
- * The line under a member's name: a handle for people, and for you the key this wallet
+ * The line under a member's name: an address for people, and for you the key this wallet
  * gave you (its own, separate from your Honey wallet's).
  */
 export function memberSubtitle(m: Member) {
-  if (m.handle) return m.handle;
   if (m.kind === 'you') return `Own key · ${shortAddress(m.address)}`;
   if (m.kind === 'person') return shortAddress(m.address);
   return MEMBER_KIND_LABEL[m.kind];
@@ -291,7 +291,74 @@ export function ThresholdStepper({
   );
 }
 
+/**
+ * Copy address for a shared wallet: one row per chain it's deployed on, each with its own
+ * address, since a Safe or Squads address only works on its own chain.
+ */
+export function DeploymentList({
+  deployments,
+  onPick,
+}: {
+  deployments: Deployment[];
+  onPick: (deployment: Deployment) => void;
+}) {
+  const styles = useStyles();
+  const c = useTheme();
+  return (
+    <View style={styles.deployments}>
+      {deployments.map((d) => (
+        <PressableRow
+          key={d.multisig.walletId}
+          accessibilityRole="button"
+          accessibilityLabel={`Copy ${d.multisig.network.name} address`}
+          onPress={() => {
+            tap();
+            onPick(d);
+          }}
+          style={styles.deploymentRow}
+        >
+          <NetworkBadge network={d.multisig.network} size={36} />
+          <View style={styles.deploymentText}>
+            <Text style={styles.deploymentTitle}>
+              {protocolName(d.multisig.protocol)} on {d.multisig.network.name}
+            </Text>
+            <Text style={styles.deploymentSub}>
+              {shortAddress(d.address)} · only on {d.multisig.network.name}
+            </Text>
+          </View>
+          <Icon name="copy" size={14} color={c.textSecondary} />
+        </PressableRow>
+      ))}
+    </View>
+  );
+}
+
 const useStyles = makeStyles((c) => ({
+  deployments: {
+    paddingVertical: 4,
+    paddingHorizontal: 14,
+    ...radius(20),
+    backgroundColor: c.card,
+  },
+  deploymentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+  },
+  deploymentText: {
+    flex: 1,
+  },
+  deploymentTitle: {
+    color: c.text,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  deploymentSub: {
+    marginTop: 2,
+    color: c.textSecondary,
+    fontSize: 13,
+  },
   stepperWrap: {
     alignItems: 'center',
   },

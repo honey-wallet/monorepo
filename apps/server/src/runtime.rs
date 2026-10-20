@@ -164,8 +164,7 @@ pub struct Infrastructure {
     swaps: Option<Arc<crate::providers::uniswap::UniswapQuotes>>,
     uniswap: Option<Arc<crate::uniswap_service::UniswapService>>,
     bridges: Option<Arc<crate::bridge_monitor::BridgeMonitor>>,
-    across: Option<Arc<crate::providers::across_quotes::AcrossQuotes>>,
-    across_execution: Option<Arc<crate::across_service::AcrossService>>,
+    near_intents: Option<Arc<crate::providers::near_intents::NearIntents>>,
     relay_quotes: Option<Arc<crate::providers::relay_quotes::RelayQuotes>>,
 }
 
@@ -299,34 +298,24 @@ impl Infrastructure {
             })
             .transpose()?;
         let swaps = swaps.or_else(|| uniswap.as_ref().map(|s| s.quotes()));
-        let across = config
-            .across_quote_config_file
-            .as_ref()
-            .map(|path| {
-                crate::providers::across_quotes::AcrossQuotes::from_file(
-                    path,
-                    config.auth.as_ref().expect("validated auth").chain_id as u64,
-                    redis.clone().expect("validated Redis"),
-                    metrics.clone(),
-                )
-                .map(Arc::new)
-                .map_err(|_| anyhow::anyhow!("invalid ACROSS_QUOTE_CONFIG_FILE"))
-            })
-            .transpose()?;
-        let across_execution = config
-            .across_execution_config_file
-            .as_ref()
-            .map(|path| {
-                crate::across_service::AcrossService::from_file(
-                    crate::work::WorkStore::new(postgres.clone().expect("validated PostgreSQL")),
-                    path,
-                    redis.clone().expect("validated Redis"),
-                    metrics.clone(),
-                )
-                .map(Arc::new)
-                .map_err(|_| anyhow::anyhow!("invalid ACROSS_EXECUTION_CONFIG_FILE"))
-            })
-            .transpose()?;
+        let near_intents = match std::env::var("NEAR_INTENTS_API_KEY") {
+            Ok(api_key) => {
+                if config.auth.is_none() || postgres.is_none() || redis.is_none() {
+                    anyhow::bail!(
+                        "NEAR_INTENTS_API_KEY requires wallet authentication, DATABASE_URL and REDIS_URL"
+                    );
+                }
+                Some(Arc::new(
+                    crate::providers::near_intents::NearIntents::new(
+                        api_key,
+                        redis.clone().expect("validated Redis"),
+                    )
+                    .map_err(|_| anyhow::anyhow!("invalid NEAR_INTENTS_API_KEY configuration"))?,
+                ))
+            }
+            Err(std::env::VarError::NotPresent) => None,
+            Err(_) => anyhow::bail!("invalid NEAR_INTENTS_API_KEY configuration"),
+        };
         let relay_quotes = match std::env::var("RELAY_API_KEY") {
             Ok(api_key) => {
                 if config.auth.is_none() || postgres.is_none() {
@@ -343,35 +332,30 @@ impl Infrastructure {
             Err(std::env::VarError::NotPresent) => None,
             Err(_) => anyhow::bail!("invalid RELAY_API_KEY configuration"),
         };
-        let bridges = if let Some(execution) = &across_execution {
-            Some(execution.monitor())
-        } else {
-            postgres
-                .clone()
-                .map(|pool| {
-                    let work = crate::work::WorkStore::new(pool);
-                    config
-                        .bridge_status_config_file
-                        .as_ref()
-                        .map_or_else(
-                            || Ok(crate::bridge_monitor::BridgeMonitor::new(work.clone())),
-                            |path| {
-                                crate::bridge_monitor::BridgeMonitor::from_file(
-                                    work.clone(),
-                                    path,
-                                    redis.clone().expect("validated Redis"),
-                                    metrics.clone(),
-                                )
-                            },
-                        )
-                        .map(Arc::new)
-                        .map_err(|_| anyhow::anyhow!("invalid BRIDGE_STATUS_CONFIG_FILE"))
-                })
-                .transpose()?
-        };
+        let bridges = postgres
+            .clone()
+            .map(|pool| {
+                let work = crate::work::WorkStore::new(pool);
+                config
+                    .bridge_status_config_file
+                    .as_ref()
+                    .map_or_else(
+                        || Ok(crate::bridge_monitor::BridgeMonitor::new(work.clone())),
+                        |path| {
+                            crate::bridge_monitor::BridgeMonitor::from_file(
+                                work.clone(),
+                                path,
+                                redis.clone().expect("validated Redis"),
+                                metrics.clone(),
+                            )
+                        },
+                    )
+                    .map(Arc::new)
+                    .map_err(|_| anyhow::anyhow!("invalid BRIDGE_STATUS_CONFIG_FILE"))
+            })
+            .transpose()?;
         Ok(Self {
-            across,
-            across_execution,
+            near_intents,
             relay_quotes,
             bridges,
             uniswap,
@@ -397,11 +381,8 @@ impl Infrastructure {
     pub fn morpho(&self) -> Option<&Arc<crate::morpho_service::MorphoService>> {
         self.morpho.as_ref()
     }
-    pub fn across(&self) -> Option<&Arc<crate::providers::across_quotes::AcrossQuotes>> {
-        self.across.as_ref()
-    }
-    pub fn across_execution(&self) -> Option<&Arc<crate::across_service::AcrossService>> {
-        self.across_execution.as_ref()
+    pub fn near_intents(&self) -> Option<&Arc<crate::providers::near_intents::NearIntents>> {
+        self.near_intents.as_ref()
     }
 
     pub fn relay_quotes(&self) -> Option<&Arc<crate::providers::relay_quotes::RelayQuotes>> {

@@ -11,8 +11,7 @@ pub struct RuntimeAdapters {
     pub morpho: bool,
     pub uniswap_quotes: bool,
     pub uniswap_local_fork: bool,
-    pub across_quotes: bool,
-    pub across_local_fork: bool,
+    pub near_intents_quotes: bool,
     pub relay_quotes: bool,
     pub earn_catalog: bool,
     pub authenticated_identity: bool,
@@ -63,8 +62,8 @@ async fn capabilities(
         ("transfers", &[][..]),
         ("swap", &["uniswap"][..]),
         ("swap_quotes", &["uniswap"][..]),
-        ("bridge", &["relay", "across"][..]),
-        ("bridge_quotes", &["relay", "across"][..]),
+        ("bridge", &["relay", "near_intents"][..]),
+        ("bridge_quotes", &["relay", "near_intents"][..]),
         ("earn", &["morpho", "aave"][..]),
         ("earn_catalog", &["morpho", "aave"][..]),
         ("perps", &["hyperliquid"][..]),
@@ -132,27 +131,14 @@ async fn capabilities(
             "not_configured",
         );
     }
-    if adapters.across_local_fork {
-        set_feature(
-            &mut features,
-            "bridge",
-            false,
-            "local_testnet",
-            "local_testnet_only",
-        );
-        if let Some(f) = features.iter_mut().find(|f| f.id == "bridge") {
-            f.configured_providers.push("across");
-        }
-    } else {
-        set_feature(
-            &mut features,
-            "bridge",
-            false,
-            "unavailable",
-            "not_configured",
-        );
-    }
-    let bridge_quotes = adapters.across_quotes || adapters.relay_quotes;
+    set_feature(
+        &mut features,
+        "bridge",
+        false,
+        "unavailable",
+        "not_configured",
+    );
+    let bridge_quotes = adapters.near_intents_quotes || adapters.relay_quotes;
     if bridge_quotes {
         set_feature(
             &mut features,
@@ -165,8 +151,8 @@ async fn capabilities(
             if adapters.relay_quotes {
                 f.configured_providers.push("relay");
             }
-            if adapters.across_quotes {
-                f.configured_providers.push("across");
+            if adapters.near_intents_quotes {
+                f.configured_providers.push("near_intents");
             }
         }
     } else {
@@ -351,8 +337,7 @@ mod tests {
             aave: true,
             uniswap_quotes: true,
             uniswap_local_fork: true,
-            across_quotes: true,
-            across_local_fork: true,
+            near_intents_quotes: true,
             earn_catalog: true,
             authenticated_identity: true,
             redis: true,
@@ -361,7 +346,7 @@ mod tests {
         .await;
 
         assert_eq!(body["schemaVersion"], 3);
-        for id in ["swap", "bridge", "earn"] {
+        for id in ["swap", "earn"] {
             assert_eq!(feature(&body, id)["available"], false);
             assert_eq!(feature(&body, id)["scope"], "local_testnet");
             assert_eq!(feature(&body, id)["reason"], "local_testnet_only");
@@ -378,11 +363,11 @@ mod tests {
         }
         assert_eq!(
             feature(&body, "bridge_quotes")["configuredProviders"],
-            serde_json::json!(["across"])
+            serde_json::json!(["near_intents"])
         );
         assert_eq!(
             feature(&body, "bridge")["configuredProviders"],
-            serde_json::json!(["across"])
+            serde_json::json!([])
         );
     }
 
@@ -390,7 +375,7 @@ mod tests {
     async fn quote_and_catalog_services_report_read_only_scope() {
         let body = capabilities(RuntimeAdapters {
             uniswap_quotes: true,
-            across_quotes: true,
+            near_intents_quotes: true,
             earn_catalog: true,
             ..RuntimeAdapters::default()
         })
@@ -411,7 +396,7 @@ mod tests {
         assert_eq!(feature(&body, "earn_catalog")["reason"], "catalog_only");
         assert_eq!(
             feature(&body, "bridge_quotes")["configuredProviders"],
-            serde_json::json!(["across"])
+            serde_json::json!(["near_intents"])
         );
     }
 
@@ -424,13 +409,13 @@ mod tests {
         .await;
         let both = capabilities(RuntimeAdapters {
             relay_quotes: true,
-            across_quotes: true,
+            near_intents_quotes: true,
             ..RuntimeAdapters::default()
         })
         .await;
         assert_eq!(
             feature(&relay, "bridge_quotes")["providers"],
-            serde_json::json!(["relay", "across"])
+            serde_json::json!(["relay", "near_intents"])
         );
         assert_eq!(
             feature(&relay, "bridge_quotes")["configuredProviders"],
@@ -438,7 +423,7 @@ mod tests {
         );
         assert_eq!(
             feature(&both, "bridge_quotes")["configuredProviders"],
-            serde_json::json!(["relay", "across"])
+            serde_json::json!(["relay", "near_intents"])
         );
         assert_eq!(feature(&relay, "bridge")["scope"], "unavailable");
     }

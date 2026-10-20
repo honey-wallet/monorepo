@@ -8,12 +8,11 @@ import { TextSwap } from '@/components/motion/TextSwap';
 // import { TextsReveal } from '@/components/motion/TextsReveal';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
-import { useHandleLookup } from '@/lib/handles';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { isWeb } from '@/lib/platform';
 import { showToast } from '@/lib/toast';
-import { addWallet, demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
+import { addWallet, isEvmAddress } from '@/lib/wallets';
 import { takeWatchedAddress } from '@/lib/watch-scan';
 import { makeStyles, radius, useTheme } from '@/theme';
 
@@ -30,26 +29,19 @@ export default function WatchWalletSheet() {
     }, []),
   );
   const value = address.trim();
-  const handle = isHoneyHandle(value);
-  const valid = isEvmAddress(value) || handle;
-  // A handle is looked up before it can be watched.
-  const resolving = useHandleLookup(value);
-  const status: 'empty' | 'resolving' | 'valid' | 'invalid' = !value
+  const status: 'empty' | 'valid' | 'invalid' = !value
     ? 'empty'
-    : resolving
-      ? 'resolving'
-      : valid
-        ? 'valid'
-        : 'invalid';
+    : isEvmAddress(value)
+      ? 'valid'
+      : 'invalid';
 
   const watch = () => {
     tap();
-    const label = nickname.trim() || (handle ? value.toLowerCase() : shortAddress(value));
+    const label = nickname.trim() || shortAddress(value);
     addWallet({
       kind: 'wallet',
       label,
-      // Handles would resolve through the Honey name service; demo addresses stand in.
-      address: handle ? demoAddress() : value,
+      address: value,
       usd: 0,
       watchOnly: true,
     });
@@ -58,10 +50,9 @@ export default function WatchWalletSheet() {
   };
 
   const hint = {
-    empty: 'A 0x address or a name.honey handle',
-    resolving: 'Looking up name…',
-    valid: handle ? 'Honey handle found' : 'Valid address',
-    invalid: 'Not a valid address or .honey name',
+    empty: 'A 0x address',
+    valid: 'Valid address',
+    invalid: 'Not a valid address',
   }[status];
 
   return (
@@ -84,7 +75,7 @@ export default function WatchWalletSheet() {
         <TextInput
           value={address}
           onChangeText={setAddress}
-          placeholder="0x… or name.honey"
+          placeholder="0x address"
           placeholderTextColor={c.placeholder}
           autoCapitalize="none"
           autoCorrect={false}
@@ -107,15 +98,7 @@ export default function WatchWalletSheet() {
       </View>
       <View style={styles.hintRow}>
         <IconSwap
-          name={
-            status === 'valid'
-              ? 'checkCircle'
-              : status === 'invalid'
-                ? 'warning'
-                : status === 'resolving'
-                  ? 'search'
-                  : 'info'
-          }
+          name={status === 'valid' ? 'checkCircle' : status === 'invalid' ? 'warning' : 'info'}
           size={14}
           color={status === 'valid' ? c.success : status === 'invalid' ? c.error : c.textSecondary}
         />
@@ -142,9 +125,7 @@ export default function WatchWalletSheet() {
       </View>
 
       <PillButton
-        label={
-          status === 'valid' ? 'Watch' : status === 'resolving' ? 'Looking up…' : 'Enter an address'
-        }
+        label={status === 'valid' ? 'Watch' : 'Enter an address'}
         disabled={status !== 'valid'}
         onPress={watch}
         style={styles.cta}

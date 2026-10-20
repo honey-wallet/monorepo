@@ -45,7 +45,7 @@ export default function SendSheet() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Enter address or username"
+          placeholder="Enter address"
           placeholderTextColor={c.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}

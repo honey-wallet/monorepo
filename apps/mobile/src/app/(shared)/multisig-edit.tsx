@@ -13,7 +13,6 @@ import {
   ThresholdStepper,
 } from '@/components/wallet/MultisigParts';
 import { EmptyState } from '@/components/wallet/parts';
-import { useHandleLookup } from '@/lib/handles';
 import { tap } from '@/lib/haptics';
 import { formatUsd } from '@/lib/mock-wallet';
 import {
@@ -26,7 +25,7 @@ import {
   useProposal,
 } from '@/lib/multisig';
 import { showToast } from '@/lib/toast';
-import { demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
+import { demoAddress, isEvmAddress } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
 
 type Kind = 'rule' | 'limit' | 'member';
@@ -53,7 +52,6 @@ export default function MultisigEditSheet() {
   const [entry, setEntry] = useState('');
   const [proposalId, setProposalId] = useState<string | null>(null);
   const proposal = useProposal(proposalId ?? '');
-  const resolving = useHandleLookup(entry);
 
   if (!multisig) {
     return (
@@ -78,19 +76,16 @@ export default function MultisigEditSheet() {
     } else setProposalId(p.id);
   };
 
-  const entryValid = (isHoneyHandle(entry) || isEvmAddress(entry)) && !resolving;
+  const entryValid = isEvmAddress(entry);
   const addPerson = () => {
     const v = entry.trim();
-    const handle = isHoneyHandle(v) ? v.toLowerCase() : undefined;
-    const label = handle ? handle.replace(/\.honey$/, '') : `${v.slice(0, 6)}…`;
     submit({
       type: 'addMember',
       member: {
         id: newMemberId(),
-        name: label.charAt(0).toUpperCase() + label.slice(1),
+        name: `${v.slice(0, 6)}…`,
         kind: 'person',
-        handle,
-        address: handle ? demoAddress() : v,
+        address: v,
       },
     });
   };
@@ -128,13 +123,7 @@ export default function MultisigEditSheet() {
           />
         ) : vault ? undefined : (
           <PillButton
-            label={
-              entryValid
-                ? 'Propose adding'
-                : resolving
-                  ? 'Looking up name…'
-                  : 'Enter a handle or address'
-            }
+            label={entryValid ? 'Propose adding' : 'Enter an address'}
             disabled={!entryValid}
             onPress={addPerson}
           />
@@ -202,7 +191,7 @@ export default function MultisigEditSheet() {
               <TextInput
                 value={entry}
                 onChangeText={setEntry}
-                placeholder="name.honey or 0x address"
+                placeholder="0x address"
                 placeholderTextColor={c.placeholder}
                 autoCapitalize="none"
                 autoCorrect={false}

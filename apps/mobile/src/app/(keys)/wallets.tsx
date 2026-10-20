@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { type Href, router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 import { Avatar } from '@/components/Avatar';
@@ -10,15 +10,24 @@ import { TextSwap } from '@/components/motion/TextSwap';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { closeSheet, SHEET, SheetRow, SheetScreen, SheetSection } from '@/components/sheets/Sheet';
 import { TRAY_CLOSE } from '@/components/sheets/Tray';
+import { ChainIcons } from '@/components/wallet/ChainIcons';
 import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
 import { formatUsd, shortAddress } from '@/lib/mock-wallet';
-import { hasVoted, useMultisigState, YOU } from '@/lib/multisig';
+import {
+  type Deployment,
+  hasVoted,
+  useMultisigDeployments,
+  useMultisigState,
+  YOU,
+} from '@/lib/multisig';
+import { memberKey } from '@/lib/multisig-deployments';
 import { leaveSheetTo } from '@/lib/navigation';
 import { useOnboarding } from '@/lib/onboarding';
 import { isWeb } from '@/lib/platform';
 import { type Profile, useProfile } from '@/lib/profile';
+import { receiveAddresses } from '@/lib/receive';
 import { showToast } from '@/lib/toast';
 import {
   type AddedWallet,
@@ -38,7 +47,31 @@ export default function WalletsSheet() {
   const shared = useMultisigState();
   const { added } = useWallets();
   const active = useActiveWallet();
-  const { copied, copy: copyAddress } = useCopy(active.address);
+  // The current wallet's chains, as on Home: one address copies, several open Copy address.
+  const activeMultisig = shared.multisigs[active.id];
+  const activeDeployments = useMultisigDeployments(active.id);
+  const activeAddresses = receiveAddresses(active);
+  const { copy: copyAddress } = useCopy(
+    activeAddresses[0]?.address ?? active.address,
+    'Address copied',
+  );
+  const onAddresses = () => {
+    tap();
+    if (activeMultisig ? activeDeployments.length > 1 : activeAddresses.length > 1) {
+      router.push('/addresses' as Href);
+    } else {
+      void copyAddress();
+    }
+  };
+  const activeChains = (
+    <ChainIcons
+      wallet={activeMultisig ? undefined : active}
+      deployments={activeMultisig ? activeDeployments : undefined}
+      ring={c.sheet}
+      textStyle={styles.subtitleText}
+      compact
+    />
+  );
   const wallets = allWallets(profile.name, added);
   const hardware = wallets.filter((w) => w.kind === 'hardware');
   // Wallets are on the device; their balances come from the network.
@@ -96,16 +129,43 @@ export default function WalletsSheet() {
     }
   };
 
+  // Shared wallets with the same members on several chains are one wallet: one row, its
+  // chains and total balance. It opens the deployment in use, else the first.
+  const multisigList = wallets.filter((w) => w.kind === 'multisig');
+  const groups = new Map<string, AddedWallet[]>();
+  for (const w of multisigList) {
+    const m = shared.multisigs[w.id];
+    const key = m ? memberKey(m) : w.id;
+    groups.set(key, [...(groups.get(key) ?? []), w]);
+  }
+  const groupOf = (w: AddedWallet) => {
+    const m = shared.multisigs[w.id];
+    return groups.get(m ? memberKey(m) : w.id) ?? [w];
+  };
+  const sharedRows = [...groups.values()].map(
+    (list) => list.find((w) => w.id === active.id) ?? list[0],
+  );
+
   const row = (w: AddedWallet) => {
     // Shared wallets show their live rule and how much is waiting for you.
     const m = shared.multisigs[w.id];
+    const members = m ? groupOf(w) : [w];
+    const ids = new Set(members.map((x) => x.id));
     const waiting = shared.proposals.filter(
-      (p) => p.walletId === w.id && p.status === 'pending' && !hasVoted(p, YOU),
+      (p) => ids.has(p.walletId) && p.status === 'pending' && !hasVoted(p, YOU),
     ).length;
+    const deployments: Deployment[] | undefined = m
+      ? [w, ...members.filter((x) => x.id !== w.id)].flatMap((x) => {
+          const multisig = shared.multisigs[x.id];
+          return multisig ? [{ multisig, address: x.address }] : [];
+        })
+      : undefined;
+    const usd = members.reduce((sum, x) => sum + x.usd, 0);
     return (
       <WalletRow
         key={w.id}
-        wallet={m ? { ...w, threshold: [m.threshold, m.members.length] } : w}
+        wallet={m ? { ...w, usd, threshold: [m.threshold, m.members.length] } : w}
+        deployments={deployments}
         waiting={waiting}
         profile={profile}
         active={w.id === active.id}
@@ -139,9 +199,14 @@ export default function WalletsSheet() {
             <Text numberOfLines={1} style={styles.nameRow}>
               {active.label}
             </Text>
-            <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRowWeb}>
-              <Text style={styles.address}>{shortAddress(active.address, 6, 4)}</Text>
-              <IconSwap name={copied ? 'check' : 'copy'} size={13} color={c.textSecondary} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Addresses"
+              onPress={onAddresses}
+              hitSlop={6}
+              style={styles.addressRowWeb}
+            >
+              {activeChains}
             </Pressable>
           </View>
           <PressableScale
@@ -162,9 +227,14 @@ export default function WalletsSheet() {
           <View style={styles.current}>
             <WalletAvatar wallet={active} profile={profile} size={64} />
             <TextSwap text={active.label} style={styles.name} />
-            <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
-              <Text style={styles.address}>{shortAddress(active.address, 8, 6)}</Text>
-              <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Addresses"
+              onPress={onAddresses}
+              hitSlop={6}
+              style={styles.addressRow}
+            >
+              {activeChains}
             </Pressable>
           </View>
 
@@ -184,12 +254,9 @@ export default function WalletsSheet() {
         wallets.filter((w) => w.kind === 'wallet'),
       )}
 
-      <SheetSection title="Multisig wallets" />
+      <SheetSection title="Shared wallets" />
       {/* {wallets.filter((w) => w.kind === 'multisig').map(row)} */}
-      {group(
-        'multisig',
-        wallets.filter((w) => w.kind === 'multisig'),
-      )}
+      {group('multisig', sharedRows)}
       <SheetRow
         leading={
           <View style={styles.iconCircle}>
@@ -286,6 +353,7 @@ function WalletAvatar({
 
 function WalletRow({
   wallet,
+  deployments,
   waiting = 0,
   profile,
   active,
@@ -293,6 +361,8 @@ function WalletRow({
   onPress,
 }: {
   wallet: AddedWallet;
+  /** Shared wallets: the chains it's on (same members), this one first. */
+  deployments?: Deployment[];
   /** Shared wallets: proposals waiting for your approval. */
   waiting?: number;
   profile: Profile;
@@ -338,8 +408,23 @@ function WalletRow({
         </View>
       }
       title={wallet.label}
-      // Shorter beside a prefix, so every row stays on one line and the list evenly spaced.
-      subtitle={`${kind}${shortAddress(wallet.address, kind ? 4 : 8, kind ? 4 : 6)}`}
+      // Chains, as on Home: your wallet's address families; a shared wallet's networks.
+      subtitle={
+        (wallet.kind === 'wallet' && !wallet.watchOnly && !wallet.burner) || deployments?.length ? (
+          <ChainIcons
+            wallet={wallet}
+            deployments={deployments?.length ? deployments : undefined}
+            label={waiting ? `${waiting} waiting ·` : undefined}
+            size={16}
+            ring={c.sheet}
+            textStyle={styles.subtitleText}
+            compact
+          />
+        ) : (
+          // Shorter beside a prefix, so every row stays on one line and the list evenly spaced.
+          `${kind}${shortAddress(wallet.address, kind ? 4 : 8, kind ? 4 : 6)}`
+        )
+      }
       value={loading ? undefined : formatUsd(usd)}
       accessory={
         <View style={styles.accessory}>
@@ -448,6 +533,9 @@ const useStyles = makeStyles((c) => ({
     backgroundColor: c.raised,
     borderWidth: 2,
     borderColor: c.sheet,
+  },
+  subtitleText: {
+    fontSize: 14,
   },
   // The faces in "+N more", overlapped, as wide as a wallet's avatar.
   moreFaces: {

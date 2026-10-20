@@ -19,6 +19,7 @@ export const TOKENS: Token[] = [
   { symbol: 'ETH', name: 'Ethereum', amount: 0.0042, usd: 10.54, change: -5.8 },
   { symbol: 'BTC', name: 'Bitcoin', amount: 0.00012, usd: 7.82, change: 1.24 },
   { symbol: 'SOL', name: 'Solana', amount: 0.031, usd: 4.61, change: -2.1 },
+  { symbol: 'NEAR', name: 'NEAR', amount: 1.2, usd: 3.02, change: 1.6 },
   { symbol: 'USDC', name: 'USD Coin', amount: 7.08, usd: 7.08, change: 0.01 },
   { symbol: 'TRX', name: 'Tron', amount: 9.8, usd: 2.35, change: 0.42 },
   { symbol: 'XRP', name: 'XRP', amount: 0.9, usd: 0.31, change: -0.8 },
@@ -44,7 +45,7 @@ const visible = TOKENS.filter((t) => !t.hidden);
 export const BALANCE = visible.reduce((sum, t) => sum + t.usd, 0);
 export const BALANCE_CHANGE = visible.reduce((sum, t) => sum + (t.usd * t.change) / 100, 0);
 
-export type Chain = 'Bitcoin' | 'Ethereum' | 'Base' | 'Solana' | 'Tron' | 'XRP Ledger';
+export type Chain = 'Bitcoin' | 'Ethereum' | 'Base' | 'Solana' | 'NEAR' | 'Tron' | 'XRP Ledger';
 
 /** The chains Honey supports, each shown with its native token's logo. */
 export const CHAINS: { name: Chain; symbol: string }[] = [
@@ -52,6 +53,7 @@ export const CHAINS: { name: Chain; symbol: string }[] = [
   { name: 'Ethereum', symbol: 'ETH' },
   { name: 'Base', symbol: 'BASE' },
   { name: 'Solana', symbol: 'SOL' },
+  { name: 'NEAR', symbol: 'NEAR' },
   // review: Tron and the XRP Ledger aren't supported for now (receive.ts ORDER).
   // { name: 'Tron', symbol: 'TRX' },
   // { name: 'XRP Ledger', symbol: 'XRP' },
@@ -115,6 +117,15 @@ export const MARKET: MarketToken[] = [
     change: -2.1,
     volume: 512.4e6,
     marketCap: 71e9,
+  },
+  {
+    symbol: 'NEAR',
+    name: 'NEAR',
+    chain: 'NEAR',
+    price: 2.52,
+    change: 1.6,
+    volume: 182.3e6,
+    marketCap: 3.1e9,
   },
   {
     symbol: 'XRP',
@@ -187,6 +198,15 @@ export function otherWallets(name: string): Wallet[] {
       label: 'Team Treasury',
       address: '0xABCe91F0c3B7a2D8e4f6A1b5C9d3E7f2a8B6c41d',
       usd: 1420.06,
+      threshold: [3, 5],
+    },
+    {
+      // Team Treasury's Safe on Base: same members, its own address.
+      id: 'team-base',
+      kind: 'multisig',
+      label: 'Team Treasury',
+      address: '0x7E2b5c9A1d3F8e0B4a6C2d7E9f1A3b5C8d0e2F4a',
+      usd: 310,
       threshold: [3, 5],
     },
   ];
@@ -430,6 +450,17 @@ export const TOKEN_INFO: Record<string, TokenInfo> = {
     holdings: [{ chain: 'Solana', amount: 0.031, usd: 4.61 }],
     performance: { averageCost: 162.1, unrealized: -0.42, realized: 0.31 },
   },
+  NEAR: {
+    about:
+      'NEAR is a sharded proof-of-stake blockchain with human-readable account names like alice.near. NEAR pays for transactions and account storage.',
+    website: 'https://near.org',
+    explorer: { label: 'NearBlocks', url: 'https://nearblocks.io' },
+    fdv: 3.2e9,
+    high52: 8.2,
+    low52: 1.8,
+    holdings: [{ chain: 'NEAR', amount: 1.2, usd: 3.02 }],
+    performance: { averageCost: 2.4, unrealized: 0.14, realized: 0 },
+  },
   USDC: {
     about:
       'USD Coin is a fully reserved stablecoin issued by Circle. Each USDC is backed one-to-one by cash and short-term US government bonds.',
@@ -475,6 +506,7 @@ const CHAIN_SYMBOLS: Record<Chain, string> = {
   Ethereum: 'ETH',
   Base: 'BASE',
   Solana: 'SOL',
+  NEAR: 'NEAR',
   Tron: 'TRX',
   'XRP Ledger': 'XRP',
 };
@@ -647,8 +679,3 @@ export const RECENT_RECIPIENTS: Recipient[] = [
   { id: 'r5', address: '0xcDaE90f2B7a1c8E4d3F6b0A5e9C2d7B1f8A31c47' },
   { id: 'r6', address: '0xd4c3a8E1f6B2c9D0e7A5b3F1c8E2d6A9b0F4B16e' },
 ];
-
-/** The user's Honey handle, shown when they tap their name, e.g. "honey.honey". */
-export function handleFor(name: string) {
-  return `${name.trim().toLowerCase().replace(/\s+/g, '')}.honey`;
-}

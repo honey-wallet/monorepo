@@ -395,29 +395,10 @@ impl Config {
                 name: "TRUST_PROXY_HEADERS/TRUSTED_PROXY_CIDRS",
             });
         }
-        if self.across_execution_config_file.is_some()
-            && (self.database_url.is_none()
-                || self.redis_url.is_none()
-                || !self.host.is_loopback()
-                || self.auth.as_ref().is_none_or(|a| a.chain_id != 31337))
-        {
+        // Retired provider settings fail visibly rather than silently enabling legacy execution.
+        if self.across_execution_config_file.is_some() || self.across_quote_config_file.is_some() {
             return Err(ConfigError::Invalid {
-                name: "ACROSS_EXECUTION_CONFIG_FILE",
-            });
-        }
-        if self.across_execution_config_file.is_some()
-            && (self.bridge_status_config_file.is_some()
-                || self.max_request_body_bytes < 192 * 1024)
-        {
-            return Err(ConfigError::Invalid {
-                name: "ACROSS_EXECUTION_CONFIG_FILE",
-            });
-        }
-        if self.across_quote_config_file.is_some()
-            && (self.database_url.is_none() || self.redis_url.is_none() || self.auth.is_none())
-        {
-            return Err(ConfigError::Invalid {
-                name: "ACROSS_QUOTE_CONFIG_FILE",
+                name: "Across is retired; use NEAR_INTENTS_API_KEY for previews",
             });
         }
         if self.bridge_status_config_file.is_some()
@@ -840,26 +821,14 @@ mod tests {
     }
 
     #[test]
-    fn across_quotes_require_authenticated_owner_and_shared_dependencies() {
-        let base = Config {
-            across_quote_config_file: Some("quotes.json".into()),
-            database_url: Some(SecretUrl::new("postgres://localhost/test".into())),
-            redis_url: Some(SecretUrl::new("redis://localhost".into())),
-            auth: Some(AuthConfig {
-                origin: "http://localhost:5173".into(),
-                additional_origins: vec![],
-                chain_id: 1,
-            }),
-            ..Config::default()
-        };
-        assert!(base.validate().is_ok());
-        for missing in 0..3 {
-            let mut config = base.clone();
-            match missing {
-                0 => config.database_url = None,
-                1 => config.redis_url = None,
-                _ => config.auth = None,
-            };
+    fn retired_across_configuration_is_rejected() {
+        for execution in [false, true] {
+            let mut config = Config::default();
+            if execution {
+                config.across_execution_config_file = Some("retired.json".into());
+            } else {
+                config.across_quote_config_file = Some("retired.json".into());
+            }
             assert!(config.validate().is_err());
         }
     }

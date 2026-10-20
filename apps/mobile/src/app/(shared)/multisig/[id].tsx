@@ -106,7 +106,9 @@ export default function MultisigScreen() {
           </View>
         </View>
         <PressableScale onPress={copy} scaleTo={0.98} style={styles.address}>
-          <Text style={styles.addressText}>{shortAddress(wallet.address, 8, 6)}</Text>
+          <Text style={styles.addressText}>
+            {shortAddress(wallet.address, 8, 6)} · only on {multisig.network.name}
+          </Text>
           <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
         </PressableScale>
       </View>

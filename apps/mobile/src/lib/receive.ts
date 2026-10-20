@@ -28,7 +28,8 @@ const FAMILIES: Record<ChainFamily, Omit<ReceiveAddress, 'family' | 'address' | 
 // const ORDER: ChainFamily[] = ['evm', 'bitcoin', 'solana', 'tron', 'xrp'];
 // Tron is out for now (review): EVM, Solana and Bitcoin only.
 // const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin', 'tron'];
-const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin'];
+// NEAR: phrase wallets derive an implicit account (docs/NEAR.md); watched/imported-key wallets don't.
+const ORDER: ChainFamily[] = ['evm', 'solana', 'bitcoin', 'near'];
 
 /** Networks the one EVM address works on, shown as logos. */
 export const EVM_LOGOS = [
@@ -44,7 +45,7 @@ export const EVM_LOGOS = [
   'SCROLL',
 ];
 
-// BIP-21, EIP-681 and Solana Pay prefixes; Tron and XRP wallets scan the bare address.
+// BIP-21, EIP-681 and Solana Pay prefixes; NEAR, Tron and XRP wallets scan the bare address.
 const uriFor = (family: ChainFamily, address: string) =>
   family === 'evm'
     ? `ethereum:${address}`

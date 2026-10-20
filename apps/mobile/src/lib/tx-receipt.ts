@@ -8,6 +8,7 @@ const EXPLORERS: Record<Chain, { name: string; tx: (hash: string) => string }> =
   Ethereum: { name: 'Etherscan', tx: (h) => `https://etherscan.io/tx/${h}` },
   Base: { name: 'Basescan', tx: (h) => `https://basescan.org/tx/${h}` },
   Solana: { name: 'Solscan', tx: (h) => `https://solscan.io/tx/${h}` },
+  NEAR: { name: 'NearBlocks', tx: (h) => `https://nearblocks.io/txns/${h}` },
   Bitcoin: { name: 'mempool.space', tx: (h) => `https://mempool.space/tx/${h}` },
   Tron: { name: 'Tronscan', tx: (h) => `https://tronscan.org/#/transaction/${h}` },
   'XRP Ledger': { name: 'XRPScan', tx: (h) => `https://xrpscan.com/tx/${h}` },

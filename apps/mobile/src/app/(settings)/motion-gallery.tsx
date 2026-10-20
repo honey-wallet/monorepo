@@ -192,7 +192,7 @@ function SpinningDemo() {
 
 function TextSwapDemo() {
   const styles = useStyles();
-  const text = pick(['Sending…', 'Sent to Honey.honey'], useTick(1600));
+  const text = pick(['Sending…', 'Sent to 0x8f3a…c21e'], useTick(1600));
   return (
     <Demo title="Text swap">
       <TextSwap text={text} style={styles.body} />
@@ -677,7 +677,7 @@ function TiltDemo() {
     <Demo title="Tilt" hint="Drag">
       <TiltCard radius={20}>
         <View style={styles.tilt}>
-          <Text style={styles.title}>Honey.honey</Text>
+          <Text style={styles.title}>Honey</Text>
           <Text style={styles.dimSmall}>Drag across the card</Text>
         </View>
       </TiltCard>

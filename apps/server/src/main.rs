@@ -130,9 +130,6 @@ async fn main() -> anyhow::Result<()> {
         if let Some(bridges) = infrastructure.bridges() {
             background.push(bridges.clone().start(health.clone()));
         }
-        if let Some(across) = infrastructure.across_execution() {
-            background.push(across.clone().start(health.clone()).await);
-        }
         if let Some(uniswap) = infrastructure.uniswap() {
             background.push(uniswap.clone().start(health.clone()));
         }

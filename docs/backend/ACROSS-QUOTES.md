@@ -1,5 +1,8 @@
 # Across direct bridge quote boundary
 
+> Retired 2026-10-21: Across is no longer mounted or started in the active server.
+> This document preserves historical evidence. See [NEAR-INTENTS.md](NEAR-INTENTS.md) for its replacement.
+
 Date: 2026-10-18. Decisions D87–D88. This documents authenticated quote reads
 and a deliberately local-fork-only execution slice. Live-provider acceptance,
 public-network execution, refunds and builder revenue remain disabled.

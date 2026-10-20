@@ -19,7 +19,7 @@ import { DISTANCE, DURATION, EASE } from '@/theme/motion';
 
 const PREVIEW = [
   { title: 'Maya wants to send 50 USDC', body: 'Family · needs your approval' },
-  { title: 'You received USDC', body: 'Received 100 USDC from swayam.honey' },
+  { title: 'You received USDC', body: 'Received 100 USDC from 0x8f3a…c21e' },
   { title: 'ETH is up 5.6%', body: 'Ethereum (ETH) is up to $3,249.55' },
   { title: 'Your Honey Jar hit 50%', body: 'Halfway to your "Summer trip" goal' },
 ];

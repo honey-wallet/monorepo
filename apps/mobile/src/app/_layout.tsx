@@ -149,6 +149,7 @@ export default function RootLayout() {
             <Stack.Screen name="(savings)/earn/[symbol]" options={tray()} />
             <Stack.Screen name="(savings)/savings-add" options={sheet([1])} />
             <Stack.Screen name="(money)/receive" options={tray()} />
+            <Stack.Screen name="(money)/addresses" options={tray()} />
             <Stack.Screen name="(money)/my-qr" options={tray()} />
             <Stack.Screen name="(money)/networks" options={tray()} />
             <Stack.Screen name="(money)/send" options={tray()} />

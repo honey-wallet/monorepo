@@ -5,6 +5,7 @@ pub mod chains;
 pub mod health;
 pub mod identity;
 pub mod monitoring;
+pub mod near_intents;
 pub mod operations;
 pub mod pairing;
 pub mod prices;
@@ -12,6 +13,7 @@ pub mod relay;
 pub mod relay_quotes;
 pub mod session_signatures;
 pub mod v1;
+pub mod waitlist;
 
 pub mod earn;
 

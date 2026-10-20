@@ -1,12 +1,11 @@
 import { type Href, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
   interpolateColor,
-  Keyframe,
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -28,7 +27,7 @@ import { Icon, type IconName } from '@/components/Icon';
 import { HoneyJar } from '@/components/logo/HoneyJar';
 import { Accordion, AccordionChevron } from '@/components/motion/Accordion';
 import { ContentSwap } from '@/components/motion/ContentSwap';
-import { IconSwap, Swap } from '@/components/motion/IconSwap';
+import { Swap } from '@/components/motion/IconSwap';
 import { PressableRow } from '@/components/motion/PressableRow';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { Entrance, Rise } from '@/components/motion/Rise';
@@ -41,8 +40,8 @@ import {
 } from '@/components/motion/Skeleton';
 import { Sticky, StickyArea } from '@/components/motion/Sticky';
 import { SwipeDismiss } from '@/components/motion/SwipeDismiss';
-import { TextSwap } from '@/components/motion/TextSwap';
 import { UnderlineTabs } from '@/components/motion/UnderlineTabs';
+import { ChainIcons } from '@/components/wallet/ChainIcons';
 import { HeaderShortcut } from '@/components/wallet/HeaderShortcut';
 import {
   BalanceAmount,
@@ -58,18 +57,18 @@ import { SHOW_DEMO_LABELS } from '@/lib/demo-money-copy';
 // import { expandView, inPopup } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { LOADS } from '@/lib/loads';
-import { BALANCE_HISTORY, EARN, formatUsd, handleFor, shortAddress } from '@/lib/mock-wallet';
-import { useMultisig, useNeedsMyApproval } from '@/lib/multisig';
+import { BALANCE_HISTORY, EARN, formatUsd } from '@/lib/mock-wallet';
+import { useMultisig, useMultisigDeployments, useNeedsMyApproval } from '@/lib/multisig';
 import { useUnreadNotifications } from '@/lib/notifications';
 import { setupComplete, useOnboarding } from '@/lib/onboarding';
 import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
+import { receiveAddresses } from '@/lib/receive';
 import { HIDDEN_AMOUNT, updateSettings, useSettings } from '@/lib/settings';
 import { useTabReselect } from '@/lib/tab-reselect';
 import { useWalletView } from '@/lib/wallet-view';
 import { isMainWallet, useActiveWallet } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
-import { DURATION, EASE, LAYOUT_MOVE, lazy } from '@/theme/motion';
 
 const ACTIONS: { label: string; icon: IconName; href: Href }[] = [
   { label: 'Send', icon: 'send', href: '/send' },
@@ -109,7 +108,17 @@ export default function HomeScreen() {
   const loading = useFirstLoad(LOADS.balances(wallet.id));
   // The bell also lights up while a shared wallet is waiting for your approval.
   const needsMe = useNeedsMyApproval();
-  const { copied, copy: copyAddress } = useCopy(wallet.address, 'Address copied');
+  // The chains this wallet has addresses on, as icons under its name: one copies
+  // straight away; several open Copy address to pick which.
+  const addresses = receiveAddresses(wallet);
+  const { copy: copyAddress } = useCopy(addresses[0]?.address ?? wallet.address, 'Address copied');
+  // A shared wallet lives on one chain with its own address there; the same members on
+  // other chains are one wallet with several deployments, so Copy address lists them.
+  const deployments = useMultisigDeployments(wallet.id);
+  const onAddresses = () =>
+    (multisig ? deployments.length > 1 : addresses.length > 1)
+      ? open('/addresses' as Href)
+      : void copyAddress();
 
   // The wallet in use: a shared wallet shows its own balances.
   const view = useWalletView();
@@ -513,10 +522,9 @@ export default function HomeScreen() {
                 </PressableScale>
                 <View style={styles.flex}>
                   <View style={styles.nameRow}>
-                    <HandleName
-                      name={wallet.label}
-                      handle={isMain ? handleFor(profile.name) : undefined}
-                    />
+                    <Text style={[styles.name, styles.nameText]} numberOfLines={1}>
+                      {wallet.label}
+                    </Text>
                     <PressableScale
                       accessibilityLabel="Switch wallet"
                       hitSlop={10}
@@ -530,14 +538,20 @@ export default function HomeScreen() {
                         takes its place, so the total is never out of sight. */}
                   <View>
                     <Animated.View style={addressShown}>
-                      <Pressable onPress={copyAddress} hitSlop={6} style={styles.addressRow}>
-                        <TextSwap text={shortAddress(wallet.address)} style={styles.address} />
-                        <IconSwap
-                          name={copied ? 'check' : 'copy'}
-                          size={13}
-                          color={c.textSecondary}
+                      <PressableScale
+                        accessibilityRole="button"
+                        accessibilityLabel="Addresses"
+                        hitSlop={6}
+                        scaleTo={0.97}
+                        onPress={onAddresses}
+                        style={styles.addressRow}
+                      >
+                        <ChainIcons
+                          wallet={multisig ? undefined : wallet}
+                          deployments={multisig ? deployments : undefined}
+                          ring={c.canvas}
                         />
-                      </Pressable>
+                      </PressableScale>
                     </Animated.View>
                     <Animated.Text
                       pointerEvents="none"
@@ -590,63 +604,6 @@ const TABS_ROW = 52;
  * big balance passes under the pinned row. */
 const SWAP_FROM = 30;
 const SWAP_TO = 70;
-
-const handleIn = lazy(() =>
-  new Keyframe({
-    0: { opacity: 0, transform: [{ translateX: -6 }] },
-    100: { opacity: 1, transform: [{ translateX: 0 }], easing: EASE.smoothOut },
-  }).duration(DURATION.fast),
-);
-const handleOut = lazy(() =>
-  new Keyframe({
-    0: { opacity: 1 },
-    100: { opacity: 0, easing: EASE.smoothOut },
-  }).duration(DURATION.quick),
-);
-
-/**
- * The wallet name. Tapping it reveals the Honey handle suffix (like Uniswap's
- * ".uni.eth"): the suffix slides in while the row eases to its new width, then
- * tucks away again after a few seconds.
- */
-function HandleName({ name, handle }: { name: string; handle?: string }) {
-  const styles = useStyles();
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    if (!shown) return;
-    const timer = setTimeout(() => setShown(false), 4000);
-    return () => clearTimeout(timer);
-  }, [shown]);
-  const suffix = handle?.slice(name.trim().length) ?? '';
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={handle ? `${name}, show handle` : name}
-      disabled={!handle}
-      hitSlop={6}
-      onPress={() => {
-        tap();
-        setShown((v) => !v);
-      }}
-      style={styles.handlePress}
-    >
-      <Animated.View layout={LAYOUT_MOVE} style={styles.handleRow}>
-        <Text style={styles.name} numberOfLines={1}>
-          {name}
-        </Text>
-        {shown && suffix ? (
-          <Animated.Text
-            entering={handleIn()}
-            exiting={handleOut()}
-            style={[styles.name, styles.handle]}
-          >
-            {suffix}
-          </Animated.Text>
-        ) : null}
-      </Animated.View>
-    </Pressable>
-  );
-}
 
 const useStyles = makeStyles((c) => ({
   root: {
@@ -721,20 +678,13 @@ const useStyles = makeStyles((c) => ({
     fontSize: 17,
     fontWeight: '500',
   },
-  handlePress: {
+  nameText: {
     flexShrink: 1,
   },
-  handleRow: {
-    flexDirection: 'row',
-  },
-  handle: {
-    color: c.textSecondary,
-  },
   addressRow: {
-    marginTop: 2,
+    marginTop: 3,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
     alignSelf: 'flex-start',
   },
   address: {

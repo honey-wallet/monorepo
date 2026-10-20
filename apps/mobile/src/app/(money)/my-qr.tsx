@@ -15,7 +15,6 @@ import { QRCode } from '@/components/wallet/QRCode';
 import { useCopy } from '@/lib/copy';
 import { demoLabel } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
-import { handleFor } from '@/lib/mock-wallet';
 import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
 import { EVM_LOGOS, receiveAddresses } from '@/lib/receive';
@@ -28,7 +27,7 @@ const QR_SIZE = 240;
 /** Every EVM network Honey supports: one address works on all of them. */
 
 /**
- * Your receive QR code, after Uniswap's: handle, dotted code, full address. Opened
+ * Your receive QR code, after Uniswap's: name, dotted code, full address. Opened
  * from the scanner it offers "Scan a QR code" to switch back; from Receive it doesn't.
  */
 export default function MyQRSheet() {
@@ -85,18 +84,7 @@ export default function MyQRSheet() {
       <TextsReveal
         id="qr"
         align="center"
-        first={
-          isMain ? (
-            <Text style={styles.handle}>
-              {profile.name}
-              <Text style={styles.suffix}>
-                {handleFor(profile.name).slice(profile.name.trim().length)}
-              </Text>
-            </Text>
-          ) : (
-            <Text style={styles.handle}>{wallet.label}</Text>
-          )
-        }
+        first={<Text style={styles.handle}>{isMain ? profile.name : wallet.label}</Text>}
       />
       {/* Press and drag to tilt the code toward your finger; it rests flat to scan. */}
       <TiltCard style={styles.qr}>
@@ -178,9 +166,6 @@ const useStyles = makeStyles((c) => ({
     color: c.text,
     fontSize: 20,
     fontWeight: '500',
-  },
-  suffix: {
-    color: c.textSecondary,
   },
   qr: {
     marginTop: 24,

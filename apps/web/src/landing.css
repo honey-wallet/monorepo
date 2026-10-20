@@ -1,0 +1,301 @@
+:root {
+  --honey: #f5c451;
+  --honey-press: #e8b43a;
+  --on-honey: #1a1408;
+  --canvas: #ffffff;
+  --card: #f4f2ee;
+  --text: #131313;
+  --text-2: #5f5a52;
+  --line: #dcd7cd;
+  --error: #b42318;
+  --ok: #3d2d00;
+  --ok-bg: #fdf1cf;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --canvas: #131313;
+    --card: #1e1e1e;
+    --text: #f5f3ef;
+    --text-2: #a39e95;
+    --line: #34322e;
+    --error: #ff8a80;
+    --ok: #f5c451;
+    --ok-bg: #2a2416;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --canvas: #131313;
+  --card: #1e1e1e;
+  --text: #f5f3ef;
+  --text-2: #a39e95;
+  --line: #34322e;
+  --error: #ff8a80;
+  --ok: #f5c451;
+  --ok-bg: #2a2416;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--canvas);
+}
+
+.landing {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  color: var(--text);
+  background: var(--canvas);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", ui-sans-serif, system-ui, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.landing-bar {
+  padding: 20px 16px;
+  max-width: 1120px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.landing-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.landing-hero {
+  flex: 1;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  /* Optical centre: a little above the middle of a 16:9 screen. */
+  padding: 48px 20px 12vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* The mark with the name beside it, set like the headline: tight, heavy, in the text colour. */
+.landing-lockup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 28px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--text);
+}
+
+.landing-mark {
+  /* The app's own vector mark, at its 400:350 shape. */
+  width: 32px;
+  height: 28px;
+}
+
+.landing-title {
+  margin: 0 auto;
+  /* The one focal point: large, tight and calm rather than heavy. */
+  font-size: clamp(34px, 6.4vw, 88px);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  font-weight: 700;
+  text-wrap: balance;
+  max-width: 13em;
+}
+
+.landing-sub {
+  margin: 18px 0 0;
+  max-width: 30em;
+  font-size: clamp(17px, 2.4vw, 20px);
+  line-height: 1.45;
+  color: var(--text-2);
+  text-wrap: pretty;
+}
+
+.landing-form {
+  width: 100%;
+  max-width: 460px;
+  margin-top: clamp(32px, 5vh, 48px);
+  text-align: left;
+}
+
+.landing-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.landing-row {
+  /* Field and button share one capsule, the way Apple pairs an input with its action. */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 60px;
+  padding: 6px 6px 6px 22px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.squircle {
+  border-radius: 16px;
+}
+
+@supports (corner-shape: squircle) {
+  .squircle {
+    corner-shape: squircle;
+    border-radius: 28px;
+  }
+}
+
+.landing-input,
+.landing-button {
+  font-family: inherit;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.landing-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  font-weight: 400;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  outline: none;
+}
+
+.landing-input::placeholder {
+  color: var(--text-2);
+  opacity: 0.8;
+}
+
+.landing-row:has([aria-invalid="true"]) {
+  border-color: var(--error);
+}
+
+.landing-row:focus-within {
+  border-color: color-mix(in srgb, var(--honey) 70%, var(--line));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--honey) 18%, transparent);
+}
+
+.landing-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--canvas),
+    0 0 0 5px var(--honey);
+}
+
+.landing-button {
+  flex: none;
+  height: 100%;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--on-honey);
+  background: var(--honey);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    transform 100ms ease;
+}
+
+.landing-button:hover:not(:disabled) {
+  background: var(--honey-press);
+}
+
+.landing-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* Closed until the backend is live: still honey, just quieter, never muddy. */
+.landing-button:disabled {
+  cursor: default;
+  color: color-mix(in srgb, var(--on-honey) 55%, var(--honey));
+}
+
+.landing-input:disabled {
+  cursor: default;
+}
+
+@media (max-width: 420px) {
+  .landing-row {
+    padding-left: 18px;
+  }
+  .landing-button {
+    padding: 0 16px;
+  }
+}
+
+.landing-note {
+  min-height: 1.4em;
+  margin: 10px 4px 0;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.landing-error {
+  color: var(--error);
+}
+
+.landing-joined {
+  margin: 36px 0 0;
+  padding: 16px 20px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 550;
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+@supports (corner-shape: squircle) {
+  .landing-joined {
+    corner-shape: squircle;
+    border-radius: 28px;
+  }
+}
+
+.landing-soon {
+  margin: 28px 0 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-input,
+  .landing-button {
+    transition: none;
+  }
+  .landing-button:active:not(:disabled) {
+    transform: none;
+  }
+}

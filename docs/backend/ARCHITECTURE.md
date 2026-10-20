@@ -1,10 +1,10 @@
 # Honey backend: architecture and delivery plan
 
-Across direct quote reads now have authenticated API/client integration, explicit
-operator asset IDs and exact Swap API attribution checks. A local-fork-only
-source-to-delivery lifecycle is now wired through review/sign, journaled dispatch
-and proof-gated settlement; public-network execution, provider acceptance and
-refund verification remain open. See [ACROSS-QUOTES.md](ACROSS-QUOTES.md), D87–D88.
+NEAR Intents replaces Across as a bridge provider alongside Relay. The active
+integration exposes authenticated token discovery and signed dry quote previews;
+deposit execution and settlement/refund reconciliation remain open. Across's old
+runtime routes and worker are removed; historical evidence and record readers are
+retained. See [NEAR-INTENTS.md](NEAR-INTENTS.md).
 
 Status: design for review; P0/P1 plus distributed Redis pairing, public price
 streams, initial native/extension sign-in, private metrics and sampled OTLP traces
@@ -57,19 +57,11 @@ admission with synthetic-provider/mock-RPC evidence ([UNISWAP-SERVICE.md](UNISWA
 Actual-contract V3 service preparation/dispatch/finality now pass with restart, fees,
 lost-acknowledgement and unfillable-minimum checks ([acceptance](UNISWAP-SERVICE-ACCEPTANCE.md), D82).
 Production acceptance and additional service route/fault scenarios remain unverified.
-Relay/Across advisory status readers, durable polling and owner-scoped web/native
-history are implemented with synthetic-provider evidence
-([BRIDGE-RECOVERY.md](BRIDGE-RECOVERY.md), D83–D84). They neither execute deposits
-nor verify settlement; no public bridge command can register a watch yet.
-Across direct-call validation and independent source/destination payment proof have
-actual Ethereum/Base two-fork acceptance ([ACROSS-EVIDENCE.md](ACROSS-EVIDENCE.md),
-D85–D86). A separate local 31337→31338 fixture mode now binds exact cached quotes,
-prepares and simulates user-signed source transactions, dispatches them through the
-durable journal, and marks an operation successful only after immutable finalized
-source and destination proofs are committed. Its isolated config, short quote window,
-fixture status transport, missing refund handling and absent live-provider acceptance
-keep it out of production.
-Production Uniswap activation, Relay/Across/Hyperliquid/Polymarket
+Historical Relay/Across status recovery and local Across proof infrastructure remain
+available as compatibility code for old records. Across is no longer an active
+quote/execution provider. NEAR Intents previews are a separate adapter and must
+never reinterpret those historical preparations.
+Production Uniswap activation, Relay/NEAR Intents/Hyperliquid/Polymarket
 execution, persistent-device authentication and production mixed-load capacity
 verification are also unfinished. The backend is not ready for production launch.
 Research date: 2026-10-17. Baseline commit: `297e0db` plus existing uncommitted work.
@@ -694,44 +686,20 @@ Acceptance: already-completed step; delayed source index; destination shortage;
 refund on supported route; wrong recipient; unsupported account; stale step;
 duplicate webhook/status observation; provider incident after source inclusion.
 
-### 11.4 Across: independent bridge adapter
+### 11.4 NEAR Intents: 1Click bridge adapter
 
-Current implementation: local-fork-only direct ERC20 quotes, immutable intent,
-source-chain approval/deposit simulation, client-signed transaction envelopes,
-journaled dispatch, origin-chain/deposit-ID status reads, exact source transaction
-binding and independently verified destination fill/refund evidence. Expiry never
-means funds returned. Actual-contract fork evidence and source-proof watch attachment
-are documented in [ACROSS-EVIDENCE.md](ACROSS-EVIDENCE.md); durable outcome handling
-is documented in [BRIDGE-RECOVERY.md](BRIDGE-RECOVERY.md). The provider adapter is
-explicitly local-only and does not constitute production route, credential, or
-capacity acceptance. The 30-second quote-cache TTL is kept separate from the
-simulation-derived signing-plan window (at most five minutes, capped by provider
-expiry, user deadline, and on-chain terms). Each unsent dispatch step re-simulates
-the remaining exact calls and checks the stored nonce and signed gas/fee ceilings;
-any drift fails closed. Unit, HTTP/idempotency, settlement and quote integration
-tests cover these boundaries. The full worker/signature path still needs an
-end-to-end local JSON-RPC fixture and production-route acceptance.
+Current implementation: authenticated token catalog and exact-input dry previews
+with server-bound refund wallet, source-chain/catalog validation, bounded transport,
+shared Redis admission and official 1Click quote signature verification. Client
+responses omit deposit addresses and transaction payloads. Execution stays disabled.
+See [NEAR-INTENTS.md](NEAR-INTENTS.md) for API, configuration and source-chain scope.
 
-Observed: current docs use `/swap/approval`, production API credentials/integrator
-identity, approval transactions, a main swap transaction and expiry. `appFee` is
-a decimal fraction, not basis points; recipient is on the destination chain.
-The docs prohibit caching executable quote responses.
-[Swap API](https://docs.across.to/introduction/swap-api)
-
-Honey decision: normalize Across separately from Relay; preserve its route IDs,
-expiry, refund address and origin/destination evidence. Do not convert a failed
-exact-output requirement into exact-input silently. Show any route-specific fill
-timing and refund conditions in the review. No shared quote cache or automatic
-retry that risks making two deposits.
-
-Acceptance: asset route unsupported; insufficient bridge liquidity; quote expires
-after approval; source succeeds/destination pending; refund observed; fee fraction
-conversion checked; wrong destination fee address; approval list validation.
-
-Open: Across credentials, quotas, supported routes and integrator ID. The current
-reference and overview differ in how they label some required parameters; pin the
-production OpenAPI schema and verify authenticated fixtures before launch.
-[API reference](https://docs.across.to/api-reference)
+Next: owner-bound non-dry quote persistence, deposit review/signing/submission,
+restart-safe status polling and independent destination/refund reconciliation.
+Accept partial/late deposits, quote expiry, memo requirements, provider outages and
+source-success/destination-pending recovery before enabling production transfers.
+Across's legacy migrations and evidence types are retained solely for old records;
+they are not a reusable NEAR Intents settlement contract.
 
 ### 11.5 Route comparison
 
@@ -1195,7 +1163,7 @@ of invented delivery estimates.
 | P3 | Canonical assets, portfolio/indexing, real activity and receipts | P1; chain/RPC choices | Chain fixtures, reorg tests, frontend read migration |
 | P4 | Shared prices/WebSockets and reconnect/resync | P2/P3; data agreements | 10k mixed-load test with bounded queues |
 | P5 | Uniswap exact-input swaps + operation UI | P1/P3; signer/API key/fee policy | Prepared intent → local sign → reconciled receipt |
-| P6 | Relay + Across bridge routes/refunds | P5; quotas/credentials | Source/destination/refund crash tests |
+| P6 | Relay + NEAR Intents bridge routes/refunds | P5; quotas/credentials | Source/destination/refund crash tests |
 | P7 | Morpho + Aave supply/withdraw | P3/P5; reviewed products | Liquidity/risk/share rounding tests; real position UI |
 | P8 | Hyperliquid perps/cancel/close + builder fee | P1/P4/P5; signer/private-stream plan | Order/fill/cancel/risk/revenue reconciliation |
 | P9 | Polymarket markets/orders/redemption + builder fee | P1/P4/P5; eligibility/provider agreement | Versioned signing, partial fills, settlement tests |
@@ -1215,7 +1183,7 @@ is enabled before authentication and durable reconciliation exist.
 | O3 | Launch countries and provider/legal eligibility | Trading disabled for unresolved eligibility |
 | O4 | Launch chains, assets, RPC/indexing providers | No assumed support from demo network labels |
 | O5 | Actual wallet contracts/spec/audits and signer compatibility | No smart-account/rotation execution claims |
-| O6 | Uniswap/Relay/Across credentials and quota agreements | Adapter fixtures only; execution unavailable |
+| O6 | Uniswap/Relay/NEAR Intents credentials and quota agreements | Adapter fixtures only; execution unavailable |
 | O7 | Morpho vault list, versions, risk owner; Aave deployments | No arbitrary vault selection by APY |
 | O8 | Hyperliquid private data delivery and master signer support | No promise of centralized private-stream scale |
 | O9 | Polymarket protocol/collateral/signature rollout and builder account | Versioned adapters remain disabled |

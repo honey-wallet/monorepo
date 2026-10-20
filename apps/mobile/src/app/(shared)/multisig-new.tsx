@@ -48,7 +48,7 @@ import { followFix, useFailure } from '@/lib/outcomes';
 import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { askForNotifications } from '@/lib/push';
-import { demoAddress, isEvmAddress, isHoneyHandle } from '@/lib/wallets';
+import { demoAddress, isEvmAddress } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
 
 type Page = 'name' | 'network' | 'members' | 'rule' | 'review' | 'done' | 'failed';
@@ -163,22 +163,19 @@ export default function NewMultisigSheet() {
   };
 
   const squads = protocolFor(network) === 'squads';
-  const entryValid =
-    isHoneyHandle(entry) || (squads ? isSolanaAddress(entry) : isEvmAddress(entry));
+  const entryValid = squads ? isSolanaAddress(entry) : isEvmAddress(entry);
   const addPerson = (value: string, label?: string) => {
     const v = value.trim();
-    if (members.some((m) => m.address === v || m.handle === v)) return;
+    if (members.some((m) => m.address === v)) return;
     tap();
-    const handle = isHoneyHandle(v) ? v.toLowerCase() : undefined;
-    const display = label ?? (handle ? handle.replace(/\.honey$/, '') : shortAddress(v));
+    const display = label ?? shortAddress(v);
     setMembers((list) => [
       ...list,
       {
         id: newMemberId(),
         name: display.charAt(0).toUpperCase() + display.slice(1),
         kind: 'person',
-        handle,
-        address: handle ? demoAddress() : v,
+        address: v,
       },
     ]);
     setEntry('');
@@ -303,7 +300,6 @@ export default function NewMultisigSheet() {
                     list.filter(
                       (m) =>
                         m.kind !== 'person' ||
-                        !!m.handle ||
                         (protocolFor(n) === 'squads'
                           ? isSolanaAddress(m.address)
                           : isEvmAddress(m.address)),
@@ -335,10 +331,9 @@ export default function NewMultisigSheet() {
                         <Text style={styles.memberSub}>
                           {m.kind === 'you'
                             ? 'A new key on this device, just for this wallet'
-                            : (m.handle ??
-                              (m.kind === 'person'
-                                ? shortAddress(m.address)
-                                : MEMBER_KIND_LABEL[m.kind]))}
+                            : m.kind === 'person'
+                              ? shortAddress(m.address)
+                              : MEMBER_KIND_LABEL[m.kind]}
                         </Text>
                       </View>
                       {m.kind === 'you' ? null : (
@@ -356,14 +351,12 @@ export default function NewMultisigSheet() {
                     </View>
                   ))}
 
-                  {/* People, by Honey handle or address */}
+                  {/* People, by address */}
                   <View style={[styles.field, styles.addField]}>
                     <TextInput
                       value={entry}
                       onChangeText={setEntry}
-                      placeholder={
-                        squads ? 'name.honey or Solana address' : 'name.honey or 0x address'
-                      }
+                      placeholder={squads ? 'Solana address' : '0x address'}
                       placeholderTextColor={c.placeholder}
                       autoCapitalize="none"
                       autoCorrect={false}

@@ -30,6 +30,4 @@ export const LOADS = {
   walletTotals: 'wallet-totals',
   /** Which wallets have smart wallet features on: read from each account on chain. */
   smartWallets: 'smart-wallets',
-  /** A name.honey handle resolving to its address. */
-  handle: (handle: string) => `handle:${handle.toLowerCase()}`,
 } as const;

@@ -1,11 +1,13 @@
 # Backend implementation and verification
 
-Across direct quote reads now have authenticated API/client integration and exact
-Swap API attribution checks; see [ACROSS-QUOTES.md](ACROSS-QUOTES.md), D87–D88.
-Provider credential acceptance and the complete signed bridge lifecycle remain open.
+NEAR Intents replaces Across in the active bridge API and provider roadmap.
+Authenticated token discovery and signed, dry exact-input quote previews are wired;
+production deposit execution and settlement/refund reconciliation remain open.
+See [NEAR-INTENTS.md](NEAR-INTENTS.md). Historical Across evidence below describes
+retired code retained for old operation records, not an available integration.
 
-Updated: 2026-10-19. This records foundation, Redis/prices/auth/observability,
-Earn and Uniswap local execution, and Relay/Across advisory status recovery.
+Updated: 2026-10-21. This records foundation, Redis/prices/auth/observability,
+Earn and Uniswap local execution, and bridge preview/recovery infrastructure.
 The full backend remains in progress. A local 10,000-socket experiment passed;
 production mixed-workload capacity remains unverified.
 
@@ -70,9 +72,9 @@ the newer wallet-membership model.
 - General provider/read-model caches and edge quotas beyond the implemented pairing/price scope.
 - Relay has an authenticated, wallet-bound quote preview with server-forced
   `indicativeQuote`, shared Redis pacing and a response projection that omits
-  executable item data; commit/reveal/submit remain unavailable. Across has
-  authenticated quote and gated execution/reconciliation slices, but public-network
-  release acceptance and complete refund/settlement evidence remain open. Hyperliquid
+  executable item data; commit/reveal/submit remain unavailable. NEAR Intents has authenticated catalog
+  reads and signature-verified dry quote previews; non-dry deposits, signing,
+  execution and complete refund/settlement reconciliation remain open. Hyperliquid
   exposes public prices and a SIWE-bound clearinghouse read only; order submission is
   unavailable. Polymarket market discovery is read-only; order placement, cancellation,
   redemption and builder fees are unavailable.
@@ -298,8 +300,9 @@ continuations add auth and worker changes):
    acceptance; add user-visible device revocation. Same-chain EOA wallet
    listing/linking is implemented under D104; cross-chain and smart-account linking
    remain out of scope.
-2. Implement Relay only behind confirmed provider semantics and durable ownership;
-   finish Across public-network settlement, refund and independent-signing acceptance.
+2. Complete NEAR Intents deposit execution, durable settlement/refund reconciliation
+   and independent signing acceptance; implement Relay behind confirmed provider
+   semantics and durable ownership. Across is retired.
 3. Add Hyperliquid perps and Polymarket trading only after signed-order, eligibility,
    builder-fee, custody and reconciliation contracts are verified; current feeds/catalog
    do not authorize execution.

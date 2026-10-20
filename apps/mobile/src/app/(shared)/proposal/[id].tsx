@@ -548,10 +548,7 @@ function ActionRows({ action, multisig }: { action: ProposalAction; multisig: Mu
     case 'addMember':
       return (
         <>
-          <StatRow
-            label="New member"
-            value={action.member.handle ?? shortAddress(action.member.address)}
-          />
+          <StatRow label="New member" value={shortAddress(action.member.address)} />
           <StatRow
             label="Approvals after"
             value={`${multisig.threshold} of ${multisig.members.length + 1}`}

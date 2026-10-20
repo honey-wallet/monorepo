@@ -4,12 +4,14 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
-const SYMBOLS = ['btc', 'eth', 'sol', 'trx', 'xrp', 'usdc', 'usdt', 'generic'];
+const SYMBOLS = ['btc', 'eth', 'sol', 'near', 'trx', 'xrp', 'usdc', 'usdt', 'generic'];
 
 // The pack predates some rebrands; these replace its logos with the current marks.
 const OVERRIDES = {
   // Solana's current mark: three bars with the purple → green gradient on a black disc.
   sol: `<defs><linearGradient id="sol-g" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9945FF"/><stop offset="1" stop-color="#14F195"/></linearGradient></defs><circle cx="16" cy="16" r="16" fill="#000"/><g fill="url(#sol-g)"><path d="M10.6 9.3h13.6l-2.8 3.2H7.8z"/><path d="M7.8 14.4h13.6l2.8 3.2H10.6z"/><path d="M10.6 19.5h13.6l-2.8 3.2H7.8z"/></g>`,
+  // Not in the pack: NEAR's mark, a white N with diagonal stroke on a black disc.
+  near: `<circle cx="16" cy="16" r="16" fill="#000"/><path fill="#FFF" d="M20.6 8.4l-3.3 4.9c-.2.3.2.7.5.4l3.3-2.8c.1-.1.2 0 .2.1v8.6c0 .1-.2.2-.3.1L11.3 8.8c-.3-.4-.8-.6-1.3-.6h-.3c-.9 0-1.6.7-1.6 1.6v12.4c0 .9.7 1.6 1.6 1.6.6 0 1.1-.3 1.4-.8l3.3-4.9c.2-.3-.2-.7-.5-.4l-3.3 2.8c-.1.1-.2 0-.2-.1v-8.6c0-.1.2-.2.3-.1l9.7 11.6c.3.4.8.6 1.3.6h.3c.9 0 1.6-.7 1.6-1.6V9.8c0-.9-.7-1.6-1.6-1.6-.6 0-1.1.3-1.4.8z"/>`,
 };
 
 const require = createRequire(import.meta.url);

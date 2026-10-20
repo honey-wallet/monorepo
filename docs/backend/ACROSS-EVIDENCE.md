@@ -1,5 +1,8 @@
 # Across deposit and delivery evidence
 
+> Retired 2026-10-21: Across is no longer mounted or started in the active server.
+> This document preserves historical evidence. See [NEAR-INTENTS.md](NEAR-INTENTS.md) for its replacement.
+
 Implemented and verified locally: 2026-10-18. Decisions D85–D86.
 
 The direct ERC20 contract boundary now has independent calldata validation,

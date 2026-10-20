@@ -23,3 +23,10 @@ export function useCopy(value: string, toast?: string) {
 
   return { copied, copy };
 }
+
+/** Copies `value` once with a toast, for rows that copy their own (they tap already). */
+export async function copyText(value: string, toast: string) {
+  if (!value) return;
+  await Clipboard.setStringAsync(value);
+  showToast(toast);
+}
