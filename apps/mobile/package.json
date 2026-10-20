@@ -20,7 +20,7 @@
     "@dicebear/styles": "^10.6.0",
     "@expo-google-fonts/comfortaa": "^0.4.2",
     "@expo/metro-runtime": "~57.0.17",
-    "@expo/ui": "~57.0.25",
+    "@expo/ui": "~58.0.20",
     "@honey-wallet/api-client": "workspace:*",
     "@honey-wallet/extension": "workspace:*",
     "@honey-wallet/keyring": "workspace:*",
