@@ -31,7 +31,7 @@
     "@walletconnect/core": "2.25.0",
     "@walletconnect/react-native-compat": "2.25.0",
     "@walletconnect/types": "2.25.0",
-    "@walletconnect/utils": "2.25.0",
+    "@walletconnect/utils": "2.26.0",
     "expo": "~57.0.30",
     "expo-alternate-app-icons": "^8.0.0",
     "expo-application": "~57.0.3",
