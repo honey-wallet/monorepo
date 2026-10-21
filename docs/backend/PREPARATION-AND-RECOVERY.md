@@ -47,7 +47,7 @@ and product migration policy is required before changing legacy behavior.
 The schema intentionally represents ordered EVM calls for a proven account on one
 chain. The provider discriminator can identify native transfers, Aave V3, Morpho
 Vault V2 or Uniswap. These are storage discriminators, **not implemented executable
-provider adapters**. Across/Relay destination/refund progress, Hyperliquid exchange
+provider adapters**. Bridge (NEAR Intents/Relay) destination/refund progress, Hyperliquid exchange
 actions, Polymarket orders/fills and non-EVM transactions need their own plan and
 reconciliation models. They are not forced into this call format.
 

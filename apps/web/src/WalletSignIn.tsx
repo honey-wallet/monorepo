@@ -5,7 +5,6 @@ import {
   type WalletProfile,
 } from '@honey-wallet/api-client';
 import { useEffect, useRef, useState } from 'react';
-import AcrossQuotes from './AcrossQuotes';
 import HyperliquidAccount from './HyperliquidAccount';
 import { api } from './lib/api';
 import OperationHistory from './OperationHistory';
@@ -273,13 +272,6 @@ export default function WalletSignIn() {
           {token.current ? (
             <SwapQuotes
               key={`quotes-${profile.wallet.id}`}
-              token={token.current}
-              profile={profile}
-            />
-          ) : null}
-          {token.current ? (
-            <AcrossQuotes
-              key={`across-${profile.wallet.id}`}
               token={token.current}
               profile={profile}
             />

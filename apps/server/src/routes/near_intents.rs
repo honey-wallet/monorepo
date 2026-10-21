@@ -93,31 +93,4 @@ mod tests {
             assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
         }
     }
-
-    #[tokio::test]
-    async fn retired_across_is_absent_from_product_router() {
-        let app = crate::build_router(&crate::Config::default());
-        for (method, path) in [
-            ("GET", "/api/v1/bridges/across/configuration"),
-            ("POST", "/api/v1/bridges/across/quote"),
-            ("POST", "/api/v1/bridges/across/operations"),
-            (
-                "GET",
-                "/api/v1/operations/00000000-0000-0000-0000-000000000000/across-signing-request",
-            ),
-        ] {
-            let response = app
-                .clone()
-                .oneshot(
-                    Request::builder()
-                        .method(method)
-                        .uri(path)
-                        .body(Body::empty())
-                        .unwrap(),
-                )
-                .await
-                .unwrap();
-            assert_eq!(response.status(), StatusCode::NOT_FOUND);
-        }
-    }
 }

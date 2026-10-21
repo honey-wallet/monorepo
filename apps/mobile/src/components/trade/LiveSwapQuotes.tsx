@@ -9,7 +9,6 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { PillButton } from '@/components/onboarding/PillButton';
-import { AcrossQuotes } from '@/components/trade/AcrossQuotes';
 import { SwapExecution } from '@/components/trade/SwapExecution';
 import { EmptyState } from '@/components/wallet/parts';
 import { api } from '@/lib/api';
@@ -20,12 +19,7 @@ import { makeStyles, radius } from '@/theme';
 /** Live quotes never enter the scripted demo review or acquire a wallet key. */
 export function LiveSwapQuotes() {
   const wallet = useActiveWallet();
-  return (
-    <View>
-      <WalletSwapQuotes key={wallet.id} />
-      <AcrossQuotes />
-    </View>
-  );
+  return <WalletSwapQuotes key={wallet.id} />;
 }
 function WalletSwapQuotes() {
   const styles = useStyles(),

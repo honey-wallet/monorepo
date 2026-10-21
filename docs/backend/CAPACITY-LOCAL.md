@@ -522,7 +522,7 @@ before allowing a pass.
 
 ### Provider quote admission
 
-Authenticated Uniswap, Across, Relay and Morpho quote requests use provider-scoped
+Authenticated Uniswap, Relay and Morpho quote requests use provider-scoped
 Redis fixed-window admission with one global and one wallet bucket evaluated
 atomically. Identity proof/session quotas and durable mutation limits continue to use
 PostgreSQL. Limits are policy values, not measured provider capacity; provider

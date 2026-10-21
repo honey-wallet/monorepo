@@ -251,7 +251,7 @@ function SwapForm() {
     setAmount(next);
   };
   const tooMuch = value > balance;
-  const route = bridging ? 'Across + Uniswap' : 'Uniswap';
+  const route = bridging ? 'NEAR Intents' : 'Uniswap';
   const networkCost = bridging ? '$1.20' : '$0.42';
   const [reviewing, setReviewing] = useState(false);
   // In the browser the quote's details fold into one line, so the button stays in view.

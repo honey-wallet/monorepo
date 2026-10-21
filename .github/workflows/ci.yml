@@ -66,7 +66,7 @@ jobs:
         run: |
           cargo test --locked \
             --test infrastructure --test durability --test preparations \
-            --test sealed_preparations --test swap_reviews --test across_quotes --test across_execution_http \
+            --test sealed_preparations --test swap_reviews \
             --test submissions --test redis_application --test price_stream \
             --test trace_export --test rpc_budget --test auth_cleanup --test recovery_auth \
             --test swap_quotes --test polymarket_catalog -- --ignored
@@ -76,10 +76,7 @@ jobs:
           cargo test --locked --lib providers::uniswap_execution::tests::persistence -- --ignored
           cargo test --locked --lib uniswap_service:: -- --ignored
           cargo test --locked --lib providers::bridge_status:: -- --ignored
-          cargo test --locked --lib providers::across_evidence:: -- --ignored
-          cargo test --locked --lib providers::across_quotes:: -- --ignored
           cargo test --locked --lib bridge_monitor:: -- --ignored
-          cargo test --locked --lib across_settlement:: -- --ignored
 
   telemetry:
     name: Telemetry configuration and alert rules

@@ -5,7 +5,7 @@ import { Icon } from '@/components/Icon';
 import { PressableScale } from '@/components/motion/PressableScale';
 import { Toggle } from '@/components/motion/Toggle';
 import { HeaderIconButton, PushedScreen, TokenIcon } from '@/components/wallet/parts';
-import { type BunkAccount, bunkMode, loadBunkAccounts } from '@/lib/bunk-mode';
+import { BUNK_LIVE, type BunkAccount, bunkMode, loadBunkAccounts } from '@/lib/bunk-mode';
 import { useCopy } from '@/lib/copy';
 import { SHOW_DEMO_LABELS } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
@@ -25,8 +25,8 @@ export default function BunkModeScreen() {
   const styles = useStyles();
   const c = useTheme();
   const { enabled: stored } = bunkMode.useValue();
-  // Outside test mode it can never be on, even if an old saved value says so.
-  const enabled = stored && TEST_MODE;
+  // Coming soon: off until Bunk is live, whatever an old saved value or test mode says.
+  const enabled = BUNK_LIVE && stored && TEST_MODE;
   const [accounts, setAccounts] = useState<BunkAccount[] | null>(null);
 
   useEffect(() => {
@@ -62,9 +62,16 @@ export default function BunkModeScreen() {
         </View>
         <View style={styles.flex}>
           <Text style={styles.heroTitle}>Bunk mode</Text>
-          <Text style={styles.sub}>A new key signs every transaction.</Text>
+          <Text style={styles.sub}>
+            {BUNK_LIVE ? 'A new key signs every transaction.' : 'Coming soon'}
+          </Text>
         </View>
-        <Toggle accessibilityLabel="Bunk mode" value={enabled} onValueChange={flip} />
+        <Toggle
+          accessibilityLabel={BUNK_LIVE ? 'Bunk mode' : 'Bunk mode, coming soon'}
+          value={enabled}
+          onValueChange={flip}
+          disabled={!BUNK_LIVE}
+        />
       </View>
       {TEST_MODE && SHOW_DEMO_LABELS ? (
         <Text style={styles.note}>Test mode: sample data</Text>

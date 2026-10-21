@@ -166,7 +166,7 @@ checks. Execution still requires these additional steps before activation:
    permit replay rejection, expiration, partial approval, revert, reorg and restart
    recovery. Production activation needs reviewed registry, quota and fee policy.
 
-Relay/Across bridges, Hyperliquid/Polymarket execution, persistent device sessions
+NEAR Intents bridging, Hyperliquid/Polymarket execution, persistent device sessions
 and full mixed-workload capacity remain separate unfinished roadmap work.
 
 Router compatibility correction: the pinned 2.1.2 configuration excludes zkSync

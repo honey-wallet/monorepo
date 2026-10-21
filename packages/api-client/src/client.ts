@@ -1,11 +1,4 @@
 import { isAaveExecutionConfiguration, isAaveIntentRecovery, isAaveSigningRequest } from './aave';
-import { isAcrossConfiguration, isAcrossQuote, isAcrossQuoteRequest } from './across';
-import {
-  isAcrossExecutionConfiguration,
-  isAcrossIntent,
-  isAcrossIntentRecovery,
-  isAcrossSigningRequest,
-} from './across-execution';
 import {
   isAuthConfiguration,
   isChallenge,
@@ -48,8 +41,6 @@ import {
 import { isSwapQuote, isSwapQuoteConfiguration, isSwapQuoteRequest } from './swaps';
 import type {
   AaveIntent,
-  AcrossIntent,
-  AcrossQuoteRequest,
   ApiErrorBody,
   Capabilities,
   Health,
@@ -437,86 +428,6 @@ export function createApiClient({ baseUrl, fetch: fetchImpl = fetch }: ApiClient
       if (value.operation.id !== id)
         throw new ApiError(200, 'invalid_response', 'Operation identity mismatch');
       return value;
-    },
-    acrossExecution: (init?: RequestInit) =>
-      validated('/api/v1/bridges/across/execution', isAcrossExecutionConfiguration, {
-        ...init,
-        cache: 'no-store',
-      }),
-    createAcrossOperation: async (
-      token: string,
-      key: string,
-      intent: AcrossIntent,
-      init?: RequestInit,
-    ) => {
-      if (!isAcrossIntent(intent)) throw new Error('Invalid Across bridge intent.');
-      const value = await validated(
-        '/api/v1/bridges/across/operations',
-        isOperationRecovery,
-        authorizedJson(token, intent, { ...init, cache: 'no-store' }, { 'Idempotency-Key': key }),
-      );
-      if (value.operation.action !== 'bridge')
-        throw new ApiError(200, 'invalid_response', 'Operation action mismatch');
-      return value;
-    },
-    acrossIntent: async (token: string, id: string, init?: RequestInit) => {
-      if (!OPERATION_ID.test(id)) throw new ApiError(400, 'bad_request', 'Invalid operation ID');
-      const value = await validated(
-        `/api/v1/operations/${id}/across-intent`,
-        isAcrossIntentRecovery,
-        authorized(token, { ...init, cache: 'no-store' }),
-      );
-      if (value.operationId !== id)
-        throw new ApiError(200, 'invalid_response', 'Operation identity mismatch');
-      return value;
-    },
-    acrossSigningRequest: async (token: string, id: string, init?: RequestInit) => {
-      if (!OPERATION_ID.test(id)) throw new ApiError(400, 'bad_request', 'Invalid operation ID');
-      const value = await validated(
-        `/api/v1/operations/${id}/across-signing-request`,
-        isAcrossSigningRequest,
-        authorized(token, { ...init, cache: 'no-store' }),
-      );
-      if (value.operationId !== id)
-        throw new ApiError(200, 'invalid_response', 'Operation identity mismatch');
-      return value;
-    },
-    submitAcross: async (
-      token: string,
-      id: string,
-      input: { expectedVersion: string; planHash: string; signedTransactions: string[] },
-      init?: RequestInit,
-    ) => {
-      if (!OPERATION_ID.test(id)) throw new ApiError(400, 'bad_request', 'Invalid operation ID');
-      const value = await validated(
-        `/api/v1/operations/${id}/across-signed`,
-        isOperationRecovery,
-        authorizedJson(token, input, { ...init, cache: 'no-store' }),
-      );
-      if (value.operation.id !== id || value.operation.action !== 'bridge')
-        throw new ApiError(200, 'invalid_response', 'Operation identity mismatch');
-      return value;
-    },
-    acrossConfiguration: (init?: RequestInit) =>
-      validated('/api/v1/bridges/across/configuration', isAcrossConfiguration, {
-        ...init,
-        cache: 'no-store',
-      }),
-    acrossQuote: async (token: string, input: AcrossQuoteRequest, init?: RequestInit) => {
-      if (!isAcrossQuoteRequest(input)) throw new Error('Invalid bridge quote request.');
-      const q = await validated(
-        '/api/v1/bridges/across/quote',
-        isAcrossQuote,
-        authorizedJson(token, input, { ...init, cache: 'no-store' }),
-      );
-      if (
-        q.routeId !== input.routeId ||
-        q.recipient !== input.recipient ||
-        q.inputAmountRaw !== input.amountRaw ||
-        BigInt(q.minimumOutputRaw) < BigInt(input.minimumOutputRaw)
-      )
-        throw new ApiError(200, 'invalid_response', 'Bridge quote does not match the request.');
-      return q;
     },
     swapConfiguration: (init?: RequestInit) =>
       validated('/api/v1/swaps/configuration', isSwapQuoteConfiguration, init),

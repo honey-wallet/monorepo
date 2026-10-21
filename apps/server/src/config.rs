@@ -41,8 +41,6 @@ pub struct Config {
     pub uniswap_quote_config_file: Option<String>,
     pub uniswap_execution_config_file: Option<String>,
     pub bridge_status_config_file: Option<String>,
-    pub across_quote_config_file: Option<String>,
-    pub across_execution_config_file: Option<String>,
     pub earn_read_targets: Vec<crate::earn_catalog::ReadProductConfig>,
     pub price_max_connections: usize,
     pub price_max_connections_per_ip: usize,
@@ -268,8 +266,6 @@ impl Default for Config {
             uniswap_quote_config_file: None,
             uniswap_execution_config_file: None,
             bridge_status_config_file: None,
-            across_quote_config_file: None,
-            across_execution_config_file: None,
             earn_read_targets: vec![],
             price_max_connections: 10_000,
             price_max_connections_per_ip: 64,
@@ -300,8 +296,6 @@ impl Config {
             uniswap_quote_config_file: env::var("UNISWAP_QUOTE_CONFIG_FILE").ok(),
             uniswap_execution_config_file: env::var("UNISWAP_EXECUTION_CONFIG_FILE").ok(),
             bridge_status_config_file: env::var("BRIDGE_STATUS_CONFIG_FILE").ok(),
-            across_quote_config_file: env::var("ACROSS_QUOTE_CONFIG_FILE").ok(),
-            across_execution_config_file: env::var("ACROSS_EXECUTION_CONFIG_FILE").ok(),
             host: parse_var("HOST")?.unwrap_or(defaults.host),
             port: parse_var("PORT")?.unwrap_or(defaults.port),
             cors_allowed_origins: match env::var("CORS_ALLOWED_ORIGINS") {
@@ -393,12 +387,6 @@ impl Config {
         {
             return Err(ConfigError::Invalid {
                 name: "TRUST_PROXY_HEADERS/TRUSTED_PROXY_CIDRS",
-            });
-        }
-        // Retired provider settings fail visibly rather than silently enabling legacy execution.
-        if self.across_execution_config_file.is_some() || self.across_quote_config_file.is_some() {
-            return Err(ConfigError::Invalid {
-                name: "Across is retired; use NEAR_INTENTS_API_KEY for previews",
             });
         }
         if self.bridge_status_config_file.is_some()
@@ -816,19 +804,6 @@ mod tests {
                 1 => config.redis_url = None,
                 _ => config.auth = None,
             };
-            assert!(config.validate().is_err());
-        }
-    }
-
-    #[test]
-    fn retired_across_configuration_is_rejected() {
-        for execution in [false, true] {
-            let mut config = Config::default();
-            if execution {
-                config.across_execution_config_file = Some("retired.json".into());
-            } else {
-                config.across_quote_config_file = Some("retired.json".into());
-            }
             assert!(config.validate().is_err());
         }
     }

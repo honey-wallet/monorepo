@@ -128,13 +128,11 @@ export function isOperationRecovery(v: unknown): v is OperationRecovery {
   const action =
     p.provider === 'native_transfer'
       ? 'transfer'
-      : p.provider === 'across'
-        ? 'bridge'
-        : p.provider === 'uniswap'
-          ? 'swap'
-          : p.provider === 'aave_v3' || p.provider === 'morpho_vault_v2'
-            ? 'earn'
-            : null;
+      : p.provider === 'uniswap'
+        ? 'swap'
+        : p.provider === 'aave_v3' || p.provider === 'morpho_vault_v2'
+          ? 'earn'
+          : null;
   return (
     action !== null &&
     action === o.action &&

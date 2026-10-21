@@ -19,7 +19,7 @@ not an assertion that the entire roadmap or 10k-user acceptance gate is complete
 | Actual browser wallet sign-in → protected profile → revocation flow | `apps/web/src/WalletSignIn.tsx` |
 | Database-backed race/failure tests in unique disposable databases | `apps/server/tests/durability.rs`, `tests/common/mod.rs` |
 
-No financial endpoint is enabled by authentication. Uniswap, Relay, Across,
+No financial endpoint is enabled by authentication. Uniswap, Relay, NEAR Intents,
 Morpho, Aave, Hyperliquid and Polymarket adapters still need their own account,
 signing, eligibility, fee, provider and reconciliation acceptance checks. Existing
 mobile/extension local vaults remain local; this change does not silently replace

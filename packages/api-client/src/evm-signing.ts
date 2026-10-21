@@ -14,12 +14,12 @@ export const time = (v: unknown): v is number =>
 const u64 = (1n << 64n) - 1n;
 const amount = (v: unknown) =>
   object(v) && address(v.assetAddress) && uint(v.amountRaw) && address(v.recipient);
-export function isEvmSigningRequest<P extends 'aave_v3' | 'morpho_vault_v2' | 'uniswap' | 'across'>(
+export function isEvmSigningRequest<P extends 'aave_v3' | 'morpho_vault_v2' | 'uniswap'>(
   v: unknown,
   provider: P,
 ): v is EvmSigningRequest<P> {
   if (
-    !['aave_v3', 'morpho_vault_v2', 'uniswap', 'across'].includes(provider) ||
+    !['aave_v3', 'morpho_vault_v2', 'uniswap'].includes(provider) ||
     !object(v) ||
     typeof v.operationId !== 'string' ||
     !OPERATION_ID.test(v.operationId) ||
@@ -47,9 +47,7 @@ export function isEvmSigningRequest<P extends 'aave_v3' | 'morpho_vault_v2' | 'u
     !hash(p.intentHash) ||
     !revision(p.registryRevision) ||
     !revision(p.feePolicyRevision) ||
-    !(['uniswap', 'across'].includes(provider)
-      ? revision(p.quoteReference)
-      : p.quoteReference === null) ||
+    !(provider === 'uniswap' ? revision(p.quoteReference) : p.quoteReference === null) ||
     !time(p.expiresAtMs) ||
     !uint(p.maximumNetworkFeeRaw) ||
     !amount(p.maximumSpend) ||
@@ -97,7 +95,7 @@ export function isEvmSigningRequest<P extends 'aave_v3' | 'morpho_vault_v2' | 'u
 }
 /** Exact type-2 transaction requests; caller still owns confirmation and cancellation. */
 export function evmTransactionRequests(
-  r: EvmSigningRequest<'aave_v3' | 'morpho_vault_v2' | 'uniswap' | 'across'>,
+  r: EvmSigningRequest<'aave_v3' | 'morpho_vault_v2' | 'uniswap'>,
 ) {
   if (
     !isEvmSigningRequest(r, r?.prepared?.plan?.provider) ||

@@ -13,8 +13,6 @@
 //! carry key material is a design bug.
 
 pub mod aave_service;
-pub mod across_service;
-pub mod across_settlement;
 pub mod bridge_monitor;
 pub mod chains;
 pub mod config;

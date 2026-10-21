@@ -8,10 +8,5 @@
     "infoVersion": "1.0.0",
     "pathsChecked": ["/intents/status/v3", "/quote/v2"]
   },
-  "across": {
-    "source": "https://docs.across.to/api-reference/deposit/status/get",
-    "machineReadableSchemaPinned": false,
-    "note": "Status reference inspected. Guessed docs.across.to/openapi.json returned HTTP 404; no authenticated response fixture."
-  },
   "scope": "Schema/documentation evidence only. Local tests use synthetic responses; no funds moved."
 }

@@ -312,7 +312,7 @@ describe('createApiClient', () => {
             available: true,
             scope: 'read_only',
             reason: 'quote_preview_only',
-            providers: ['relay', 'across'],
+            providers: ['relay', 'near_intents'],
           },
         ],
       }),

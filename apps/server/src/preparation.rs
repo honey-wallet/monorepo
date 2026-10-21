@@ -27,7 +27,6 @@ pub enum PreparationProvider {
     AaveV3,
     MorphoVaultV2,
     Uniswap,
-    Across,
 }
 impl PreparationProvider {
     fn action(self) -> Action {
@@ -35,7 +34,6 @@ impl PreparationProvider {
             Self::NativeTransfer => Action::Transfer,
             Self::AaveV3 | Self::MorphoVaultV2 => Action::Earn,
             Self::Uniswap => Action::Swap,
-            Self::Across => Action::Bridge,
         }
     }
 }
@@ -222,11 +220,7 @@ impl EvmPreparation {
             || !label(&self.registry_revision)
             || !label(&self.fee_policy_revision)
             || self.quote_reference.as_deref().is_some_and(|s| !label(s))
-            || (matches!(
-                self.provider,
-                PreparationProvider::Uniswap | PreparationProvider::Across
-            ) && self.quote_reference.is_none())
-            || (self.provider == PreparationProvider::Across && self.minimum_receive.is_some())
+            || (self.provider == PreparationProvider::Uniswap && self.quote_reference.is_none())
             || !uint(&self.maximum_network_fee_raw, UINT256_MAX)
             || !amount(&self.maximum_spend)
             || self.maximum_spend.amount_raw == "0"

@@ -7,16 +7,15 @@ const id = '00000000-0000-4000-8000-000000000001';
 const fixture = (): BridgeStatusRecovery => ({
   operationId: id,
   binding: {
-    provider: 'across',
-    providerReference: '7',
+    provider: 'relay',
+    providerReference: 'request-fixture',
     sourceChainId: '1',
     destinationChainId: '8453',
     refundChainId: '1',
     sourceTransactionHash: `0x${'11'.repeat(32)}`,
   },
-  verifiedDelivery: null,
   observation: {
-    provider: 'across',
+    provider: 'relay',
     reportedOutcome: 'fill_reported',
     sourceTransactionSeen: true,
     candidates: [
@@ -43,9 +42,6 @@ describe('bridge observation contract', () => {
     expect(isBridgeStatusRecovery(f)).toBe(true);
     f.stale = false;
     expect(isBridgeStatusRecovery(f)).toBe(false);
-    const missingProof = fixture();
-    Reflect.deleteProperty(missingProof, 'verifiedDelivery');
-    expect(isBridgeStatusRecovery(missingProof)).toBe(false);
   });
   it('rejects mismatched chains, non-advisory claims and malformed candidates', () => {
     for (const mutate of [
@@ -61,10 +57,13 @@ describe('bridge observation contract', () => {
         if (candidate) f.observation?.candidates.push({ ...candidate });
       },
       (f: ReturnType<typeof fixture>) => {
-        f.binding.providerReference = '07';
+        f.binding.providerReference = '../?secret';
       },
       (f: ReturnType<typeof fixture>) => {
         f.binding.sourceChainId = '8453';
+      },
+      (f: ReturnType<typeof fixture>) => {
+        f.binding.refundChainId = '8453';
       },
     ]) {
       const f = fixture();
@@ -98,42 +97,4 @@ describe('bridge observation contract', () => {
       code: 'invalid_response',
     });
   });
-});
-it('accepts verified destination anchors separately from stale provider hints and rejects substitution', () => {
-  const f = fixture();
-  const anchor = {
-    blockNumber: '100',
-    blockHash: `0x${'33'.repeat(32)}`,
-    finalizedNumber: '101',
-    finalizedHash: `0x${'44'.repeat(32)}`,
-  };
-  f.verifiedDelivery = {
-    evidenceVersion: '1',
-    operationVersion: '8',
-    sourceChainId: '1',
-    sourceTransactionHash: f.binding.sourceTransactionHash,
-    destinationChainId: '8453',
-    destinationTransactionHash: `0x${'22'.repeat(32)}`,
-    recipient: `0x${'55'.repeat(20)}`,
-    outputToken: `0x${'66'.repeat(20)}`,
-    deliveredAmountRaw: '990000',
-    source: anchor,
-    destination: anchor,
-    verifiedAtMs: 120000,
-  };
-  f.stale = true;
-  expect(isBridgeStatusRecovery(f)).toBe(true);
-  expect(bridgeStatusMessage(f)).toBe('Destination delivery verified.');
-  for (const change of [
-    { evidenceVersion: '2' },
-    { destinationChainId: '1' },
-    { sourceTransactionHash: `0x${'99'.repeat(32)}` },
-    { deliveredAmountRaw: '0' },
-    { deliveredAmountRaw: '01' },
-    { recipient: '0x0' },
-    { destination: { ...anchor, finalizedNumber: '99' } },
-  ])
-    expect(
-      isBridgeStatusRecovery({ ...f, verifiedDelivery: { ...f.verifiedDelivery, ...change } }),
-    ).toBe(false);
 });

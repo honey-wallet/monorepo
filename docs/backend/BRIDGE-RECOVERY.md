@@ -1,4 +1,4 @@
-# Relay and Across observation recovery
+# Relay bridge observation recovery
 
 Implemented and locally verified: 2026-10-18. Decisions D83–D84.
 
@@ -8,23 +8,17 @@ bridge quote, prepare a deposit, execute a bridge or prove delivery/refund.** No
 public command currently creates the signed bridge bundle required to register a
 watch. Fixtures exercise this internal handoff with relational metadata, not a
 valid signed financial preparation. No production bridge capability is enabled.
-Subsequent work adds an independent direct-ERC20 Across proof primitive with
-actual-contract fork evidence ([ACROSS-EVIDENCE.md](ACROSS-EVIDENCE.md), D85–D86).
-It strengthens Across watch registration; stored status responses remain advisory.
-Authenticated Across direct quote reads are now implemented separately in
-[ACROSS-QUOTES.md](ACROSS-QUOTES.md); they do not create signed bridge operations.
+Across was removed on 2026-10-21; bridging is NEAR Intents
+([NEAR-INTENTS.md](NEAR-INTENTS.md)). Status polling here is Relay only.
 
 ## Authority and contracts
 
 The immutable operation intent commits `bridgeTracking`: provider, source chain,
 destination chain and refund chain, plus Relay's request ID. A source transaction
 hash cannot exist before signing and is therefore bound later to the last entry
-of the persisted signed source bundle. Across's deposit ID likewise arrives
-later. New Across watches now require `attach_across` with a verified canonical
-source result and matching immutable `acrossDirectDeposit` terms. The original
-caller-supplied lookup-hint path is no longer accepted for new registrations.
+of the persisted signed source bundle.
 
-`BridgeMonitor::attach` (Relay) and `attach_across` require a bridge operation, matching immutable intent
+`BridgeMonitor::attach` accepts Relay only and requires a bridge operation, matching immutable intent
 terms and that operation's last signed transaction on the expected chain. It
 rejects an approval hash, missing bundle or changed binding. Registration is
 internal only; there is no endpoint for submitting arbitrary provider IDs. The
@@ -41,15 +35,11 @@ releases a nonce reservation, requests a signature or sends a transaction.
 | Provider | Fixed request | Binding checks | Normalized observation |
 | --- | --- | --- | --- |
 | Relay | `https://api.relay.link/intents/status/v3?requestId=…` | Expected source/destination chains and source hash; at most one input transaction; bounded unique EVM output hashes | Waiting/depositing/pending/submitted → pending; success → fill reported; refund with a candidate → refund reported; refund without candidate → refund pending; failure → recovery required |
-| Across | `https://app.across.to/api/deposit/status?originChainId=…&depositId=…&integratorId=…` | Exact deposit ID, chains and source hash; matching aliases; no multiple-deposit pagination or unsupported action/sweep fields | Received/pending → pending; filled → fill reported; expired → refund pending; refunded → refund reported |
 
-Terminal-looking reports require their corresponding candidate hashes. Across
-fill and refund candidates together are rejected as ambiguous. Unknown states,
-conflicting aliases, malformed/zero hashes and unexpected chains are rejected.
-HTTP 404 is `not_indexed`, not a failed transfer. Expiry does not prove funds
-returned. Relay refunds are currently restricted to the source chain; Across's
-refund chain comes from the immutable route policy. Only EVM-shaped identifiers
-are supported; this is not Solana, embedded-action or universal bridge support.
+Terminal-looking reports require their corresponding candidate hashes. Unknown
+states, malformed/zero hashes and unexpected chains are rejected. HTTP 404 is
+`not_indexed`, not a failed transfer. Relay refunds are currently restricted to
+the source chain. Only EVM-shaped identifiers are supported; this is not Solana, embedded-action or universal bridge support.
 
 Provider freeform reasons, details, payloads and URLs are neither copied into
 recovery responses nor logged. Requests use fixed origins and paths, with no
@@ -58,7 +48,8 @@ cannot choose a destination for another HTTP request.
 
 ## Durability, limits and recovery
 
-Migration `202610180010` adds `bridge_status_watches`. It stores the immutable
+Migration `202610180010` adds `bridge_status_watches`; `202610210002` narrows its
+provider to `relay`. It stores the immutable
 binding, source-transaction foreign key, next poll time, lease token/deadline,
 version, latest observation/digest and a fixed error code. Claiming uses
 `FOR UPDATE SKIP LOCKED`; completion requires the same token/version and an
@@ -114,23 +105,14 @@ Use a secret-managed, mode-0600 JSON file; never commit its populated contents.
     "apiKey": "REPLACE_WITH_SECRET",
     "accountScope": "relay-account-name",
     "intervalMs": 1000
-  },
-  "across": {
-    "account": {
-      "apiKey": "REPLACE_WITH_SECRET",
-      "accountScope": "across-account-name",
-      "intervalMs": 1000
-    },
-    "integratorId": "0xabcd"
   }
 }
 ```
 
-Either provider may be omitted; an empty file configuration is rejected. The
-example intervals and integrator ID are placeholders, not approved settings.
-Select spacing from the actual account agreement. Provider names prefix Redis
-budget scopes to avoid collisions. Relay credentials use `x-api-key`; Across uses
-a Bearer credential. Sensitive header values are marked for redaction. No endpoint
+An empty file configuration is rejected. The example interval is a placeholder,
+not an approved setting. Select spacing from the actual account agreement. The
+provider name prefixes Redis budget scopes to avoid collisions. Relay credentials
+use `x-api-key`. Sensitive header values are marked for redaction. No endpoint
 override is available in a production build; literal loopback overrides exist
 only under `cfg(test)`.
 
@@ -151,11 +133,7 @@ bridge settlement metrics remain future work.
 
 Relay's status contract is documented in its [v3 status reference](https://docs.relay.link/references/api/get-intents-status-v3)
 and machine-readable [API description](https://api.relay.link/documentation/json),
-retrieved during this work. Across status fields and aliases were checked against
-its [status reference](https://docs.across.to/api-reference/deposit/status/get).
-A guessed Across `/openapi.json` URL returned 404; no machine-readable Across
-schema has been pinned or authenticated response accepted.
-The observed Relay schema hash and evidence limits are recorded in
+retrieved during this work. The observed Relay schema hash and evidence limits are recorded in
 [contract evidence](evidence/bridge-status-contracts-2026-10-18.json).
 
 Relay's [refund guide](https://docs.relay.link/references/api/api_core_concepts/refunds)
@@ -172,15 +150,6 @@ announces a v3.2 router/ApprovalProxy migration for 2026-10-26 at 10 AM ET and a
 ABI request process. This requires versioned deployment review before enabling
 execution; legacy pins cannot silently authorize a replacement router.
 
-Across currently documents [swap/approval](https://docs.across.to/api-reference/swap/approval/get)
-for transaction construction. Quote, approval and swap payloads require independent
-decoding, exact finite allowances and economics checks. Explicit `refundOnOrigin`
-and `refundAddress` must be committed because refund behavior depends on route.
-Its [refund documentation](https://docs.across.to/introduction/refunds) separates
-expiry and subsequent recovery; these cannot be collapsed into one successful
-refund state. Credentials, integrator registration, quotas and live response
-fixtures remain external prerequisites, not values inferred from examples.
-
 The next execution milestones are:
 
 1. Approve a bounded chain/token/EOA route and deployment registry per provider;
@@ -193,9 +162,7 @@ The next execution milestones are:
 3. Simulate the ordered source sequence and reuse sealed preparations, device
    signing, nonce reservations, journaled dispatch and ambiguous-send recovery.
    Persist the monitor handoff without assuming a source receipt means delivery.
-4. Wire the direct Across source/fill proof into execution and durable outcomes;
-   implement Relay source/order proof, remaining Across route shapes and both
-   refund verifiers. Independently verify asset/recipient/amount under chain
+4. Implement Relay source/order proof and refund verification. Independently verify asset/recipient/amount under chain
    finality and reorg rules. Only persisted proofs may advance the end-to-end
    financial outcome and stop a watch.
 5. Exercise restart at every boundary, lost acknowledgements, delayed indexing,

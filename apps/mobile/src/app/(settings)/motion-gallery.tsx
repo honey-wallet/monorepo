@@ -288,7 +288,7 @@ function ReasoningDemo() {
           lines={[
             'Quoting 6 routes',
             'Best price via Uniswap',
-            'Bridging with Across',
+            'Bridging with NEAR Intents',
             'Simulating transaction',
             'No issues found',
           ]}

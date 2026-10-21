@@ -482,25 +482,6 @@ impl Metrics {
             })
             .observe(elapsed);
     }
-    pub fn across_quote(
-        &self,
-        error: Option<crate::providers::across_quotes::QuoteError>,
-        elapsed: f64,
-    ) {
-        self.providers
-            .get_or_create(&ProviderLabels {
-                provider: "across",
-                operation: "quote",
-                outcome: error.map_or("ok", |e| e.code()),
-            })
-            .inc();
-        self.provider_latency
-            .get_or_create(&ProviderOperationLabels {
-                provider: "across",
-                operation: "quote",
-            })
-            .observe(elapsed);
-    }
     pub fn evm_rpc(
         &self,
         method: &str,

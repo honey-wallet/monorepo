@@ -1,10 +1,9 @@
 # Honey backend: architecture and delivery plan
 
-NEAR Intents replaces Across as a bridge provider alongside Relay. The active
-integration exposes authenticated token discovery and signed dry quote previews;
-deposit execution and settlement/refund reconciliation remain open. Across's old
-runtime routes and worker are removed; historical evidence and record readers are
-retained. See [NEAR-INTENTS.md](NEAR-INTENTS.md).
+Bridging is NEAR Intents, with Relay for quote previews and advisory status. The
+active integration exposes authenticated token discovery and signed dry quote
+previews; deposit execution and settlement/refund reconciliation remain open. See
+[NEAR-INTENTS.md](NEAR-INTENTS.md).
 
 Status: design for review; P0/P1 plus distributed Redis pairing, public price
 streams, initial native/extension sign-in, private metrics and sampled OTLP traces
@@ -57,10 +56,8 @@ admission with synthetic-provider/mock-RPC evidence ([UNISWAP-SERVICE.md](UNISWA
 Actual-contract V3 service preparation/dispatch/finality now pass with restart, fees,
 lost-acknowledgement and unfillable-minimum checks ([acceptance](UNISWAP-SERVICE-ACCEPTANCE.md), D82).
 Production acceptance and additional service route/fault scenarios remain unverified.
-Historical Relay/Across status recovery and local Across proof infrastructure remain
-available as compatibility code for old records. Across is no longer an active
-quote/execution provider. NEAR Intents previews are a separate adapter and must
-never reinterpret those historical preparations.
+Relay status recovery remains advisory. Bridging is NEAR Intents
+([NEAR-INTENTS.md](NEAR-INTENTS.md)).
 Production Uniswap activation, Relay/NEAR Intents/Hyperliquid/Polymarket
 execution, persistent-device authentication and production mixed-load capacity
 verification are also unfinished. The backend is not ready for production launch.
@@ -698,8 +695,8 @@ Next: owner-bound non-dry quote persistence, deposit review/signing/submission,
 restart-safe status polling and independent destination/refund reconciliation.
 Accept partial/late deposits, quote expiry, memo requirements, provider outages and
 source-success/destination-pending recovery before enabling production transfers.
-Across's legacy migrations and evidence types are retained solely for old records;
-they are not a reusable NEAR Intents settlement contract.
+Migration `202610210002_remove_across.sql` keeps bridge success and poll stops
+blocked until a NEAR Intents verified-delivery writer exists.
 
 ### 11.5 Route comparison
 
@@ -858,7 +855,7 @@ vs additional status, estimated vs realized status and policy revision. Not all
 components are payable to Honey; do not add them all into revenue.
 
 Illustrative unit checks (test vectors, not pricing policy): 10 bps = 0.1%; a
-Hyperliquid field of 10 tenth-bps units = 1 bp; an Across fraction of 0.01 = 1%.
+Hyperliquid field of 10 tenth-bps units = 1 bp; a fraction of 0.01 = 1%.
 Use exact conversion helpers per adapter with overflow and range checks.
 
 Revenue lifecycle: quoted → execution/fill observed → accrued → claimable → paid,

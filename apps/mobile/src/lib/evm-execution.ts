@@ -7,7 +7,7 @@ import { wallets } from '@/lib/wallets';
 
 /** Shared key lifetime and session fencing; provider review remains independent. */
 export async function signReviewedEvm(
-  provider: 'Aave' | 'Morpho' | 'Uniswap' | 'Across',
+  provider: 'Aave' | 'Morpho' | 'Uniswap',
   identity: { signer: string; chainId: string },
   accountId: string,
   isCurrent: () => boolean,

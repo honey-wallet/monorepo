@@ -5,24 +5,6 @@ export {
   isAaveSigningRequest,
   validateAaveReview,
 } from './aave';
-export {
-  isAcrossConfiguration,
-  isAcrossQuote,
-  isAcrossQuoteRequest,
-  validateAcrossQuote,
-} from './across';
-export {
-  type AcrossReviewContext,
-  acrossTransactionRequests,
-  decodeAcrossDeposit,
-  isAcrossDepositTerms,
-  isAcrossExecutionConfiguration,
-  isAcrossIntent,
-  isAcrossIntentRecovery,
-  isAcrossReview,
-  isAcrossSigningRequest,
-  validateAcrossSigning,
-} from './across-execution';
 export { formatTokenAmount, parseTokenAmount } from './amounts';
 export { validateSignInChallenge, validateWalletLinkChallenge } from './authentication';
 export { bridgeStatusMessage, isBridgeStatusRecovery } from './bridge-status';

@@ -22,7 +22,6 @@ pub mod swaps;
 
 pub mod bridges;
 
-pub mod across;
 pub mod hyperliquid;
 pub mod polymarket;
 

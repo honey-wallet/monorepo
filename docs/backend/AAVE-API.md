@@ -188,7 +188,7 @@ shared quotas/cooldowns; key custody/rotation operations; balance/position/histo
 replacement/cancellation and residual-approval recovery; contract/delegated account
 support; final native/web/extension UX; production metrics/runbooks for execution;
 independent chain/finality monitoring; and mixed-workload 10k-user/N-1 capacity evidence.
-Aave integration does not complete Morpho, Uniswap, Relay, Across, Hyperliquid or Polymarket.
+Aave integration does not complete Morpho, Uniswap, Relay, NEAR Intents, Hyperliquid or Polymarket.
 
 References: [Aave Pool contract documentation](https://aave.com/docs/aave-v3/smart-contracts/pool),
 [Geth simulation semantics](https://geth.ethereum.org/docs/interacting-with-geth/rpc/ns-eth),

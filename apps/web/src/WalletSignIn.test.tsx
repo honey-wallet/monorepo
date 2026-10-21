@@ -53,7 +53,6 @@ describe('wallet sign-in vertical slice', () => {
     Object.defineProperty(window, 'ethereum', { value: wallet, configurable: true });
     vi.spyOn(api, 'operations').mockResolvedValue({ items: [], nextCursor: null });
     vi.spyOn(api, 'swapConfiguration').mockRejectedValue(new Error('not configured'));
-    vi.spyOn(api, 'acrossConfiguration').mockRejectedValue(new Error('not configured'));
     vi.spyOn(api, 'authConfiguration').mockResolvedValue({
       enabled: true,
       method: 'siwe_eoa',

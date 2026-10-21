@@ -23,10 +23,12 @@ type Props = {
   value: boolean;
   onValueChange: (value: boolean) => void;
   accessibilityLabel: string;
+  /** Shown but can't be flipped (a feature that isn't available yet). */
+  disabled?: boolean;
 };
 
 /** On/off switch with a honey track and a check in the thumb when on. */
-export function Toggle({ value, onValueChange, accessibilityLabel }: Props) {
+export function Toggle({ value, onValueChange, accessibilityLabel, disabled }: Props) {
   const styles = useStyles();
   const c = useTheme();
   const reduceMotion = useReducedMotion();
@@ -56,9 +58,11 @@ export function Toggle({ value, onValueChange, accessibilityLabel }: Props) {
     <Pressable
       accessibilityRole="switch"
       accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ checked: value }}
+      accessibilityState={{ checked: value, disabled }}
       hitSlop={8}
+      disabled={disabled}
       onPress={() => onValueChange(!value)}
+      style={disabled ? { opacity: 0.4 } : undefined}
     >
       <Animated.View style={[styles.track, trackStyle]}>
         <Animated.View style={[styles.thumb, thumbStyle]}>

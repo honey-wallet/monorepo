@@ -91,7 +91,6 @@ it('keeps a bridge provider fill separate from source finality and never claims 
       refundChainId: '1',
       sourceTransactionHash: `0x${'11'.repeat(32)}`,
     },
-    verifiedDelivery: null,
     observation: {
       provider: 'relay',
       reportedOutcome: 'fill_reported',

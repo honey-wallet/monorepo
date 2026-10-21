@@ -1,10 +1,8 @@
 # Backend implementation and verification
 
-NEAR Intents replaces Across in the active bridge API and provider roadmap.
-Authenticated token discovery and signed, dry exact-input quote previews are wired;
-production deposit execution and settlement/refund reconciliation remain open.
-See [NEAR-INTENTS.md](NEAR-INTENTS.md). Historical Across evidence below describes
-retired code retained for old operation records, not an available integration.
+Bridging is NEAR Intents. Authenticated token discovery and signed, dry
+exact-input quote previews are wired; production deposit execution and
+settlement/refund reconciliation remain open. See [NEAR-INTENTS.md](NEAR-INTENTS.md).
 
 Updated: 2026-10-21. This records foundation, Redis/prices/auth/observability,
 Earn and Uniswap local execution, and bridge preview/recovery infrastructure.
@@ -302,7 +300,7 @@ continuations add auth and worker changes):
    remain out of scope.
 2. Complete NEAR Intents deposit execution, durable settlement/refund reconciliation
    and independent signing acceptance; implement Relay behind confirmed provider
-   semantics and durable ownership. Across is retired.
+   semantics and durable ownership.
 3. Add Hyperliquid perps and Polymarket trading only after signed-order, eligibility,
    builder-fee, custody and reconciliation contracts are verified; current feeds/catalog
    do not authorize execution.
@@ -801,7 +799,7 @@ roadmap remain unfinished.
 
 Verification: all three actual-contract scenarios passed. `pnpm lint`, `pnpm typecheck`, `pnpm test` and `git diff --check` passed. The owned Anvil process was stopped; the disposable databases and exact leftover test quota policies were removed. No production transaction, deployment or commit was performed.
 
-## Relay/Across advisory recovery (2026-10-18)
+## Relay advisory recovery (2026-10-18)
 
 Fixed-origin provider readers validate status identity, chains, source hash and
 bounded candidate transactions. Redis admission/cooldowns, request/body deadlines,
@@ -815,8 +813,7 @@ source finality and destination/refund confirmation. D83–D84 and
 No public bridge command creates an attachable signed source bundle yet. Quote,
 deposit execution, source-event identity, verified destination/refund settlement,
 terminal-proof polling retirement and actual device/provider acceptance remain
-unfinished. Across deposit IDs are internal lookup hints until event verification
-exists. Tests seed relational metadata and synthetic provider replies; they do
+unfinished. Tests seed relational metadata and synthetic provider replies; they do
 not prove a valid signed bridge preparation or transfer. Runtime readiness now
 requires migration 10; only disposable test databases were migrated here.
 
@@ -827,34 +824,6 @@ and authenticated recovery); existing opt-in durability/preparation regressions
 passed (20). Shared-client and web suites include advisory status validation and
 source-success/destination-pending regression coverage. CI runs both opt-in bridge
 suites. No production credentials, funds, deployment, commit or base DB migration.
-
-## Across direct source/destination proof (2026-10-18)
-
-Independent validation now binds direct ERC20 deposit calldata to immutable terms,
-extracts the deposit ID from a pinned canonical source event, and verifies a
-candidate fill against both original and actual recipient/amount/message fields.
-Historical contract/token implementation checks, exact transfer events, finalized
-receipts and source rechecks after destination reads produce private proof types.
-New Across watches require source proof and matching operation terms, signer and
-last signed transaction. Generic caller-picked Across IDs no longer attach.
-
-The actual Ethereum/Base contract fork harness passed: 1,000,000 raw USDC deposited,
-990,000 delivered by a local relayer, finite source/relayer allowances consumed,
-unfinalized and changed-recipient cases rejected. Both snapshots were restored and
-owned fork processes stopped. This tests the contract/evidence boundary, not a
-provider quote, application execution worker, device flow or live relayer. The
-selected spread is a fixture term, not a verified provider or builder fee.
-
-Four evidence tests and four monitor tests pass, including cross-chain reorg and
-PostgreSQL source-proof handoff checks. Full `pnpm lint`, `pnpm typecheck` and
-`pnpm test` pass. CI includes the opt-in evidence suite. Details, reproducible
-commands, source hashes, actual runtime pins and limitations:
-[ACROSS-EVIDENCE.md](ACROSS-EVIDENCE.md), D85–D86.
-
-Public quote/prepare/sign/dispatch orchestration, periphery/fee callbacks, refunds,
-durable verified outcomes and production acceptance remain unfinished. History
-still labels provider observations as advisory. No new migration, dependency,
-production transaction, deployment or commit was introduced.
 
 ## Required worker supervision behavior
 
@@ -876,12 +845,11 @@ work.
 The full opt-in server test set was run with
 `TEST_DATABASE_URL=postgres://honey:honey_local_only@127.0.0.1:25439/honey` and
 `TEST_REDIS_URL=redis://127.0.0.1:26389` against an isolated Compose project. All
-ignored server tests passed: provider/bridge/queue service tests; Across HTTP
-quote/create/idempotency admission; authentication and worker durability;
+ignored server tests passed: provider/bridge/queue service tests; authentication
+and worker durability;
 PostgreSQL statement timeout/readiness; preparation/history, price WebSocket and
 Redis pairing; RPC budgets; sealed signing/submission/reconciliation; and real OTLP
-export. Across settlement and monitor acceptance passed 4 and 3 PostgreSQL-backed
-cases respectively.
+export. Monitor acceptance passed 3 PostgreSQL-backed cases.
 
 This validates the current local fixtures and process-level invariants. It does
 not prove provider credentials, mainnet execution, external worker/relayer behavior,
@@ -1115,9 +1083,9 @@ still requires isolated `TEST_REDIS_URL` / `TEST_DATABASE_URL` services.
 
 ## Atomic route quota admission (2026-10-19)
 
-Active Aave, Morpho, swap execution, Across create/submit, bridge-status and
-Hyperliquid account routes now check global plus wallet quotas through the atomic
-pair primitive. Across intent/signing and operation recovery/list use Redis-backed
+Active Aave, Morpho, swap execution, bridge-status and Hyperliquid account routes
+now check global plus wallet quotas through the atomic pair primitive. Operation
+recovery/list use Redis-backed
 single-subject quotas when configured. This closes the quota-drain behavior where
 rejected wallet requests incremented a shared global bucket, and removes
 per-request quota writes from PostgreSQL in configured runtime. Fixed domains use
@@ -1215,7 +1183,7 @@ that a newly installed full snapshot is delivered within its two-second deadline
 The complete ignored server acceptance suite was then run serially against disposable
 PostgreSQL 17 and Redis 7.4 with loopback fixtures; all selected tests passed, including
 durability, operation/outbox recovery, provider transport budgets, cache fencing,
-pairing quotas, authenticated Across execution, sealed preparations, and OTLP export.
+pairing quotas, sealed preparations, and OTLP export.
 This exposed two test defects that were corrected: the readiness test now toggles
 `LATEST_SCHEMA_VERSION` rather than a retired migration number, and the Redis pairing
 byte-budget test uses 64-write waves so it tests atomic global reservation without
@@ -1318,10 +1286,8 @@ queue cleanup behavior; production terminal transitions are unchanged by that fi
 
 The [scoped security pass](RECOVERY-SECURITY-REVIEW.md) inventories 99 backend
 production source files and 14 migrations. It found and fixed price-WS stale-state
-suppression after Redis sequence rollback, an Across post-journal shutdown race,
-and the mismatch between typed service intents and legacy tracking/settlement
-readers. Shared Across interpretation preserves canonical intent hashes and all
-proof, ownership and lease checks. Decisions D149–D151 explain the tradeoffs.
+suppression after Redis sequence rollback. Decisions D149–D150 explain the
+tradeoffs. Bridging is now NEAR Intents ([NEAR-INTENTS.md](NEAR-INTENTS.md)).
 
 Local evidence is in [the restore result](results/recovery-restore-local-2026-10-19.json).
 These tests use synthetic data and loopback providers, not production backups or

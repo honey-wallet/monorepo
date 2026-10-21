@@ -13,7 +13,7 @@ import { SheetRow, SheetSection } from '@/components/sheets/Sheet';
 import { PushedScreen } from '@/components/wallet/parts';
 import { api } from '@/lib/api';
 import { lockNow } from '@/lib/app-lock';
-import { bunkMode } from '@/lib/bunk-mode';
+import { BUNK_LIVE, bunkMode } from '@/lib/bunk-mode';
 import { expandView, inPopup } from '@/lib/dapp';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
@@ -95,7 +95,8 @@ export default function SettingsScreen() {
       </Accordion>
       */}
 
-      <BunkModeCard />
+      {/* Leads Settings once it's live; until then it's an ordinary row under Privacy and security. */}
+      {BUNK_LIVE ? <BunkModeCard /> : null}
 
       <View style={styles.gutter}>
         <SheetSection title="Preferences" />
@@ -186,6 +187,15 @@ export default function SettingsScreen() {
           onPress={open('/recovery-phrase')}
           accessory="chevron"
         />
+        {BUNK_LIVE ? null : (
+          <SheetRow
+            icon="shieldLock"
+            title="Bunk mode"
+            value="Coming soon"
+            onPress={open('/bunk-mode')}
+            accessory="chevron"
+          />
+        )}
         {isWeb ? (
           <SheetRow
             icon="qr"
@@ -275,11 +285,11 @@ function BunkModeCard() {
   const styles = useStyles();
   const c = useTheme();
   const { enabled: stored } = bunkMode.useValue();
-  const on = stored && TEST_MODE;
+  const on = BUNK_LIVE && stored && TEST_MODE;
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={`Bunk mode, ${on ? 'on' : 'off'}`}
+      accessibilityLabel={`Bunk mode, ${BUNK_LIVE ? (on ? 'on' : 'off') : 'coming soon'}`}
       scaleTo={0.98}
       onPress={() => {
         tap();
@@ -293,7 +303,11 @@ function BunkModeCard() {
       <View style={styles.flex}>
         <Text style={styles.bunkTitle}>Bunk mode</Text>
         <Text style={styles.bunkSub}>
-          {on ? 'On · a new key signs every transaction' : 'A new key for every transaction'}
+          {!BUNK_LIVE
+            ? 'Coming soon'
+            : on
+              ? 'On · a new key signs every transaction'
+              : 'A new key for every transaction'}
         </Text>
       </View>
       <Icon name="chevronRight" size={15} color={c.textSecondary} />

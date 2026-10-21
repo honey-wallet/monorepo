@@ -24,6 +24,9 @@ export type BunkActivity = { id: string; chain: BunkChain; title: string; when: 
  * Opt-in, off by default in the real app. Test mode starts with it on so its screens can be
  * reviewed; only test mode can turn it on (see `bunkToggle`).
  */
+/** Bunk mode isn't live yet: its contracts aren't deployed, so the switch stays off everywhere. */
+export const BUNK_LIVE = false;
+
 export const bunkMode = createStore<{ enabled: boolean }>(
   { enabled: TEST_MODE },
   { persist: 'bunk-mode' },

@@ -429,7 +429,7 @@ export interface OperationRecovery {
   intentAvailable: boolean;
   preparation: {
     hash: string;
-    provider: 'native_transfer' | 'aave_v3' | 'morpho_vault_v2' | 'uniswap' | 'across';
+    provider: 'native_transfer' | 'aave_v3' | 'morpho_vault_v2' | 'uniswap';
     chainId: string;
     expiresAtMs: number;
     expired: boolean;
@@ -478,7 +478,7 @@ export interface AaveIntent {
   maximumNetworkFeeRaw: string;
 }
 export type AaveSigningRequest = EvmSigningRequest<'aave_v3'>;
-export interface EvmSigningRequest<P extends 'aave_v3' | 'morpho_vault_v2' | 'uniswap' | 'across'> {
+export interface EvmSigningRequest<P extends 'aave_v3' | 'morpho_vault_v2' | 'uniswap'> {
   operationId: string;
   operationVersion: string;
   planHash: string;
@@ -495,7 +495,7 @@ export interface EvmSigningRequest<P extends 'aave_v3' | 'morpho_vault_v2' | 'un
       intentHash: string;
       registryRevision: string;
       feePolicyRevision: string;
-      quoteReference: P extends 'uniswap' | 'across' ? string : null;
+      quoteReference: P extends 'uniswap' ? string : null;
       expiresAtMs: number;
       maximumNetworkFeeRaw: string;
       maximumSpend: { assetAddress: string; amountRaw: string; recipient: string };
@@ -716,7 +716,7 @@ export interface SwapIntentRecovery {
 }
 
 /** Provider observations are advisory; they do not establish cross-chain finality. */
-export type BridgeProvider = 'relay' | 'across';
+export type BridgeProvider = 'relay';
 export interface BridgeBinding {
   provider: BridgeProvider;
   providerReference: string;
@@ -746,35 +746,9 @@ export interface BridgeStatusReport {
   verificationRequired: true;
   pollAfterMs: 10000 | 60000;
 }
-export interface VerifiedBridgeDelivery {
-  evidenceVersion: '1';
-  operationVersion: string;
-  sourceChainId: string;
-  sourceTransactionHash: string;
-  destinationChainId: string;
-  destinationTransactionHash: string;
-  recipient: string;
-  outputToken: string;
-  deliveredAmountRaw: string;
-  source: {
-    blockNumber: string;
-    blockHash: string;
-    finalizedNumber: string;
-    finalizedHash: string;
-  };
-  destination: {
-    blockNumber: string;
-    blockHash: string;
-    finalizedNumber: string;
-    finalizedHash: string;
-  };
-  verifiedAtMs: number;
-}
 export interface BridgeStatusRecovery {
   operationId: string;
   binding: BridgeBinding;
-  /** Always present: null until independently verified settlement evidence exists. */
-  verifiedDelivery: VerifiedBridgeDelivery | null;
   observation: BridgeStatusReport | null;
   stale: boolean;
   pollVersion: string;
@@ -791,123 +765,6 @@ export interface BridgeStatusRecovery {
     | null;
 }
 
-/** Direct ERC20 Across quote routes; these endpoints do not enable signing. */
-export interface BridgeToken {
-  address: string;
-  /** Operator-approved cross-chain asset identity; symbols are display labels only. */
-  assetId: string;
-  symbol: string;
-  decimals: number;
-}
-export interface AcrossRoute {
-  id: string;
-  destinationChainId: string;
-  sourceSpoke: string;
-  inputToken: BridgeToken;
-  outputToken: BridgeToken;
-  minimumInputRaw: string;
-  maximumInputRaw: string;
-  maximumBridgeFeeBps: number;
-  maximumFillSeconds: number;
-  maximumExclusivitySeconds: number;
-}
-export interface AcrossConfiguration {
-  provider: 'across';
-  sourceChainId: string;
-  integratorId: string;
-  registryRevision: string;
-  routes: AcrossRoute[];
-  executionAvailable: false;
-}
-export interface AcrossQuoteRequest {
-  routeId: string;
-  amountRaw: string;
-  minimumOutputRaw: string;
-  recipient: string;
-}
-export interface AcrossQuote {
-  provider: 'across';
-  quoteId: string;
-  routeId: string;
-  registryRevision: string;
-  sourceChainId: string;
-  destinationChainId: string;
-  sender: string;
-  recipient: string;
-  inputToken: string;
-  outputToken: string;
-  inputAmountRaw: string;
-  outputAmountRaw: string;
-  minimumOutputRaw: string;
-  bridgeFeeRaw: string;
-  integratorFeeRaw: '0';
-  integratorId: string;
-  /** Gas units, not a native-token fee. Does not include approvals. */
-  sourceGasEstimateRaw: string;
-  approvalGasIncluded: false;
-  expectedFillSeconds: number;
-  refundChainId: string;
-  refundRecipient: string;
-  quoteTimestamp: string;
-  fillDeadline: string;
-  exclusivityParameter: string;
-  exclusiveRelayer: string;
-  receivedAtMs: number;
-  providerExpiresAtMs: number | null;
-  expiresAtMs: number;
-  executionAvailable: false;
-}
-
-export interface AcrossDepositTerms {
-  sourceChain: string;
-  destinationChain: string;
-  depositor: string;
-  recipient: string;
-  inputToken: string;
-  outputToken: string;
-  inputAmount: string;
-  outputAmount: string;
-  exclusiveRelayer: string;
-  quoteTimestamp: string;
-  fillDeadline: string;
-  exclusivityParameter: string;
-  swapApiIntegratorId?: string;
-}
-export interface AcrossIntent extends AcrossQuoteRequest {
-  quoteId: string;
-  deadline: string;
-  maximumNetworkFeeRaw: string;
-}
-export interface AcrossExecutionConfiguration {
-  mode: 'local_fork';
-  quote: AcrossConfiguration;
-  feePolicyRevision: 'across-zero-app-fee-v1';
-}
-export interface AcrossIntentRecovery {
-  operationId: string;
-  signer: string;
-  chainId: '31337';
-  registryRevision: string;
-  intent: AcrossIntent;
-}
-export interface AcrossReview {
-  terms: AcrossDepositTerms;
-  sourceSpoke: string;
-  calldata: string;
-  quoteId: string;
-  registryRevision: string;
-  intentHash: string;
-  quotedAtMs: number;
-  quoteExpiresAtMs: number;
-  providerExpiresAtMs: number | null;
-  executionDeadlineMs: number;
-  preparedAtMs: number;
-  expiresAtMs: number;
-  maximumNetworkFeeRaw: string;
-}
-export interface AcrossSigningRequest extends EvmSigningRequest<'across'> {
-  review: AcrossReview;
-}
 // Provider-specific NEAR Intents response types mirror the server preview contract.
 export type {
   NearIntentsQuotePreview,

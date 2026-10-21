@@ -1,11 +1,9 @@
 # NEAR Intents bridge provider
 
-NEAR Intents replaces Across as the planned bridge provider alongside Relay.
-The active server no longer mounts Across quote, prepare, signing or submission
-routes, constructs its adapters, or starts its execution worker. Existing Across
-database migrations, evidence readers and compatibility code remain for historical
-operations; those records must not be deleted or reinterpreted as NEAR Intents.
-Old `ACROSS_QUOTE_CONFIG_FILE` / `ACROSS_EXECUTION_CONFIG_FILE` settings fail startup.
+Bridging is NEAR Intents; Relay remains a quote preview and advisory status
+provider. Across was removed on 2026-10-21: its code, routes, configuration,
+client APIs and UI are gone, and migration `202610210002_remove_across.sql` drops
+its settlement table.
 
 ## Available now
 
@@ -47,8 +45,7 @@ deposit submission, restart-safe polling, and independently verified destination
 settlement/refund accounting are not implemented. A provider `SUCCESS` or
 `REFUNDED` status alone must not settle a wallet operation. Handle deposit memos,
 partial/late deposits, expired quotes, duplicate submissions and recovery after
-process crashes before enabling transfers. Never translate an Across preparation
-or deposit ID into a NEAR Intents order.
+process crashes before enabling transfers.
 
 References (checked 2026-10-21):
 [quote API](https://docs.near-intents.org/api-reference/oneclick/request-a-swap-quote),

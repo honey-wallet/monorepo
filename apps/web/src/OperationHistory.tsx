@@ -97,17 +97,8 @@ export default function OperationHistory({ token, walletId }: { token: string; w
                     : 'Bridge outcome pending'
                   : detail.operation.state.replaceAll('_', ' ')}
               </p>
-              {detail.operation.state === 'bridging' && !bridge?.verifiedDelivery ? (
+              {detail.operation.state === 'bridging' ? (
                 <p>Source finalized; destination delivery pending.</p>
-              ) : null}
-              {bridge?.operationId === detail.operation.id && bridge.verifiedDelivery ? (
-                <p>
-                  Verified delivery: {bridge.verifiedDelivery.deliveredAmountRaw} base units of{' '}
-                  {bridge.verifiedDelivery.outputToken} to{' '}
-                  <code>{bridge.verifiedDelivery.recipient}</code> on chain{' '}
-                  {bridge.verifiedDelivery.destinationChainId}. Transaction{' '}
-                  <code>{bridge.verifiedDelivery.destinationTransactionHash}</code>.
-                </p>
               ) : null}
               <p>
                 Operation <code>{detail.operation.id}</code>

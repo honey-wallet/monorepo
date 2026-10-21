@@ -29,10 +29,8 @@ keys are trusted administrative boundaries. A backup is not assumed current.
 | Finding | Impact | Disposition |
 | --- | --- | --- |
 | Lower Redis price sequence suppresses WS aging | After restore, an existing frame could remain `stale=false` until the collector catches up; HTTP age calculation was unaffected. | Fixed in `markets.rs`: preserve the newest accepted prices but update stale serialization and metrics. Deterministic rollback/recovery regression passes. |
-| Across sends after drain begins during journal commit | Shutdown could admit one more send after the process entered drain; the prior journal already retained uncertain outcome. | Post-commit drain check now skips send and records unknown, matching Earn/Uniswap. Existing preflight tests cover shared preparation policy; the precise scheduling race was reviewed statically, not fault-injected. |
 | Restored auth can revive revoked credentials or consumed proofs | PostgreSQL snapshot rollback removes later session/refresh/proof invalidations. | Offline transactional reset SQL, real-identity regression, and mandatory fencing before ingress. This is an operator recovery requirement, not an automatic startup action. |
 | Restored financial journal omits post-backup activity | Dispatch/nonce/idempotency guards are database-local; old backups cannot prove no external send occurred. | Explicit quarantine and external reconciliation gate; no automatic replay/row deletion. Real dump/restore test preserves an unknown journal and demonstrates a deliberately missing post-backup marker. |
-| Across intent schema mismatch | Service writes typed `terms`; legacy tracking/settlement readers expected `acrossDirectDeposit`/`bridgeTracking`, blocking service-created bridge settlement. | Fixed through strict shared intent interpretation. Adversarial parser, typed-intent attach/settle/recovery, legacy settlement and actual HTTP create/replay tests pass; immutable JSON/hash preserved. |
 
 No confirmed cross-wallet authorization bypass, encryption substitution bypass,
 arbitrary-origin provider SSRF, or credential/raw-payload telemetry exposure was
@@ -40,9 +38,6 @@ identified in this pass. That is a review result, not proof of absence.
 
 ## Assumptions and residual limits
 
-- Historical Across registry configuration must remain available: the worker fails
-  closed on revision mismatch before pending reconciliation. Configuration rotation
-  requires a separate compatibility/reconciliation plan.
 - Redis reset loses socket reservations, read-once pairing state and quota counters.
   Fence old replicas, disconnect sockets and rebuild coordination together. Preserve
   or deliberately reconstruct provider policy fingerprints and cooldown holds.
@@ -74,6 +69,8 @@ they cover the schema disconnect; they are not a real network bridge transaction
 
 Final validation: `pnpm lint`, `pnpm typecheck` and `pnpm test` pass on the
 completed fixes (7 test tasks, with cached unchanged frontend results). Thirteen
-PostgreSQL-backed auth/submission checks and six Across HTTP/settlement checks
-passed separately against the disposable services. Both owned containers were
+PostgreSQL-backed auth/submission checks passed separately against the disposable services. Both owned containers were
 removed. Hosted CI execution and production acceptance were not performed.
+
+Across was removed on 2026-10-21 (bridging is NEAR Intents); its findings and
+checks from this review no longer apply.

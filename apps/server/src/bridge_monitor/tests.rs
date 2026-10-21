@@ -5,20 +5,11 @@ mod common {
 }
 use common::TestDatabase;
 #[test]
-fn dynamic_source_hash_and_across_deposit_id_are_not_required_before_signing() {
-    let mut b = BridgeBinding {
-        provider: BridgeProvider::Across,
-        provider_reference: "7".into(),
-        source_chain_id: "1".into(),
-        destination_chain_id: "8453".into(),
-        refund_chain_id: "1".into(),
-        source_transaction_hash: format!("0x{}", "11".repeat(32)),
-    };
+fn dynamic_source_hash_is_not_required_before_signing() {
+    let b = binding();
     let terms = b.intent_terms().unwrap();
     assert!(terms.get("sourceTransactionHash").is_none());
-    assert!(terms.get("providerReference").is_none());
-    b.provider = BridgeProvider::Relay;
-    assert_eq!(b.intent_terms().unwrap()["providerReference"], "7");
+    assert_eq!(terms["providerReference"], "test-order");
     assert!(b.lookup().is_ok());
 }
 
@@ -35,21 +26,10 @@ fn binding() -> BridgeBinding {
 // Relational fixtures only. These are deliberately not a valid signed financial
 // plan; transport/lease tests never call a dispatcher or claim contract acceptance.
 async fn seed(db: &TestDatabase, b: &BridgeBinding, signed: bool) -> (Uuid, Uuid, Uuid) {
-    seed_terms(db, b, signed, None).await
-}
-async fn seed_terms(
-    db: &TestDatabase,
-    b: &BridgeBinding,
-    signed: bool,
-    terms: Option<&crate::providers::across_evidence::DirectDepositTerms>,
-) -> (Uuid, Uuid, Uuid) {
     let user = Uuid::new_v4();
     let wallet = Uuid::new_v4();
     let mut address = wallet.as_bytes().to_vec();
     address.extend_from_slice(&[0; 4]);
-    if let Some(terms) = terms {
-        address = terms.depositor.as_slice().to_vec();
-    }
     sqlx::query("INSERT INTO users(id) VALUES($1)")
         .bind(user)
         .execute(&db.pool)
@@ -62,7 +42,7 @@ async fn seed_terms(
             wallet_id: wallet,
             action: crate::work::Action::Bridge,
             idempotency_key: "bridge-fixture",
-            intent: &serde_json::json!({"bridgeTracking":b.intent_terms().unwrap(),"acrossDirectDeposit":terms}),
+            intent: &serde_json::json!({"bridgeTracking":b.intent_terms().unwrap()}),
         })
         .await
         .unwrap();
@@ -82,47 +62,6 @@ async fn seed_terms(
     (user, wallet, op.id)
 }
 
-#[tokio::test]
-#[ignore = "requires disposable TEST_DATABASE_URL and loopback RPC fixture"]
-async fn across_registration_requires_verified_source_and_matching_financial_intent() {
-    let proof = crate::providers::across_evidence::test_deposit().await;
-    let terms = proof.terms();
-    let b = BridgeBinding {
-        provider: BridgeProvider::Across,
-        provider_reference: proof.deposit_id(),
-        source_chain_id: terms.source_chain.to_string(),
-        destination_chain_id: terms.destination_chain.to_string(),
-        refund_chain_id: terms.source_chain.to_string(),
-        source_transaction_hash: format!("{:#x}", proof.source().transaction_hash),
-    };
-    let db = TestDatabase::new().await;
-    let monitor = BridgeMonitor::new(WorkStore::new(db.pool.clone()));
-    let (user, wallet, id) = seed_terms(&db, &b, true, Some(terms)).await;
-    assert!(monitor.attach(id, &b).await.is_err());
-    monitor.attach_across(id, &proof).await.unwrap();
-    monitor.attach_across(id, &proof).await.unwrap();
-    let recovered = monitor.recover(user, wallet, id).await.unwrap();
-    assert_eq!(recovered.binding.provider_reference, "7");
-    assert!(recovered.observation.is_none());
-    assert!(recovered.stale);
-    assert_eq!(
-        monitor.work.get(user, wallet, id).await.unwrap().state,
-        crate::work::OperationState::Created
-    );
-    db.close().await;
-    let db = TestDatabase::new().await;
-    let monitor = BridgeMonitor::new(WorkStore::new(db.pool.clone()));
-    let mut different = terms.clone();
-    different.depositor = alloy_primitives::Address::repeat_byte(99);
-    let (_, _, wrong) = seed_terms(&db, &b, true, Some(&different)).await;
-    assert!(monitor.attach_across(wrong, &proof).await.is_err());
-    db.close().await;
-    let db = TestDatabase::new().await;
-    let monitor = BridgeMonitor::new(WorkStore::new(db.pool.clone()));
-    let (_, _, missing) = seed(&db, &b, true).await;
-    assert!(monitor.attach_across(missing, &proof).await.is_err());
-    db.close().await;
-}
 fn report(b: &BridgeBinding) -> BridgeStatusReport {
     use crate::providers::bridge_status::{CandidateRole, CandidateTransaction, ReportedOutcome};
     BridgeStatusReport {
@@ -313,7 +252,6 @@ async fn worker_persists_provider_candidate_and_http_read_requires_owner_session
     let response: serde_json::Value =
         serde_json::from_slice(&to_bytes(response.into_body(), 10000).await.unwrap()).unwrap();
     assert_eq!(response["operationId"], id.to_string());
-    assert_eq!(response["verifiedDelivery"], serde_json::Value::Null);
     assert_eq!(response["observation"]["reportedOutcome"], "fill_reported");
     assert_eq!(response["observation"]["verificationRequired"], true);
     assert!(!response.to_string().contains(&token));

@@ -222,18 +222,13 @@ mod tests {
             "morpho_read",
             "swap_exec_mutation",
             "swap_exec_read",
-            "across_create",
-            "across_submit",
             "bridge_read",
             "hyperliquid_read",
             "swap_quote",
             "morpho_quote",
             "relay_quote",
-            "across_quote",
             "operation_read",
             "operation_list",
-            "across_intent",
-            "across_signing",
         ] {
             assert!(valid_quota_domain(domain), "invalid quota domain: {domain}");
         }

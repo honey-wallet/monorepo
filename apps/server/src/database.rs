@@ -8,7 +8,7 @@ use sqlx_core::migrate::{Migration, MigrationSource, MigrationType, Migrator};
 /// Latest schema version required before authenticated endpoints are ready.
 /// Keep this attached to the final embedded migration so readiness cannot drift
 /// from the migration list when the schema advances.
-pub const LATEST_SCHEMA_VERSION: i64 = 202610190002;
+pub const LATEST_SCHEMA_VERSION: i64 = 202610210002;
 const AUTH_CLEANUP_LOCK: i64 = 0x484f_4e45_5941_5554;
 
 #[derive(Debug)]
@@ -126,13 +126,27 @@ impl MigrationSource<'static> for EmbeddedMigrations {
                     false,
                 ),
                 Migration::new(
-                    LATEST_SCHEMA_VERSION,
+                    202610190002,
                     Cow::Borrowed("bounded queue metric probes"),
                     MigrationType::Simple,
                     Cow::Borrowed(include_str!(
                         "../migrations/202610190002_job_queue_metrics.sql"
                     )),
                     true,
+                ),
+                Migration::new(
+                    202610210001,
+                    Cow::Borrowed("launch waitlist"),
+                    MigrationType::Simple,
+                    Cow::Borrowed(include_str!("../migrations/202610210001_waitlist.sql")),
+                    false,
+                ),
+                Migration::new(
+                    LATEST_SCHEMA_VERSION,
+                    Cow::Borrowed("remove Across settlement"),
+                    MigrationType::Simple,
+                    Cow::Borrowed(include_str!("../migrations/202610210002_remove_across.sql")),
+                    false,
                 ),
             ])
         })

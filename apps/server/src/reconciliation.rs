@@ -294,59 +294,6 @@ async fn collect_inner(
 fn conflict() -> AppError {
     AppError::Conflict("receipt evidence or operation changed".into())
 }
-#[cfg(test)]
-pub(crate) fn test_finalized_bridge_report(
-    operation: Uuid,
-    proof: &crate::providers::across_evidence::VerifiedAcrossFill,
-    reverted_approval: bool,
-) -> VerifiedReconciliation {
-    let source = proof.deposit().source();
-    let mut report = VerifiedReconciliation {
-        operation,
-        plan_hash: hex::encode([3u8; 32]),
-        chain: proof.deposit().terms().source_chain,
-        observations: vec![ReceiptObservation {
-            transaction_hash: format!("{:#x}", source.transaction_hash),
-            inclusion: Some(Inclusion {
-                block_number: source.block_number.to_string(),
-                block_hash: format!("{:#x}", source.block_hash),
-                transaction_index: "0".into(),
-                succeeded: true,
-                finalized: true,
-                gas_used: "21000".into(),
-                effective_gas_price: "1".into(),
-            }),
-        }],
-        head: Checkpoint {
-            number: source.finalized_number,
-            hash: source.finalized_hash,
-        },
-        finalized: Checkpoint {
-            number: source.finalized_number,
-            hash: source.finalized_hash,
-        },
-        observed_at_ms: now_ms(),
-        anchor: None,
-    };
-    if reverted_approval {
-        report.observations.insert(
-            0,
-            ReceiptObservation {
-                transaction_hash: format!("0x{}", "04".repeat(32)),
-                inclusion: Some(Inclusion {
-                    block_number: (source.block_number - 1).to_string(),
-                    block_hash: format!("0x{}", "cc".repeat(32)),
-                    transaction_index: "0".into(),
-                    succeeded: false,
-                    finalized: true,
-                    gas_used: "21000".into(),
-                    effective_gas_price: "1".into(),
-                }),
-            },
-        );
-    }
-    report
-}
 impl WorkStore {
     /// Commit verified receipt changes under the current worker lease. Unchanged
     /// pending polls refresh the proof and defer the same job without history growth.

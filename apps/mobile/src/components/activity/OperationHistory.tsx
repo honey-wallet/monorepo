@@ -31,7 +31,7 @@ const labels: Record<OperationRecovery['operation']['state'], string> = {
  * no credentials or signing bytes are saved for app restart recovery. */
 type Props = {
   onResume?: (operation: OperationRecovery) => Promise<void>;
-  resumeProvider?: 'aave_v3' | 'morpho_vault_v2' | 'uniswap' | 'across';
+  resumeProvider?: 'aave_v3' | 'morpho_vault_v2' | 'uniswap';
 };
 export function OperationHistory(props: Props) {
   const profile = backendSession.useValue().profile;
@@ -190,21 +190,8 @@ function ScopedHistory({
                     : 'Bridge outcome pending'
                   : labels[detail.operation.state]}
               </Text>
-              {detail.operation.state === 'bridging' && !bridge?.verifiedDelivery ? (
+              {detail.operation.state === 'bridging' ? (
                 <Text style={styles.note}>Source finalized; destination delivery pending.</Text>
-              ) : null}
-              {bridge?.operationId === detail.operation.id && bridge.verifiedDelivery ? (
-                <View>
-                  <Text selectable style={styles.note}>
-                    Verified delivery: {bridge.verifiedDelivery.deliveredAmountRaw} base units of{' '}
-                    {bridge.verifiedDelivery.outputToken} to {bridge.verifiedDelivery.recipient} on
-                    chain {bridge.verifiedDelivery.destinationChainId}.
-                  </Text>
-                  <Copyable
-                    value={bridge.verifiedDelivery.destinationTransactionHash}
-                    toast="Destination transaction hash copied"
-                  />
-                </View>
               ) : null}
               <Copyable value={detail.operation.id} toast="Operation ID copied" />
               {detail.operation.action === 'bridge' && bridge?.operationId === detail.operation.id
@@ -240,16 +227,10 @@ function ScopedHistory({
                 </Text>
               ) : null}
               {onResume &&
-              ((resumeProvider === 'across' &&
-                detail.operation.action === 'bridge' &&
-                detail.operation.state === 'created' &&
+              ((resumeProvider === 'uniswap' &&
+                detail.operation.action === 'swap' &&
+                ['created', 'awaiting_permit', 'building_swap'].includes(detail.operation.state) &&
                 detail.intentAvailable) ||
-                (resumeProvider === 'uniswap' &&
-                  detail.operation.action === 'swap' &&
-                  ['created', 'awaiting_permit', 'building_swap'].includes(
-                    detail.operation.state,
-                  ) &&
-                  detail.intentAvailable) ||
                 (detail.operation.state === 'awaiting_signature' &&
                   detail.preparation?.provider === resumeProvider &&
                   !detail.preparation.expired)) ? (

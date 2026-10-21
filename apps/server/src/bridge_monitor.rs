@@ -26,8 +26,7 @@ fn now() -> i64 {
     (time::OffsetDateTime::now_utc().unix_timestamp_nanos() / 1_000_000) as i64
 }
 /// The bridge command commits provider/chains/refund route under `bridgeTracking`
-/// before signing (plus Relay request ID). Source hash comes from the signed bundle;
-/// Across deposit ID is derived later from verified source-event evidence.
+/// before signing (plus Relay request ID). Source hash comes from the signed bundle.
 /// No public endpoint registers arbitrary IDs.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -44,26 +43,6 @@ impl BridgeBinding {
         let mut terms = serde_json::to_value(self).map_err(|_| AppError::Busy)?;
         let fields = terms.as_object_mut().ok_or_else(invalid)?;
         fields.remove("sourceTransactionHash");
-        if self.provider == BridgeProvider::Across {
-            fields.remove("providerReference");
-        }
-        Ok(terms)
-    }
-    /// Bind either supported immutable Across schema to the same chain route.
-    pub(crate) fn across_intent_terms(
-        &self,
-        intent: &serde_json::Value,
-    ) -> Result<crate::providers::across_evidence::DirectDepositTerms, AppError> {
-        let terms = crate::across_service::stored_bridge_terms(intent)?;
-        if self.provider != BridgeProvider::Across
-            || self.source_chain_id != terms.source_chain.to_string()
-            || self.destination_chain_id != terms.destination_chain.to_string()
-            || self.refund_chain_id != terms.source_chain.to_string()
-            || (intent.get("service").is_none()
-                && intent["bridgeTracking"] != self.intent_terms()?)
-        {
-            return Err(conflict());
-        }
         Ok(terms)
     }
     fn lookup(&self) -> Result<BridgeStatusLookup, AppError> {
@@ -86,13 +65,6 @@ impl BridgeBinding {
                 destination,
                 &self.source_transaction_hash,
             ),
-            BridgeProvider::Across => BridgeStatusLookup::across(
-                &self.provider_reference,
-                source,
-                destination,
-                refund,
-                &self.source_transaction_hash,
-            ),
             _ => return Err(invalid()),
         }
         .map_err(|_| invalid())?;
@@ -108,7 +80,6 @@ pub struct BridgeStatusRecovery {
     pub operation_id: Uuid,
     pub binding: BridgeBinding,
     pub observation: Option<BridgeStatusReport>,
-    pub verified_delivery: Option<crate::across_settlement::AcrossDeliverySummary>,
     pub stale: bool,
     pub poll_version: String,
     pub next_poll_at_ms: i64,
@@ -129,16 +100,9 @@ struct Account {
     interval_ms: u64,
 }
 #[derive(Deserialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct AcrossAccount {
-    account: Account,
-    integrator_id: String,
-}
-#[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Accounts {
     relay: Option<Account>,
-    across: Option<AcrossAccount>,
 }
 fn secret<'de, D: serde::Deserializer<'de>>(d: D) -> Result<Zeroizing<String>, D::Error> {
     String::deserialize(d).map(Zeroizing::new)
@@ -148,12 +112,6 @@ pub struct BridgeMonitor {
     clients: Vec<BridgeStatusClient>,
 }
 impl BridgeMonitor {
-    pub(crate) fn with_client(work: WorkStore, client: BridgeStatusClient) -> Self {
-        Self {
-            work,
-            clients: vec![client],
-        }
-    }
     pub fn new(work: WorkStore) -> Self {
         Self {
             work,
@@ -180,13 +138,6 @@ impl BridgeMonitor {
                     .map_err(|_| invalid())?,
             );
         }
-        if let Some(a) = config.across {
-            let b = budget(&a.account);
-            clients.push(
-                BridgeStatusClient::across(a.account.api_key, a.integrator_id, b, redis, metrics)
-                    .map_err(|_| invalid())?,
-            );
-        }
         if clients.is_empty() {
             return Err(invalid());
         }
@@ -195,38 +146,12 @@ impl BridgeMonitor {
     /// Internal handoff only: requires the exact immutable intent binding and the
     /// last transaction of the already-persisted signed source bundle. An approval
     /// hash or another user's transaction cannot attach. Relay's request ID must
-    /// match the intent. Across must use the separate verified-source handoff.
+    /// match the intent.
     #[tracing::instrument(name="bridge.attach",skip_all,fields(operation_id=%operation))]
     pub async fn attach(&self, operation: Uuid, binding: &BridgeBinding) -> Result<(), AppError> {
         if binding.provider != BridgeProvider::Relay {
             return Err(invalid());
         }
-        self.attach_inner(operation, binding, None).await
-    }
-    /// Across's reference is derived from independently verified source evidence,
-    /// never selected from a provider status response or an HTTP caller's string.
-    pub async fn attach_across(
-        &self,
-        operation: Uuid,
-        proof: &crate::providers::across_evidence::VerifiedAcrossDeposit,
-    ) -> Result<(), AppError> {
-        let terms = proof.terms();
-        let binding = BridgeBinding {
-            provider: BridgeProvider::Across,
-            provider_reference: proof.deposit_id(),
-            source_chain_id: terms.source_chain.to_string(),
-            destination_chain_id: terms.destination_chain.to_string(),
-            refund_chain_id: terms.source_chain.to_string(),
-            source_transaction_hash: format!("{:#x}", proof.source().transaction_hash),
-        };
-        self.attach_inner(operation, &binding, Some(proof)).await
-    }
-    async fn attach_inner(
-        &self,
-        operation: Uuid,
-        binding: &BridgeBinding,
-        across: Option<&crate::providers::across_evidence::VerifiedAcrossDeposit>,
-    ) -> Result<(), AppError> {
         binding.lookup()?;
         let json = serde_json::to_string(binding).map_err(|_| AppError::Busy)?;
         let hash = digest(json.as_bytes());
@@ -237,23 +162,9 @@ impl BridgeMonitor {
         let intent: serde_json::Value =
             serde_json::from_str(&intent).map_err(|_| AppError::Busy)?;
         if row.try_get::<String, _>("action").map_err(unavailable)? != "bridge"
-            || (across.is_none() && intent["bridgeTracking"] != binding.intent_terms()?)
+            || intent["bridgeTracking"] != binding.intent_terms()?
         {
             return Err(conflict());
-        }
-        if let Some(proof) = across {
-            if binding.across_intent_terms(&intent)? != *proof.terms() {
-                return Err(conflict());
-            }
-            let signer: Option<Vec<u8>> =
-                sqlx::query_scalar("SELECT signer FROM evm_submissions WHERE operation_id=$1")
-                    .bind(operation)
-                    .fetch_optional(&mut *tx)
-                    .await
-                    .map_err(unavailable)?;
-            if signer.as_deref() != Some(proof.terms().depositor.as_slice()) {
-                return Err(conflict());
-            }
         }
         let source:Option<Uuid>=sqlx::query_scalar("SELECT t.id FROM evm_signed_transactions t JOIN evm_submissions s ON s.operation_id=t.operation_id JOIN operations o ON o.id=s.operation_id WHERE t.operation_id=$1 AND t.step=s.step_count-1 AND t.tx_hash=$2 AND t.chain_id=$3 AND s.wallet_id=o.wallet_id")
             .bind(operation).bind(hex::decode(&binding.source_transaction_hash[2..]).map_err(|_|invalid())?).bind(binding.source_chain_id.parse::<i64>().map_err(|_|invalid())?).fetch_optional(&mut *tx).await.map_err(unavailable)?;
@@ -268,10 +179,6 @@ impl BridgeMonitor {
         .await
         .map_err(unavailable)?;
         if stored != hash {
-            return Err(conflict());
-        }
-        // Check after row locks/inserts too: waiting cannot extend observation age.
-        if across.is_some_and(|p| p.checked_at_ms() > now() || now() - p.checked_at_ms() > 10_000) {
             return Err(conflict());
         }
         tx.commit().await.map_err(unavailable)
@@ -302,7 +209,6 @@ impl BridgeMonitor {
             operation_id: operation,
             binding,
             observation,
-            verified_delivery: self.work.across_delivery(user, wallet, operation).await?,
             stale,
             poll_version: row
                 .try_get::<i64, _>("poll_version")

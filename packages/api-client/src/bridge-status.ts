@@ -1,4 +1,4 @@
-import { address, object, time, uint } from './evm-signing';
+import { object, time, uint } from './evm-signing';
 import { OPERATION_ID } from './operations';
 import type { BridgeReportedOutcome, BridgeStatusRecovery } from './types';
 
@@ -19,7 +19,6 @@ export function isBridgeStatusRecovery(v: unknown): v is BridgeStatusRecovery {
     typeof v.operationId !== 'string' ||
     !OPERATION_ID.test(v.operationId) ||
     !object(v.binding) ||
-    !Object.hasOwn(v, 'verifiedDelivery') ||
     typeof v.stale !== 'boolean' ||
     !uint(v.pollVersion, (1n << 63n) - 1n) ||
     !time(v.nextPollAtMs) ||
@@ -40,49 +39,16 @@ export function isBridgeStatusRecovery(v: unknown): v is BridgeStatusRecovery {
     return false;
   const b = v.binding;
   if (
-    !['relay', 'across'].includes(b.provider as string) ||
+    b.provider !== 'relay' ||
     !chain(b.sourceChainId) ||
     !chain(b.destinationChainId) ||
     b.sourceChainId === b.destinationChainId ||
-    ![b.sourceChainId, b.destinationChainId].includes(b.refundChainId as string) ||
+    b.refundChainId !== b.sourceChainId ||
     !tx(b.sourceTransactionHash) ||
-    typeof b.providerReference !== 'string'
+    typeof b.providerReference !== 'string' ||
+    !/^[A-Za-z0-9_-]{1,128}$/.test(b.providerReference)
   )
     return false;
-  if (
-    b.provider === 'relay'
-      ? !/^[A-Za-z0-9_-]{1,128}$/.test(b.providerReference) || b.refundChainId !== b.sourceChainId
-      : !uint(b.providerReference, (1n << 256n) - 1n)
-  )
-    return false;
-  const delivery = v.verifiedDelivery;
-  if (delivery !== null) {
-    const anchor = (a: unknown) =>
-      object(a) &&
-      uint(a.blockNumber, (1n << 64n) - 1n) &&
-      tx(a.blockHash) &&
-      uint(a.finalizedNumber, (1n << 64n) - 1n) &&
-      BigInt(a.blockNumber) <= BigInt(a.finalizedNumber) &&
-      tx(a.finalizedHash);
-    if (
-      b.provider !== 'across' ||
-      !object(delivery) ||
-      delivery.evidenceVersion !== '1' ||
-      !uint(delivery.operationVersion, (1n << 63n) - 1n) ||
-      delivery.sourceChainId !== b.sourceChainId ||
-      delivery.destinationChainId !== b.destinationChainId ||
-      delivery.sourceTransactionHash !== b.sourceTransactionHash ||
-      !tx(delivery.destinationTransactionHash) ||
-      !address(delivery.recipient) ||
-      !address(delivery.outputToken) ||
-      !uint(delivery.deliveredAmountRaw) ||
-      delivery.deliveredAmountRaw === '0' ||
-      !anchor(delivery.source) ||
-      !anchor(delivery.destination) ||
-      !time(delivery.verifiedAtMs)
-    )
-      return false;
-  }
   const o = v.observation;
   if (o === null) return v.stale === true;
   if (
@@ -130,9 +96,8 @@ export function isBridgeStatusRecovery(v: unknown): v is BridgeStatusRecovery {
   }
   return true;
 }
-/** Only independently verified delivery can supersede advisory provider hints. */
+/** Provider hints are advisory; none of these messages claims verified delivery. */
 export function bridgeStatusMessage(value: BridgeStatusRecovery): string {
-  if (value.verifiedDelivery) return 'Destination delivery verified.';
   if (value.stale) return 'Bridge status is delayed. Your deposit must not be sent again.';
   switch (value.observation?.reportedOutcome) {
     case 'fill_reported':

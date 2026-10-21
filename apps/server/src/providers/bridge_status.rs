@@ -6,7 +6,6 @@ use super::{
     transport::retry_after_ms,
 };
 use crate::{metrics::Metrics, redis_store::RedisStore};
-use alloy_primitives::U256;
 use reqwest::{
     StatusCode,
     header::{HeaderMap, HeaderValue},
@@ -27,19 +26,16 @@ type Result<T> = std::result::Result<T, StatusError>;
 #[serde(rename_all = "snake_case")]
 pub enum BridgeProvider {
     Relay,
-    Across,
 }
 impl BridgeProvider {
     pub fn name(self) -> &'static str {
         match self {
             Self::Relay => "relay",
-            Self::Across => "across",
         }
     }
     fn origin(self) -> &'static str {
         match self {
             Self::Relay => "https://api.relay.link",
-            Self::Across => "https://app.across.to/api",
         }
     }
 }
@@ -120,7 +116,6 @@ pub struct BridgeStatusLookup {
     reference: String,
     source_chain: u64,
     destination_chain: u64,
-    refund_chain: u64,
     source_transaction: String,
 }
 fn chain(n: u64) -> bool {
@@ -156,27 +151,6 @@ impl BridgeStatusLookup {
             request_id,
             source_chain,
             destination_chain,
-            source_chain,
-            source_transaction,
-        )
-    }
-    pub fn across(
-        deposit_id: &str,
-        source_chain: u64,
-        destination_chain: u64,
-        refund_chain: u64,
-        source_transaction: &str,
-    ) -> Result<Self> {
-        let id = U256::from_str_radix(deposit_id, 10).map_err(|_| StatusError::Invalid)?;
-        if deposit_id.len() > 78 || id.to_string() != deposit_id {
-            return Err(StatusError::Invalid);
-        }
-        Self::new(
-            BridgeProvider::Across,
-            deposit_id,
-            source_chain,
-            destination_chain,
-            refund_chain,
             source_transaction,
         )
     }
@@ -185,14 +159,9 @@ impl BridgeStatusLookup {
         reference: &str,
         source_chain: u64,
         destination_chain: u64,
-        refund_chain: u64,
         source_transaction: &str,
     ) -> Result<Self> {
-        if !chain(source_chain)
-            || !chain(destination_chain)
-            || source_chain == destination_chain
-            || ![source_chain, destination_chain].contains(&refund_chain)
-        {
+        if !chain(source_chain) || !chain(destination_chain) || source_chain == destination_chain {
             return Err(StatusError::Invalid);
         }
         Ok(Self {
@@ -200,24 +169,17 @@ impl BridgeStatusLookup {
             reference: reference.into(),
             source_chain,
             destination_chain,
-            refund_chain,
             source_transaction: tx_hash(source_transaction).map_err(|_| StatusError::Invalid)?,
         })
     }
     fn path(&self) -> &'static str {
         match self.provider {
             BridgeProvider::Relay => "/intents/status/v3",
-            BridgeProvider::Across => "/deposit/status",
         }
     }
-    fn query(&self, integrator: Option<&str>) -> Vec<(&'static str, String)> {
+    fn query(&self) -> Vec<(&'static str, String)> {
         match self.provider {
             BridgeProvider::Relay => vec![("requestId", self.reference.clone())],
-            BridgeProvider::Across => vec![
-                ("originChainId", self.source_chain.to_string()),
-                ("depositId", self.reference.clone()),
-                ("integratorId", integrator.unwrap_or_default().into()),
-            ],
         }
     }
 }
@@ -242,20 +204,6 @@ fn hashes(v: &Value) -> Result<Vec<String>> {
         return Err(StatusError::InvalidResponse);
     }
     Ok(values)
-}
-fn alias(v: &Value, a: &str, b: &str) -> Result<Option<String>> {
-    let parse = |name| {
-        if v[name].is_null() {
-            Ok(None)
-        } else {
-            tx_hash(v[name].as_str().ok_or(StatusError::InvalidResponse)?).map(Some)
-        }
-    };
-    let (first, second) = (parse(a)?, parse(b)?);
-    if first.is_some() && second.is_some() && first != second {
-        return Err(StatusError::InvalidResponse);
-    }
-    Ok(first.or(second))
 }
 fn report(
     provider: BridgeProvider,
@@ -358,86 +306,16 @@ fn normalize(lookup: &BridgeStatusLookup, v: &Value, now: i64) -> Result<BridgeS
                 updated,
             ))
         }
-        BridgeProvider::Across => {
-            if v["originChainId"].as_u64() != Some(lookup.source_chain)
-                || v["destinationChainId"].as_u64() != Some(lookup.destination_chain)
-                || v["depositId"].as_str() != Some(&lookup.reference)
-                || alias(v, "depositTxHash", "depositTxnRef")?.as_ref()
-                    != Some(&lookup.source_transaction)
-            {
-                return Err(StatusError::InvalidResponse);
-            }
-            if let Some(pagination) = v.get("pagination").filter(|v| !v.is_null())
-                && (pagination["currentIndex"].as_u64() != Some(0)
-                    || pagination["maxIndex"].as_u64() != Some(0))
-            {
-                return Err(StatusError::Ambiguous);
-            }
-            if [
-                "sweepTxnRef",
-                "actionsTargetRecipient",
-                "actionsTargetToken",
-                "actionsTargetAmount",
-                "actionsTargetTxnRef",
-                "actionsTargetBlockTimestamp",
-                "actionsSucceeded",
-                "actionsTargetChainId",
-            ]
-            .iter()
-            .any(|field| !v[field].is_null())
-            {
-                return Err(StatusError::UnsupportedRoute);
-            }
-            let fill = alias(v, "fillTx", "fillTxnRef")?;
-            let refund = alias(v, "depositRefundTxHash", "depositRefundTxnRef")?;
-            if fill.is_some() && refund.is_some() {
-                return Err(StatusError::Ambiguous);
-            }
-            let (outcome, candidate) = match status {
-                "pending" | "received" if fill.is_none() && refund.is_none() => {
-                    (ReportedOutcome::Pending, None)
-                }
-                "expired" if fill.is_none() && refund.is_none() => {
-                    (ReportedOutcome::RefundPending, None)
-                }
-                "filled" if fill.is_some() => (
-                    ReportedOutcome::FillReported,
-                    fill.map(|h| (lookup.destination_chain, h, CandidateRole::DestinationFill)),
-                ),
-                "refunded" if refund.is_some() => (
-                    ReportedOutcome::RefundReported,
-                    refund.map(|h| (lookup.refund_chain, h, CandidateRole::Refund)),
-                ),
-                _ => return Err(StatusError::InvalidResponse),
-            };
-            let candidates = candidate
-                .map(|(chain, transaction_hash, role)| CandidateTransaction {
-                    chain_id: chain.to_string(),
-                    transaction_hash,
-                    role,
-                })
-                .into_iter()
-                .collect();
-            Ok(report(
-                lookup.provider,
-                outcome,
-                true,
-                candidates,
-                now,
-                None,
-            ))
-        }
     }
 }
 
-/// Separate constructors enforce provider-specific credential and integrator headers.
+/// Separate constructors enforce provider-specific credential headers.
 /// Origins and paths are fixed. Operator account scope/spacing must reflect the
 /// actual quota agreement; all future calls for that account must share this scope.
 pub struct BridgeStatusClient {
     provider: BridgeProvider,
     client: reqwest::Client,
     headers: HeaderMap,
-    integrator: Option<String>,
     budget: RpcBudget,
     permits: Semaphore,
     metrics: Arc<Metrics>,
@@ -452,34 +330,6 @@ impl BridgeStatusClient {
         self.origin = Some(origin);
         self
     }
-    pub(crate) fn local_across(
-        origin: &str,
-        integrator: String,
-        budget: RpcBudgetConfig,
-        redis: RedisStore,
-        metrics: Arc<Metrics>,
-    ) -> Result<Self> {
-        let u = reqwest::Url::parse(origin).map_err(|_| StatusError::Invalid)?;
-        if u.scheme() != "http"
-            || u.host_str() != Some("127.0.0.1")
-            || !u.username().is_empty()
-            || u.password().is_some()
-            || u.path() != "/"
-            || u.query().is_some()
-            || u.fragment().is_some()
-        {
-            return Err(StatusError::Invalid);
-        }
-        let mut client = Self::across(
-            Zeroizing::new("local-fixture-only".into()),
-            integrator,
-            budget,
-            redis,
-            metrics,
-        )?;
-        client.origin = Some(origin.trim_end_matches('/').into());
-        Ok(client)
-    }
     pub fn provider(&self) -> BridgeProvider {
         self.provider
     }
@@ -489,34 +339,11 @@ impl BridgeStatusClient {
         redis: RedisStore,
         metrics: Arc<Metrics>,
     ) -> Result<Self> {
-        Self::new(BridgeProvider::Relay, api_key, None, budget, redis, metrics)
-    }
-    pub fn across(
-        api_key: Zeroizing<String>,
-        integrator_id: String,
-        budget: RpcBudgetConfig,
-        redis: RedisStore,
-        metrics: Arc<Metrics>,
-    ) -> Result<Self> {
-        if integrator_id.len() != 6
-            || !integrator_id.starts_with("0x")
-            || !integrator_id[2..].bytes().all(|b| b.is_ascii_hexdigit())
-        {
-            return Err(StatusError::Invalid);
-        }
-        Self::new(
-            BridgeProvider::Across,
-            api_key,
-            Some(integrator_id.to_ascii_lowercase()),
-            budget,
-            redis,
-            metrics,
-        )
+        Self::new(BridgeProvider::Relay, api_key, budget, redis, metrics)
     }
     fn new(
         provider: BridgeProvider,
         api_key: Zeroizing<String>,
-        integrator: Option<String>,
         mut config: RpcBudgetConfig,
         redis: RedisStore,
         metrics: Arc<Metrics>,
@@ -531,23 +358,9 @@ impl BridgeStatusClient {
         config.scope = format!("{}-{}", provider.name(), config.scope);
         let budget = RpcBudget::new(redis, config).map_err(|_| StatusError::Invalid)?;
         let mut headers = HeaderMap::new();
-        let mut value = match provider {
-            BridgeProvider::Relay => HeaderValue::from_str(&api_key),
-            BridgeProvider::Across => {
-                let value = Zeroizing::new(format!("Bearer {}", api_key.as_str()));
-                HeaderValue::from_str(value.as_str())
-            }
-        }
-        .map_err(|_| StatusError::Invalid)?;
+        let mut value = HeaderValue::from_str(&api_key).map_err(|_| StatusError::Invalid)?;
         value.set_sensitive(true);
-        headers.insert(
-            if provider == BridgeProvider::Relay {
-                "x-api-key"
-            } else {
-                "authorization"
-            },
-            value,
-        );
+        headers.insert("x-api-key", value);
         headers.insert("accept", HeaderValue::from_static("application/json"));
         headers.insert("cache-control", HeaderValue::from_static("no-cache"));
         let client = reqwest::Client::builder()
@@ -561,7 +374,6 @@ impl BridgeStatusClient {
             provider,
             client,
             headers,
-            integrator,
             budget,
             permits: Semaphore::new(4),
             metrics,
@@ -597,7 +409,7 @@ impl BridgeStatusClient {
             .client
             .get(format!("{origin}{}", lookup.path()))
             .headers(self.headers.clone())
-            .query(&lookup.query(self.integrator.as_deref()))
+            .query(&lookup.query())
             .send()
             .await;
         let mut response = match response {

@@ -89,7 +89,7 @@ per Honey client behind the backend. Conflicts with published limits.
 ## D09 — No shared executable quote cache
 
 **Decision:** public display data may be cached; executable quotes are scoped to
-intent/user and provider validity rules; Across no-cache rule is explicit.
+intent/user and provider validity rules.
 **Pros:** prevents cross-user parameters, stale fees and expired execution.
 **Cons:** more provider requests; quote quotas and input debouncing matter.
 **Alternative:** cache every quote by token pair. Unsafe because amount, recipient,
@@ -1129,13 +1129,12 @@ Permit2 signatures was rejected. Evidence: [UNISWAP-SERVICE-ACCEPTANCE.md](UNISW
 
 ## D83 — Keep bridge provider reports separate from settlement authority
 
-**Decision:** normalize Relay/Across status into bounded advisory observations and
+**Decision:** normalize Relay status into bounded advisory observations and
 candidate transactions. Bind reads to immutable route terms and a persisted source
 transaction; validate provider identities, chains and aliases. Expose
 `verificationRequired: true` and distinguish source finality, reported fill, pending
 refund and verified credit. No provider report advances financial operation state.
-Across's post-source deposit ID remains a lookup hint until source-event verification
-exists; neither it nor the source hash is required in the pre-signing intent.
+The source hash is not required in the pre-signing intent.
 
 **Pros:** delayed indexing, provider mistakes, expiry and source success cannot be
 mistaken for funds delivered. Recovery does not grant another signature or deposit.
@@ -1163,77 +1162,21 @@ activation. Stopping on a provider success label, storing watches only in Redis,
 and making browser reads synchronously call providers were rejected. No public
 bridge-execution handoff exists yet; tests use synthetic relational fixtures.
 
-## D85 — Verify direct Across delivery from both chains and exact payment terms
+## D85 — (Removed) Direct bridge delivery verification
 
-**Decision:** accept a bounded direct ERC20 deposit shape first, with canonical
-calldata matching immutable consent. Derive its ID and resolved exclusivity from
-the pinned source contract event. Require finalized canonical receipts, historical
-proxy/token identity, full original and actual fill terms, and exact standard-token
-transfer evidence on the destination. Refresh both chains and recheck source
-anchors after destination reads. Proof types have no public constructor/deserializer.
+**Superseded (2026-10-21):** Across was removed; bridging is NEAR Intents. See D152.
 
-**Pros:** a matching status ID, event name or source success cannot hide changed
-recipient/amount, missing payment or an observed reorg. Independent viem fixtures
-and actual Ethereum/Base contract forks exercise the parser against external ABI
-encoding and runtime behavior. **Cons:** historical RPC reads and identity checks
-cost capacity; trusted RPC and reviewed token semantics remain assumptions, not
-light-client consensus. The bounded shape excludes periphery callbacks, native
-unwraps, multi-fill transactions and changed speed-up terms until independently
-supported. It does not prove refunds or production L2 finality. Broadening the
-existing single-chain receipt success into bridge success was rejected. Details:
-[ACROSS-EVIDENCE.md](ACROSS-EVIDENCE.md).
+## D86 — (Removed) Source proof before registering a bridge status watch
 
-## D86 — Require source proof before registering an Across status watch
+**Superseded (2026-10-21):** Across was removed; bridging is NEAR Intents. See D152.
 
-**Decision:** generic watch attachment accepts Relay only; Across uses a separate
-handoff taking the private verified source result. Derive its reference/hash/chains,
-compare all financial terms against immutable intent, verify the persisted signer
-and last signed source transaction, and check proof age after possible database
-waits. Continue to expose provider observations as advisory. Recompute chain proofs
-for the future outcome writer rather than making stored provider status authoritative.
+## D87 — (Removed) Bridge quotes with checked economics
 
-**Pros:** eliminates caller-picked Across deposit IDs at registration and links
-tracking to the original financial operation without a new schema. Existing
-historical reads remain unchanged. **Cons:** no public preparation service produces
-this handoff yet; durable verified outcomes and their historical anchor policy
-still need implementation. The existing watch does not store a settlement proof,
-and recovering it cannot by itself claim destination payment. Automatically marking
-the operation successful or changing history UI labels merely because a proof
-primitive exists was rejected.
+**Superseded (2026-10-21):** Across was removed; bridging is NEAR Intents. See D152.
 
-## D87 — Across quotes expose checked economics without signing authority
+## D88 — (Removed) Bridge Swap API attribution bytes
 
-**Decision:** add a protected, operator-reviewed direct same-asset ERC20 route
-registry and authenticated exact-input quote endpoint. Bind the owner from the
-session, independently decode the deposit, check all displayed amounts against
-calldata, cap fees/deadlines and return no signable transaction. Registry review
-must establish asset equivalence; matching symbols cannot. Reject unsupported
-swap/callback/periphery routes. Share Redis account admission with status reads.
-**Pros:** complete client-visible quote contract, bounded provider usage and no
-unreviewed provider transaction reaching a signer. **Cons:** narrow coverage and
-operator registry maintenance; changes in live response shape can reject useful
-quotes. **Alternatives:** generic forwarding or accepting arbitrary token pairs
-would make displayed economics and authority dependent on provider metadata.
-**Revisit:** authenticated live response evidence plus dedicated decoders and
-simulation for additional route families. **Status:** local synthetic transport,
-API and client validation; real API credentials/registration acceptance remains
-open. Source, configuration and remaining lifecycle: [ACROSS-QUOTES.md](ACROSS-QUOTES.md).
-
-## D88 — Bind exact Swap API attribution bytes, without inferring revenue
-
-**Decision:** immutable direct-deposit terms optionally bind the two-byte
-integrator ID. Tagged quotes accept only the exact eight-byte SDK Swap API suffix;
-legacy untagged terms retain their exact 420-byte call. No generic trailing bytes
-are accepted. Collect no app fee in this initial path. **Pros:** attribution is
-preserved through quote decoding and finalized transaction proof; previous
-untagged evidence remains valid. **Cons:** provider variants need explicit review;
-attribution does not itself monetize the flow. **Alternatives:** stripping the
-suffix breaks attribution, while accepting arbitrary suffixes weakens exact
-transaction binding. **Revisit:** registered integrator/fee terms and separately
-verified destination fee callbacks and settlement. **Status:** exact/mutated
-suffix unit tests and actual-contract two-fork tagged deposit/fill evidence.
-The test ID is synthetic and proves no registration or fee entitlement.
-See [tagged fork proof](evidence/across-direct-tagged-local-fork-2026-10-18.json).
+**Superseded (2026-10-21):** Across was removed; bridging is NEAR Intents. See D152.
 
 ## D89 — Rotate device-bound refresh credentials as a family
 
@@ -1482,7 +1425,7 @@ disposable database service to execute. See `IDENTITY-AND-DURABILITY.md` and
 limits; wallet-link address quotas are charged only after authenticating the live
 principal and are scoped to that principal. Metrics remains optional and binds only
 to an IPv4/IPv6 loopback address because its scrape route is unauthenticated and
-contains operational data. Across and the other operation-creation handlers share
+contains operational data. The operation-creation handlers share
 one parser that rejects duplicate, empty, non-graphic or over-128-byte idempotency
 keys. **Pros:** bearer-driven profile load is bounded, unauthenticated callers cannot
 starve a victim's link quota, and metrics cannot be exposed by accidentally binding
@@ -1788,9 +1731,8 @@ and updates the D121 cleanup cadence. See `identity.rs`, `redis_store.rs`,
 
 **Decision:** use the existing atomic global+subject quota primitive for every
 active route that has both shared and per-wallet limits (Aave, Morpho, swap
-execution, Across create/submit, bridge status and Hyperliquid account reads).
-Use Redis-backed subject quotas for operation recovery and Across intent/signing
-reads. Keep the PostgreSQL compatibility implementation for isolated Identity
+execution, bridge status and Hyperliquid account reads).
+Use Redis-backed subject quotas for operation recovery reads. Keep the PostgreSQL compatibility implementation for isolated Identity
 fixtures. Route quota domains are fixed, bounded lowercase identifiers accepted by
 Redis validation. **Pros:** a wallet that has exhausted its own quota cannot burn
 shared capacity with rejected requests; configured runtime quotas avoid writing a
@@ -1964,17 +1906,9 @@ These stubs contain no read or write implementation; they remain subject to the
 same HTTP envelope/body limits as other API routes. See `routes/v1.rs` and the
 `accounts.rs`, `session_signatures.rs`, `relay.rs`, and `monitoring.rs` handlers.
 
-## D134 — Return accepted status for Across operation staging
+## D134 — (Removed) Accepted status for bridge operation staging
 
-**Decision:** Across operation creation and signed-operation submission use HTTP 202,
-matching Aave, Morpho, and Uniswap asynchronous operation endpoints. Exact idempotent
-replays retain 202 because the response remains the accepted operation's current
-recovery snapshot. Quote reads remain 200. **Pros:** API consumers can apply one
-submission contract across providers and distinguish accepted work from completed
-reads. **Cons:** clients must still inspect the operation state; 202 does not promise
-that bridge settlement or destination delivery has completed. **Alternative:** use
-200 for synchronous PostgreSQL staging; rejected to avoid a provider-specific status
-contract. The Across HTTP acceptance test asserts create and replay behavior.
+**Superseded (2026-10-21):** Across was removed; bridging is NEAR Intents. See D152.
 
 ## D135 — Bound Polymarket Gamma catalog pagination
 
@@ -2018,7 +1952,7 @@ fee change after review; the same prepared transaction is signed and broadcast.
 
 ## D137 — Apply pre-auth admission at the private route-group boundary
 
-**Decision:** mount bearer-authenticated operation, bridge, Across, Relay quote,
+**Decision:** mount bearer-authenticated operation, bridge, Relay quote,
 Aave, Morpho, Hyperliquid account and swap handlers in one private subrouter and
 apply shared peer/global admission to that entire group before handler execution.
 Mount public Polymarket catalog reads in their own group with a separate shared
@@ -2127,16 +2061,9 @@ to refresh account data. Keep remote revocation errors visible for explicit
 sign-out and account switches. Other provider reads and every financial action
 remain separate reviewed slices.
 
-## D145 — Apply global and per-wallet quotas to Across recovery reads
+## D145 — (Removed) Quotas for bridge intent recovery reads
 
-**Decision:** Across intent recovery uses a 600-request global and 60-request
-per-wallet minute quota; signing-request reads use 120 global and 20 per-wallet.
-**Pros:** aggregate database/recovery load remains bounded as the number of
-wallets grows, matching the dual-quota pattern used by other provider reads.
-**Cons:** a shared global budget can throttle legitimate users during a burst or
-provider incident; revisit these values against measured traffic and expose quota
-rejections in operational metrics. The previous subject-only limits scaled with
-wallet count and did not provide a service-wide ceiling.
+**Superseded (2026-10-21):** Across was removed; bridging is NEAR Intents. See D152.
 
 ## D146 — Reject future-dated Polymarket catalog cache entries
 
@@ -2209,22 +2136,22 @@ the serialized WS payload, preserved price/sequence, stale gauge and later recov
 The tradeoff is continued display of the last accepted price explicitly marked stale;
 resetting the sequence would instead permit older prices to look like new updates.
 
-## D151 — Share immutable Across intent interpretation across settlement readers
+## D151 — (Removed) Shared bridge intent interpretation for settlement readers
 
-The service stores a strict typed `across_local_v1` intent with `terms`, while the
-older proof-store fixtures use `acrossDirectDeposit` plus `bridgeTracking`. Requiring
-only the old keys prevents service-created operations from attaching or settling.
-A shared interpretation now accepts the explicit supported typed schema and the
-existing legacy proof schema without rewriting either canonical intent or its hash.
-Typed consent binds saved calldata, amount/minimum, recipient, chain route, revision
-syntax and original quote/deadline bounds; a service discriminator never falls back
-to legacy parsing. Mixed/unknown service shapes fail closed.
+**Superseded (2026-10-21):** Across was removed; bridging is NEAR Intents. See D152.
 
-**Benefits:** create, attachment, settlement and readback agree on immutable consent;
-existing records keep their exact hashes; historical expired evidence remains usable
-for reconciliation. Signed-source, canonical receipt, wallet, lease and delivery
-checks remain mandatory. **Costs:** two explicitly supported historical formats and
-a dependency on versioned fee/registry configuration remain. A migration that rewrote
-consent would invalidate signing evidence; removing legacy support would strand its
-records. Neither is justified for this compatibility fix. Current registry mismatch
-still stops the Across worker; retain historical configuration until reconciliation.
+## D152 — Remove Across; bridge through NEAR Intents
+
+**Decision (2026-10-21):** remove Across entirely. Its quote, execution and
+settlement code, routes, configuration (`ACROSS_QUOTE_CONFIG_FILE` /
+`ACROSS_EXECUTION_CONFIG_FILE`), client APIs and UI are deleted. Migration
+`202610210002_remove_across.sql` drops `across_settlements` and
+`require_atomic_across_settlement`, rewrites `require_bridge_delivery` and
+`protect_bridge_poll_stop` so bridge success and poll stop stay blocked until a
+verified-delivery writer exists, and narrows `bridge_status_watches.provider` to
+`'relay'`. Migration `202610180011` stays because it also added the generic
+`bridging` state and `stopped_at`. Bridge previews use NEAR Intents
+([NEAR-INTENTS.md](NEAR-INTENTS.md)); Relay remains an advisory status and quote
+preview. **Pros:** one bridge provider to integrate, review and operate; no dormant
+execution path. **Cons:** no bridge execution or verified delivery exists until the
+NEAR Intents lifecycle lands. Editing or deleting applied migrations was rejected.

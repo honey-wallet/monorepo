@@ -147,7 +147,6 @@ impl PreparedEvm {
             PreparationProvider::AaveV3
                 | PreparationProvider::MorphoVaultV2
                 | PreparationProvider::Uniswap
-                | PreparationProvider::Across
         ) || nonce >= U256::from(u64::MAX)
             || nonce
                 .checked_add(U256::from(self.plan.steps.len()))
