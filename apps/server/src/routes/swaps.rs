@@ -1,4 +1,5 @@
 //! Quote reads plus explicitly configured local-fork operation execution.
+use super::operation_id as id;
 use crate::{
     error::AppError,
     identity::{Identity, Profile},
@@ -29,23 +30,13 @@ impl SwapState {
         ))
     }
     async fn profile(&self, headers: &HeaderMap, mutation: bool) -> Result<Profile, AppError> {
-        let identity = self.identity.as_ref().ok_or(AppError::Unauthorized)?;
-        let p = identity
-            .authenticate(super::identity::bearer(headers)?)
-            .await?;
-        identity
-            .rate_limit_pair(
-                if mutation {
-                    "swap_exec_mutation"
-                } else {
-                    "swap_exec_read"
-                },
-                &p.wallet.id.to_string(),
-                if mutation { 60 } else { 600 },
-                if mutation { 10 } else { 60 },
-            )
-            .await?;
-        Ok(p)
+        super::execution_profile(
+            self.identity.as_ref(),
+            headers,
+            mutation,
+            ("swap_exec_read", "swap_exec_mutation"),
+        )
+        .await
     }
     fn service(&self) -> Result<&UniswapQuotes, AppError> {
         self.quotes
@@ -105,10 +96,6 @@ async fn quote(
     Ok(Json(service.quote(&profile.wallet.address, input).await?))
 }
 
-fn id(s: &str) -> Result<uuid::Uuid, AppError> {
-    s.parse()
-        .map_err(|_| AppError::BadRequest("invalid operation ID".into()))
-}
 async fn execution_configuration(
     State(s): State<SwapState>,
 ) -> Result<Json<SwapExecutionConfiguration>, AppError> {

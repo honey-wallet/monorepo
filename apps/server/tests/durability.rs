@@ -1261,3 +1261,68 @@ async fn failed_and_crashed_final_attempts_become_dead_without_republishing() {
     assert_eq!(dead, 2);
     db.close().await;
 }
+
+#[tokio::test]
+#[ignore = "requires isolated TEST_DATABASE_URL"]
+async fn attacker_cannot_spend_another_peers_wallet_challenge_allowance() {
+    let db = TestDatabase::new().await;
+    let app = routes::identity::router(Some(identity(&db)), false);
+    let request = |peer: &str| {
+        let mut request = Request::builder()
+            .method("POST")
+            .uri("/auth/challenges")
+            .header("content-type", "application/json")
+            .body(Body::from(
+                json!({"address": ADDRESS, "chainId": "eip155:1"}).to_string(),
+            ))
+            .unwrap();
+        request
+            .extensions_mut()
+            .insert(ConnectInfo(peer.parse::<std::net::SocketAddr>().unwrap()));
+        request
+    };
+    for _ in 0..5 {
+        assert_eq!(
+            app.clone()
+                .oneshot(request("192.0.2.1:1000"))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::OK
+        );
+    }
+    assert_eq!(
+        app.clone()
+            .oneshot(request("192.0.2.2:1000"))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::OK
+    );
+    for _ in 5..30 {
+        assert_eq!(
+            app.clone()
+                .oneshot(request("192.0.2.1:1000"))
+                .await
+                .unwrap()
+                .status(),
+            StatusCode::OK
+        );
+    }
+    assert_eq!(
+        app.clone()
+            .oneshot(request("192.0.2.1:1000"))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::TOO_MANY_REQUESTS
+    );
+    assert_eq!(
+        app.oneshot(request("192.0.2.2:1000"))
+            .await
+            .unwrap()
+            .status(),
+        StatusCode::OK
+    );
+    db.close().await;
+}

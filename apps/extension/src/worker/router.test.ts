@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { type Approval, ERR, type PageReply } from './protocol';
+import {
+  type Approval,
+  ERR,
+  type PageReply,
+  type Site,
+  STORAGE,
+  siteMatchesWallet,
+} from './protocol';
 import { createRouter } from './router';
 
 const SITE = 'https://app.example';
@@ -8,7 +15,10 @@ const OTHER = '0xbBbBBBBbbBBBbbbBbbBbbbbBBbBbbbbBbBbbBBbB';
 const SOL = '7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV';
 
 function setup(
-  options: { rpc?: (url: string, method: string, params: unknown) => Promise<unknown> } = {},
+  options: {
+    canUseSite?: (site: Site) => Promise<boolean>;
+    rpc?: (url: string, method: string, params: unknown) => Promise<unknown>;
+  } = {},
 ) {
   const store = new Map<string, unknown>();
   const events: { origin: string; reply: PageReply }[] = [];
@@ -17,6 +27,7 @@ function setup(
   let opened = 0;
   let id = 0;
   const router = createRouter({
+    canUseSite: options.canUseSite ?? (async () => true),
     load: async <T>(key: string) => store.get(key) as T | undefined,
     save: async (key, value) => {
       store.set(key, structuredClone(value));
@@ -53,7 +64,17 @@ function setup(
     });
     return accounts;
   };
-  return { router, call, nextApproval, connect, events, rpcCalls, badges, opened: () => opened };
+  return {
+    store,
+    router,
+    call,
+    nextApproval,
+    connect,
+    events,
+    rpcCalls,
+    badges,
+    opened: () => opened,
+  };
 }
 
 describe('connecting', () => {
@@ -409,4 +430,48 @@ describe('badge', () => {
     await t.router.forgetAll();
     expect(await t.router.sites()).toEqual([]);
   });
+});
+
+it('filters cached legacy shared, missing-key and mismatched accounts while retaining real permissions', async () => {
+  const wallet = { id: 'real', kind: 'wallet', addresses: { evm: EVM, solana: SOL } };
+  const t = setup({ canUseSite: async (site) => siteMatchesWallet(site, wallet) });
+  const permission = {
+    origin: SITE,
+    walletId: 'legacy',
+    walletName: 'Old shared',
+    evm: OTHER,
+    solana: null,
+    chainId: 1,
+    connectedAt: 1,
+  };
+  t.store.set(STORAGE.sites, { [SITE]: permission });
+  expect(await t.call('eth_accounts')).toEqual([]);
+  expect(await t.router.sites()).toEqual([]);
+  expect(
+    siteMatchesWallet(
+      { ...permission, walletId: 'real', evm: EVM },
+      { ...wallet, kind: 'multisig' },
+    ),
+  ).toBe(false);
+  expect(
+    siteMatchesWallet(
+      { ...permission, walletId: 'real', evm: EVM },
+      { ...wallet, watchOnly: true },
+    ),
+  ).toBe(false);
+  t.store.set(STORAGE.sites, { [SITE]: { ...permission, walletId: 'real' } });
+  expect(await t.call('eth_accounts')).toEqual([]);
+  t.store.set(STORAGE.sites, {
+    [SITE]: { ...permission, walletId: 'real', evm: EVM.toLowerCase(), solana: SOL },
+  });
+  expect(await t.call('eth_accounts')).toEqual([EVM.toLowerCase()]);
+  expect(
+    siteMatchesWallet({ ...permission, walletId: 'real', evm: null, solana: SOL }, wallet),
+  ).toBe(true);
+});
+
+it('does not install a new permission for an unbacked address', async () => {
+  const t = setup({ canUseSite: async () => false });
+  await expect(t.connect()).rejects.toMatchObject(ERR.unauthorized);
+  expect(await t.call('eth_accounts')).toEqual([]);
 });

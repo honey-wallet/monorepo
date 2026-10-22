@@ -1,5 +1,5 @@
 import type { ChainFamily } from '@honey-wallet/keyring';
-import type { AddedWallet } from '@/lib/wallets';
+import { type AddedWallet, canReceive } from '@/lib/wallets';
 
 /** One address to receive on, and what can be sent to it. */
 export type ReceiveAddress = {
@@ -58,9 +58,10 @@ const uriFor = (family: ChainFamily, address: string) =>
 /**
  * Every address a wallet can receive on. Each chain has its own address, so sending
  * Bitcoin to the EVM address would lose it: wallets with keys on this device list one
- * per chain, and the rest (watched, demo) only their EVM address.
+ * per chain. Explicitly watched wallets list their EVM address; simulations list none.
  */
 export function receiveAddresses(wallet: AddedWallet): ReceiveAddress[] {
+  if (!canReceive(wallet)) return [];
   const addresses = wallet.addresses ?? { evm: wallet.address };
   return ORDER.flatMap((family) => {
     const address = addresses[family];

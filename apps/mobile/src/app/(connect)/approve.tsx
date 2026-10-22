@@ -143,29 +143,16 @@ function SiteChip({ approval }: { approval: Approval }) {
   );
 }
 
-/** A wallet that can answer this site: its keys are here, or it's a shared wallet you're in. */
+/** A wallet that can answer this site: its keys must be on this device. */
 type Signer = { wallet: AddedWallet; evm: string | null; solana: string | null; shared: boolean };
 
 function useSigners(): Signer[] {
   const profile = useProfile();
   const { added } = useWallets();
-  const shared = useMultisigState();
   return useMemo(
     () =>
       allWallets(profile.name, added).flatMap((wallet): Signer[] => {
         if (wallet.watchOnly || isFixtureWallet(wallet)) return [];
-        const m = multisigOf(shared, wallet.id);
-        if (m) {
-          const safe = m.protocol === 'safe';
-          return [
-            {
-              wallet,
-              evm: safe ? wallet.address : null,
-              solana: safe ? null : wallet.address,
-              shared: true,
-            },
-          ];
-        }
         if (!wallet.addresses) return [];
         return [
           {
@@ -176,7 +163,7 @@ function useSigners(): Signer[] {
           },
         ];
       }),
-    [profile.name, added, shared],
+    [profile.name, added],
   );
 }
 

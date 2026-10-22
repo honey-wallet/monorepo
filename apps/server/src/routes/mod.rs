@@ -2,6 +2,7 @@ pub mod aave;
 pub mod accounts;
 pub mod capabilities;
 pub mod chains;
+pub mod clerk;
 pub mod health;
 pub mod identity;
 pub mod monitoring;
@@ -24,6 +25,31 @@ pub mod bridges;
 
 pub mod hyperliquid;
 pub mod polymarket;
+
+/// Execution routes share admission rules while retaining separate quota domains.
+pub(super) async fn execution_profile(
+    identity: Option<&crate::identity::Identity>,
+    headers: &axum::http::HeaderMap,
+    mutation: bool,
+    domains: (&'static str, &'static str),
+) -> Result<crate::identity::Profile, crate::error::AppError> {
+    let identity = identity.ok_or(crate::error::AppError::Unauthorized)?;
+    let profile = identity.authenticate(identity::bearer(headers)?).await?;
+    identity
+        .rate_limit_pair(
+            if mutation { domains.1 } else { domains.0 },
+            &profile.wallet.id.to_string(),
+            if mutation { 60 } else { 600 },
+            if mutation { 10 } else { 60 },
+        )
+        .await?;
+    Ok(profile)
+}
+
+pub(super) fn operation_id(id: &str) -> Result<uuid::Uuid, crate::error::AppError> {
+    id.parse()
+        .map_err(|_| crate::error::AppError::BadRequest("invalid operation ID".into()))
+}
 
 pub(crate) fn idempotency_key(
     headers: &axum::http::HeaderMap,

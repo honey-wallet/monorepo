@@ -50,6 +50,28 @@ export type Site = {
   connectedAt: number;
 };
 
+/** Public key-backed wallet metadata, shared by the worker and native WalletConnect. */
+export type SiteWallet = {
+  id: string;
+  kind: string;
+  watchOnly?: boolean;
+  addresses?: { evm?: string; solana?: string };
+};
+
+/** Cached site permissions must still name addresses whose keys the wallet holds. */
+export function siteMatchesWallet(site: Site, wallet: SiteWallet | undefined): boolean {
+  return (
+    !!wallet &&
+    wallet.id === site.walletId &&
+    wallet.kind === 'wallet' &&
+    !wallet.watchOnly &&
+    !!wallet.addresses &&
+    !!(site.evm || site.solana) &&
+    (!site.evm || site.evm.toLowerCase() === wallet.addresses.evm?.toLowerCase()) &&
+    (!site.solana || site.solana === wallet.addresses.solana)
+  );
+}
+
 export type ApprovalKind =
   | 'connect'
   | 'switchChain'

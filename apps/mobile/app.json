@@ -59,6 +59,9 @@
       ],
       "expo-sharing",
       "expo-secure-store",
+      "expo-web-browser",
+      "expo-apple-authentication",
+      "@clerk/expo",
       [
         "expo-local-authentication",
         {

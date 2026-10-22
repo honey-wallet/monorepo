@@ -1,10 +1,12 @@
 import { router } from 'expo-router';
+import { useRef } from 'react';
 import { View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { Icon, type IconName } from '@/components/Icon';
 import { Guide, riseIn } from '@/components/wallet/Guide';
-import { showToast } from '@/lib/toast';
-import { addWallet, demoAddress, nextBurnerLabel } from '@/lib/wallets';
+import { showErrorToast, showToast } from '@/lib/toast';
+import { createAccount } from '@/lib/vault';
+import { addVaultWallet, nextBurnerLabel } from '@/lib/wallets';
 import { makeStyles, useTheme } from '@/theme';
 
 /** A honey icon on a soft honey disc, rising into place. */
@@ -22,16 +24,19 @@ function Art({ icon }: { icon: IconName }) {
 
 /** What a burner wallet is for, in three steps, then create one. */
 export default function BurnerWalletSheet() {
-  const create = () => {
-    addWallet({
-      kind: 'wallet',
-      label: nextBurnerLabel(),
-      address: demoAddress(),
-      usd: 0,
-      burner: true,
-    });
-    showToast('Burner wallet created');
-    router.dismissAll();
+  const creating = useRef(false);
+  const create = async () => {
+    if (creating.current) return;
+    creating.current = true;
+    try {
+      addVaultWallet(await createAccount(nextBurnerLabel(), true));
+      showToast('Burner wallet created');
+      router.dismissAll();
+    } catch {
+      showErrorToast('Couldn’t create burner wallet');
+    } finally {
+      creating.current = false;
+    }
   };
 
   return (

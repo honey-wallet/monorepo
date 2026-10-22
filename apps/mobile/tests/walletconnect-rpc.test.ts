@@ -16,6 +16,7 @@ vi.mock('@walletconnect/core', () => ({ Core: class {} }));
 vi.mock('@walletconnect/utils', () => ({ buildApprovedNamespaces: vi.fn(), getSdkError: vi.fn() }));
 vi.mock('expo-crypto', () => ({ getRandomBytes: vi.fn() }));
 vi.mock('expo-router', () => ({ router: { push: vi.fn() } }));
+vi.mock('@/lib/wallets', () => ({ wallets: { get: () => ({ added: [] }) } }));
 vi.mock('@/lib/toast', () => ({ showToast: vi.fn() }));
 
 const { isBoundedWalletConnectRequest, requestRpc } = await import('@/lib/walletconnect');

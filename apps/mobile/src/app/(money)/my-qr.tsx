@@ -9,16 +9,14 @@ import { TextsReveal } from '@/components/motion/TextsReveal';
 import { TiltCard } from '@/components/motion/TiltCard';
 import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
 import { ChainPicker } from '@/components/wallet/ChainPicker';
-import { NetworkBadge, networkLabel } from '@/components/wallet/MultisigParts';
 import { TokenIcon } from '@/components/wallet/parts';
 import { QRCode } from '@/components/wallet/QRCode';
 import { useCopy } from '@/lib/copy';
 import { demoLabel } from '@/lib/demo-money-copy';
 import { tap } from '@/lib/haptics';
-import { useMultisig } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
 import { EVM_LOGOS, receiveAddresses } from '@/lib/receive';
-import { isFixtureWallet, isMainWallet, useActiveWallet } from '@/lib/wallets';
+import { isMainWallet, useActiveWallet } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
 
 const QR_SIZE = 240;
@@ -35,17 +33,15 @@ export default function MyQRSheet() {
   const c = useTheme();
   const profile = useProfile();
   const { from, chain } = useLocalSearchParams<{ from?: string; chain?: ChainFamily }>();
-  // The wallet in use; a shared wallet's code says which network it's on.
   const wallet = useActiveWallet();
-  const multisig = useMultisig(wallet.id);
   const isMain = isMainWallet(wallet);
   // One chain's address (from Receive's list); otherwise the EVM one.
   const list = receiveAddresses(wallet);
   const entry = list.find((e) => e.family === chain) ?? list[0];
-  const address = entry?.address ?? wallet.address;
+  const address = entry?.address ?? '';
   const { copied, copy } = useCopy(address);
 
-  if (isFixtureWallet(wallet))
+  if (!entry)
     return (
       <SheetScreen title={demoLabel('Demo wallet', 'My QR')}>
         <Text style={{ color: c.text }}>Create or import a wallet before receiving funds.</Text>
@@ -53,7 +49,7 @@ export default function MyQRSheet() {
     );
 
   // Opened without a network (from Home): ask which one first.
-  if (!chain && !multisig && list.length > 1)
+  if (!chain && list.length > 1)
     return (
       <SheetScreen title="Which network?">
         <SheetText lead>Each network has its own address.</SheetText>
@@ -89,18 +85,12 @@ export default function MyQRSheet() {
       {/* Press and drag to tilt the code toward your finger; it rests flat to scan. */}
       <TiltCard style={styles.qr}>
         <QRCode
-          value={
-            multisig?.protocol === 'squads'
-              ? `solana:${wallet.address}`
-              : (entry?.uri ?? `ethereum:${wallet.address}`)
-          }
+          value={entry.uri}
           size={QR_SIZE}
           color={c.primary}
           center={
             <View style={styles.qrCenter}>
-              {multisig ? (
-                <NetworkBadge network={multisig.network} size={50} />
-              ) : isMain ? (
+              {isMain ? (
                 <Avatar
                   name={profile.name}
                   size={50}
@@ -126,13 +116,7 @@ export default function MyQRSheet() {
         </Text>
       </Pressable>
 
-      {multisig ? (
-        <View style={styles.networks}>
-          <Text style={styles.networksText}>
-            Only on {multisig.network.name}. This is a {networkLabel(multisig)} shared wallet.
-          </Text>
-        </View>
-      ) : entry && entry.family !== 'evm' ? (
+      {entry && entry.family !== 'evm' ? (
         <View style={styles.networks}>
           <Text style={styles.networksText}>
             Only send {entry.name} tokens here. Other networks have their own address.

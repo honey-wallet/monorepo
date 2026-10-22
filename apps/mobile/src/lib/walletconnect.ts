@@ -1,4 +1,4 @@
-import type { Approval, Site } from '@honey-wallet/extension/protocol';
+import { type Approval, type Site, siteMatchesWallet } from '@honey-wallet/extension/protocol';
 import { type Caller, createRouter } from '@honey-wallet/extension/router';
 import { EVM_NETWORKS, readSolanaTransaction } from '@honey-wallet/keyring';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,6 +10,7 @@ import { getRandomBytes } from 'expo-crypto';
 import { router as nav } from 'expo-router';
 import { requestJsonRpc } from '@/lib/json-rpc';
 import { showErrorToast, showToast } from '@/lib/toast';
+import { wallets } from '@/lib/wallets';
 
 /**
  * Websites on the phone, through WalletConnect: scan a site's QR (or paste its link) and
@@ -116,6 +117,11 @@ export function isBoundedWalletConnectRequest(request: unknown): boolean {
 }
 
 const router = createRouter({
+  canUseSite: async (site) =>
+    siteMatchesWallet(
+      site,
+      wallets.get().added.find((wallet) => wallet.id === site.walletId),
+    ),
   load: async <T>(key: string) => {
     const text = await AsyncStorage.getItem(`honey.wc.${key}`);
     return text ? (JSON.parse(text) as T) : undefined;
@@ -201,6 +207,17 @@ async function start(): Promise<IWalletKit | null> {
       icons: ['https://honeywallet.app/icon.png'],
     },
   });
+
+  // Revoke restored sessions whose accounts were only simulated or have been removed.
+  const origins = new Set((await router.sites()).map((site) => site.origin));
+  for (const [topic, entry] of Object.entries(topics)) {
+    if (origins.has(entry.key)) continue;
+    delete topics[topic];
+    await walletkit
+      .disconnectSession({ topic, reason: getSdkError('USER_DISCONNECTED') })
+      .catch(() => {});
+  }
+  await saveTopics();
 
   walletkit.on('session_proposal', async (proposal) => {
     const { id, params } = proposal;

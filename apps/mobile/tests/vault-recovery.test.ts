@@ -79,3 +79,12 @@ it('adds NEAR to legacy phrase wallets, preserving existing addresses and raw EV
   expect((await privateKeyOf(account.id, 'near')).length).toBe(32);
   await expect(privateKeyOf(imported.id, 'near')).rejects.toThrow('only works on EVM');
 });
+
+it('creates a burner with recoverable keys on a distinct derivation index', async () => {
+  const main = await startWithMnemonic(phrase, 'Main');
+  const burner = await createAccount('Burner 1', true);
+  expect(burner.burner).toBe(true);
+  expect(burner.addresses.evm).not.toBe(main.addresses.evm);
+  expect((await privateKeyOf(burner.id, 'evm')).length).toBe(32);
+  expect((await loadAccounts()).find((a) => a.id === burner.id)?.burner).toBe(true);
+});

@@ -29,6 +29,7 @@ import * as SecureStore from '@/lib/secure-store';
 export type VaultAccount = {
   id: string;
   label: string;
+  burner?: boolean;
   /** The phrase it derives from (and its index), or an imported private key. */
   source: { kind: 'phrase'; seedId: string; index: number } | { kind: 'key' };
   addresses: Partial<Addresses> & { evm: string };
@@ -112,7 +113,7 @@ async function saveSeed(phrase: string, { primary = false } = {}) {
   return seedId;
 }
 
-async function deriveAccount(seedId: string, index: number, label: string) {
+async function deriveAccount(seedId: string, index: number, label: string, burner = false) {
   const phrase = await read(KEY.seed(seedId));
   if (!phrase) throw new Error('Recovery phrase missing from this device');
   const addresses = await withMnemonicSeed(phrase, (seed) => deriveAddresses(seed, index));
@@ -121,6 +122,7 @@ async function deriveAccount(seedId: string, index: number, label: string) {
     label,
     source: { kind: 'phrase', seedId, index },
     addresses,
+    ...(burner ? { burner: true } : {}),
   });
 }
 
@@ -137,15 +139,20 @@ export const startWithMnemonic = serial(
  * Creates the next wallet under the primary phrase, starting a new random phrase when
  * the device doesn't have one yet (backed up later, from the setup checklist).
  */
-export const createAccount = serial(async (label: string): Promise<VaultAccount> => {
-  let seedId = await read(KEY.primary);
-  if (!seedId) seedId = await saveSeed(draftMnemonic());
-  const used = (await loadAccounts()).filter(
-    (a) => a.source.kind === 'phrase' && a.source.seedId === seedId,
-  );
-  const next = used.reduce((max, a) => Math.max(max, (a.source as { index: number }).index + 1), 0);
-  return deriveAccount(seedId, next, label);
-});
+export const createAccount = serial(
+  async (label: string, burner: boolean = false): Promise<VaultAccount> => {
+    let seedId = await read(KEY.primary);
+    if (!seedId) seedId = await saveSeed(draftMnemonic());
+    const used = (await loadAccounts()).filter(
+      (a) => a.source.kind === 'phrase' && a.source.seedId === seedId,
+    );
+    const next = used.reduce(
+      (max, a) => Math.max(max, (a.source as { index: number }).index + 1),
+      0,
+    );
+    return deriveAccount(seedId, next, label, burner);
+  },
+);
 
 /** Imports account 0 of an existing phrase from another wallet. */
 export const importMnemonic = serial(

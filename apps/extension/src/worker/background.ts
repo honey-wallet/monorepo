@@ -5,7 +5,9 @@ import {
   type PageRequest,
   PORT_NAME,
   type ProviderError,
+  type SiteWallet,
   STORAGE,
+  siteMatchesWallet,
 } from './protocol';
 import { createRouter } from './router';
 import { createRpcClient } from './rpc';
@@ -88,6 +90,15 @@ const openApprovals = () => openWindow(STORAGE.window, 'approve', POPUP);
 const rpc = createRpcClient();
 
 const router = createRouter({
+  canUseSite: async (site) => {
+    const state = (await chrome.storage.local.get('honey.state.wallets'))['honey.state.wallets'] as
+      | { added?: SiteWallet[] }
+      | undefined;
+    return siteMatchesWallet(
+      site,
+      state?.added?.find((wallet) => wallet.id === site.walletId),
+    );
+  },
   load: async <T>(key: string) => (await chrome.storage.local.get(key))[key] as T | undefined,
   save: (key, value) => chrome.storage.local.set({ [key]: value }),
   openApprovals,

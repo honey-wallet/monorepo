@@ -1,3 +1,4 @@
+use super::operation_id as parse_id;
 use crate::{
     error::AppError,
     identity::{Identity, Profile},
@@ -14,7 +15,6 @@ use axum::{
     routing::{get, post},
 };
 use std::sync::Arc;
-use uuid::Uuid;
 #[derive(Clone)]
 struct MorphoState {
     identity: Option<Identity>,
@@ -27,23 +27,13 @@ impl MorphoState {
         ))
     }
     async fn profile(&self, headers: &HeaderMap, mutation: bool) -> Result<Profile, AppError> {
-        let identity = self.identity.as_ref().ok_or(AppError::Unauthorized)?;
-        let profile = identity
-            .authenticate(super::identity::bearer(headers)?)
-            .await?;
-        identity
-            .rate_limit_pair(
-                if mutation {
-                    "morpho_mutation"
-                } else {
-                    "morpho_read"
-                },
-                &profile.wallet.id.to_string(),
-                if mutation { 60 } else { 600 },
-                if mutation { 10 } else { 60 },
-            )
-            .await?;
-        Ok(profile)
+        super::execution_profile(
+            self.identity.as_ref(),
+            headers,
+            mutation,
+            ("morpho_read", "morpho_mutation"),
+        )
+        .await
     }
 }
 pub fn router(identity: Option<Identity>, service: Option<Arc<MorphoService>>) -> Router {
@@ -115,10 +105,6 @@ async fn submit(
         StatusCode::ACCEPTED,
         Json(s.service()?.submit(&profile, parse_id(&id)?, input).await?),
     ))
-}
-fn parse_id(id: &str) -> Result<Uuid, AppError> {
-    id.parse()
-        .map_err(|_| AppError::BadRequest("invalid operation ID".into()))
 }
 
 async fn intent(

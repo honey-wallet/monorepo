@@ -34,7 +34,7 @@ export default function SignOutSheet() {
       .catch(() => showErrorToast('Couldn’t load wallets'));
   }, []);
   const ready = accounts?.every((a) => confirmed.includes(a.id));
-  // Nothing stored on this phone (signed in with Apple, Google or email): no ticks needed.
+  // Nothing stored here (no wallet was made or imported): no ticks needed.
   const hasSecrets = (accounts?.length ?? 0) > 0;
 
   const confirm = async () => {

@@ -33,6 +33,7 @@ http-body-util.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 sha2.workspace = true
+base64 = "0.22.1"
 bs58 = "0.5.1"
 ring = "0.17.14"
 sqlx.workspace = true

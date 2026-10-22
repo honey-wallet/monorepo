@@ -1,75 +1,109 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { TextInput } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { StepScreen, useStepStyles } from '@/components/onboarding/StepScreen';
-import { useTheme } from '@/theme';
+import { failure, tap } from '@/lib/haptics';
+import { IDENTITY_ENABLED } from '@/lib/identity';
+import { useEmailCode } from '@/lib/identity-flows';
+import { makeStyles, useTheme } from '@/theme';
+import { DURATION } from '@/theme/motion';
 
 const EMAIL = /^\S+@\S+\.\S+$/;
 
+/** Email sign-in, step one: Clerk emails a 6-digit code (the next screen checks it). */
 export default function EmailScreen() {
-  // `intent` is create or restore, from the Get started sheet; it rides along to verify.
-  const params = useLocalSearchParams<{ mode?: string; intent?: string }>();
-  const [mode, setMode] = useState<'email' | 'phone'>(params.mode === 'phone' ? 'phone' : 'email');
-  const [value, setValue] = useState('');
-  const stepStyles = useStepStyles();
-  const c = useTheme();
-  const isEmail = mode === 'email';
-  const valid = isEmail ? EMAIL.test(value.trim()) : value.replace(/\D/g, '').length >= 7;
+  // No Clerk in this build: there's no email sign-in to offer.
+  if (!IDENTITY_ENABLED) return <Redirect href="/welcome" />;
+  return <EmailStep />;
+}
 
-  const switchMode = () => {
-    setMode(isEmail ? 'phone' : 'email');
-    setValue('');
+function EmailStep() {
+  // `intent` is create or restore, from the Get started sheet; it rides along to verify.
+  const params = useLocalSearchParams<{ intent?: string }>();
+  const [value, setValue] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const stepStyles = useStepStyles();
+  const styles = useStyles();
+  const c = useTheme();
+  const emailCode = useEmailCode();
+  const email = value.trim();
+  const valid = EMAIL.test(email);
+
+  const send = async () => {
+    if (!valid || sending) return;
+    tap();
+    setSending(true);
+    setError(null);
+    try {
+      const sent = await emailCode.start(email);
+      if (!sent.ok) {
+        failure();
+        setError(sent.message);
+        return;
+      }
+      router.push({
+        pathname: '/verify',
+        params: { to: email, intent: params.intent, flow: sent.flow },
+      });
+    } catch (cause) {
+      console.warn('Couldn’t send the email code', cause);
+      failure();
+      setError('Couldn’t send a code. Check your connection and try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
     <StepScreen
       leading="close"
-      help={isEmail ? 'email' : 'phone'}
-      title={isEmail ? 'Enter your email address' : 'Enter your phone number'}
+      help="email"
+      title="Enter your email address"
       footer={
-        <View style={stepStyles.footerRow}>
-          <PillButton
-            variant="secondary"
-            label={isEmail ? 'Use Phone' : 'Use Email'}
-            onPress={switchMode}
-            style={stepStyles.footerButton}
-          />
-          <PillButton
-            label="Continue"
-            disabled={!valid}
-            onPress={() =>
-              router.push({
-                pathname: '/verify',
-                params: { to: value.trim(), intent: params.intent },
-              })
-            }
-            style={stepStyles.footerButton}
-          />
-        </View>
+        <PillButton
+          label={sending ? 'Sending code…' : 'Continue'}
+          disabled={!valid || sending}
+          onPress={send}
+        />
       }
     >
       <TextInput
-        key={mode}
         autoFocus
         value={value}
-        onChangeText={setValue}
-        placeholder={isEmail ? 'Email Address' : 'Phone Number'}
+        onChangeText={(text) => {
+          setValue(text);
+          setError(null);
+        }}
+        editable={!sending}
+        placeholder="Email Address"
         placeholderTextColor={c.placeholder}
         selectionColor={c.accentText}
         cursorColor={c.accentText}
-        keyboardType={isEmail ? 'email-address' : 'phone-pad'}
-        textContentType={isEmail ? 'emailAddress' : 'telephoneNumber'}
-        autoComplete={isEmail ? 'email' : 'tel'}
+        keyboardType="email-address"
+        textContentType="emailAddress"
+        autoComplete="email"
         autoCapitalize="none"
         autoCorrect={false}
-        returnKeyType={isEmail ? 'next' : undefined}
-        onSubmitEditing={() =>
-          valid &&
-          router.push({ pathname: '/verify', params: { to: value.trim(), intent: params.intent } })
-        }
+        returnKeyType="next"
+        onSubmitEditing={send}
         style={stepStyles.input}
       />
+      {error ? (
+        <Animated.Text entering={FadeIn.duration(DURATION.fast)} style={styles.error}>
+          {error}
+        </Animated.Text>
+      ) : null}
     </StepScreen>
   );
 }
+
+const useStyles = makeStyles((c) => ({
+  error: {
+    marginTop: 12,
+    color: c.error,
+    fontSize: 14,
+  },
+}));

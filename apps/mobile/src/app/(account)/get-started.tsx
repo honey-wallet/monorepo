@@ -1,5 +1,5 @@
 import { type Href, Redirect, router, useLocalSearchParams } from 'expo-router';
-import { type ReactNode, useRef, useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { ActivityIndicator, Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
@@ -11,15 +11,15 @@ import { KeyGlyph, PhraseGlyph } from '@/components/onboarding/icons';
 import { SheetScreen, SheetText } from '@/components/sheets/Sheet';
 import { LabeledRule } from '@/components/wallet/parts';
 import { failure, tap } from '@/lib/haptics';
+import { IDENTITY_ENABLED } from '@/lib/identity';
+import { APPLE_SIGN_IN, useIdentity, useSocialSignIn } from '@/lib/identity-flows';
+import { continueAfterSignIn, type IdentityMethod } from '@/lib/identity-onboarding';
 import { leaveSheetTo } from '@/lib/navigation';
-import { finishOnboarding } from '@/lib/onboarding';
-import { isWeb } from '@/lib/platform';
-import { settings } from '@/lib/settings';
+import { HERE, isWeb } from '@/lib/platform';
 import { makeStyles, useTheme } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
-/** How long the placeholder Apple / Google sign-in takes. */
-const SIGN_IN_MS = 1100;
+type Busy = IdentityMethod | 'continue' | null;
 
 /**
  * The two ways in, after Phantom: Apple, Google or email first (no recovery phrase to
@@ -27,50 +27,26 @@ const SIGN_IN_MS = 1100;
  * with a recovery phrase or an import tucked under them for people who want it.
  *
  *   create  → Continue with Apple / Google / email, or create with a recovery phrase
- *   restore → Continue with Apple / Google / email, or import a phrase or private key
+ *   restore → Continue with Apple / Google / email, then bring the keys back (backup,
+ *             phrase, key or the other device), or go straight to those
+ *
+ * Apple, Google and email are a Clerk account (identity only): the keys are made or
+ * restored on this device either way (lib/identity-onboarding.ts). Without a Clerk key
+ * (and always in the browser) only the phrase and import ways are shown.
  */
 export default function GetStartedSheet() {
   const { mode = 'create' } = useLocalSearchParams<{ mode?: 'create' | 'restore' }>();
   const restore = mode === 'restore';
   const styles = useStyles();
   const compact = useCompact();
-  const c = useTheme();
-  const [signingIn, setSigningIn] = useState<'apple' | 'google' | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<Busy>(null);
   // Restore: pairing first; the phrase, key and backup ways one tap further.
   // const [otherWays, setOtherWays] = useState(false);
-  const cancelled = useRef(false);
-  const { shake, style: shaken } = useErrorShake();
 
   // A sheet over Welcome only. Opened on its own (a reload that reopens a deep link),
   // it would be a bare page with nothing under it, so start from Welcome instead.
   if (!router.canGoBack()) return <Redirect href="/welcome" />;
 
-  // TODO: real Sign in with Apple / Google (an embedded-wallet provider) once the
-  // server has accounts; for now it pauses as if signing in and opens the wallet.
-  const social = (provider: 'apple' | 'google') => {
-    tap();
-    setError(null);
-    setSigningIn(provider);
-    setTimeout(() => {
-      // DEMO: with Simulate failures on, sign-in alternates between being cancelled
-      // and failing, so both messages can be seen.
-      if (settings.get().simulateFailures) {
-        const name = provider === 'apple' ? 'Apple' : 'Google';
-        cancelled.current = !cancelled.current;
-        failure();
-        setSigningIn(null);
-        setError(
-          cancelled.current
-            ? `Sign-in with ${name} was cancelled. Nothing was created.`
-            : `Couldn’t reach ${name}. Check your connection and try again.`,
-        );
-        shake();
-        return;
-      }
-      finishOnboarding(provider, { restored: restore });
-    }, SIGN_IN_MS);
-  };
   // Leave the sheet, then open the next step full screen.
   const go = (href: Href) => {
     tap();
@@ -82,48 +58,23 @@ export default function GetStartedSheet() {
       <Text style={[styles.title, compact && styles.titleCompact]}>
         {restore ? 'Use an existing wallet' : 'Create a new wallet'}
       </Text>
-      <SheetText center>
-        {restore ? 'Sign in the way you created it.' : 'No password or phrase to remember.'}
-      </SheetText>
 
-      <Animated.View style={[styles.buttons, compact && styles.buttonsCompact, shaken]}>
-        <AuthButton
-          label="Continue with Apple"
-          icon={<AppleGlyph color={c.canvas} />}
-          tone="inverse"
-          busy={signingIn === 'apple'}
-          disabled={!!signingIn}
-          onPress={() => social('apple')}
-        />
-        <AuthButton
-          label="Continue with Google"
-          icon={<GoogleGlyph />}
-          busy={signingIn === 'google'}
-          disabled={!!signingIn}
-          onPress={() => social('google')}
-        />
-        <AuthButton
-          label="Continue with email"
-          icon={<Icon name="mail" size={18} color={c.text} />}
-          disabled={!!signingIn}
-          onPress={() => go({ pathname: '/email', params: { intent: mode } })}
-        />
-      </Animated.View>
-      {/* Why sign-in didn't work, under the buttons, until the next try. */}
-      {error ? (
-        <Animated.Text entering={FadeIn.duration(DURATION.fast)} style={styles.error}>
-          {error}
-        </Animated.Text>
-      ) : null}
-
-      <LabeledRule label="or" />
+      {IDENTITY_ENABLED ? (
+        <IdentityWays restore={restore} busy={busy} setBusy={setBusy} go={go} />
+      ) : (
+        <SheetText center>
+          {restore
+            ? 'Bring back your keys from a backup, your phrase or your other device.'
+            : `Your keys stay on ${HERE}.`}
+        </SheetText>
+      )}
 
       {restore ? (
         <View style={[styles.buttons, compact && styles.buttonsCompact]}>
           {/* In a browser, the easiest way in is the wallet already on the phone. */}
           {isWeb ? (
             <MoreRow
-              disabled={!!signingIn}
+              disabled={!!busy}
               icon="qr"
               title="Pair with your phone"
               onPress={() => {
@@ -134,7 +85,7 @@ export default function GetStartedSheet() {
           ) : (
             // On the phone, the wallet you made in Honey for Chrome, by its QR code.
             <MoreRow
-              disabled={!!signingIn}
+              disabled={!!busy}
               icon="qr"
               title="Scan from the browser extension"
               onPress={() => {
@@ -148,13 +99,13 @@ export default function GetStartedSheet() {
           {/* One button each for a phrase and a key (review); the backup, rarer, a
               link under them. Before: one "I have a recovery phrase or key" row. */}
           <MoreRow
-            disabled={!!signingIn}
+            disabled={!!busy}
             icon="phrase"
             title="I have a recovery phrase"
             onPress={() => go({ pathname: '/import-wallet', params: { onboarding: '1' } })}
           />
           <MoreRow
-            disabled={!!signingIn}
+            disabled={!!busy}
             icon="privateKey"
             title="I have a private key"
             onPress={() =>
@@ -163,7 +114,7 @@ export default function GetStartedSheet() {
           />
           {/* A button like the others (review), not a link. */}
           <MoreRow
-            disabled={!!signingIn}
+            disabled={!!busy}
             icon="cloud"
             title="Restore from a backup"
             onPress={() => go({ pathname: '/restore-backup', params: { onboarding: '1' } })}
@@ -172,19 +123,19 @@ export default function GetStartedSheet() {
           {otherWays ? (
             <Animated.View entering={FadeIn.duration(DURATION.fast)} style={styles.otherWays}>
               <MoreRow
-                disabled={!!signingIn}
+                disabled={!!busy}
                 icon="phrase"
                 title="Import a recovery phrase"
                 onPress={() => go({ pathname: '/import-wallet', params: { onboarding: '1' } })}
               />
               <MoreRow
-                disabled={!!signingIn}
+                disabled={!!busy}
                 icon="cloud"
                 title="Restore from a backup"
                 onPress={() => go({ pathname: '/restore-backup', params: { onboarding: '1' } })}
               />
               <MoreRow
-                disabled={!!signingIn}
+                disabled={!!busy}
                 icon="privateKey"
                 title="Import a private key"
                 onPress={() =>
@@ -194,7 +145,7 @@ export default function GetStartedSheet() {
             </Animated.View>
           ) : (
             <MoreRow
-              disabled={!!signingIn}
+              disabled={!!busy}
               icon="phrase"
               title="I have a recovery phrase or key"
               onPress={() => {
@@ -209,7 +160,7 @@ export default function GetStartedSheet() {
       ) : (
         <View style={styles.buttons}>
           <MoreRow
-            disabled={!!signingIn}
+            disabled={!!busy}
             icon="phrase"
             title="Create with a recovery phrase"
             onPress={() => go({ pathname: '/recovery-phrase', params: { onboarding: '1' } })}
@@ -217,6 +168,152 @@ export default function GetStartedSheet() {
         </View>
       )}
     </SheetScreen>
+  );
+}
+
+/**
+ * Apple (iOS), Google and email, through Clerk. Once signed in: Continue (create), or
+ * the account's name over the restore ways, since the account can't bring keys back.
+ */
+function IdentityWays({
+  restore,
+  busy,
+  setBusy,
+  go,
+}: {
+  restore: boolean;
+  busy: Busy;
+  setBusy: (busy: Busy) => void;
+  go: (href: Href) => void;
+}) {
+  const styles = useStyles();
+  const compact = useCompact();
+  const c = useTheme();
+  const identity = useIdentity();
+  const social = useSocialSignIn();
+  const [error, setError] = useState<string | null>(null);
+  const { shake, style: shaken } = useErrorShake();
+
+  const fail = (message: string) => {
+    failure();
+    setBusy(null);
+    setError(message);
+    shake();
+  };
+
+  // The account is identity only: make or find the wallet on this device.
+  const proceed = async (method: IdentityMethod, who: { email?: string; name?: string }) => {
+    try {
+      if ((await continueAfterSignIn(method, { restore, identity: who })) === 'needs-keys')
+        setBusy(null);
+    } catch (cause) {
+      console.warn('Couldn’t set up the wallet after sign-in', cause);
+      fail(restore ? 'Couldn’t open your wallet. Try again.' : 'Couldn’t create your wallet.');
+    }
+  };
+
+  const signIn = async (provider: 'apple' | 'google') => {
+    tap();
+    setError(null);
+    setBusy(provider);
+    const outcome = await social[provider]();
+    if (!outcome.ok) {
+      fail(outcome.cancelled ? `${outcome.message} Nothing was created.` : outcome.message);
+      return;
+    }
+    await proceed(provider, outcome.identity);
+  };
+
+  if (identity.signedIn) {
+    const who = identity.email ?? identity.name ?? 'your account';
+    return (
+      <>
+        <SheetText center>
+          {restore
+            ? `Signed in as ${who}. Your keys never leave your devices, so bring them back here.`
+            : `Signed in as ${who}. Your keys stay on ${HERE}.`}
+        </SheetText>
+        <Text
+          accessibilityRole="button"
+          style={[styles.link, !!busy && styles.disabled]}
+          disabled={!!busy}
+          onPress={() => {
+            tap();
+            setError(null);
+            void identity.signOut();
+          }}
+        >
+          Use another account
+        </Text>
+        {restore ? null : (
+          <Animated.View style={[styles.buttons, compact && styles.buttonsCompact, shaken]}>
+            <AuthButton
+              label="Continue"
+              icon={<Icon name="checkCircle" size={18} color={c.canvas} />}
+              tone="inverse"
+              busy={busy === 'continue'}
+              disabled={!!busy}
+              onPress={() => {
+                tap();
+                setError(null);
+                setBusy('continue');
+                void proceed(identity.method, identity);
+              }}
+            />
+          </Animated.View>
+        )}
+        {error ? (
+          <Animated.Text entering={FadeIn.duration(DURATION.fast)} style={styles.error}>
+            {error}
+          </Animated.Text>
+        ) : null}
+        {restore ? null : <LabeledRule label="or" />}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <SheetText center>
+        {restore
+          ? 'Sign in, then bring back your keys. They never leave your devices.'
+          : 'No password or phrase to remember.'}
+      </SheetText>
+      <Animated.View style={[styles.buttons, compact && styles.buttonsCompact, shaken]}>
+        {APPLE_SIGN_IN ? (
+          <AuthButton
+            label="Continue with Apple"
+            icon={<AppleGlyph color={c.canvas} />}
+            tone="inverse"
+            busy={busy === 'apple'}
+            disabled={!!busy}
+            onPress={() => signIn('apple')}
+          />
+        ) : null}
+        <AuthButton
+          label="Continue with Google"
+          icon={<GoogleGlyph />}
+          busy={busy === 'google'}
+          disabled={!!busy}
+          onPress={() => signIn('google')}
+        />
+        <AuthButton
+          label="Continue with email"
+          icon={<Icon name="mail" size={18} color={c.text} />}
+          disabled={!!busy}
+          onPress={() =>
+            go({ pathname: '/email', params: { intent: restore ? 'restore' : 'create' } })
+          }
+        />
+      </Animated.View>
+      {/* Why sign-in didn't work, under the buttons, until the next try. */}
+      {error ? (
+        <Animated.Text entering={FadeIn.duration(DURATION.fast)} style={styles.error}>
+          {error}
+        </Animated.Text>
+      ) : null}
+      <LabeledRule label="or" />
+    </>
   );
 }
 

@@ -3,6 +3,7 @@ import { randomAvatarSeed } from '@/components/Avatar';
 import { forgetSavedBackendSession } from '@/lib/backend-session';
 import { forgetSites } from '@/lib/dapp';
 import { demoLabel } from '@/lib/demo-money-copy';
+import { signOutIdentity } from '@/lib/identity';
 import { isWeb } from '@/lib/platform';
 import { setProfile } from '@/lib/profile';
 import { createStore } from '@/lib/store';
@@ -18,6 +19,8 @@ import { wallets } from '@/lib/wallets';
  *
  *   welcome  → Create a new wallet (Apple, Google, email, or a recovery phrase)
  *            → I already have a wallet (Apple, Google, email, or import a phrase)
+ *   (Apple, Google and email are a Clerk account: identity only. The keys are always
+ *   made or restored on this device; see identity-onboarding.ts.)
  *   home     → no money yet: the empty state is all about adding money
  *            → money, setup unfinished: "Finish setting up, get $5 off network fees"
  *            → setup done: nothing extra
@@ -88,25 +91,16 @@ const ALL_STEPS: { id: SetupStep; title: string; hint: string; href: string }[] 
 ];
 
 // Face ID and notifications are phone features, so the browser's checklist skips them
-// and can still be finished. Its backup is writing the phrase down, so a wallet with no
-// phrase on this device (signed in with Apple, Google or email) has no backup step there.
+// and can still be finished. Every way in leaves a recovery phrase on this device (Apple,
+// Google and email sign-in included: the account is identity only), so every wallet has
+// a backup step and can be sent to the other device.
 const PHONE_ONLY: SetupStep[] = ['faceId', 'notifications', 'browser'];
 // Sending the wallet across is each side's own step, and needs a phrase to send.
 const BROWSER_ONLY: SetupStep[] = ['phone'];
-const NO_PHRASE: (SignInMethod | null)[] = ['apple', 'google', 'email'];
 
-/** The checklist for how this wallet was set up, on this platform. */
-export function setupSteps(method: SignInMethod | null) {
-  if (!isWeb) {
-    return ALL_STEPS.filter(
-      (s) => !BROWSER_ONLY.includes(s.id) && !(s.id === 'browser' && NO_PHRASE.includes(method)),
-    );
-  }
-  return ALL_STEPS.filter(
-    (s) =>
-      !PHONE_ONLY.includes(s.id) &&
-      !((s.id === 'backup' || s.id === 'phone') && NO_PHRASE.includes(method)),
-  );
+/** The checklist for this platform. (`method` is kept for callers; every way in has one.) */
+export function setupSteps(_method: SignInMethod | null) {
+  return ALL_STEPS.filter((s) => !(isWeb ? PHONE_ONLY : BROWSER_ONLY).includes(s.id));
 }
 
 /** The reward for finishing setup: credit against network fees. */
@@ -144,11 +138,15 @@ export const setupComplete = (state: Onboarding) =>
 /**
  * Ends onboarding and opens the wallet. A new wallet starts empty; a restored one
  * already holds money (the demo portfolio). Backing up is done already when the user
- * wrote down a phrase. Social sign-in is a demo and does not back up keys.
+ * wrote down a phrase; Apple, Google and email sign-in leave the backup step to do.
  */
 export function finishOnboarding(
   method: SignInMethod,
-  { restored = method === 'import', email }: { restored?: boolean; email?: string } = {},
+  {
+    restored = method === 'import',
+    email,
+    name,
+  }: { restored?: boolean; email?: string; name?: string } = {},
 ) {
   const backedUp = method === 'phrase';
   onboarding.set({
@@ -157,13 +155,14 @@ export function finishOnboarding(
     done: backedUp ? ['wallet', 'backup'] : ['wallet'],
     credit: 0,
   });
-  if (email) setProfile({ name: nameFromEmail(email) });
+  if (name) setProfile({ name });
+  else if (email) setProfile({ name: nameFromEmail(email) });
   router.dismissAll();
   router.replace('/home');
 }
 
 /** "maya.lee@gmail.com" → "Maya". */
-function nameFromEmail(email: string) {
+export function nameFromEmail(email: string) {
   const local = email.split('@')[0]?.split(/[._+-]/)[0] ?? '';
   return local ? local[0].toUpperCase() + local.slice(1) : 'Honey';
 }
@@ -197,6 +196,8 @@ export async function signOut(confirmedAccountIds: readonly string[]) {
   await eraseVault(confirmedAccountIds);
   // Honey for Chrome: no website stays connected to wallets that just left.
   await forgetSites();
+  // And the Apple / Google / email account (best effort; it holds no keys).
+  await signOutIdentity();
   onboarding.set({ method: null, funded: false, done: [], credit: 0 });
   wallets.set({ activeId: 'main', added: [] });
   setProfile({ name: 'Honey', photo: null, avatarSeed: randomAvatarSeed() });

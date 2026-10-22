@@ -17,6 +17,7 @@ import {
  */
 
 export type RouterDeps = {
+  canUseSite: (site: Site) => Promise<boolean>;
   load: <T>(key: string) => Promise<T | undefined>;
   save: (key: string, value: unknown) => Promise<void>;
   /** Opens (or focuses) the approval window. */
@@ -228,7 +229,14 @@ export function createRouter(deps: RouterDeps) {
 
   // Sites
 
-  const sites = async () => (await deps.load<Record<string, Site>>(STORAGE.sites)) ?? {};
+  const sites = async () => {
+    const saved = (await deps.load<Record<string, Site>>(STORAGE.sites)) ?? {};
+    const valid: Record<string, Site> = {};
+    for (const [origin, site] of Object.entries(saved)) {
+      if (await deps.canUseSite(site)) valid[origin] = site;
+    }
+    return valid;
+  };
   const siteOf = async (origin: string) => (await sites())[origin];
   const saveSite = async (origin: string, site: Site | null) => {
     const all = await sites();
@@ -333,6 +341,7 @@ export function createRouter(deps: RouterDeps) {
       chainId: await chainOf(origin),
       connectedAt: deps.now(),
     };
+    if (!(await deps.canUseSite(site))) return fail(ERR.unauthorized);
     await saveSite(origin, site);
     announce(origin, site);
     return site;

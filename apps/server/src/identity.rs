@@ -497,8 +497,9 @@ impl Identity {
             .domain_for_origin(origin)
             .map_err(|_| AppError::Unauthorized)?;
         let address = parse_address(&input.address)?;
-        self.rate_limit_scoped("identity-proof-address", &hex::encode(address), 5)
-            .await?;
+        // The public route applies peer/global proof admission. An unproven address
+        // must never be a hard quota subject: anyone could exhaust another owner's
+        // allowance before that owner has had a chance to prove possession.
         let (now, expiry): (OffsetDateTime, OffsetDateTime) = sqlx::query_as(
             "SELECT statement_timestamp(), statement_timestamp() + interval '5 minutes'",
         )
@@ -906,6 +907,64 @@ pub(crate) fn unavailable(error: sqlx::Error) -> AppError {
 
 #[cfg(test)]
 mod tests {
+    #[tokio::test]
+    async fn unproven_challenge_addresses_never_consume_shared_subject_quotas() {
+        use super::*;
+        use std::{io::ErrorKind, time::Duration};
+
+        // A closed pool stops at issuance without a database service. An occupied
+        // Redis socket witnesses any pre-auth quota access without running Redis.
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.set_nonblocking(true).unwrap();
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://test:test@127.0.0.1:1/test")
+            .unwrap();
+        pool.close().await;
+        let identity = Identity::new(
+            pool,
+            AuthConfig {
+                origin: "http://localhost:5173".into(),
+                additional_origins: vec![],
+                chain_id: 1,
+            },
+        )
+        .unwrap()
+        .with_redis(Some(crate::redis_store::RedisStore::new(
+            redis::Client::open(format!("redis://{}", listener.local_addr().unwrap())).unwrap(),
+            "challenge-quota-regression".into(),
+            Duration::from_millis(50),
+        )));
+        for n in 0..6 {
+            let address = if n % 2 == 0 {
+                "0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf"
+            } else {
+                "0x7e5f4552091a69125d5dfcb7b8c2659029395bdf"
+            };
+            assert!(matches!(
+                identity
+                    .challenge(ChallengeRequest {
+                        address: address.into(),
+                        chain_id: "eip155:1".into(),
+                    })
+                    .await,
+                Err(AppError::Busy)
+            ));
+        }
+        assert_eq!(
+            listener.accept().unwrap_err().kind(),
+            ErrorKind::WouldBlock,
+            "an unproven victim address must not consume Redis quota"
+        );
+        // Positive control: the same transport does witness real quota access.
+        assert!(
+            identity
+                .rate_limit_scoped("control", "subject", 5)
+                .await
+                .is_err()
+        );
+        assert!(listener.accept().is_ok());
+    }
+
     #[test]
     fn siwe_parser_accepts_the_exact_chrome_extension_origin() {
         let id = "abcdefghijklmnopabcdefghijklmnop";

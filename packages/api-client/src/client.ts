@@ -2,6 +2,7 @@ import { isAaveExecutionConfiguration, isAaveIntentRecovery, isAaveSigningReques
 import {
   isAuthConfiguration,
   isChallenge,
+  isClerkIdentity,
   isProfile,
   isSession,
   isWalletIdentity,
@@ -502,6 +503,9 @@ export function createApiClient({ baseUrl, fetch: fetchImpl = fetch }: ApiClient
       validated('/api/v1/me', isProfile, authorized(token, init)),
     wallets: (token: string, init?: RequestInit) =>
       validated('/api/v1/me/wallets', isWalletList, authorized(token, init)),
+    /** `sessionToken` is a Clerk session token (Clerk `getToken()`), not a SIWE token. */
+    clerkIdentity: (sessionToken: string, init?: RequestInit) =>
+      validated('/api/v1/me/clerk', isClerkIdentity, authorized(sessionToken, init)),
     createWalletLinkChallenge: (token: string, address: string, init?: RequestInit) =>
       validated('/api/v1/me/wallets/challenges', isChallenge, {
         ...authorizedJson(token, { address }, init),

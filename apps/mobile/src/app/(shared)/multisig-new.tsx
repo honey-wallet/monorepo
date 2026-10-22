@@ -48,6 +48,8 @@ import { followFix, useFailure } from '@/lib/outcomes';
 import { isWeb } from '@/lib/platform';
 import { useProfile } from '@/lib/profile';
 import { askForNotifications } from '@/lib/push';
+import { NOT_AVAILABLE, TEST_MODE } from '@/lib/test-mode';
+import { showToast } from '@/lib/toast';
 import { demoAddress, isEvmAddress } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
 
@@ -183,6 +185,10 @@ export default function NewMultisigSheet() {
 
   const outcome = useFailure('multisig');
   const create = () => {
+    if (!TEST_MODE) {
+      showToast(NOT_AVAILABLE);
+      return;
+    }
     if (outcome.attempt()) {
       setPage('failed');
       return;

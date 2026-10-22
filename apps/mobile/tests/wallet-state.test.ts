@@ -102,3 +102,52 @@ it('treats the first keyed wallet as main, or the sample wallet when none has ke
   expect(isMainWallet(other, [own, other])).toBe(false);
   expect(isMainWallet(allWallets('Owner', [])[0], [])).toBe(true);
 });
+
+it('blocks funding for legacy random addresses and all simulated shared wallets', async () => {
+  const { receiveAddresses } = await import('@/lib/receive');
+  const legacy = {
+    id: 'old',
+    kind: 'wallet' as const,
+    label: 'Old',
+    address: `0x${'a'.repeat(40)}`,
+    usd: 0,
+  };
+  for (const wallet of [
+    legacy,
+    { ...legacy, burner: true },
+    { ...legacy, demo: true },
+    { ...legacy, kind: 'multisig' as const },
+    { ...legacy, kind: 'multisig' as const, demo: true },
+    { ...legacy, kind: 'multisig' as const, addresses: { evm: legacy.address } },
+  ]) {
+    expect(receiveAddresses(wallet)).toEqual([]);
+    expect(isFixtureWallet(wallet)).toBe(true);
+  }
+  expect(receiveAddresses({ ...legacy, watchOnly: true }).map((e) => e.address)).toEqual([
+    legacy.address,
+  ]);
+  expect(receiveAddresses({ ...legacy, watchOnly: true, address: 'alice.eth' })).toEqual([]);
+  const addresses = {
+    evm: legacy.address,
+    solana: 'sol-address',
+    bitcoin: 'btc-address',
+    near: 'near-address',
+  };
+  expect(receiveAddresses({ ...legacy, demo: true, addresses }).map((e) => e.family)).toEqual([
+    'evm',
+    'solana',
+    'bitcoin',
+    'near',
+  ]);
+});
+
+it('keeps a real burner key-backed and marked after hydration', async () => {
+  const { addVaultWallet } = await import('@/lib/wallets');
+  const { receiveAddresses } = await import('@/lib/receive');
+  const burner = { ...account, burner: true };
+  addVaultWallet(burner as never);
+  load.mockResolvedValue([burner]);
+  await hydrateWallets();
+  expect(wallets.get().added[0]).toMatchObject({ id: account.id, burner: true });
+  expect(receiveAddresses(wallets.get().added[0])[0]?.address).toBe(account.addresses.evm);
+});

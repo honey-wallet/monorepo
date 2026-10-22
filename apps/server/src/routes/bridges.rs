@@ -33,9 +33,7 @@ async fn recover(
     identity
         .rate_limit_pair("bridge_read", &profile.wallet.id.to_string(), 600, 60)
         .await?;
-    let id = id
-        .parse()
-        .map_err(|_| AppError::BadRequest("invalid operation ID".into()))?;
+    let id = super::operation_id(&id)?;
     Ok(Json(
         s.monitor
             .as_ref()

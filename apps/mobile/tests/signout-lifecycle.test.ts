@@ -23,6 +23,11 @@ vi.mock('@/lib/toast', () => ({ showToast: vi.fn() }));
 vi.mock('@/lib/vault', () => ({ eraseVault: mocks.erase }));
 vi.mock('@/lib/wallets', () => ({ wallets: mocks.wallets }));
 vi.mock('@/lib/backend-session', () => ({ forgetSavedBackendSession: mocks.forgetBackend }));
+vi.mock('@/lib/identity', () => ({
+  signOutIdentity: async () => {
+    mocks.events.push('identity');
+  },
+}));
 
 import { signOut } from '@/lib/onboarding';
 
@@ -39,7 +44,7 @@ beforeEach(() => {
 
 it('forgets backend authorization before erasing the wallet, even with the main wallet active', async () => {
   await signOut(['main']);
-  expect(mocks.events.slice(0, 3)).toEqual(['backend', 'vault', 'sites']);
+  expect(mocks.events.slice(0, 4)).toEqual(['backend', 'vault', 'sites', 'identity']);
   expect(mocks.forgetBackend).toHaveBeenCalledTimes(1);
   expect(mocks.erase).toHaveBeenCalledWith(['main']);
 });

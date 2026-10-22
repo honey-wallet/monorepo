@@ -21,6 +21,7 @@ import { LOADS } from '@/lib/loads';
 import { formatAmount, formatUsd, shortAddress } from '@/lib/mock-wallet';
 import { memberName, PURPOSES, propose, useMultisig, useProposals, YOU } from '@/lib/multisig';
 import { useProfile } from '@/lib/profile';
+import { receiveAddresses } from '@/lib/receive';
 import { showToast } from '@/lib/toast';
 import { allWallets, useWallets } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
@@ -41,7 +42,8 @@ export default function MultisigScreen() {
   const wallet = allWallets(name, added).find((w) => w.id === id);
   const multisig = useMultisig(id);
   const { pending, history } = useProposals(id);
-  const { copied, copy } = useCopy(wallet?.address ?? '', 'Address copied');
+  const address = wallet ? receiveAddresses(wallet)[0]?.address : undefined;
+  const { copied, copy } = useCopy(address ?? '', 'Address copied');
   // Balances are read from the chain.
   const loading = useFirstLoad(LOADS.balances(id));
   // So are its proposals, the same fetch as Activity's.
@@ -82,8 +84,8 @@ export default function MultisigScreen() {
     const url =
       multisig.protocol === 'squads'
         ? 'https://app.squads.so'
-        : chainId !== null && SAFE_PREFIX[chainId]
-          ? `https://app.safe.global/home?safe=${SAFE_PREFIX[chainId]}:${wallet.address}`
+        : address && chainId !== null && SAFE_PREFIX[chainId]
+          ? `https://app.safe.global/home?safe=${SAFE_PREFIX[chainId]}:${address}`
           : 'https://app.safe.global';
     Linking.openURL(url).catch(() => {});
   };
@@ -107,7 +109,9 @@ export default function MultisigScreen() {
         </View>
         <PressableScale onPress={copy} scaleTo={0.98} style={styles.address}>
           <Text style={styles.addressText}>
-            {shortAddress(wallet.address, 8, 6)} · only on {multisig.network.name}
+            {address
+              ? `${shortAddress(address, 8, 6)} · only on ${multisig.network.name}`
+              : 'Demo wallet · receiving unavailable'}
           </Text>
           <IconSwap name={copied ? 'check' : 'copy'} size={14} color={c.textSecondary} />
         </PressableScale>
@@ -148,8 +152,7 @@ export default function MultisigScreen() {
             compact
             icon="receive"
             title="Nothing here yet"
-            hint={`Send funds to this wallet's address on ${multisig.network.name}.`}
-            action={{ label: 'Copy address', onPress: copy }}
+            hint="Shared wallets are a preview. Do not send funds to them."
           />
         ) : null}
       </SkeletonReveal>

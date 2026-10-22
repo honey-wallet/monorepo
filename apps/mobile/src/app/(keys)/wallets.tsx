@@ -51,10 +51,7 @@ export default function WalletsSheet() {
   const activeMultisig = shared.multisigs[active.id];
   const activeDeployments = useMultisigDeployments(active.id);
   const activeAddresses = receiveAddresses(active);
-  const { copy: copyAddress } = useCopy(
-    activeAddresses[0]?.address ?? active.address,
-    'Address copied',
-  );
+  const { copy: copyAddress } = useCopy(activeAddresses[0]?.address ?? '', 'Address copied');
   const onAddresses = () => {
     tap();
     if (activeMultisig ? activeDeployments.length > 1 : activeAddresses.length > 1) {

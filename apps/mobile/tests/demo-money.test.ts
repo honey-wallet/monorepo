@@ -46,7 +46,7 @@ it('keeps Home balance and holdings clearly labeled while demo data is visible',
 it('never marks onboarding funded from opening the receive screen', () => {
   const receive = source('../src/app/(money)/receive.tsx');
   const onboarding = source('../src/lib/onboarding.ts');
-  expect(receive).toContain('if (isFixtureWallet(wallet))');
+  expect(receive).toContain('if (!list.length)');
   expect(receive).not.toMatch(/markFunded|simulateDemoDeposit/);
   expect(onboarding).not.toContain('simulateDemoDeposit');
   expect(onboarding).not.toMatch(/arrived\. You're all set|Money arrived/);

@@ -227,6 +227,14 @@ export interface WalletProfile {
   wallet: WalletIdentity;
 }
 
+/**
+ * GET /api/v1/me/clerk with a Clerk session token: the Clerk user id only. Identity,
+ * not wallet authority; unrelated to SIWE sessions.
+ */
+export interface ClerkIdentity {
+  userId: string;
+}
+
 export interface WalletIdentity {
   id: string;
   chainId: string;

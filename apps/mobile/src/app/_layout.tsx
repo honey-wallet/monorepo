@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppGate } from '@/components/AppGate';
 import { BackendSessionLifecycle } from '@/components/BackendSessionLifecycle';
+import { IdentityProvider } from '@/components/IdentityProvider';
 import { LaunchAnimation } from '@/components/LaunchAnimation';
 import { ToastHost } from '@/components/motion/ToastHost';
 import { Tray } from '@/components/sheets/Tray';
@@ -116,111 +117,113 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={navigationTheme}>
-        <AppGate>
-          <NotificationResponses />
-          <WalletConnectSessions />
-          <BackendSessionLifecycle />
-          <Stack
-            screenOptions={{ headerShown: false }}
-            screenLayout={({ options, navigation, route, children }) =>
-              options.presentation === 'transparentModal' ? (
-                <Tray navigation={navigation} routeKey={route.key}>
-                  {children}
-                </Tray>
-              ) : (
-                children
-              )
-            }
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="(onboarding)" />
-            <Stack.Screen name="(wallet)" options={{ gestureEnabled: false }} />
-            <Stack.Screen name="(settings)/settings" />
-            <Stack.Screen name="(account)/wallet-sign-in" />
-            <Stack.Screen name="(activity)/notifications" />
-            <Stack.Screen name="(portfolio)/token/[symbol]" />
-            <Stack.Screen name="(trade)/perp/[symbol]" />
-            <Stack.Screen name="(trade)/predict/[id]" />
-            <Stack.Screen name="(portfolio)/portfolio" />
-            <Stack.Screen name="(shared)/multisig/[id]" />
-            <Stack.Screen name="(money)/scan" options={{ presentation: 'fullScreenModal' }} />
-            <Stack.Screen name="(keys)/wallets" options={tray()} />
-            <Stack.Screen name="(savings)/earn/[symbol]" options={tray()} />
-            <Stack.Screen name="(savings)/savings-add" options={sheet([1])} />
-            <Stack.Screen name="(money)/receive" options={tray()} />
-            <Stack.Screen name="(money)/addresses" options={tray()} />
-            <Stack.Screen name="(money)/my-qr" options={tray()} />
-            <Stack.Screen name="(money)/networks" options={tray()} />
-            <Stack.Screen name="(money)/send" options={tray()} />
-            <Stack.Screen name="(money)/buy" options={tray()} />
-            <Stack.Screen name="(activity)/activity/[id]" options={tray()} />
-            <Stack.Screen name="(trade)/swap-settings" options={tray()} />
-            <Stack.Screen name="(trade)/trade-settings" options={tray()} />
-            <Stack.Screen name="(money)/balance" options={tray()} />
-            <Stack.Screen name="(portfolio)/share-portfolio" options={tray()} />
-            <Stack.Screen name="(portfolio)/share-token" options={tray()} />
-            <Stack.Screen name="(settings)/section-settings" options={tray()} />
-            <Stack.Screen name="(trade)/trade-tabs" options={tray()} />
-            <Stack.Screen name="(money)/token-picker" options={tray()} />
-            <Stack.Screen name="(money)/network-picker" options={tray()} />
-            <Stack.Screen name="(account)/step-help" options={tray()} />
-            <Stack.Screen name="(trade)/perp-order" options={sheet([1])} />
-            <Stack.Screen name="(trade)/predict-order" options={sheet([1])} />
-            <Stack.Screen name="(trade)/predict-guide" options={tray()} />
-            <Stack.Screen name="(trade)/perps-guide" options={tray()} />
-            {/* Money flows */}
-            <Stack.Screen name="(money)/send-amount" options={sheet([1])} />
-            <Stack.Screen name="(money)/buy-cash" options={sheet([1])} />
-            <Stack.Screen name="(keys)/add-wallet" options={tray()} />
-            <Stack.Screen name="(keys)/burner-wallet" options={tray()} />
-            <Stack.Screen name="(keys)/import-wallet" options={tray()} />
-            <Stack.Screen name="(keys)/pair-extension" options={tray()} />
-            <Stack.Screen name="(keys)/pair-phone" options={tray()} />
-            {/* Honey for Chrome: websites' requests, in their own window */}
-            <Stack.Screen name="(connect)/approve" />
-            <Stack.Screen name="(connect)/wc" />
-            <Stack.Screen name="(settings)/connected-sites" options={tray()} />
-            <Stack.Screen name="(keys)/restore-backup" options={tray()} />
-            <Stack.Screen name="(keys)/watch-wallet" options={tray()} />
-            <Stack.Screen name="(keys)/hardware-wallet" options={tray()} />
-            <Stack.Screen name="(savings)/jar-new" options={tray()} />
-            <Stack.Screen name="(savings)/jar-move" options={sheet([1])} />
-            {/* Shared wallets */}
-            <Stack.Screen name="(shared)/multisig-new" options={tray()} />
-            <Stack.Screen name="(shared)/proposal/[id]" options={tray()} />
-            <Stack.Screen name="(shared)/multisig-edit" options={tray()} />
-            {/* Settings pages (pushed) and pickers (sheets) */}
-            <Stack.Screen name="(account)/profile-edit" options={tray()} />
-            <Stack.Screen name="(account)/get-started" options={tray()} />
-            <Stack.Screen name="(account)/setup" options={tray()} />
-            <Stack.Screen name="(account)/sign-out" options={tray()} />
-            <Stack.Screen name="(settings)/app-data" />
-            <Stack.Screen name="(settings)/smart-wallet" />
-            <Stack.Screen name="(settings)/bunk-mode" />
-            <Stack.Screen name="(keys)/recovery-phrase" />
-            <Stack.Screen name="(keys)/icloud-backup" options={tray()} />
-            <Stack.Screen name="(settings)/disclosures" />
-            <Stack.Screen name="(settings)/help" />
-            <Stack.Screen name="(settings)/settings-theme" options={tray()} />
-            <Stack.Screen name="(settings)/settings-app-icon" options={tray()} />
-            <Stack.Screen name="(settings)/settings-currency" options={tray()} />
-            <Stack.Screen name="(settings)/settings-language" options={tray()} />
-            <Stack.Screen name="(settings)/settings-notifications" options={tray()} />
-            <Stack.Screen name="(settings)/settings-balances" options={tray()} />
-            <Stack.Screen name="(settings)/settings-advanced" options={tray()} />
-            <Stack.Screen name="(settings)/settings-network-cost" options={tray()} />
-            <Stack.Screen name="(settings)/settings-face-id" options={tray()} />
-            <Stack.Screen name="(settings)/settings-permissions" options={tray()} />
-            <Stack.Screen name="(settings)/settings-about" options={tray()} />
-            <Stack.Screen name="(settings)/smart-wallet-info" options={tray()} />
-            <Stack.Screen name="(settings)/bunk-mode-info" options={tray()} />
-            <Stack.Screen name="(settings)/contact" options={tray()} />
-          </Stack>
-          <ToastHost />
-          {!launched && <LaunchAnimation onDone={endLaunch} />}
-        </AppGate>
-      </ThemeProvider>
+      <IdentityProvider>
+        <ThemeProvider value={navigationTheme}>
+          <AppGate>
+            <NotificationResponses />
+            <WalletConnectSessions />
+            <BackendSessionLifecycle />
+            <Stack
+              screenOptions={{ headerShown: false }}
+              screenLayout={({ options, navigation, route, children }) =>
+                options.presentation === 'transparentModal' ? (
+                  <Tray navigation={navigation} routeKey={route.key}>
+                    {children}
+                  </Tray>
+                ) : (
+                  children
+                )
+              }
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(onboarding)" />
+              <Stack.Screen name="(wallet)" options={{ gestureEnabled: false }} />
+              <Stack.Screen name="(settings)/settings" />
+              <Stack.Screen name="(account)/wallet-sign-in" />
+              <Stack.Screen name="(activity)/notifications" />
+              <Stack.Screen name="(portfolio)/token/[symbol]" />
+              <Stack.Screen name="(trade)/perp/[symbol]" />
+              <Stack.Screen name="(trade)/predict/[id]" />
+              <Stack.Screen name="(portfolio)/portfolio" />
+              <Stack.Screen name="(shared)/multisig/[id]" />
+              <Stack.Screen name="(money)/scan" options={{ presentation: 'fullScreenModal' }} />
+              <Stack.Screen name="(keys)/wallets" options={tray()} />
+              <Stack.Screen name="(savings)/earn/[symbol]" options={tray()} />
+              <Stack.Screen name="(savings)/savings-add" options={sheet([1])} />
+              <Stack.Screen name="(money)/receive" options={tray()} />
+              <Stack.Screen name="(money)/addresses" options={tray()} />
+              <Stack.Screen name="(money)/my-qr" options={tray()} />
+              <Stack.Screen name="(money)/networks" options={tray()} />
+              <Stack.Screen name="(money)/send" options={tray()} />
+              <Stack.Screen name="(money)/buy" options={tray()} />
+              <Stack.Screen name="(activity)/activity/[id]" options={tray()} />
+              <Stack.Screen name="(trade)/swap-settings" options={tray()} />
+              <Stack.Screen name="(trade)/trade-settings" options={tray()} />
+              <Stack.Screen name="(money)/balance" options={tray()} />
+              <Stack.Screen name="(portfolio)/share-portfolio" options={tray()} />
+              <Stack.Screen name="(portfolio)/share-token" options={tray()} />
+              <Stack.Screen name="(settings)/section-settings" options={tray()} />
+              <Stack.Screen name="(trade)/trade-tabs" options={tray()} />
+              <Stack.Screen name="(money)/token-picker" options={tray()} />
+              <Stack.Screen name="(money)/network-picker" options={tray()} />
+              <Stack.Screen name="(account)/step-help" options={tray()} />
+              <Stack.Screen name="(trade)/perp-order" options={sheet([1])} />
+              <Stack.Screen name="(trade)/predict-order" options={sheet([1])} />
+              <Stack.Screen name="(trade)/predict-guide" options={tray()} />
+              <Stack.Screen name="(trade)/perps-guide" options={tray()} />
+              {/* Money flows */}
+              <Stack.Screen name="(money)/send-amount" options={sheet([1])} />
+              <Stack.Screen name="(money)/buy-cash" options={sheet([1])} />
+              <Stack.Screen name="(keys)/add-wallet" options={tray()} />
+              <Stack.Screen name="(keys)/burner-wallet" options={tray()} />
+              <Stack.Screen name="(keys)/import-wallet" options={tray()} />
+              <Stack.Screen name="(keys)/pair-extension" options={tray()} />
+              <Stack.Screen name="(keys)/pair-phone" options={tray()} />
+              {/* Honey for Chrome: websites' requests, in their own window */}
+              <Stack.Screen name="(connect)/approve" />
+              <Stack.Screen name="(connect)/wc" />
+              <Stack.Screen name="(settings)/connected-sites" options={tray()} />
+              <Stack.Screen name="(keys)/restore-backup" options={tray()} />
+              <Stack.Screen name="(keys)/watch-wallet" options={tray()} />
+              <Stack.Screen name="(keys)/hardware-wallet" options={tray()} />
+              <Stack.Screen name="(savings)/jar-new" options={tray()} />
+              <Stack.Screen name="(savings)/jar-move" options={sheet([1])} />
+              {/* Shared wallets */}
+              <Stack.Screen name="(shared)/multisig-new" options={tray()} />
+              <Stack.Screen name="(shared)/proposal/[id]" options={tray()} />
+              <Stack.Screen name="(shared)/multisig-edit" options={tray()} />
+              {/* Settings pages (pushed) and pickers (sheets) */}
+              <Stack.Screen name="(account)/profile-edit" options={tray()} />
+              <Stack.Screen name="(account)/get-started" options={tray()} />
+              <Stack.Screen name="(account)/setup" options={tray()} />
+              <Stack.Screen name="(account)/sign-out" options={tray()} />
+              <Stack.Screen name="(settings)/app-data" />
+              <Stack.Screen name="(settings)/smart-wallet" />
+              <Stack.Screen name="(settings)/bunk-mode" />
+              <Stack.Screen name="(keys)/recovery-phrase" />
+              <Stack.Screen name="(keys)/icloud-backup" options={tray()} />
+              <Stack.Screen name="(settings)/disclosures" />
+              <Stack.Screen name="(settings)/help" />
+              <Stack.Screen name="(settings)/settings-theme" options={tray()} />
+              <Stack.Screen name="(settings)/settings-app-icon" options={tray()} />
+              <Stack.Screen name="(settings)/settings-currency" options={tray()} />
+              <Stack.Screen name="(settings)/settings-language" options={tray()} />
+              <Stack.Screen name="(settings)/settings-notifications" options={tray()} />
+              <Stack.Screen name="(settings)/settings-balances" options={tray()} />
+              <Stack.Screen name="(settings)/settings-advanced" options={tray()} />
+              <Stack.Screen name="(settings)/settings-network-cost" options={tray()} />
+              <Stack.Screen name="(settings)/settings-face-id" options={tray()} />
+              <Stack.Screen name="(settings)/settings-permissions" options={tray()} />
+              <Stack.Screen name="(settings)/settings-about" options={tray()} />
+              <Stack.Screen name="(settings)/smart-wallet-info" options={tray()} />
+              <Stack.Screen name="(settings)/bunk-mode-info" options={tray()} />
+              <Stack.Screen name="(settings)/contact" options={tray()} />
+            </Stack>
+            <ToastHost />
+            {!launched && <LaunchAnimation onDone={endLaunch} />}
+          </AppGate>
+        </ThemeProvider>
+      </IdentityProvider>
     </GestureHandlerRootView>
   );
 }

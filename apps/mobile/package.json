@@ -19,6 +19,7 @@
     "icons": "node scripts/gen-app-icons.mjs"
   },
   "dependencies": {
+    "@clerk/expo": "4.13.1",
     "@dicebear/core": "^10.7.0",
     "@dicebear/styles": "^10.6.0",
     "@expo-google-fonts/comfortaa": "^0.4.2",
@@ -37,7 +38,9 @@
     "@walletconnect/utils": "2.25.0",
     "expo": "~57.0.30",
     "expo-alternate-app-icons": "^8.0.0",
+    "expo-apple-authentication": "~57.0.2",
     "expo-application": "~57.0.3",
+    "expo-auth-session": "~57.0.16",
     "expo-camera": "~57.0.6",
     "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.22",
@@ -59,6 +62,7 @@
     "expo-symbols": "~57.0.3",
     "expo-system-ui": "~57.0.4",
     "expo-updates": "~57.0.26",
+    "expo-web-browser": "~57.0.3",
     "qrcode-generator": "^2.0.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",

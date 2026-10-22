@@ -116,6 +116,22 @@ describe('wallet authentication contract', () => {
     ).toThrow();
   });
 
+  it('reads the Clerk identity with the Clerk token and validates its shape', async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ userId: 'user_2abcDEF' })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ userId: 'not a clerk id' })));
+    const api = createApiClient({ baseUrl: 'http://api.test', fetch });
+    await expect(api.clerkIdentity('clerk.jwt.token')).resolves.toEqual({
+      userId: 'user_2abcDEF',
+    });
+    expect(fetch.mock.calls[0]?.[0]).toBe('http://api.test/api/v1/me/clerk');
+    expect(new Headers(fetch.mock.calls[0]?.[1]?.headers).get('authorization')).toBe(
+      'Bearer clerk.jwt.token',
+    );
+    await expect(api.clerkIdentity('clerk.jwt.token')).rejects.toThrow();
+  });
+
   it('keeps authentication credentials in bound headers and never retries proofs', async () => {
     const token = 'a'.repeat(64);
     const profile = {

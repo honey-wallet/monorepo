@@ -32,6 +32,8 @@ pub struct Config {
     pub shutdown_timeout_secs: u64,
     /// Explicit relying-party origin and chain. Absent means auth is disabled.
     pub auth: Option<AuthConfig>,
+    /// Clerk session-token verification (identity only). Absent means it is off.
+    pub clerk: Option<crate::clerk::ClerkConfig>,
     pub metrics_addr: Option<SocketAddr>,
     pub otlp_traces_endpoint: Option<SecretUrl>,
     pub trace_sample_per_mille: u16,
@@ -257,6 +259,7 @@ impl Default for Config {
             dependency_timeout_ms: 1_000,
             shutdown_timeout_secs: 15,
             auth: None,
+            clerk: None,
             metrics_addr: None,
             otlp_traces_endpoint: None,
             trace_sample_per_mille: 100,
@@ -346,6 +349,7 @@ impl Config {
                     });
                 }
             },
+            clerk: crate::clerk::ClerkConfig::from_env()?,
             metrics_addr: parse_var("METRICS_ADDR")?,
             otlp_traces_endpoint: secret_var("HONEY_OTLP_TRACES_ENDPOINT")?,
             trace_sample_per_mille: parse_var("TRACE_SAMPLE_PER_MILLE")?
@@ -436,6 +440,9 @@ impl Config {
             });
         }
 
+        if let Some(clerk) = &self.clerk {
+            clerk.validate()?;
+        }
         if self.trace_sample_per_mille > 1000 {
             return Err(ConfigError::Invalid {
                 name: "TRACE_SAMPLE_PER_MILLE",

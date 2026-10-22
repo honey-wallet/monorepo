@@ -8,8 +8,16 @@ import { persistence } from '@/lib/persistence';
 import { getProfile } from '@/lib/profile';
 import { notify } from '@/lib/push';
 import { createStore } from '@/lib/store';
+import { NOT_AVAILABLE, TEST_MODE } from '@/lib/test-mode';
 import { showToast } from '@/lib/toast';
-import { addWallet, allWallets, demoAddress, useActiveWallet, wallets } from '@/lib/wallets';
+import {
+  addWallet,
+  allWallets,
+  canReceive,
+  demoAddress,
+  useActiveWallet,
+  wallets,
+} from '@/lib/wallets';
 
 /**
  * Shared wallets (multisigs). Every outgoing action from one is a proposal that
@@ -393,7 +401,8 @@ export function useMultisigDeployments(walletId: string | undefined): Deployment
   if (!multisig) return [];
   const list = allWallets(getProfile().name, added);
   return multisigDeployments(multisig, state.multisigs).flatMap((m) => {
-    const address = list.find((w) => w.id === m.walletId)?.address;
+    const wallet = list.find((w) => w.id === m.walletId);
+    const address = wallet && canReceive(wallet) ? wallet.address : undefined;
     return address ? [{ multisig: m, address }] : [];
   });
 }
@@ -822,9 +831,10 @@ export function createMultisig(input: {
   members: Member[];
   threshold: number;
 }) {
+  if (!TEST_MODE) throw new Error(NOT_AVAILABLE);
   const protocol = protocolFor(input.network);
   const address = protocol === 'squads' ? demoSolanaAddress() : demoAddress();
-  // A fresh key of yours, just for this wallet, on its network.
+  // Simulated members only; no keys or contract are created.
   const members = input.members.map((m) =>
     m.kind === 'you'
       ? { ...m, address: protocol === 'squads' ? demoSolanaAddress() : demoAddress() }
@@ -832,6 +842,7 @@ export function createMultisig(input: {
   );
   const walletId = addWallet({
     kind: 'multisig',
+    demo: true,
     label: input.name,
     address,
     usd: 0,

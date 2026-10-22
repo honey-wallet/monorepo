@@ -24,7 +24,7 @@ vi.mock('@/lib/toast', () => ({ showToast: state.toast }));
 vi.mock('@/lib/vault', () => ({ eraseVault: vi.fn() }));
 vi.mock('@/lib/wallets', () => ({ wallets: { set: vi.fn() } }));
 
-import { finishOnboarding, markDemoFunded, useOnboarding } from '@/lib/onboarding';
+import { finishOnboarding, markDemoFunded, setupSteps, useOnboarding } from '@/lib/onboarding';
 
 beforeEach(() => {
   state.toast.mockClear();
@@ -39,4 +39,13 @@ it('marks only the demo onboarding view as funded and never claims money arrived
   expect(useOnboarding().funded).toBe(true);
   expect(state.toast).toHaveBeenCalledWith('Balance updated');
   expect(state.toast).not.toHaveBeenCalledWith(expect.stringMatching(/arrived/i));
+});
+
+it('keeps the backup step for Apple / Google / email wallets: their phrase lives on this device', () => {
+  for (const method of ['apple', 'google', 'email', 'phrase'] as const) {
+    const steps = setupSteps(method).map((s) => s.id);
+    expect(steps).toContain('backup');
+    expect(steps).toContain('browser');
+    expect(steps).not.toContain('phone');
+  }
 });

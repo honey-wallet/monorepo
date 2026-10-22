@@ -33,9 +33,7 @@ async fn recover(
     identity
         .rate_limit_scoped("operation_read", &profile.wallet.id.to_string(), 60)
         .await?;
-    let id = id
-        .parse::<Uuid>()
-        .map_err(|_| AppError::BadRequest("invalid operation ID".into()))?;
+    let id = super::operation_id(&id)?;
     let work = state.work.as_ref().ok_or(AppError::Busy)?;
     Ok(Json(
         work.recover(profile.user_id, profile.wallet.id, id).await?,

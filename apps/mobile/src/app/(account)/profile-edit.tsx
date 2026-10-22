@@ -12,8 +12,9 @@ import { useCopy } from '@/lib/copy';
 import { tap } from '@/lib/haptics';
 import { shortAddress } from '@/lib/mock-wallet';
 import { setProfile, useProfile } from '@/lib/profile';
+import { receiveAddresses } from '@/lib/receive';
 import { showToast } from '@/lib/toast';
-import { isFixtureWallet, useActiveWallet } from '@/lib/wallets';
+import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
 
 const AVATAR = 104;
@@ -31,7 +32,8 @@ export default function ProfileEditSheet() {
   const [name, setName] = useState(profile.name);
   const [photo, setPhoto] = useState(profile.photo);
   const [seed, setSeed] = useState(profile.avatarSeed);
-  const { copied, copy } = useCopy(isFixtureWallet(wallet) ? '' : wallet.address, 'Address copied');
+  const address = receiveAddresses(wallet)[0]?.address ?? '';
+  const { copied, copy } = useCopy(address, 'Address copied');
 
   const trimmed = name.trim();
   const changed =
@@ -150,7 +152,9 @@ export default function ProfileEditSheet() {
         </View>
         <View style={styles.flex}>
           <Text style={styles.addressLabel}>Wallet address</Text>
-          <Text style={styles.addressValue}>{shortAddress(wallet.address, 6, 4)}</Text>
+          <Text style={styles.addressValue}>
+            {address ? shortAddress(address, 6, 4) : 'Receive unavailable'}
+          </Text>
         </View>
         <IconSwap name={copied ? 'check' : 'copy'} size={16} color={c.textSecondary} />
       </PressableScale>

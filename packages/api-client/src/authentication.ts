@@ -1,6 +1,7 @@
 import type {
   AuthConfiguration,
   AuthenticatedSession,
+  ClerkIdentity,
   SignInChallenge,
   WalletProfile,
 } from './types';
@@ -134,6 +135,15 @@ export function isProfile(value: unknown): value is WalletProfile {
     typeof value.userId === 'string' &&
     UUID.test(value.userId) &&
     isWalletIdentity(value.wallet)
+  );
+}
+
+/** Clerk user ids look like `user_2abc…`. */
+export function isClerkIdentity(value: unknown): value is ClerkIdentity {
+  return (
+    object(value) &&
+    typeof value.userId === 'string' &&
+    /^user_[A-Za-z0-9]{1,120}$/.test(value.userId)
   );
 }
 

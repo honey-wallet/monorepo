@@ -1,13 +1,14 @@
-import { useLocalSearchParams } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useErrorShake } from '@/components/motion/ErrorShake';
 import { PillButton } from '@/components/onboarding/PillButton';
 import { StepScreen } from '@/components/onboarding/StepScreen';
-import { failure } from '@/lib/haptics';
-import { finishOnboarding } from '@/lib/onboarding';
-import { settings } from '@/lib/settings';
+import { failure, tap } from '@/lib/haptics';
+import { IDENTITY_ENABLED } from '@/lib/identity';
+import { type EmailFlow, useEmailCode } from '@/lib/identity-flows';
+import { continueAfterSignIn } from '@/lib/identity-onboarding';
 import { makeStyles, radius } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
@@ -16,10 +17,22 @@ const RESEND_SECONDS = 30;
 /** Wrong codes allowed before a new one has to be sent. */
 const TRIES = 3;
 
+/** Email sign-in, step two: the code Clerk emailed, checked by Clerk. */
 export default function VerifyScreen() {
+  const { flow } = useLocalSearchParams<{ flow?: string }>();
+  // Only reachable after the email step sent a code (and only with Clerk configured).
+  if (!IDENTITY_ENABLED || (flow !== 'sign-in' && flow !== 'sign-up'))
+    return <Redirect href="/welcome" />;
+  return <VerifyCode flow={flow} />;
+}
+
+function VerifyCode({ flow }: { flow: EmailFlow }) {
   const { to, intent } = useLocalSearchParams<{ to?: string; intent?: string }>();
+  const restore = intent === 'restore';
+  const emailCode = useEmailCode();
   const [code, setCode] = useState('');
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
+  const [checking, setChecking] = useState(false);
   const input = useRef<TextInput>(null);
   const styles = useStyles();
 
@@ -35,41 +48,86 @@ export default function VerifyScreen() {
   const { shake, style: shaken } = useErrorShake();
   const locked = wrong >= TRIES;
 
-  // DEMO: any code works, except 000000 or with Simulate failures on. A wrong code
-  // shakes the boxes, turns them red and clears them; three in a row need a new code.
-  const submit = () => {
-    if (code === '000000' || settings.get().simulateFailures) {
-      const tries = wrong + 1;
-      failure();
-      shake();
-      setWrong(tries);
-      setError(
-        tries >= TRIES
-          ? 'Too many tries. Get a new code to keep going.'
-          : `That code isn’t right. ${TRIES - tries} ${TRIES - tries === 1 ? 'try' : 'tries'} left.`,
-      );
-      setTimeout(() => setCode(''), 350);
-      return;
-    }
-    // Straight into the wallet: password, name and photo are out of the flow for now
-    // (fewer steps before the wallet exists; the name comes from the email, the photo
-    // from Finish setting up).
-    // router.push('/password')
-    finishOnboarding('email', { restored: intent === 'restore', email: to });
+  // A wrong code shakes the boxes, turns them red and clears them; three in a row (or a
+  // code Clerk won't take any more) need a new code.
+  const reject = (tries: number, message: string) => {
+    failure();
+    shake();
+    setWrong(tries);
+    setError(message);
+    setTimeout(() => setCode(''), 350);
   };
-  const resend = () => {
+
+  const submit = async () => {
+    if (!complete || locked || checking) return;
+    tap();
+    setChecking(true);
+    try {
+      const outcome = await emailCode.verify(flow, code);
+      if (!outcome.ok) {
+        setChecking(false);
+        if (outcome.reason === 'wrong') {
+          const tries = wrong + 1;
+          reject(
+            tries,
+            tries >= TRIES
+              ? 'Too many tries. Get a new code to keep going.'
+              : `That code isn’t right. ${TRIES - tries} ${TRIES - tries === 1 ? 'try' : 'tries'} left.`,
+          );
+        } else if (outcome.reason === 'expired') {
+          reject(TRIES, outcome.message);
+        } else {
+          failure();
+          shake();
+          setError(outcome.message);
+        }
+        return;
+      }
+      // Signed in. Straight into the wallet: password, name and photo are out of the flow
+      // for now (the name comes from the email, the photo from Finish setting up).
+      // router.push('/password')
+      const next = await continueAfterSignIn('email', {
+        restore,
+        identity: { email: to, ...outcome.identity },
+      });
+      // Restoring: the account holds no keys, so back to the ways to bring them back.
+      if (next === 'needs-keys') {
+        router.dismissAll();
+        router.push({ pathname: '/get-started', params: { mode: 'restore' } });
+      }
+    } catch (cause) {
+      console.warn('Email sign-in failed', cause);
+      setChecking(false);
+      failure();
+      setError('Couldn’t check the code. Check your connection and try again.');
+    }
+  };
+  const resend = async () => {
     setSecondsLeft(RESEND_SECONDS);
     setWrong(0);
     setError(null);
     setCode('');
     input.current?.focus();
+    try {
+      const sent = await emailCode.resend(flow);
+      if (!sent.ok) setError(sent.message);
+    } catch (cause) {
+      console.warn('Couldn’t resend the email code', cause);
+      setError('Couldn’t send a new code. Check your connection and try again.');
+    }
   };
 
   return (
     <StepScreen
       help="code"
       title="Enter your code"
-      footer={<PillButton label="Continue" disabled={!complete || locked} onPress={submit} />}
+      footer={
+        <PillButton
+          label={checking ? 'Checking…' : 'Continue'}
+          disabled={!complete || locked || checking}
+          onPress={submit}
+        />
+      }
     >
       <Animated.View style={shaken}>
         <Pressable style={styles.boxes} onPress={() => input.current?.focus()}>
@@ -102,7 +160,7 @@ export default function VerifyScreen() {
         ref={input}
         autoFocus
         value={code}
-        editable={!locked}
+        editable={!locked && !checking}
         onChangeText={(text) => {
           setCode(text.replace(/\D/g, '').slice(0, LENGTH));
           if (!locked) setError(null);

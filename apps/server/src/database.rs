@@ -20,137 +20,115 @@ impl MigrationSource<'static> for EmbeddedMigrations {
     ) -> Pin<Box<dyn Future<Output = Result<Vec<Migration>, BoxDynError>> + Send + 'static>> {
         Box::pin(async {
             Ok(vec![
-                Migration::new(
+                migration(
                     202610180001,
-                    Cow::Borrowed("identity and work"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610180001_identity_and_work.sql"
-                    )),
+                    "identity and work",
+                    include_str!("../migrations/202610180001_identity_and_work.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180002,
-                    Cow::Borrowed("immutable preparations"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610180002_preparations.sql")),
+                    "immutable preparations",
+                    include_str!("../migrations/202610180002_preparations.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180003,
-                    Cow::Borrowed("signed submissions"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610180003_submissions.sql")),
+                    "signed submissions",
+                    include_str!("../migrations/202610180003_submissions.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180004,
-                    Cow::Borrowed("receipt reconciliation"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610180004_reconciliation.sql"
-                    )),
+                    "receipt reconciliation",
+                    include_str!("../migrations/202610180004_reconciliation.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180005,
-                    Cow::Borrowed("Aave signing requests"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610180005_aave_signing.sql")),
+                    "Aave signing requests",
+                    include_str!("../migrations/202610180005_aave_signing.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180006,
-                    Cow::Borrowed("wallet operation history"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610180006_operation_history.sql"
-                    )),
+                    "wallet operation history",
+                    include_str!("../migrations/202610180006_operation_history.sql"),
                     true,
                 ),
-                Migration::new(
+                migration(
                     202610180007,
-                    Cow::Borrowed("shared Earn signing evidence"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610180007_earn_signing.sql")),
+                    "shared Earn signing evidence",
+                    include_str!("../migrations/202610180007_earn_signing.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180008,
-                    Cow::Borrowed("sealed swap preparations"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610180008_sealed_preparations.sql"
-                    )),
+                    "sealed swap preparations",
+                    include_str!("../migrations/202610180008_sealed_preparations.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180009,
-                    Cow::Borrowed("immutable swap permit reviews"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610180009_swap_permits.sql")),
+                    "immutable swap permit reviews",
+                    include_str!("../migrations/202610180009_swap_permits.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180010,
-                    Cow::Borrowed("durable bridge status observations"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610180010_bridge_monitor.sql"
-                    )),
+                    "durable bridge status observations",
+                    include_str!("../migrations/202610180010_bridge_monitor.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180011,
-                    Cow::Borrowed("verified Across destination settlement"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610180011_across_settlement.sql"
-                    )),
+                    "verified Across destination settlement",
+                    include_str!("../migrations/202610180011_across_settlement.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610180012,
-                    Cow::Borrowed("rotating refresh families"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610180012_refresh_families.sql"
-                    )),
+                    "rotating refresh families",
+                    include_str!("../migrations/202610180012_refresh_families.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610190001,
-                    Cow::Borrowed("proof-based wallet links"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610190001_wallet_links.sql")),
+                    "proof-based wallet links",
+                    include_str!("../migrations/202610190001_wallet_links.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     202610190002,
-                    Cow::Borrowed("bounded queue metric probes"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!(
-                        "../migrations/202610190002_job_queue_metrics.sql"
-                    )),
+                    "bounded queue metric probes",
+                    include_str!("../migrations/202610190002_job_queue_metrics.sql"),
                     true,
                 ),
-                Migration::new(
+                migration(
                     202610210001,
-                    Cow::Borrowed("launch waitlist"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610210001_waitlist.sql")),
+                    "launch waitlist",
+                    include_str!("../migrations/202610210001_waitlist.sql"),
                     false,
                 ),
-                Migration::new(
+                migration(
                     LATEST_SCHEMA_VERSION,
-                    Cow::Borrowed("remove Across settlement"),
-                    MigrationType::Simple,
-                    Cow::Borrowed(include_str!("../migrations/202610210002_remove_across.sql")),
+                    "remove Across settlement",
+                    include_str!("../migrations/202610210002_remove_across.sql"),
                     false,
                 ),
             ])
         })
     }
+}
+
+fn migration(version: i64, description: &'static str, sql: &'static str, no_tx: bool) -> Migration {
+    Migration::new(
+        version,
+        Cow::Borrowed(description),
+        MigrationType::Simple,
+        Cow::Borrowed(sql),
+        no_tx,
+    )
 }
 
 /// Explicit operator action, not called by the API startup path.

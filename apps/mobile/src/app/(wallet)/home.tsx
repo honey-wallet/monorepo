@@ -111,7 +111,7 @@ export default function HomeScreen() {
   // The chains this wallet has addresses on, as icons under its name: one copies
   // straight away; several open Copy address to pick which.
   const addresses = receiveAddresses(wallet);
-  const { copy: copyAddress } = useCopy(addresses[0]?.address ?? wallet.address, 'Address copied');
+  const { copy: copyAddress } = useCopy(addresses[0]?.address ?? '', 'Address copied');
   // A shared wallet lives on one chain with its own address there; the same members on
   // other chains are one wallet with several deployments, so Copy address lists them.
   const deployments = useMultisigDeployments(wallet.id);

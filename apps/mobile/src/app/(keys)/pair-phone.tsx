@@ -64,7 +64,7 @@ function PairPhone() {
   const sessions = useRef(new Set<PairSession>());
   const [noPhrase, setNoPhrase] = useState(false);
 
-  // Only a recovery phrase can move to the phone (Apple, Google and email wallets have none here).
+  // Only a recovery phrase can move to the phone (a browser with only imported keys has none).
   useEffect(() => {
     if (!toPhone) return;
     void hasPrimaryMnemonic().then((has) => {

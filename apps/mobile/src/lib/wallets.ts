@@ -35,6 +35,7 @@ const fromVault = (account: VaultAccount): AddedWallet => ({
   address: account.addresses.evm,
   addresses: account.addresses,
   usd: 0,
+  ...(account.burner ? { burner: true } : {}),
 });
 
 // Wallets created or imported on an earlier launch. Their keys stay in secure storage;
@@ -107,8 +108,17 @@ function withSampleMoney(name: string, added: AddedWallet[]): AddedWallet[] {
   return [...own, ...shared];
 }
 
-/** A built-in sample wallet with no keys on this device (not one of the user's own). */
-export const isFixtureWallet = (wallet: AddedWallet) => !!wallet.demo && !wallet.addresses;
+/** Samples and legacy records without keys, including every simulated shared wallet. */
+export const isFixtureWallet = (wallet: AddedWallet) =>
+  wallet.kind === 'multisig' || (!wallet.addresses && !wallet.watchOnly);
+
+/** Only key-backed accounts and explicitly watched EVM addresses may receive funds.
+ * Shared wallets are simulations until on-chain deployment is implemented. This also
+ * rejects legacy burners/shared wallets that were saved without a demo marker.
+ */
+export const canReceive = (wallet: AddedWallet) =>
+  wallet.kind === 'wallet' &&
+  (!!wallet.addresses?.evm || (!wallet.demo && !!wallet.watchOnly && isEvmAddress(wallet.address)));
 
 export function setActiveWallet(id: string) {
   wallets.set((prev) => ({ ...prev, activeId: id }));

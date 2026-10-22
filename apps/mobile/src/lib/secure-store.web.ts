@@ -27,8 +27,8 @@ export const AUTO_LOCK_MS = 15 * 60 * 1000;
 const VAULT = 'honey.vault';
 const SESSION = 'honey.session';
 
-type VaultRecord = { locked: LockedKey; items: string };
-type Session = { key: string; at: number };
+type VaultRecord = { locked: LockedKey; items: string; epoch?: string; at?: number };
+type Session = { key: string; epoch: string };
 type Area = {
   get<T>(key: string): Promise<T | undefined>;
   set(key: string, value: unknown): Promise<void>;
@@ -42,7 +42,17 @@ type ChromeArea = {
   remove(key: string): Promise<void>;
 };
 const chromeStorage = (
-  globalThis as { chrome?: { storage?: { local?: ChromeArea; session?: ChromeArea } } }
+  globalThis as {
+    chrome?: {
+      storage?: {
+        local?: ChromeArea;
+        session?: ChromeArea;
+        onChanged?: {
+          addListener(listener: (changes: Record<string, unknown>, area: string) => void): void;
+        };
+      };
+    };
+  }
 ).chrome?.storage;
 
 function chromeArea(area: ChromeArea): Area {
@@ -88,68 +98,95 @@ export const vaultStatus = createStore<VaultStatus>('loading');
 
 let timer: ReturnType<typeof setTimeout> | undefined;
 
-async function lock() {
-  clearTimeout(timer);
-  await session.remove(SESSION);
+/** One origin-wide lock covers reads, writes, key installation and revocation, including
+ * asynchronous storage calls. A per-popup promise queue cannot protect this boundary.
+ * Unsupported/insecure browser contexts fail closed instead of falling back to a mutex.
+ */
+function exclusive<T>(run: () => Promise<T>): Promise<T> {
+  if (!globalThis.navigator?.locks) return Promise.reject(new VaultLockedError());
+  return navigator.locks.request('honey.vault', run);
+}
+
+async function lockedStatus() {
   vaultStatus.set((await local.get<VaultRecord>(VAULT)) ? 'locked' : 'new');
 }
 
-/** Restarts the idle timer; every read and write counts as use. */
-async function touch(key: Uint8Array) {
-  await session.set(SESSION, { key: toHex(key), at: Date.now() } satisfies Session);
+// Called only while holding the origin-wide lock. The persisted epoch revokes keys
+// even in ordinary tabs, whose sessionStorage areas are separate.
+async function revoke() {
   clearTimeout(timer);
-  timer = setTimeout(() => void lock(), AUTO_LOCK_MS);
+  const record = await local.get<VaultRecord>(VAULT);
+  if (record) await local.set(VAULT, { ...record, epoch: toHex(random(16)) });
+  await session.remove(SESSION);
+  vaultStatus.set(record ? 'locked' : 'new');
 }
 
-/** The data key while unlocked and recently used; null (and locks) otherwise. */
-async function currentKey(): Promise<Uint8Array | null> {
+const lock = () => exclusive(revoke);
+
+function schedule(at: number) {
+  clearTimeout(timer);
+  // A stale timer checks shared activity under the lock before revoking a key.
+  timer = setTimeout(
+    () => void webVault.load().catch(() => {}),
+    Math.max(0, at + AUTO_LOCK_MS - Date.now()),
+  );
+}
+
+async function currentKey(record: VaultRecord, touch = true): Promise<Uint8Array | null> {
   const state = await session.get<Session>(SESSION);
-  if (!state) return null;
-  if (Date.now() - state.at >= AUTO_LOCK_MS) {
-    await lock();
+  if (!record.epoch || !state || state.epoch !== record.epoch) return null;
+  if (
+    typeof record.at !== 'number' ||
+    !Number.isFinite(record.at) ||
+    record.at > Date.now() ||
+    Date.now() - record.at >= AUTO_LOCK_MS ||
+    !/^[0-9a-f]{64}$/.test(state.key)
+  ) {
+    await revoke();
     return null;
   }
-  const key = fromHex(state.key);
-  await touch(key);
-  return key;
+  if (touch) {
+    record.at = Date.now();
+    await local.set(VAULT, record);
+  }
+  schedule(record.at);
+  return fromHex(state.key);
 }
 
-async function readItems(key: Uint8Array): Promise<{ [name: string]: string }> {
-  const record = await local.get<VaultRecord>(VAULT);
-  if (!record) throw new VaultLockedError();
-  return JSON.parse(openWithKey(key, record.items));
+async function install(key: Uint8Array, epoch: string) {
+  const at = Date.now();
+  await session.set(SESSION, { key: toHex(key), epoch } satisfies Session);
+  schedule(at);
+  vaultStatus.set('unlocked');
 }
 
 async function unlockedItems() {
-  const key = await currentKey();
+  const record = await local.get<VaultRecord>(VAULT);
+  const key = record && (await currentKey(record));
   if (!key) {
-    vaultStatus.set((await local.get<VaultRecord>(VAULT)) ? 'locked' : 'new');
+    await lockedStatus();
     throw new VaultLockedError();
   }
-  return { key, items: await readItems(key) };
+  return {
+    key,
+    record,
+    items: JSON.parse(openWithKey(key, record.items)) as Record<string, string>,
+  };
 }
 
-// Writes run one at a time so two quick changes can't overwrite each other.
-let queue: Promise<unknown> = Promise.resolve();
-function update(change: (items: { [name: string]: string }) => void) {
-  const run = queue.then(async () => {
-    const { key, items } = await unlockedItems();
+function update(change: (items: Record<string, string>) => void) {
+  return exclusive(async () => {
+    const { key, record, items } = await unlockedItems();
     change(items);
-    const record = await local.get<VaultRecord>(VAULT);
-    if (!record) throw new VaultLockedError();
-    await local.set(VAULT, {
-      locked: record.locked,
-      items: sealWithKey(key, JSON.stringify(items), random),
-    });
+    await local.set(VAULT, { ...record, items: sealWithKey(key, JSON.stringify(items), random) });
   });
-  queue = run.catch(() => {});
-  return run;
 }
 
-export async function getItemAsync(name: string): Promise<string | null> {
-  const { items } = await unlockedItems();
-  return items[name] ?? null;
-}
+export const getItemAsync = (name: string): Promise<string | null> =>
+  exclusive(async () => {
+    const { items } = await unlockedItems();
+    return items[name] ?? null;
+  });
 
 export const setItemAsync = (name: string, value: string) =>
   update((items) => {
@@ -163,57 +200,79 @@ export const deleteItemAsync = (name: string) =>
 
 /** Setting up, unlocking and locking the browser's vault. */
 export const webVault = {
-  async load() {
-    const record = await local.get<VaultRecord>(VAULT);
-    vaultStatus.set(!record ? 'new' : (await currentKey()) ? 'unlocked' : 'locked');
-    return vaultStatus.get();
-  },
+  load: () =>
+    exclusive(async () => {
+      const record = await local.get<VaultRecord>(VAULT);
+      vaultStatus.set(!record ? 'new' : (await currentKey(record, false)) ? 'unlocked' : 'locked');
+      return vaultStatus.get();
+    }),
 
-  /** First run: an empty vault under `password`, unlocked. */
-  async create(password: string) {
-    if (await local.get<VaultRecord>(VAULT)) throw new Error('Honey is already set up here');
-    const { key, locked } = await createLocalVault(password, random);
-    await local.set(VAULT, { locked, items: sealWithKey(key, '{}', random) });
-    await touch(key);
-    vaultStatus.set('unlocked');
-  },
+  create: (password: string) =>
+    exclusive(async () => {
+      if (await local.get<VaultRecord>(VAULT)) throw new Error('Honey is already set up here');
+      const { key, locked } = await createLocalVault(password, random);
+      const epoch = toHex(random(16));
+      await local.set(VAULT, {
+        locked,
+        items: sealWithKey(key, '{}', random),
+        epoch,
+        at: Date.now(),
+      });
+      await install(key, epoch);
+    }),
 
-  /** False for a wrong password. */
-  async unlock(password: string) {
-    const record = await local.get<VaultRecord>(VAULT);
-    if (!record) return false;
-    try {
-      const key = await unlockLocalVault(record.locked, password);
-      await touch(key);
-      vaultStatus.set('unlocked');
-      return true;
-    } catch (error) {
-      if (error instanceof WrongPasswordError) return false;
-      throw error;
-    }
-  },
+  /** False for a wrong password. Unlock completion precedes any queued lock/reset. */
+  unlock: (password: string) =>
+    exclusive(async () => {
+      const record = await local.get<VaultRecord>(VAULT);
+      if (!record) return false;
+      try {
+        const key = await unlockLocalVault(record.locked, password);
+        const epoch = record.epoch ?? toHex(random(16));
+        await local.set(VAULT, { ...record, epoch, at: Date.now() });
+        await install(key, epoch);
+        return true;
+      } catch (error) {
+        if (error instanceof WrongPasswordError) return false;
+        throw error;
+      }
+    }),
 
   /** Checks the password without changing anything, for sensitive actions. */
-  async verify(password: string) {
-    const record = await local.get<VaultRecord>(VAULT);
-    if (!record) return false;
-    try {
-      await unlockLocalVault(record.locked, password);
-      return true;
-    } catch (error) {
-      if (error instanceof WrongPasswordError) return false;
-      throw error;
-    }
-  },
+  verify: (password: string) =>
+    exclusive(async () => {
+      const record = await local.get<VaultRecord>(VAULT);
+      if (!record) return false;
+      try {
+        await unlockLocalVault(record.locked, password);
+        return true;
+      } catch (error) {
+        if (error instanceof WrongPasswordError) return false;
+        throw error;
+      }
+    }),
 
   lock,
 
-  /** Forgets everything Honey keeps in this browser. Wallets come back from their phrase. */
-  async reset() {
-    await queue;
-    clearTimeout(timer);
-    await session.remove(SESSION);
-    await local.remove(VAULT);
-    vaultStatus.set('new');
-  },
+  /** Forgets everything Honey keeps in this browser. */
+  reset: () =>
+    exclusive(async () => {
+      clearTimeout(timer);
+      await session.remove(SESSION);
+      await local.remove(VAULT);
+      vaultStatus.set('new');
+    }),
 };
+
+// Keep already-open lock screens in sync; reads below do not refresh idle activity.
+const reload = () => {
+  void webVault.load().catch(() => {});
+};
+chromeStorage?.onChanged?.addListener((changes, area) => {
+  if ((area === 'local' && VAULT in changes) || (area === 'session' && SESSION in changes))
+    reload();
+});
+if (!chromeStorage)
+  globalThis.addEventListener?.('storage', (event) => {
+    if (event.key === VAULT) reload();
+  });
