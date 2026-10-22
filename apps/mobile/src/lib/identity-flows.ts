@@ -1,23 +1,18 @@
-import {
-  isClerkAPIResponseError,
-  useAuth,
-  useClerk,
-  useSignIn,
-  useSignUp,
-  useSSO,
-  useUser,
-} from '@clerk/expo';
-import { useSignInWithApple } from '@clerk/expo/apple';
+import { isAuthApiError, isAuthError, type User } from '@supabase/supabase-js';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import * as AuthSession from 'expo-auth-session';
+import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import { useIdentityState } from '@/components/IdentityProvider';
 import { AUTH_CALLBACK_PATH } from '@/lib/auth-callback';
+import { identityClient } from '@/lib/identity-client';
 
 /**
- * Clerk sign-in, for screens that only render when IDENTITY_ENABLED (ClerkProvider is
- * mounted then). Every flow ends in a Clerk session and nothing else: the caller decides
- * what happens to the wallet, which stays on this device. No metadata is written to Clerk.
+ * Supabase sign-in, for screens that only render when IDENTITY_ENABLED. Every flow ends
+ * in a Supabase session and nothing else: the caller decides what happens to the wallet,
+ * which stays on this device. No profile data or metadata is written to Supabase.
  */
 
 // Completes a browser redirect if this bundle was opened by one (a no-op on phones).
@@ -26,56 +21,68 @@ WebBrowser.maybeCompleteAuthSession();
 /** Native Sign in with Apple is iOS only; Android offers Google and email. */
 export const APPLE_SIGN_IN = Platform.OS === 'ios';
 
-/** What the app may use from the Clerk account: a name for the profile, nothing more. */
+/** What the app may use from the account: a name for the profile, nothing more. */
 export type Identity = { email?: string; name?: string };
 
 export type SignInOutcome =
   | { ok: true; identity: Identity }
   | { ok: false; cancelled: boolean; message: string };
 
-type ClerkUser = ReturnType<typeof useUser>['user'];
+const text = (value: unknown) =>
+  typeof value === 'string' && value.trim() ? value.trim() : undefined;
 
-const describe = (user: ClerkUser | undefined): Identity => ({
-  email: user?.primaryEmailAddress?.emailAddress ?? undefined,
-  name: user?.firstName ?? undefined,
-});
+/** The first name the provider gave us (Google's profile; Apple sends one on first sign-in). */
+const describe = (user: User | null | undefined, name?: string): Identity => {
+  const meta = user?.user_metadata ?? {};
+  const full = text(meta.full_name) ?? text(meta.name);
+  return {
+    email: user?.email || undefined,
+    name: name ?? text(meta.given_name) ?? full?.split(/\s+/)[0],
+  };
+};
 
-/** Clerk's own codes for an error, from an API response or a client-side error. */
-function errorCodes(error: unknown): string[] {
-  if (isClerkAPIResponseError(error)) return error.errors.map((e) => e.code);
-  if (error && typeof error === 'object' && 'code' in error && typeof error.code === 'string')
-    return [error.code];
-  return [];
-}
+/** Supabase's error code, when the Auth server sent one. */
+const errorCode = (error: unknown) => (isAuthApiError(error) ? error.code : undefined);
 
-/** A sentence for the user: Clerk's long message when it has one, ours otherwise. */
+const RATE_LIMITED = ['over_email_send_rate_limit', 'over_request_rate_limit'];
+const UNAVAILABLE = [
+  'otp_disabled',
+  'provider_disabled',
+  'email_provider_disabled',
+  'signup_disabled',
+];
+
+/** A sentence for the user: ours for the errors we know, the fallback otherwise. */
 function errorMessage(error: unknown, fallback: string) {
-  if (isClerkAPIResponseError(error)) {
-    const first = error.errors[0];
-    return first?.longMessage || first?.message || fallback;
-  }
+  const code = errorCode(error);
+  if ((code && RATE_LIMITED.includes(code)) || (isAuthError(error) && error.status === 429))
+    return 'Too many tries. Wait a minute, then try again.';
+  if (code && UNAVAILABLE.includes(code))
+    return 'This way of signing in isn’t available right now. Try another.';
+  if (code === 'email_address_invalid') return 'That email address can’t be used. Try another.';
+  if (code === 'user_banned') return 'This account can’t sign in.';
   return fallback;
 }
 
-const CONNECTING = 'Still connecting. Try again in a moment.';
-
-/** The signed-in Clerk account, if any, and how it signs in. */
+/** The signed-in Supabase account, if any, and how it signs in. */
 export function useIdentity() {
-  const { isLoaded, isSignedIn } = useAuth();
-  const { user } = useUser();
-  const clerk = useClerk();
-  const providers = user?.externalAccounts.map((account) => account.provider) ?? [];
+  const { loaded, user } = useIdentityState();
+  const providers: unknown[] = Array.isArray(user?.app_metadata.providers)
+    ? user.app_metadata.providers
+    : [user?.app_metadata.provider];
   const method: 'apple' | 'google' | 'email' = providers.includes('apple')
     ? 'apple'
     : providers.includes('google')
       ? 'google'
       : 'email';
   return {
-    loaded: isLoaded,
-    signedIn: !!isSignedIn,
+    loaded,
+    signedIn: !!user,
     method,
     ...describe(user),
-    signOut: () => clerk.signOut(),
+    signOut: async () => {
+      await identityClient().auth.signOut({ scope: 'local' });
+    },
   };
 }
 
@@ -90,159 +97,148 @@ function useWarmUpBrowser() {
   }, []);
 }
 
-/** Sign in with Apple (native, iOS) and Google (Clerk's browser OAuth flow). */
-export function useSocialSignIn() {
-  useWarmUpBrowser();
-  const clerk = useClerk();
-  const { isLoaded } = useAuth();
-  const { startSSOFlow } = useSSO();
-  const { startAppleAuthenticationFlow } = useSignInWithApple();
+const cancelledBy = (name: string): SignInOutcome => ({
+  ok: false,
+  cancelled: true,
+  message: `Sign-in with ${name} was cancelled.`,
+});
 
-  const finish = async (
-    name: string,
-    start: () => Promise<{
-      createdSessionId: string | null;
-      setActive?: (params: { session: string }) => Promise<void>;
-      cancelled: boolean;
-    }>,
-  ): Promise<SignInOutcome> => {
-    if (!isLoaded) return { ok: false, cancelled: false, message: CONNECTING };
-    try {
-      const { createdSessionId, setActive, cancelled } = await start();
-      if (createdSessionId && setActive) {
-        await setActive({ session: createdSessionId });
-        return { ok: true, identity: describe(clerk.user) };
-      }
-      return cancelled
-        ? { ok: false, cancelled: true, message: `Sign-in with ${name} was cancelled.` }
-        : {
-            ok: false,
-            cancelled: false,
-            message: `Couldn’t finish signing in with ${name}. Try again or use another way.`,
-          };
-    } catch (error) {
-      if (errorCodes(error).includes('ERR_REQUEST_CANCELED'))
-        return { ok: false, cancelled: true, message: `Sign-in with ${name} was cancelled.` };
-      console.warn(`Sign in with ${name} failed`, error);
-      return {
-        ok: false,
-        cancelled: false,
-        message: errorMessage(
-          error,
-          `Couldn’t reach ${name}. Check your connection and try again.`,
-        ),
-      };
-    }
-  };
+const failedWith = (name: string, error?: unknown): SignInOutcome => ({
+  ok: false,
+  cancelled: false,
+  message: errorMessage(
+    error,
+    `Couldn’t finish signing in with ${name}. Try again or use another way.`,
+  ),
+});
 
-  return {
-    apple: () =>
-      finish('Apple', async () => {
-        // The hook resolves without a session when the Apple sheet is dismissed.
-        const result = await startAppleAuthenticationFlow();
-        return { ...result, cancelled: !result.createdSessionId };
-      }),
-    google: () =>
-      finish('Google', async () => {
-        const result = await startSSOFlow({
-          strategy: 'oauth_google',
-          redirectUrl: AuthSession.makeRedirectUri({ path: AUTH_CALLBACK_PATH }),
-        });
-        const type = result.authSessionResult?.type;
-        return { ...result, cancelled: type === 'cancel' || type === 'dismiss' };
-      }),
-  };
+/**
+ * Sign in with Apple: the native sheet (iOS), then its identity token to Supabase. A
+ * random nonce goes to Apple hashed and to Supabase raw, so a token can't be replayed.
+ */
+async function signInWithApple(): Promise<SignInOutcome> {
+  const nonce = Crypto.randomUUID();
+  const hashed = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, nonce);
+  let credential: AppleAuthentication.AppleAuthenticationCredential;
+  try {
+    credential = await AppleAuthentication.signInAsync({
+      requestedScopes: [
+        AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+        AppleAuthentication.AppleAuthenticationScope.EMAIL,
+      ],
+      nonce: hashed,
+    });
+  } catch (error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'ERR_REQUEST_CANCELED'
+    )
+      return cancelledBy('Apple');
+    console.warn('Sign in with Apple failed', error);
+    return failedWith('Apple');
+  }
+  if (!credential.identityToken) return failedWith('Apple');
+  const { data, error } = await identityClient().auth.signInWithIdToken({
+    provider: 'apple',
+    token: credential.identityToken,
+    nonce,
+  });
+  if (error || !data.user) {
+    console.warn('Supabase rejected the Apple sign-in', error);
+    return failedWith('Apple', error);
+  }
+  // Apple shares the name on the first sign-in only. It's used for the profile on this
+  // device and not written back to the account.
+  return { ok: true, identity: describe(data.user, text(credential.fullName?.givenName)) };
 }
 
-export type EmailFlow = 'sign-in' | 'sign-up';
+/**
+ * Sign in with Google: Supabase's OAuth page in the in-app browser, back to
+ * honeywallet://auth-callback with a one-time code (PKCE), exchanged for a session.
+ */
+async function signInWithGoogle(): Promise<SignInOutcome> {
+  const auth = identityClient().auth;
+  const redirectTo = AuthSession.makeRedirectUri({ path: AUTH_CALLBACK_PATH });
+  const { data, error } = await auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+  if (error || !data.url) return failedWith('Google', error);
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  if (result.type === 'cancel' || result.type === 'dismiss') return cancelledBy('Google');
+  if (result.type !== 'success') return failedWith('Google');
+  const url = new URL(result.url);
+  const code = url.searchParams.get('code');
+  if (!code) {
+    // Supabase reports provider errors in the query or the fragment.
+    const reason =
+      url.searchParams.get('error_description') ??
+      new URLSearchParams(url.hash.slice(1)).get('error_description');
+    console.warn('Google sign-in came back without a code', reason);
+    return failedWith('Google');
+  }
+  const exchanged = await auth.exchangeCodeForSession(code);
+  if (exchanged.error || !exchanged.data.user) return failedWith('Google', exchanged.error);
+  return { ok: true, identity: describe(exchanged.data.user) };
+}
+
+/** Sign in with Apple (native, iOS) and Google (Supabase's browser OAuth flow). */
+export function useSocialSignIn() {
+  useWarmUpBrowser();
+  const guard =
+    (name: string, run: () => Promise<SignInOutcome>) => async (): Promise<SignInOutcome> => {
+      try {
+        return await run();
+      } catch (error) {
+        console.warn(`Sign in with ${name} failed`, error);
+        return {
+          ok: false,
+          cancelled: false,
+          message: `Couldn’t reach ${name}. Check your connection and try again.`,
+        };
+      }
+    };
+  return { apple: guard('Apple', signInWithApple), google: guard('Google', signInWithGoogle) };
+}
 
 export type CodeOutcome =
   | { ok: true; identity: Identity }
   | { ok: false; reason: 'wrong' | 'expired' | 'other'; message: string };
 
-const WRONG_CODE = ['form_code_incorrect'];
-const DEAD_CODE = ['verification_expired', 'verification_failed', 'too_many_requests'];
-
 /**
- * Sign in or up with a 6-digit code emailed by Clerk. An address without an account
- * gets one (sign-up), so "create" and "restore" both just work.
+ * Sign in or up with a 6-digit code emailed by Supabase. An address without an account
+ * gets one, so "create" and "restore" both just work.
  */
 export function useEmailCode() {
-  const clerk = useClerk();
-  const { signIn } = useSignIn();
-  const { signUp } = useSignUp();
+  const send = async (email: string): Promise<{ ok: true } | { ok: false; message: string }> => {
+    const { error } = await identityClient().auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true },
+    });
+    return error
+      ? {
+          ok: false,
+          message: errorMessage(error, 'Couldn’t send a code. Check the address and try again.'),
+        }
+      : { ok: true };
+  };
 
-  const sendFailure = (error: unknown) => ({
-    ok: false as const,
-    message: errorMessage(error, 'Couldn’t send a code. Check the address and try again.'),
-  });
-
-  const codeFailure = (error: unknown): CodeOutcome => {
-    const codes = errorCodes(error);
-    if (codes.some((code) => WRONG_CODE.includes(code)))
-      return { ok: false, reason: 'wrong', message: 'That code isn’t right.' };
-    if (codes.some((code) => DEAD_CODE.includes(code)))
-      return {
-        ok: false,
-        reason: 'expired',
-        message: 'That code can’t be used anymore. Get a new code to keep going.',
-      };
+  /** Checks the code and, when it's right, the session starts. */
+  const verify = async (email: string, code: string): Promise<CodeOutcome> => {
+    const { data, error } = await identityClient().auth.verifyOtp({
+      email,
+      token: code,
+      type: 'email',
+    });
+    if (!error && data.user) return { ok: true, identity: describe(data.user) };
+    // Supabase answers a wrong code and an expired one the same way (otp_expired).
+    if (errorCode(error) === 'otp_expired')
+      return { ok: false, reason: 'wrong', message: 'That code isn’t right or has expired.' };
     return { ok: false, reason: 'other', message: errorMessage(error, 'Couldn’t check the code.') };
   };
 
-  /** Sends the first code. */
-  const start = async (
-    email: string,
-  ): Promise<{ ok: true; flow: EmailFlow } | { ok: false; message: string }> => {
-    const created = await signIn.create({ identifier: email });
-    if (!created.error) {
-      const sent = await signIn.emailCode.sendCode();
-      return sent.error ? sendFailure(sent.error) : { ok: true, flow: 'sign-in' };
-    }
-    if (!errorCodes(created.error).includes('form_identifier_not_found'))
-      return sendFailure(created.error);
-    const registered = await signUp.create({ emailAddress: email });
-    if (registered.error) return sendFailure(registered.error);
-    const sent = await signUp.verifications.sendEmailCode();
-    return sent.error ? sendFailure(sent.error) : { ok: true, flow: 'sign-up' };
-  };
-
-  /** Sends a fresh code for the same attempt. */
-  const resend = async (flow: EmailFlow) => {
-    const sent =
-      flow === 'sign-in'
-        ? await signIn.emailCode.sendCode()
-        : await signUp.verifications.sendEmailCode();
-    return sent.error ? sendFailure(sent.error) : { ok: true as const };
-  };
-
-  /** Checks the code and, when it's right, makes the new session active. */
-  const verify = async (flow: EmailFlow, code: string): Promise<CodeOutcome> => {
-    if (flow === 'sign-in') {
-      const checked = await signIn.emailCode.verifyCode({ code });
-      if (checked.error) return codeFailure(checked.error);
-      if (signIn.status !== 'complete')
-        return {
-          ok: false,
-          reason: 'other',
-          message: 'This account needs another sign-in step that Honey doesn’t support yet.',
-        };
-      const done = await signIn.finalize();
-      if (done.error) return codeFailure(done.error);
-    } else {
-      const checked = await signUp.verifications.verifyEmailCode({ code });
-      if (checked.error) return codeFailure(checked.error);
-      if (signUp.status !== 'complete')
-        return {
-          ok: false,
-          reason: 'other',
-          message: 'Couldn’t finish creating your account. Try again later.',
-        };
-      const done = await signUp.finalize();
-      if (done.error) return codeFailure(done.error);
-    }
-    return { ok: true, identity: describe(clerk.user) };
-  };
-
-  return { start, resend, verify };
+  /** Sends the first code, and fresh ones for the same address. */
+  return { start: send, resend: send, verify };
 }

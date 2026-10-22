@@ -3,7 +3,7 @@ import { createStore } from '@/lib/store';
 import { TEST_MODE } from '@/lib/test-mode';
 import { readPrimaryMnemonic } from '@/lib/vault';
 
-export type BunkChain = 'evm' | 'solana' | 'bitcoin';
+export type BunkChain = 'evm' | 'solana';
 
 export type BunkAccount = {
   chain: BunkChain;
@@ -38,12 +38,11 @@ const NETWORKS: Record<BunkChain, { label: string; network: BunkNetwork }> = {
     label: 'Solana',
     network: { family: 'solana', genesisHash: '5eykt4UsFv8P8NJdTREpY1vuAUSKWq8W7GhKWCa9eBYW' },
   },
-  bitcoin: { label: 'Bitcoin', network: { family: 'bitcoin', network: 'mainnet' } },
 };
 
 export const BUNK_CHAINS = Object.keys(NETWORKS) as BunkChain[];
 
-const SAMPLE_ROTATIONS: Record<BunkChain, number> = { evm: 7, solana: 3, bitcoin: 1 };
+const SAMPLE_ROTATIONS: Record<BunkChain, number> = { evm: 7, solana: 3 };
 
 /**
  * Current and next owners for each chain, derived from the primary recovery phrase.
@@ -78,7 +77,6 @@ function sampleAccounts(): BunkAccount[] {
   const owners: Record<BunkChain, string> = {
     evm: '0x5aE1b1f0c3d2E9A47b6C8d1f2E3a4B5c6D7e8F90',
     solana: 'BunkSamp1eOwner1111111111111111111111111111',
-    bitcoin: 'bc1qsampleowner0000000000000000000000000000',
   };
   return BUNK_CHAINS.map((chain) => ({
     chain,
@@ -96,5 +94,4 @@ export const SAMPLE_BUNK_ACTIVITY: BunkActivity[] = [
   { id: 'a1', chain: 'evm', title: 'Sent 0.05 ETH · new owner key', when: 'Today' },
   { id: 'a2', chain: 'solana', title: 'Swapped SOL · new owner key', when: 'Yesterday' },
   { id: 'a3', chain: 'evm', title: 'Approved USDC · new owner key', when: 'Oct 15' },
-  { id: 'a4', chain: 'bitcoin', title: 'Sent 0.001 BTC · new owner key', when: 'Oct 12' },
 ];

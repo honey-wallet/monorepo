@@ -26,7 +26,7 @@ export function addJar(jar: Omit<Jar, 'id' | 'saved'>) {
 }
 
 /** The tokens a jar can hold. */
-export const JAR_TOKENS = ['USDC', 'USDT', 'ETH', 'BTC'] as const;
+export const JAR_TOKENS = ['USDC', 'USDT', 'ETH'] as const;
 
 /** Dollar value of an amount of `symbol`, at the placeholder market price. */
 export function usdValue(symbol: string, amount: number) {

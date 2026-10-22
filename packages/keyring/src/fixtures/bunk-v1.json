@@ -86,54 +86,6 @@
       "path": "m/7744'/1'/501'/0'/8454530'/21070274'/18956641'/1087430897'/8949912'/1347704924'/808596534'/471670303'/0'/1'",
       "publicKey": "0x9b613b5d6b1bd6a677e608a7827c986e9c97733317548183b78a794cc37e6678",
       "commitment": "0x118465063b7c828662bcd2ffdfecb93f1e0c883022d28c89a9d64f1f8b6b25e5"
-    },
-    {
-      "name": "bitcoin-mainnet",
-      "network": {
-        "family": "bitcoin",
-        "network": "mainnet"
-      },
-      "accountIndex": 0,
-      "ownerIndex": 0,
-      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/0'/0'/0'",
-      "publicKey": "0x03a65e7fd5446ddbfd9ad81bfeb504ffea15a02ba2885f18a3c8e36698f6df5eae",
-      "commitment": "0x9e552e6de779669908dc1c1edc9812e7e948cce4"
-    },
-    {
-      "name": "bitcoin-testnet",
-      "network": {
-        "family": "bitcoin",
-        "network": "testnet"
-      },
-      "accountIndex": 0,
-      "ownerIndex": 0,
-      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/1'/0'/0'",
-      "publicKey": "0x023241a9e4b5fa50661d745886bf7587cb187105f3cf617507f98a427037eb2fbb",
-      "commitment": "0x21063a2c9a7f60d8002bae9201ba821c9457457d"
-    },
-    {
-      "name": "bitcoin-signet",
-      "network": {
-        "family": "bitcoin",
-        "network": "signet"
-      },
-      "accountIndex": 0,
-      "ownerIndex": 0,
-      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/2'/0'/0'",
-      "publicKey": "0x039113e349e46db0580e7ae2439ca5cb9a2f39add46faff9242d8033504bad931f",
-      "commitment": "0x6d8ca9987a12bf7c0e14898829e230fff77350de"
-    },
-    {
-      "name": "bitcoin-regtest",
-      "network": {
-        "family": "bitcoin",
-        "network": "regtest"
-      },
-      "accountIndex": 0,
-      "ownerIndex": 0,
-      "path": "m/7744'/1'/0'/0'/0'/0'/0'/0'/0'/0'/0'/3'/0'/0'",
-      "publicKey": "0x0284e583b94cbff8c8bb055db5b3f1f42557b6051cbeae9ee3556e6104408046c7",
-      "commitment": "0xdee7ce0b8f2aa17fd756069f6566d74f1c09fe4e"
     }
   ]
 }

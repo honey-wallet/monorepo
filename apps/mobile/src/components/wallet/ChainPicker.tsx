@@ -12,7 +12,6 @@ import { makeStyles, radius, useTheme } from '@/theme';
 /** What each network takes, in a few words. */
 const SUBTITLES: Partial<Record<ChainFamily, string>> = {
   solana: 'SOL and Solana tokens',
-  bitcoin: 'BTC only',
   near: 'NEAR only',
   tron: 'TRX and USDT on Tron',
 };

@@ -19,7 +19,6 @@ describe('deriveAddresses', () => {
     const seed = await mnemonicToSeed(PHRASE);
     expect(deriveAddresses(seed)).toEqual({
       evm: '0x9858EfFD232B4033E47d90003D41EC34EcaEda94',
-      bitcoin: 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu',
       solana: 'HAgk14JpMQLgt6rVgv7cBQFJWFto5Dqxi472uT3DKpqk',
       near: '5510e2b44cae6eb807e3e0e45d579dda058c274abcba15e5cb84636f5d1ee412',
       tron: 'TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH',
@@ -39,7 +38,6 @@ describe('deriveAddresses', () => {
     const before = seed.slice();
     expect(deriveAddresses(seed)).toEqual({
       evm: '0x9858EfFD232B4033E47d90003D41EC34EcaEda94',
-      bitcoin: 'bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu',
       solana: 'HAgk14JpMQLgt6rVgv7cBQFJWFto5Dqxi472uT3DKpqk',
       near: '5510e2b44cae6eb807e3e0e45d579dda058c274abcba15e5cb84636f5d1ee412',
       tron: 'TUEZSdKsoDHQMeZwihtdoBiN46zxhGWYdH',

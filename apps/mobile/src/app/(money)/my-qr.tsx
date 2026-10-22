@@ -123,7 +123,7 @@ export default function MyQRSheet() {
           </Text>
         </View>
       ) : (
-        // The EVM address works on every EVM network, but not on Bitcoin, Solana and the rest.
+        // The EVM address works on every EVM network, but not on Solana, NEAR and the rest.
         <View style={styles.networksRow}>
           <Text style={styles.networksText}>Available on</Text>
           <View style={styles.chainStack}>
@@ -191,7 +191,7 @@ const useStyles = makeStyles((c) => ({
   networksText: {
     color: c.text,
     fontSize: 15,
-    // A two-line warning (Bitcoin, Solana…) stays centred under the code.
+    // A two-line warning (Solana, NEAR…) stays centred under the code.
     textAlign: 'center',
   },
   networksRow: {

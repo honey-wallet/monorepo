@@ -9,7 +9,7 @@ import { makeStyles, radius } from '@/theme';
 
 /**
  * A wallet's chains as small overlapped icons. Your own wallet: one per address family
- * (ETH, SOL, BTC, NEAR). A shared wallet: its deployments' networks, then "Base · 0x12…"
+ * (ETH, SOL, NEAR). A shared wallet: its deployments' networks, then "Base · 0x12…"
  * for one or "N chains" for several. `ring` is the surface behind, so overlaps read.
  */
 export function ChainIcons({

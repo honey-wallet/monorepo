@@ -15,7 +15,7 @@ import { showErrorToast, showToast } from '@/lib/toast';
 import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Each chain's coin, shown beside its next key. */
-const SYMBOL = { evm: 'ETH', solana: 'SOL', bitcoin: 'BTC' } as const;
+const SYMBOL = { evm: 'ETH', solana: 'SOL' } as const;
 
 /**
  * Bunk mode: every transaction signed by a fresh one-time owner key. Opt-in. The page is

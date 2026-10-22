@@ -1,59 +1,11 @@
 # Encrypted Bunk recovery backup
 
-## One file with known Bitcoin history
+Bitcoin was removed on 2026-10-22, together with the version-3 file that carried
+Bitcoin journal archives. Version 2 below is the only Bunk backup format. Importing an
+older version-2 file silently drops any `bitcoin-v1` hints and keeps the phrase and
+EVM/Solana hints.
 
-`encryptBunkBackupWithHistory(phrase, hints, bitcoinJournals, password, random)`
-produces version 3: the phrase, discovery hints and supplied encrypted Bitcoin
-journal archives are authenticated together inside one password-encrypted file.
-`decryptBunkBackupWithHistory(file, password)` imports versions 1, 2 and 3 without
-dropping history. `isBunkBackupWithHistory` recognizes and bounds version 3.
-Existing version-1/2 APIs remain available and reject version 3; their wire formats
-and derivation paths are unchanged.
-
-The version-3 plaintext has exactly `mnemonic`, `bunk` and `bitcoinJournals`.
-It uses the same bounded scrypt policy and XChaCha20-Poly1305 as version 2, with
-distinct AAD `honey-backup-v3`. The complete plaintext is limited to 16 MiB and
-64 unique Bitcoin account archives; oversize exports/imports reject without
-truncation. Archive envelopes are copied before asynchronous work. Each archive
-must decrypt under the file's phrase and match a Bitcoin network/account hint.
-Duplicates, foreign/corrupted archives and omitted matching hints reject both
-export and import. The outer ciphertext hides archive keys, revisions and data,
-and authenticates the supplied list against removal or substitution.
-
-For normal app export, call
-`encryptBunkBackupFromStore(phrase, hints, unlockedStore, password, random)`.
-It derives the journal key for every hinted Bitcoin account, captures its record,
-validates/archives it and encrypts the complete supplied set in one version-3 file.
-It never allocates or writes to the source store. `BunkBackupHistoryMissing.accounts`
-lists missing network/account scopes; no partial backup or fresh journal is created.
-Storage/corruption errors propagate. All captured revisions and exact bytes are
-checked again after encryption; changes/deletions throw `BunkJournalConflict`
-instead of returning the file. Count and aggregate size limits apply before archive
-encryption. The caller must retain hints for all intended accounts: this cannot
-discover omitted accounts, freeze writers or prove freshness after return.
-
-Advanced callers can still export individual archives with
-`exportBunkBitcoinJournalArchive` and supply them to `encryptBunkBackupWithHistory`.
-On import, `bitcoinJournals` contains validated encrypted archives;
-open selected ones with `openBunkBitcoinJournalArchive` for read-only inspection
-and exact saved-transaction submission. It never installs writable journal rows.
-
-Legacy files return `bitcoinJournals: null`, while an empty version-3 list returns
-`[]`. Every import carries `inventoryComplete: false`, `historyComplete: false`
-and `signingAuthorized: false`. A password-authenticated old backup can still omit
-later activity. Complete account metadata, durable replication, device authority and
-packaged-app restore integration remain required. Registry pins remain independently
-trusted app inputs and are not supplied by the backup.
-
-Seven new unit tests cover production-KDF round trips through exact signed
-transaction recovery, legacy compatibility, tampering/version binding, archive
-identity/hint binding, bounds/schema, input snapshots and explicit empty history.
-Seven additional collection tests cover multiple networks/sparse accounts, complete
-missing-account reporting, changed/deleted source rows, corrupt/unavailable storage,
-input snapshots, aggregate bounds and exports with no Bitcoin accounts. All 14
-version-3 backup/collection tests pass.
-
-## Version-2 discovery-only compatibility
+## Version-2 discovery backup
 
 `encryptBunkBackup(phrase, hints, password, random)` produces a version-2 Honey
 backup containing the normalized phrase and bounded Bunk discovery metadata in one
@@ -77,9 +29,6 @@ unique account entries. Each entry includes `accountIndex` and one of:
   relying on a mutable display label or importing contract code hashes as authority.
 - `family: "solana-v1"`, the full `genesisHash` and `program` address. This refers
   to wire protocol v1; the existing derivation version is still 2.
-- `family: "bitcoin-v1"`, `network` and sorted unique `ownerIndices`. The networks
-  remain mainnet, testnet (testnet3), signet and regtest. There can be at most 4,096
-  owner indices across the entire backup.
 
 Indices span the existing hardened 0–2,147,483,647 range. The validator rejects
 duplicates, unknown fields/protocols, invalid identities, sparse JavaScript arrays
@@ -121,13 +70,14 @@ signing journal or grants ordinary signing permission.
 1. Decrypt after explicit user import. Preserve all hints, including currently
    unsupported network locations, in the app's recovery workflow. Unknown protocols
    require a compatible importer; do not silently discard the file's metadata.
+   Retired `bitcoin-v1` hints are the one exception: the importer drops them.
 2. Resolve EVM key scopes and Solana program identities against the independently
    trusted [release registry](BUNK-RELEASE-REGISTRY.md), including restore-only
    entries. Missing releases are unresolved accounts, not zero balances. A backup
    does not establish its own registry pin.
    Use `resolveBunkRecoveryHints(contents.bunk, registryJson, appTrustedSha256)`
    after `decryptBunkBackup`. The shared resolver authenticates the registry and
-   returns one ordered result per hint: `evm-v3`, `solana-v1`, `bitcoin-v1`, or
+   returns one ordered result per hint: `evm-v3`, `solana-v1` or
    `missing-release`. Matched entries preserve their active/restore-only policy.
    It also retains the full registry for discovery beyond the supplied hints.
    Legacy `null` hints and an empty version-2 list remain distinguishable through
@@ -139,19 +89,6 @@ signing journal or grants ordinary signing permission.
 4. For EVM/Solana, enter the explicit restore coordinator even if old local journal
    rows survive. Observe finalized chain state and complete the generation reset
    before ordinary signing. A backup restored onto an old database is still an import.
-5. For Bitcoin, inspect hinted owner addresses through UTXO/history discovery and
-   apply the separate missing-journal policy. Never set `nextOwnerIndex` from the
-   maximum hint and initialize a fresh journal: unbroadcast or lost signed approvals
-   are absent from chain history. This format does not solve that signing-history
-   requirement.
-   [Encrypted Bitcoin history archives](BUNK-BITCOIN-JOURNAL.md#encrypted-history-archives)
-   now preserve known allocations, approval phases and signed transaction bytes.
-   They open as read-only stores for inspection/exact-byte submission, not normal
-   signing. Version-3 files embed the supplied archives; version-2 phrase/hint
-   files have no history. Complete app collection and restore integration remain
-   required.
-   Read archived allocations through `readBunkBitcoinJournal` as additional
-   discovery locations: they may include addresses newer than the hint list.
 
 Persist updated hints after account/address allocation and refresh the exported
 backup when the user chooses. A stale static file can omit later indices; no format
@@ -162,7 +99,7 @@ can discover an arbitrary missing sparse index cheaply from a phrase alone.
 Eleven new tests cover production-KDF export/import, legacy imports, old-reader
 rejection, tampering/passwords/version binding, asynchronous snapshots, malformed
 authenticated payloads, bounds, random-buffer copying, terminal/sparse indices,
-duplicates and aggregate Bitcoin owner limits. The six existing backup tests also
+duplicates and retired Bitcoin hints. The six existing backup tests also
 pass. Fixtures contain public test phrases; no live wallet or cloud account is used.
 
 The actual-validator runner also exercises a file export at account index 10,000
@@ -207,6 +144,5 @@ unit tests.
 
 App hint collection, encrypted local persistence of hints, cloud file selection,
 registry resolution, restore UI and packaged-device round trips remain required.
-Complete Bitcoin history restore, multi-device coordination and whole-backup rollback
-policy remain separate gates. Complete wallet recovery and production readiness
+Multi-device coordination and whole-backup rollback policy remain separate gates. Complete wallet recovery and production readiness
 still require these integration steps.

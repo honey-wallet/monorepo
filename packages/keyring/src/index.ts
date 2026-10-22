@@ -5,7 +5,7 @@ import { ripemd160 } from '@noble/hashes/legacy.js';
 import { sha256, sha512 } from '@noble/hashes/sha2.js';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 import { bytesToHex, hexToBytes, utf8ToBytes } from '@noble/hashes/utils.js';
-import { base58, base58xrp, bech32, createBase58check } from '@scure/base';
+import { base58, base58xrp, createBase58check } from '@scure/base';
 import { HDKey } from '@scure/bip32';
 import { entropyToMnemonic, mnemonicToSeed as seedOf, validateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english.js';
@@ -19,7 +19,7 @@ import { wordlist } from '@scure/bip39/wordlists/english.js';
  * so this is the only place that knows the paths.
  */
 
-export type ChainFamily = 'evm' | 'bitcoin' | 'solana' | 'near' | 'tron' | 'xrp';
+export type ChainFamily = 'evm' | 'solana' | 'near' | 'tron' | 'xrp';
 
 export type Addresses = Record<ChainFamily, string>;
 
@@ -27,8 +27,6 @@ export type Addresses = Record<ChainFamily, string>;
 export const PATHS: Record<ChainFamily, (index: number) => string> = {
   // MetaMask, Rabby, Ledger Live: one address for every EVM chain (Ethereum, Base, …).
   evm: (i) => `m/44'/60'/0'/0/${i}`,
-  // Native SegWit (bc1q…), BIP-84.
-  bitcoin: (i) => `m/84'/0'/0'/0/${i}`,
   // Phantom and Solflare. ed25519 only supports hardened steps (SLIP-10).
   solana: (i) => `m/44'/501'/${i}'/0'`,
   // NEAR seed phrase / near-cli default, with one hardened account per index.
@@ -116,7 +114,6 @@ export function deriveAddresses(seed: Uint8Array, index = 0): Addresses {
   }
   return {
     evm: evmAddress(evmPublicKey('evm')),
-    bitcoin: bitcoinAddress(evmPublicKey('bitcoin')),
     solana: base58.encode(solanaPublicKey),
     near: bytesToHex(nearPublicKey),
     tron: tronAddress(evmPublicKey('tron')),
@@ -150,11 +147,6 @@ function evmAddress(pub: Uint8Array) {
     out += Number.parseInt(hash[i] as string, 16) >= 8 ? hex[i]?.toUpperCase() : hex[i];
   }
   return out;
-}
-
-/** P2WPKH: bech32 of witness version 0 plus hash160(pubkey). */
-function bitcoinAddress(pub: Uint8Array) {
-  return bech32.encode('bc', [0, ...bech32.toWords(hash160(pub))]);
 }
 
 const base58check = createBase58check(sha256);
@@ -196,14 +188,6 @@ function concat(a: Uint8Array, b: Uint8Array) {
 export * from './backup';
 export * from './bunk';
 export * from './bunk-backup';
-export * from './bunk-bitcoin';
-export * from './bunk-bitcoin-approval';
-export * from './bunk-bitcoin-discovery';
-export * from './bunk-bitcoin-fees';
-export * from './bunk-bitcoin-history';
-export * from './bunk-bitcoin-journal';
-export * from './bunk-bitcoin-observe';
-export * from './bunk-bitcoin-submit';
 export * from './bunk-evm';
 export * from './bunk-evm-observe';
 export * from './bunk-evm-sign';

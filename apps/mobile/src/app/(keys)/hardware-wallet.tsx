@@ -36,7 +36,7 @@ const DEVICES: Record<Device, { name: string; steps: { title: string; hint: stri
     name: 'Ledger',
     steps: [
       { title: 'Unlock your Ledger', hint: 'Enter your PIN on the device itself.' },
-      { title: 'Open the Ethereum or Bitcoin app', hint: 'Pick the app for the coins you hold.' },
+      { title: 'Open the Ethereum or Solana app', hint: 'Pick the app for the coins you hold.' },
       { title: 'Keep Bluetooth on', hint: 'Stay close to your phone while it connects.' },
     ],
   },

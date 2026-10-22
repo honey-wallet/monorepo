@@ -25,7 +25,7 @@ import { useActiveWallet } from '@/lib/wallets';
 import { makeStyles, radius, useTheme } from '@/theme';
 import { DURATION, LAYOUT_MOVE } from '@/theme/motion';
 
-const POPULAR = ['USDC', 'USDT', 'ETH', 'BTC', 'SOL'];
+const POPULAR = ['USDC', 'USDT', 'ETH', 'SOL'];
 
 /**
  * The token picker's list, after Uniswap's: a tip that bridging is built in, quick

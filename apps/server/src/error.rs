@@ -29,7 +29,7 @@ pub enum AppError {
     PayloadTooLarge,
     #[error("request deadline exceeded; check operation status before retrying a submission")]
     Timeout,
-    /// The chain cannot do what was asked (e.g. commit-delay-reveal on Bitcoin).
+    /// The chain cannot do what was asked (e.g. commit-delay-reveal on XRPL).
     #[error("{0}")]
     Unsupported(String),
     /// Skeleton endpoint; the payload names the feature still to be built.

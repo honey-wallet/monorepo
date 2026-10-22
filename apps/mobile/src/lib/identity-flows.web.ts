@@ -1,6 +1,6 @@
 /**
- * Honey for Chrome has no Clerk sign-in (see identity.web.ts), so nothing here is ever
- * rendered; these keep the shared screens compiling without bundling Clerk.
+ * Honey for Chrome has no account sign-in (see identity.web.ts), so nothing here is ever
+ * rendered; these keep the shared screens compiling without bundling Supabase.
  */
 export const APPLE_SIGN_IN = false;
 
@@ -9,8 +9,6 @@ export type Identity = { email?: string; name?: string };
 export type SignInOutcome =
   | { ok: true; identity: Identity }
   | { ok: false; cancelled: boolean; message: string };
-
-export type EmailFlow = 'sign-in' | 'sign-up';
 
 export type CodeOutcome =
   | { ok: true; identity: Identity }
@@ -39,18 +37,16 @@ export function useSocialSignIn() {
 }
 
 export function useEmailCode() {
+  const unavailable = async (
+    _email: string,
+  ): Promise<{ ok: true } | { ok: false; message: string }> => ({
+    ok: false,
+    message: UNAVAILABLE,
+  });
   return {
-    start: async (
-      _email: string,
-    ): Promise<{ ok: true; flow: EmailFlow } | { ok: false; message: string }> => ({
-      ok: false,
-      message: UNAVAILABLE,
-    }),
-    resend: async (_flow: EmailFlow): Promise<{ ok: true } | { ok: false; message: string }> => ({
-      ok: false,
-      message: UNAVAILABLE,
-    }),
-    verify: async (_flow: EmailFlow, _code: string): Promise<CodeOutcome> => ({
+    start: unavailable,
+    resend: unavailable,
+    verify: async (_email: string, _code: string): Promise<CodeOutcome> => ({
       ok: false,
       reason: 'other',
       message: UNAVAILABLE,

@@ -19,7 +19,6 @@
     "icons": "node scripts/gen-app-icons.mjs"
   },
   "dependencies": {
-    "@clerk/expo": "4.13.1",
     "@dicebear/core": "^10.7.0",
     "@dicebear/styles": "^10.6.0",
     "@expo-google-fonts/comfortaa": "^0.4.2",
@@ -28,10 +27,12 @@
     "@honey-wallet/api-client": "workspace:*",
     "@honey-wallet/extension": "workspace:*",
     "@honey-wallet/keyring": "workspace:*",
+    "@noble/ciphers": "2.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/netinfo": "12.0.1",
     "@reown/walletkit": "1.6.0",
     "@scure/base": "2.4.0",
+    "@supabase/supabase-js": "2.117.3",
     "@walletconnect/core": "2.25.0",
     "@walletconnect/react-native-compat": "2.25.0",
     "@walletconnect/types": "2.25.0",

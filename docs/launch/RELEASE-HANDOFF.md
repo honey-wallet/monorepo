@@ -76,7 +76,7 @@ or declaring a gate complete. No frontend/backend source was changed in this wor
 ## App restore handoff
 
 1. Import through [the encrypted backup APIs](BUNK-RECOVERY-BACKUP.md). Preserve
-   discovery hints and Bitcoin archives; do not initialize signing history from hints.
+   discovery hints; do not initialize signing history from hints.
 2. Resolve hints with `resolveBunkRecoveryHints` using the app's independently
    trusted registry pin. Keep missing-release results visible. Scan active and
    restore-only deployments, including known sparse indices.
@@ -88,10 +88,6 @@ or declaring a gate complete. No frontend/backend source was changed in this wor
    `startBunkSolanaRestore`. Their fresh observations and durable recovery state,
    not discovery output, govern subsequent signing. Clear session-owned secrets
    and cancel pending work when the vault locks.
-5. Bitcoin archives provide known history and exact saved transactions through
-   a read-only store. They do not grant new signing authority. The strict signer
-   currently permits one input per owner; the multi-input policy decision in
-   [L19](REVIEW.md) remains unanswered.
 
 No new network/node runs are part of this handoff. The current constraint is
 normal automated tests only. Full asset coverage, extension-adjusted/confidential

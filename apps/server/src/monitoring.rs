@@ -10,8 +10,6 @@ use crate::wallet::UnixSeconds;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MigrationTrigger {
-    /// BIP-360 (P2MR) activation signalling on Bitcoin.
-    Bip360Activation,
     /// EIP-8141 or a post-quantum precompile on Ethereum mainnet.
     EthereumPqSignatures,
     /// A native post-quantum signature type on Solana mainnet.
@@ -32,6 +30,6 @@ pub struct TriggerStatus {
     pub evidence: Option<String>,
 }
 
-// TODO(spec §12): a background task that polls each source (bitcoin node
-// deployment info, Ethereum fork schedule, Solana feature gates, npm/PyPI
-// releases), stores `TriggerStatus`, and notifies when one fires.
+// TODO(spec §12): a background task that polls each source (Ethereum fork
+// schedule, Solana feature gates, npm/PyPI releases), stores `TriggerStatus`,
+// and notifies when one fires.

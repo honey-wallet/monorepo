@@ -260,7 +260,7 @@ async fn readiness_is_separate_from_liveness_and_drain_rejects_new_work() {
 }
 
 #[tokio::test]
-async fn chains_lists_all_five_with_capabilities() {
+async fn chains_lists_all_four_with_capabilities() {
     let (status, _, body) = get("/api/v1/chains").await;
     assert_eq!(status, StatusCode::OK);
     let chains: Vec<&str> = body
@@ -269,12 +269,12 @@ async fn chains_lists_all_five_with_capabilities() {
         .iter()
         .map(|c| c["chain"].as_str().unwrap())
         .collect();
-    assert_eq!(chains, ["evm", "solana", "bitcoin", "tron", "xrpl"]);
+    assert_eq!(chains, ["evm", "solana", "tron", "xrpl"]);
 
-    let bitcoin = &body[2];
-    assert_eq!(bitcoin["commitDelayReveal"], "no");
-    assert_eq!(bitcoin["tierB"], "no");
-    assert_eq!(bitcoin["sessionAnchor"], "identity_address");
+    let xrpl = &body[3];
+    assert_eq!(xrpl["commitDelayReveal"], "no");
+    assert_eq!(xrpl["tierB"], "no");
+    assert_eq!(xrpl["sessionAnchor"], "message_key");
 }
 
 #[tokio::test]

@@ -1,10 +1,11 @@
 /**
- * Honey for Chrome: no Apple / Google / email sign-in yet. Clerk's web SDK loads its
- * runtime script from Clerk's servers, which a Manifest V3 extension may not do, and
- * OAuth redirects would leave the popup. The browser keeps the recovery phrase, import
- * and pairing ways in. See docs/launch/CLERK-SETUP.md.
+ * Honey for Chrome: no Apple / Google / email sign-in yet. Native Sign in with Apple is
+ * iOS only, OAuth redirects would leave the popup, and the extension keeps no account
+ * session. The browser keeps the recovery phrase, import and pairing ways in.
+ * See docs/launch/SUPABASE-SETUP.md.
  */
-export const CLERK_PUBLISHABLE_KEY = '';
+export const SUPABASE_URL = '';
+export const SUPABASE_ANON_KEY = '';
 
 export const IDENTITY_ENABLED = false;
 

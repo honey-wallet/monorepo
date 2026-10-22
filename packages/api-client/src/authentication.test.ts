@@ -116,20 +116,19 @@ describe('wallet authentication contract', () => {
     ).toThrow();
   });
 
-  it('reads the Clerk identity with the Clerk token and validates its shape', async () => {
+  it('reads the account identity with the Supabase token and validates its shape', async () => {
+    const userId = '8d0f8c9e-2b7a-4e55-9a51-3f0f6b2c9d11';
     const fetch = vi
       .fn<typeof globalThis.fetch>()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ userId: 'user_2abcDEF' })))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ userId: 'not a clerk id' })));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ userId })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ userId: 'user_2abcDEF' })));
     const api = createApiClient({ baseUrl: 'http://api.test', fetch });
-    await expect(api.clerkIdentity('clerk.jwt.token')).resolves.toEqual({
-      userId: 'user_2abcDEF',
-    });
-    expect(fetch.mock.calls[0]?.[0]).toBe('http://api.test/api/v1/me/clerk');
+    await expect(api.accountIdentity('supabase.jwt.token')).resolves.toEqual({ userId });
+    expect(fetch.mock.calls[0]?.[0]).toBe('http://api.test/api/v1/me/identity');
     expect(new Headers(fetch.mock.calls[0]?.[1]?.headers).get('authorization')).toBe(
-      'Bearer clerk.jwt.token',
+      'Bearer supabase.jwt.token',
     );
-    await expect(api.clerkIdentity('clerk.jwt.token')).rejects.toThrow();
+    await expect(api.accountIdentity('supabase.jwt.token')).rejects.toThrow();
   });
 
   it('keeps authentication credentials in bound headers and never retries proofs', async () => {

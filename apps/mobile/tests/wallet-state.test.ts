@@ -127,6 +127,7 @@ it('blocks funding for legacy random addresses and all simulated shared wallets'
     legacy.address,
   ]);
   expect(receiveAddresses({ ...legacy, watchOnly: true, address: 'alice.eth' })).toEqual([]);
+  // Accounts saved before Bitcoin was removed may still carry a bitcoin address: never offered.
   const addresses = {
     evm: legacy.address,
     solana: 'sol-address',
@@ -136,7 +137,6 @@ it('blocks funding for legacy random addresses and all simulated shared wallets'
   expect(receiveAddresses({ ...legacy, demo: true, addresses }).map((e) => e.family)).toEqual([
     'evm',
     'solana',
-    'bitcoin',
     'near',
   ]);
 });

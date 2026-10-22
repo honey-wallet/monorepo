@@ -1,7 +1,7 @@
 import type {
+  AccountIdentity,
   AuthConfiguration,
   AuthenticatedSession,
-  ClerkIdentity,
   SignInChallenge,
   WalletProfile,
 } from './types';
@@ -138,12 +138,12 @@ export function isProfile(value: unknown): value is WalletProfile {
   );
 }
 
-/** Clerk user ids look like `user_2abc…`. */
-export function isClerkIdentity(value: unknown): value is ClerkIdentity {
+/** Supabase user ids are UUIDs, as the server prints them (lowercase, hyphenated). */
+export function isAccountIdentity(value: unknown): value is AccountIdentity {
   return (
     object(value) &&
     typeof value.userId === 'string' &&
-    /^user_[A-Za-z0-9]{1,120}$/.test(value.userId)
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(value.userId)
   );
 }
 

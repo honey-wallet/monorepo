@@ -208,8 +208,7 @@ were restored after the first 20 indices or after finding no deployment.
 Unknown token addresses, NFT holdings and transaction history need additional asset
 discovery. Requested ERC-20 balances do not establish a complete asset inventory.
 Solana's scanner above reads public token-account base balances when requested,
-while extension balances, mint metadata and large inventories remain incomplete. Bitcoin
-has separate [UTXO/history discovery](BUNK-BITCOIN.md) with explicit coverage limits.
+while extension balances, mint metadata and large inventories remain incomplete.
 The prior
 v1/v2 EVM deployments also retain separate restoration requirements; this helper
 only accepts protocol v3 and does not reinterpret old derivation paths.

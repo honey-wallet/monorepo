@@ -18,7 +18,8 @@ All inputs derive from a 64-byte BIP-39 seed. The version-one path is:
 m/7744'/1'/coin'/network[0]'/.../network[8]'/account'/owner'
 ```
 
-Each component is hardened. `coin` is 60 (EVM), 501 (Solana), or 0 (Bitcoin).
+Each component is hardened. `coin` is 60 (EVM) or 501 (Solana). Coin 0 was the
+Bitcoin branch until Bitcoin was removed on 2026-10-22; it is retired, not reusable.
 `network` is the fixed-width, big-endian base-2^31 representation of the network
 integer; it always has **nine** components, including leading zeroes. This encodes
 a complete 256-bit value without hashing, truncation, or JavaScript precision loss.
@@ -28,14 +29,11 @@ The leading component is at most 255. The full path has fourteen child steps.
 | --- | --- | --- | --- |
 | EVM | Positive uint256 chain ID, supplied as canonical decimal string | BIP-32 secp256k1 | Keccak-256 of the raw 20-byte recovered signer address |
 | Solana | Big-endian integer from the full 32-byte genesis hash, supplied as canonical base58 | SLIP-10 ed25519 | SHA-256 of the raw 32-byte public key |
-| Bitcoin | Fixed registry: mainnet=0, testnet=1, signet=2, regtest=3 | BIP-32 secp256k1 | HASH160 of compressed SEC1 public key (20-byte witness program) |
 
 Cluster nicknames, truncated Solana CAIP references, negative/float indices,
-noncanonical decimal strings and unknown Bitcoin networks are rejected. A network
+noncanonical decimal strings and unknown chain families are rejected. A network
 change is not an account migration: it derives a different key by definition.
-Other Bitcoin test networks require a future explicit registry addition; an unknown
-network must not fall back to testnet. Forks that share a chain ID/genesis identity
-are outside this separation guarantee.
+Forks that share a chain ID/genesis identity are outside this separation guarantee.
 
 EVM example, chain 1, account 0, owner 0:
 
@@ -55,12 +53,11 @@ them after signing. JavaScript GC, library-internal copies and bigint storage me
 this is best-effort clearing, not a guarantee against process-memory compromise.
 The seed remains caller-owned and is never cleared or mutated by these helpers.
 
-`ownerAddress` means an EOA/ed25519 signer address or Bitcoin receiving address.
+`ownerAddress` means an EOA or ed25519 signer address.
 It is **not** a Safe/PDA address. The EVM client now predicts Safes and signs
 restricted deployment certificates; Solana account prediction remains separate
 unfinished work. EVM commitments hash addresses for compatibility with `ecrecover`; their
-preimage security is bounded by the 160-bit address space. Bitcoin's commitment
-is its native P2WPKH witness program, not a synthetic 32-byte on-chain field.
+preimage security is bounded by the 160-bit address space.
 
 EVM deployment-only identities use the distinct hardened v1 branch
 `m/7744'/1'/2147483647'/60'/account'`. The third component `2147483647` is reserved
@@ -74,8 +71,7 @@ network-bound. The signing API and independent vectors are documented in
 Persist public `derivationVersion`, exact network identity, `accountIndex`,
 deployed account address, deployment version/code identity and last finalized
 observation. A cached `ownerIndex` is a scan hint, never authority to sign.
-Bitcoin additionally requires all used receive/change indices and UTXO discovery
-with a documented gap policy. A recovery phrase alone can regenerate keys, but
+A recovery phrase alone can regenerate keys, but
 cannot cheaply discover arbitrary sparse indices or an unknown deployment registry.
 Backup serialization and chain scanning are still to be implemented.
 
@@ -146,7 +142,7 @@ sufficient. Recovery must not introduce an unreviewed permanent execution key.
 The same-address requirement remains open pending a deterministic bootstrap design
 that does not reuse rotating owners across networks or permit first-claim takeover.
 
-## Solana, Bitcoin and off-chain signatures
+## Solana and off-chain signatures
 
 The Solana program needs a signed, network/account/index-bound operation, verified
 owner commitment, atomic successor update, strict CPI account/privilege checks,
@@ -154,10 +150,8 @@ and PDA authorization. CPI failure/transaction rollback must be specified honest
 rollback can leave an exposed current owner in place. A PDA cannot replace an
 ordinary dApp ed25519 signer without provider/program compatibility work.
 
-Bitcoin needs actual UTXO spend/change policy. Receiving new coins at an old address
-can require later use of its key. Multi-input spends, replacements, failed broadcasts
-and reorgs invalidate a blanket one-signature-per-key promise. New change addresses
-alone do not implement coin selection, recovery, replacement policy or no-reuse.
+Bitcoin is not supported: it has no account whose address survives owner-key
+rotation, so every rotation would move funds to a new address.
 
 Do not sign SIWE, arbitrary personal messages, permits, CLOB orders or perps-agent
 authorizations with the current rotating owner by default. Define a separate scoped
@@ -167,9 +161,9 @@ extra call to `signEvmTypedData`.
 
 ## Evidence
 
-- `packages/keyring/src/fixtures/bunk-v1.json`: eleven fixed vectors from the public
-  BIP-39 “abandon … about” phrase, covering chains, successor indices, the maximum
-  EVM chain ID, terminal owner index, Solana and four Bitcoin networks.
+- `packages/keyring/src/fixtures/bunk-v1.json`: seven fixed vectors from a synthetic
+  test-only phrase, covering chains, successor indices, the maximum EVM chain ID,
+  terminal owner index and Solana.
 - `packages/keyring/scripts/bunk-vectors.py --check`: independent HMAC/PBKDF2 and
   OpenSSL key derivation with Foundry `cast keccak`; no Honey/Noble/Scure imports or
   network calls. Requires Python `cryptography` and `cast` on PATH.

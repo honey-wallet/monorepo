@@ -66,19 +66,18 @@ export interface ApiErrorBody {
 // Multi-chain wallet (apps/server/src/{chains,wallet,relayer,exposure,monitoring}.rs).
 // Self-custodial: no request or response ever carries key material.
 
-export type Chain = 'evm' | 'solana' | 'bitcoin' | 'tron' | 'xrpl';
+export type Chain = 'evm' | 'solana' | 'tron' | 'xrpl';
 
 /** Security tier: A = hot (curve key + rotation), B = vault (hash-based). */
 export type Tier = 'A' | 'B';
 
-export type Support = 'yes' | 'no' | 'contract_route_only' | 'inherent';
+export type Support = 'yes' | 'no' | 'contract_route_only';
 
 export type SessionAnchorKind =
   | 'erc7579_validator'
   | 'pda_field'
   | 'zero_ops_permission'
-  | 'message_key'
-  | 'identity_address';
+  | 'message_key';
 
 /** `public_rpc` today; the private routes are a later upgrade (spec §10). */
 export type SubmissionRoute =
@@ -87,8 +86,7 @@ export type SubmissionRoute =
   | 'flashbots_protect'
   | 'direct_to_leader'
   | 'jito_bundle'
-  | 'own_node'
-  | 'miner_direct';
+  | 'own_node';
 
 /** GET /api/v1/chains */
 export interface ChainCapabilities {
@@ -109,8 +107,7 @@ export type SessionAnchor =
   | { kind: 'erc7579_validator'; validator: string }
   | { kind: 'pda_field' }
   | { kind: 'zero_ops_permission'; permission_id: number }
-  | { kind: 'message_key' }
-  | { kind: 'identity_address'; address: string };
+  | { kind: 'message_key' };
 
 export interface SessionKey {
   publicKey: string;
@@ -194,7 +191,6 @@ export interface SubmissionReceipt {
 }
 
 export type MigrationTrigger =
-  | 'bip360_activation'
   | 'ethereum_pq_signatures'
   | 'solana_native_pq'
   | 'xrpl_batch_libraries'
@@ -228,10 +224,10 @@ export interface WalletProfile {
 }
 
 /**
- * GET /api/v1/me/clerk with a Clerk session token: the Clerk user id only. Identity,
- * not wallet authority; unrelated to SIWE sessions.
+ * GET /api/v1/me/identity with a Supabase access token: the Supabase user id (a UUID)
+ * only. Identity, not wallet authority; unrelated to SIWE sessions.
  */
-export interface ClerkIdentity {
+export interface AccountIdentity {
   userId: string;
 }
 

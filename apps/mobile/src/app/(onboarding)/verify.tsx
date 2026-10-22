@@ -7,27 +7,27 @@ import { PillButton } from '@/components/onboarding/PillButton';
 import { StepScreen } from '@/components/onboarding/StepScreen';
 import { failure, tap } from '@/lib/haptics';
 import { IDENTITY_ENABLED } from '@/lib/identity';
-import { type EmailFlow, useEmailCode } from '@/lib/identity-flows';
+import { useEmailCode } from '@/lib/identity-flows';
 import { continueAfterSignIn } from '@/lib/identity-onboarding';
 import { makeStyles, radius } from '@/theme';
 import { DURATION } from '@/theme/motion';
 
 const LENGTH = 6;
-const RESEND_SECONDS = 30;
+/** Supabase lets an address ask for a new code once a minute. */
+const RESEND_SECONDS = 60;
 /** Wrong codes allowed before a new one has to be sent. */
 const TRIES = 3;
 
-/** Email sign-in, step two: the code Clerk emailed, checked by Clerk. */
+/** Email sign-in, step two: the code Supabase emailed, checked by Supabase. */
 export default function VerifyScreen() {
-  const { flow } = useLocalSearchParams<{ flow?: string }>();
-  // Only reachable after the email step sent a code (and only with Clerk configured).
-  if (!IDENTITY_ENABLED || (flow !== 'sign-in' && flow !== 'sign-up'))
-    return <Redirect href="/welcome" />;
-  return <VerifyCode flow={flow} />;
+  const { to } = useLocalSearchParams<{ to?: string }>();
+  // Only reachable after the email step sent a code (and only with sign-in configured).
+  if (!IDENTITY_ENABLED || !to) return <Redirect href="/welcome" />;
+  return <VerifyCode to={to} />;
 }
 
-function VerifyCode({ flow }: { flow: EmailFlow }) {
-  const { to, intent } = useLocalSearchParams<{ to?: string; intent?: string }>();
+function VerifyCode({ to }: { to: string }) {
+  const { intent } = useLocalSearchParams<{ intent?: string }>();
   const restore = intent === 'restore';
   const emailCode = useEmailCode();
   const [code, setCode] = useState('');
@@ -49,7 +49,7 @@ function VerifyCode({ flow }: { flow: EmailFlow }) {
   const locked = wrong >= TRIES;
 
   // A wrong code shakes the boxes, turns them red and clears them; three in a row (or a
-  // code Clerk won't take any more) need a new code.
+  // code Supabase won't take any more) need a new code.
   const reject = (tries: number, message: string) => {
     failure();
     shake();
@@ -63,7 +63,7 @@ function VerifyCode({ flow }: { flow: EmailFlow }) {
     tap();
     setChecking(true);
     try {
-      const outcome = await emailCode.verify(flow, code);
+      const outcome = await emailCode.verify(to, code);
       if (!outcome.ok) {
         setChecking(false);
         if (outcome.reason === 'wrong') {
@@ -72,7 +72,7 @@ function VerifyCode({ flow }: { flow: EmailFlow }) {
             tries,
             tries >= TRIES
               ? 'Too many tries. Get a new code to keep going.'
-              : `That code isn’t right. ${TRIES - tries} ${TRIES - tries === 1 ? 'try' : 'tries'} left.`,
+              : `${outcome.message} ${TRIES - tries} ${TRIES - tries === 1 ? 'try' : 'tries'} left.`,
           );
         } else if (outcome.reason === 'expired') {
           reject(TRIES, outcome.message);
@@ -88,7 +88,7 @@ function VerifyCode({ flow }: { flow: EmailFlow }) {
       // router.push('/password')
       const next = await continueAfterSignIn('email', {
         restore,
-        identity: { email: to, ...outcome.identity },
+        identity: { ...outcome.identity, email: outcome.identity.email ?? to },
       });
       // Restoring: the account holds no keys, so back to the ways to bring them back.
       if (next === 'needs-keys') {
@@ -109,7 +109,7 @@ function VerifyCode({ flow }: { flow: EmailFlow }) {
     setCode('');
     input.current?.focus();
     try {
-      const sent = await emailCode.resend(flow);
+      const sent = await emailCode.resend(to);
       if (!sent.ok) setError(sent.message);
     } catch (cause) {
       console.warn('Couldn’t resend the email code', cause);
@@ -183,9 +183,7 @@ function VerifyCode({ flow }: { flow: EmailFlow }) {
           </Text>
         )}
       </Text>
-      <Text style={styles.note}>
-        {to ? `We sent a 6-digit code to ${to}.` : 'We sent you a 6-digit code.'}
-      </Text>
+      <Text style={styles.note}>{`We sent a 6-digit code to ${to}.`}</Text>
     </StepScreen>
   );
 }

@@ -554,7 +554,6 @@ function Unlock({
 
 const CHAINS: { family: ChainFamily; name: string; symbol: string }[] = [
   { family: 'evm', name: 'Ethereum & Base', symbol: 'ETH' },
-  { family: 'bitcoin', name: 'Bitcoin', symbol: 'BTC' },
   { family: 'solana', name: 'Solana', symbol: 'SOL' },
   { family: 'tron', name: 'Tron', symbol: 'TRX' },
   { family: 'xrp', name: 'XRP Ledger', symbol: 'XRP' },

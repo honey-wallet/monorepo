@@ -1,5 +1,9 @@
 # Launch work validation
 
+Bitcoin was removed from the wallet on 2026-10-22 (Bunk needs addresses that stay
+stable under key rotation). Its validation entries and regtest evidence were deleted
+with the code; git history keeps them.
+
 ## Requested automated-only verification
 
 On 2026-10-19, root `pnpm lint` and `pnpm typecheck` passed, followed by
@@ -142,94 +146,6 @@ No Docker or blockchain nodes were started. Historical live acceptance predates
 this addition. App catalog integration, Solana token inventory and complete wallet
 restore remain open; see [the API handoff](BUNK-ACCOUNT-DISCOVERY.md#evm-token-balances).
 
-## Backup collection from known account journals
-
-`encryptBunkBackupFromStore` now collects every hinted Bitcoin account using its
-deterministic journal key, preserves other chain hints and emits one version-3
-file. Missing accounts are reported together; corruption/storage errors propagate.
-No source writes or new journal initialization occur. Captured revisions and bytes
-are rechecked after encryption, and concurrent changes reject the export. Limits
-apply before archive encryption. This still depends on complete caller-maintained
-hints and does not freeze writers or establish current signing authority.
-
-Seven collection cases were added; all 14 version-3 backup/history tests pass.
-Required `pnpm lint`, `pnpm typecheck` and
-`VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1` pass on the final
-run: five typecheck tasks, seven test tasks and 510 keyring tests; two test tasks
-used Turbo cache. Existing infrastructure ignores and six mobile skips remain.
-Log: `/private/tmp/honey-bunk-backup-collect-root-retry.log`.
-
-The initial run timed out in three existing tests during confirmed system sleep,
-including a 17-minute sleep interval. Those unchanged suites passed 31 tests in
-3.19 seconds on rerun, followed by the successful full check sequence. No assertion,
-timeout or power setting changed. Initial log:
-`/private/tmp/honey-bunk-backup-collect-root.log`. No Docker or blockchain nodes
-were started. App integration and token inventory discovery remain open.
-
-## One encrypted file with phrase, hints and Bitcoin history
-
-Version-3 backup APIs now authenticate the phrase, discovery hints and supplied
-Bitcoin archives together. Export/import verify that each archive belongs to the
-phrase and a hinted Bitcoin account. They bound the payload/archive list, reject
-duplicates and retain explicit incomplete-history/no-signing flags. Legacy imports
-remain supported; existing version-1/2 APIs and formats are unchanged. Seven new
-tests cover a production-KDF round trip through exact saved-transaction recovery,
-legacy compatibility, ciphertext/version binding, archive identity/hint binding,
-bounds/schema, snapshots and empty history. All 43 focused backup/archive tests
-and package typecheck passed.
-
-Required checks pass: `pnpm lint`, `pnpm typecheck` and
-`VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`. All five typecheck
-tasks and seven test tasks pass, including 503 keyring tests; two test tasks used
-Turbo cache. Existing infrastructure ignores and six mobile skips are unchanged.
-Log: `/private/tmp/honey-bunk-backup-history-root.log`. No Docker or blockchain
-nodes were started. Complete app collection, cloud/file integration, current device
-authority and ordinary signing after restore remain open.
-
-## Bitcoin encrypted history archives
-
-Journal export now encrypts an atomic account snapshot under the phrase-derived
-journal key with an archive-specific authenticated domain. Import checks identity,
-revision, schema and bounds, then exposes a read-only store. It preserves approval
-phases and exact saved transactions without installing rows into a writable DB.
-An old authentic snapshot is explicitly incomplete and cannot grant new signing
-authority. Seven archive tests pass, including tampering, wrong seeds, old snapshots,
-write rejection, ciphertext domain separation, snapshots and closure on vault lock.
-The signing suite also verifies encrypted export/import followed by exact-byte
-submission using mocked RPC, with the live journal unchanged.
-
-Required checks pass: `pnpm lint`, `pnpm typecheck` and
-`VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`. All five typecheck
-tasks and seven test tasks pass, including 496 keyring tests; two test tasks used
-Turbo cache. Existing infrastructure ignores and six mobile skips are unchanged.
-Log: `/private/tmp/honey-bunk-bitcoin-archive-root.log`. No Docker or blockchain
-nodes were started. Full app backup collection, latest-history/device authority
-and resuming normal sends after device loss remain open; this proves known-history
-and saved-transaction recovery only.
-
-## Bitcoin strict observed signing coordinator
-
-`signObservedBunkBitcoinApproval` requires an existing exact durable approval and
-the user-approved review digest. It rechecks funds, change, fees and pending-input
-consent before and after atomic claiming, signs one input per distinct owner,
-verifies/persists signatures before return, and retries saved signed bytes offline.
-Multiple inputs from one owner reject pending REVIEW L19. A claimed/uncertain
-approval cannot be signed again; no automatic reset or reconstruction was added.
-
-Eleven new normal tests cover signing/submission composition, strict-policy and
-digest rejection, changed observations, failed/lost write acknowledgements,
-concurrent claims, caller-buffer mutation and cancellation. All 20 approval/signing
-tests pass using mocked RPC replies and in-memory stores. No live node acceptance,
-device crash durability or app activation is claimed for this coordinator.
-
-Required checks pass: `pnpm lint`, `pnpm typecheck` and
-`VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`. All five typecheck
-tasks and seven test tasks passed, including 489 keyring tests; two test tasks used
-Turbo cache. Existing infrastructure ignores and six mobile skips are unchanged.
-Log: `/private/tmp/honey-bunk-bitcoin-sign-root.log`. No Docker or blockchain nodes
-were started. Full Bitcoin history/recovery, multiple-input policy and packaged-app
-integration remain open in [the approval guide](BUNK-BITCOIN-APPROVAL.md).
-
 ## Shared recovery release resolution
 
 `resolveBunkRecoveryHints` connects authenticated backup hints to an independently
@@ -299,11 +215,11 @@ unchanged; no assertion or timeout was relaxed. Full log:
 ## Encrypted sparse-account discovery backup
 
 [The version-2 backup APIs](BUNK-RECOVERY-BACKUP.md) preserve the phrase and sparse
-EVM/Solana/Bitcoin discovery hints in one authenticated ciphertext. Old version-1
+EVM/Solana discovery hints in one authenticated ciphertext. Old version-1
 APIs/formats remain unchanged; new imports explicitly distinguish legacy files with
 no hints and never grant signing authority. Eleven new tests, all six existing
 backup tests and package typecheck pass. App integration and actual-device restore
-acceptance remain open, as does Bitcoin approval-history restoration.
+acceptance remain open.
 
 Required checks pass: `pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
 Lint, all five typecheck tasks and all seven test tasks pass, including 471 keyring
@@ -325,224 +241,6 @@ Lint, all five typecheck tasks and all seven test tasks pass, including 460 keyr
 tests and the extension build. Existing infrastructure ignores/mobile skips remain
 unchanged; no assertion or timeout was relaxed. Full log:
 `/private/tmp/honey-bunk-release-registry-root.log`.
-
-## Bitcoin persisted submission and transaction observation
-
-[The submission/status APIs](BUNK-BITCOIN-SUBMISSION.md) load only a matching saved
-signed approval, verify exact bytes and witness identity, preflight actual fees/
-size with explicit rate and burn caps, and distinguish acknowledged submission
-from observed inclusion. Unknown send outcomes retain the signed journal.
-
-Ten new tests and package typecheck pass. [The Core31.1 report](evidence/bunk-bitcoin-submit-regtest-local.json)
-uses real encrypted SQLite reopened in fresh processes. It recovers a deliberately
-lost parent-send acknowledgement; submits the saved child; observes pending,
-included, confirmed and orphaned states; rejects an obsolete checkpoint; and finds
-the identical child witness in the replacement block. Exact transactions already
-observed are not rebroadcast by the API. Ciphertext hashes/revisions stay unchanged
-through submission/observation (parent 7, child 11). Retry branches compute no new
-signatures. All previous construction/fee/approval/history/UTXO assertions pass.
-Sixty-three source/dependency hashes and the bundle were rechecked; the isolated
-node stopped. Log: `/private/tmp/honey-bitcoin-submit-regtest.log`.
-
-Required checks pass: `pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
-Lint, all five typecheck tasks and all seven test tasks pass, including 452 keyring
-tests and the extension build. Existing infrastructure ignores/mobile skips remain
-unchanged; no assertion or timeout was relaxed. Full log:
-`/private/tmp/honey-bitcoin-submit-root.log`.
-
-## Bitcoin observed approval preparation and reservation
-
-[The approval API](BUNK-BITCOIN-APPROVAL.md) combines exact-plan review, complete
-observed selected-owner groups, pending-input/ancestor checks and fee policy with
-durable reservation. Review writes nothing. New reservations require the reviewed
-digest and fresh checks without repricing; retries recover the original saved
-approval with no new chain assurance or signing authority.
-
-Nine new tests and package typecheck pass. [The Core31.1 report](evidence/bunk-bitcoin-approval-regtest-local.json)
-verifies byte-identical review/reservation for a three-input confirmed parent and
-one-input pending child, including actual ancestor-fee checks, missing-consent
-rejection and rejection of an omitted repeated owner deposit. Core accepts/mines
-those same transactions. All preceding signature, fee-policy, UTXO/history, reorg
-and maturity assertions pass. The composition fixture uses an in-memory CAS;
-durable SQLite evidence remains separate. All 61 source/dependency hashes and the
-bundle were rechecked; the owned node stopped. Log:
-`/private/tmp/honey-bitcoin-approval-regtest.log`.
-
-Required checks pass: `pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
-Lint, all five typecheck tasks and all seven test tasks pass, including 442 keyring
-tests and the extension build. Existing ignored infrastructure/mobile cases remain
-unchanged; no assertion or timeout was relaxed. Log:
-`/private/tmp/honey-bitcoin-approval-root.log`.
-
-## Bitcoin fee policy observation and capped selection
-
-`observeBunkBitcoinFeePolicy` reads/rechecks loaded-node relay/mempool policy and
-returns an explicit available/unavailable confirmation estimate. It retains the
-actual estimated block target and exact sat/kvB units. `selectBunkBitcoinFee`
-combines the estimate or caller-supplied fallback with node/caller floors, rounds
-up at the supplied maximum size, and rejects rate/total-fee cap overruns. No
-automatic fallback, signing authorization or confirmation guarantee is introduced.
-
-Ten new tests and package typecheck pass. [The Core 31.1 report](evidence/bunk-bitcoin-fees-regtest-local.json)
-cross-checks each rate against raw RPC data, verifies the real unavailable estimate
-on regtest, rejects missing fallback and both cap overruns, and feeds the labelled
-1,000-sat/kvB fallback into the accepted parent transaction. Existing transaction,
-CPFP, history, reorg and UTXO/maturity assertions also pass. Seventeen source/
-dependency hashes plus the bundle were frozen/rechecked; the owned node stopped.
-Log: `/private/tmp/honey-bitcoin-fees-regtest.log`. Local regtest acceptance does
-not establish real-market estimates or packaged-app readiness.
-
-Required checks pass: `pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
-All five typecheck tasks and seven test tasks pass, including 433 keyring tests
-and the extension build. Existing explicitly ignored infrastructure/mobile cases
-remain unchanged; no assertion or timeout was relaxed. Full log:
-`/private/tmp/honey-bitcoin-fees-root.log`.
-
-## Bitcoin spent/received history discovery
-
-`discoverBunkBitcoinHistory` adds explicit owner/block pagination using Core's
-basic filter index and descriptor activity. It retains spent owners and incoming
-mempool deposits, validates coverage and canonical blocks, compares relevant
-mempool observations, and rejects malformed, incomplete or oversized results.
-It does not infer unused keys, restore journal records or authorize signing.
-
-Eleven new tests and package typecheck pass. [The Core 31.1 report](evidence/bunk-bitcoin-history-regtest-local.json)
-verifies ten confirmed events across owners 0–4, including emptied owners 0/2/3;
-empty early-window continuation; six events becoming pending after reorg; obsolete
-checkpoint rejection; and a 30,000-satoshi pending deposit to already-used owner 0.
-Existing construction, witness/amount rejection, fee, CPFP, UTXO, reorg and maturity
-checks also pass. Fifteen source/dependency hashes plus the fixture bundle were
-rechecked. The runner's index readiness permits an indexed height above a deliberately
-lowered reorg tip; canonical hashes are independently checked by the scanner.
-The owned node stopped. Log: `/private/tmp/honey-bitcoin-history-regtest-final.log`.
-
-The required chain passes: `pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
-Lint and all five typecheck tasks pass; all seven test tasks pass, including 423
-keyring tests and the extension build. Existing explicitly ignored infrastructure
-tests and six mobile skips remain unchanged. No test assertion or timeout was
-relaxed. Test log: `/private/tmp/honey-bitcoin-history-tests.log`.
-
-## Bitcoin durable allocation and approval storage
-
-[The Bitcoin journal](BUNK-BITCOIN-JOURNAL.md) adds a distinct encrypted account
-namespace to the existing SQLite/IndexedDB stores. Allocations commit before
-address return; exact approved bytes/digests and whole-owner reservations commit
-together; claims precede external signature work; verified signatures commit before
-raw-byte return. Only unclaimed approvals may be cancelled. Missing history is
-not treated as a new wallet. No native signing or chain-observation policy is inferred.
-
-Twelve new tests and package typecheck pass. [The SQLite report](evidence/bunk-bitcoin-journal-restart-local.json)
-verifies separate-process allocation and approval races, abrupt exits before
-signature persistence and after allocation/signature commits, uncertain-claim
-retention, exact-byte reopen/recovery, missing-record rejection and ciphertext at
-rest. Both synchronized races have one winner/one CAS conflict. An allocation
-acknowledgement retry returns index 4 with cursor 5. All 54 source/dependency hashes
-were rechecked. The runner uses only public fixture keys and temporary databases;
-its synthetic inputs are not a Core transaction-acceptance test. Log:
-`/private/tmp/honey-bitcoin-journal-restart.log`.
-
-The required chain passes: `pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
-All seven test tasks passed, including 412 keyring tests and the extension build.
-No assertions/timeouts changed; existing explicitly ignored infrastructure/mobile
-tests remain ignored. Log: `/private/tmp/honey-bitcoin-journal-root.log`.
-
-## Bitcoin pending-input observation and calculated package fees
-
-`observeBunkBitcoinInputs` verifies explicit expected outputs, including pending
-change, through the trusted node. Shared chain/header/checkpoint validation now
-lives in an internal RPC module used by both observation and discovery. Pending
-input ancestors form a checked, deduplicated union of actual base fees and vbytes;
-output availability and relevant graph entries are rechecked before return.
-Unavailable outputs do not release signing claims or establish a current balance.
-
-`estimateBunkBitcoinChildFee` calculates the child's fee needed to meet the package
-target and the child's minimum rate. It includes the builder's integer-rate
-rounding in its absolute fee cap. It requires recalculation after selection or
-output-shape changes and does not promise relay/mining acceptance.
-
-All 23 discovery/observation tests pass (12 new observer/fee tests). Package
-typecheck passes. [The Core 31.1 report](evidence/bunk-bitcoin-observe-regtest-local.json)
-verifies a 289-vbyte/290-satoshi parent and a calculated 141-vbyte/1,861-satoshi
-child: 2,151 satoshis across 430 vbytes, meeting the 5 sat/vbyte package target.
-The observer ignores a temporary mining-priority delta when accounting for paid
-fees, rejects incorrect expected output amounts, deduplicates the parent/child
-ancestor chain, and follows pending → confirmed → pending through mining/reorg.
-Old checkpoints reject. Core accepts/mines the child after the priority delta is
-removed. Existing construction, discovery, maturity and identical rebroadcast
-checks also pass. Thirteen source/dependency hashes plus the bundle were rechecked;
-the isolated node stopped. Log: `/private/tmp/honey-bitcoin-observe-regtest.log`.
-
-The full required chain passes on the final source and formatted evidence:
-`pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
-All seven test tasks pass, including 400 keyring tests and the extension build.
-No assertion or timeout changed. Existing explicitly skipped infrastructure/mobile
-tests remain skipped. Log: `/private/tmp/honey-bitcoin-observe-root.log`.
-
-## Bitcoin confirmed-UTXO discovery
-
-`discoverBunkBitcoinUtxos` adds bounded seed-based scanning through a caller-trusted
-Core node, without Honey backend records or key imports. Eleven new tests pass for
-owner grouping, retained empty/immature/pending coins, exact amounts, chain and
-checkpoint consistency, freshness, cancellation, input snapshots and range limits.
-Package typecheck passes. Existing derivation paths are unchanged.
-
-[The discovery Core 31.1 report](evidence/bunk-bitcoin-discovery-regtest-local.json)
-records four initial coins across owners 0/1/2, with two payments to owner 0. After
-the parent broadcasts, owners 0 and 2 retain their coins as mempool-spent and become
-unavailable. Mining discovers owner 4's final change; invalidating that block makes
-its checkpoint fail. Discovery succeeds against the replacement chain. A fresh
-coinbase to owner 5 remains visible but immature, then becomes available at exactly
-100 confirmations. The existing signature, fee, CPFP and exact-rebroadcast checks
-also pass. Ten source/dependency hashes and the bundle hash were rechecked; the
-owned isolated node stopped. Log: `/private/tmp/honey-bitcoin-discovery-regtest-final.log`.
-
-This scans confirmed UTXOs, not transaction history or incoming mempool outputs.
-The node remains trusted for consensus/completeness. Empty addresses cannot prove
-unused keys, and results never authorize signing. [Remaining work and the pending
-signing-policy decision](BUNK-BITCOIN.md) remain explicit.
-
-Root lint and all five typecheck tasks pass. The full keyring suite reports
-386 passed and two existing EVM journal cases timing out at their unchanged
-20-second limit (`bunk-evm-v3-account.test.mjs:288` and `:317`). All eleven new
-discovery cases pass. Both failing cases pass when rerun in isolation with the
-same assertions and timeouts (2 passed, 17 unselected); log
-`/private/tmp/honey-bitcoin-discovery-evm-retry.log`. The root test command stopped
-on those timeouts; the remaining packages then passed separately with six successful
-Turbo tasks, including the extension build, 44 extension tests and 113 mobile tests
-(six pre-existing mobile skips). Existing ignored infrastructure tests remain ignored.
-Command: `VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1 --filter='!@honey-wallet/keyring'`.
-Log: `/private/tmp/honey-bitcoin-discovery-remaining-tests.log`.
-Every selected test passed across these runs; this is not a clean single-run
-full-suite pass. Root log:
-`/private/tmp/honey-bitcoin-discovery-root-final.log`.
-
-## Bitcoin spend construction and Core regtest
-
-`packages/keyring/src/bunk-bitcoin.ts` adds unsigned Bunk P2WPKH selection/change,
-standard recipient scripts, fee/dust limits, BIP143 SIGHASH_ALL and verified witness
-assembly. Existing derivation paths are unchanged. Twelve unit tests pass, including
-the published BIP143 digest and deterministic DER signature.
-
-[The Core 31.1 local report](evidence/bunk-bitcoin-regtest-local.json) records a
-three-input payment with fresh change (288 vbytes/290 satoshis), a child spending that
-change with a new owner (141 vbytes/705 satoshis), mined parent/child, preserved
-unselected coin, input-amount and recipient mutation rejection, and identical-byte
-rebroadcast/remine after a reorg. The node had no peers, used a fresh regtest datadir
-and public fixture keys, and was stopped by the runner. Source and bundle hashes
-were frozen/rechecked. Logs: `/private/tmp/honey-bitcoin-regtest-final.log`.
-
-An initial harness run tried to regenerate the identical invalidated block and
-Core correctly rejected it as `duplicate-invalid`; the passing run advances the
-regtest timestamp before mining the distinct replacement. No transaction behavior
-was relaxed. [Remaining integration and the pending per-key signing-policy decision](BUNK-BITCOIN.md)
-are explicit; this is not application signing, a complete restored-wallet scan,
-public-network acceptance or production activation.
-
-Final root checks pass: `pnpm lint && pnpm typecheck && VITEST_MAX_WORKERS=1 pnpm test --env-mode=loose --concurrency=1`.
-All seven test tasks passed, including 377 keyring tests. Bounded package/worker
-concurrency preserves every assertion and timeout while avoiding the shared-machine
-resource contention seen in prior turns. Explicitly ignored infrastructure tests
-remain ignored. Log: `/private/tmp/honey-bitcoin-root-final.log`.
 
 ## Solana seed account discovery and package relocation
 
@@ -818,7 +516,7 @@ own historical snapshots; no old source manifest was rewritten to claim a new ru
 Trusted production registry distribution, token/NFT inventory, sparse-index backup
 format, packaged app restore and mismatch investigation remain open. A mismatch may
 still be recoverable through the independent recovery authority; it is never an
-empty-account result. Solana/Bitcoin program and UTXO discovery remain required.
+empty-account result. Solana program discovery remains required.
 [Solana requirements](BUNK-SOLANA-DESIGN.md) now record transaction rollback,
 precompile and CPI constraints for the next program workstream. No production
 activation, public deployment or complete launch is claimed.
@@ -1308,7 +1006,7 @@ No new dependency or lockfile modification was required for the initial keyring 
    recorded decoder/fork/gas gaps; independently review certificate/recovery policy.
 2. Connect signing and the implemented canonical state verifier to a reviewed release
    registry and durable operation journal; complete finalized-state recovery.
-3. Implement/test the Solana account program and Bitcoin spend/change recovery.
+3. Implement/test the Solana account program.
 4. Hand verified contract fixtures to backend/frontend owners; integrate account
    observation, authorization, pending operation recovery and activation UX.
 5. Complete each remaining release item in `REVIEW.md`. None is waived by passing

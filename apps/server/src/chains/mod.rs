@@ -4,7 +4,6 @@
 //! where the session key is anchored, how the account's public state is read,
 //! whether commit-delay-reveal exists, and how signed payloads are submitted.
 
-pub mod bitcoin;
 pub mod evm;
 pub mod solana;
 pub mod tron;
@@ -35,19 +34,12 @@ use crate::{
 pub enum Chain {
     Evm,
     Solana,
-    Bitcoin,
     Tron,
     Xrpl,
 }
 
 impl Chain {
-    pub const ALL: [Chain; 5] = [
-        Chain::Evm,
-        Chain::Solana,
-        Chain::Bitcoin,
-        Chain::Tron,
-        Chain::Xrpl,
-    ];
+    pub const ALL: [Chain; 4] = [Chain::Evm, Chain::Solana, Chain::Tron, Chain::Xrpl];
 }
 
 /// How far a chain supports a feature.
@@ -58,8 +50,6 @@ pub enum Support {
     No,
     /// Only through a deployed contract (Tron TVM).
     ContractRouteOnly,
-    /// Built into how the chain works (Bitcoin: spending is rotation).
-    Inherent,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -69,7 +59,6 @@ pub enum SessionAnchorKind {
     PdaField,
     ZeroOpsPermission,
     MessageKey,
-    IdentityAddress,
 }
 
 /// One column of the spec's cross-chain comparison (§14), plus §10's
@@ -125,19 +114,6 @@ pub fn capabilities() -> Vec<ChainCapabilities> {
             confirmation_window_ms: 400,
             private_submission: &[SubmissionRoute::DirectToLeader, SubmissionRoute::JitoBundle],
             notes: "Custom program stores sha256(owner pubkey) in the wallet PDA.",
-        },
-        ChainCapabilities {
-            chain: Chain::Bitcoin,
-            identifier_is_pubkey_hash: true,
-            atomic_rotation: Inherent,
-            custom_contract_for_tier_a: No,
-            commit_delay_reveal: No,
-            session_anchor: SessionAnchorKind::IdentityAddress,
-            third_party_session_verification: false,
-            tier_b: No,
-            confirmation_window_ms: 600_000,
-            private_submission: &[SubmissionRoute::MinerDirect],
-            notes: "Hygiene only: P2WPKH, no reuse, no Taproot key-path. Window excludes mempool time.",
         },
         ChainCapabilities {
             chain: Chain::Tron,

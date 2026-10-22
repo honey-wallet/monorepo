@@ -49,7 +49,7 @@ const SLIDES: Slide[] = [
     key: 'honey',
     art: 'logo',
     title: ['All your crypto,\n', 'one wallet.'],
-    subtitle: 'Bitcoin, Ethereum, Solana,\nTron and XRP, side by side.',
+    subtitle: 'Ethereum, Solana,\nTron and XRP, side by side.',
   },
   {
     key: 'protected',

@@ -57,8 +57,7 @@ The loader cannot infer omitted historical releases from one manifest. The separ
 and sparse indices; it never supplies its own trusted manifest pin.
 `resolveBunkRecoveryHints` connects those decrypted hints to this loader. EVM
 matches require both chain ID and key scope; Solana matches require both genesis
-hash and program. Missing releases remain explicit results, while Bitcoin owner
-indices remain discovery hints with their separate history requirements. The
+hash and program. Missing releases remain explicit results. The
 resolver retains all registry entries for scans beyond the hints and performs no
 RPC, journal initialization or signing.
 
@@ -89,8 +88,7 @@ Each EVM network/key scope and each Solana genesis/program pair may occur only o
 Two conflicting Solana code policies for one program reject; a reviewed in-place
 program upgrade requires updating that identity's policy in a new artifact. Older
 EVM v1/v2 deployments need their separate restoration path and cannot be relabelled
-v3. Bitcoin needs no deployment registry and retains its separate network/journal
-rules. This artifact has no account indices, private keys or user balances.
+v3. This artifact has no account indices, private keys or user balances.
 
 ## Validation and remaining release work
 

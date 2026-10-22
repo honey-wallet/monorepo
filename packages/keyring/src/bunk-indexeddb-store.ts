@@ -14,9 +14,9 @@ const MAX_STORED_BYTES = 2 * BUNK_JOURNAL_MAX_BYTES + 1024;
 function storageKey(key: string): string {
   if (
     typeof key === 'string' &&
-    /^(?:bunk-v3(?:-account)?|bunk-solana-account|bunk-bitcoin-account):[0-9a-f]{64}$/.test(key)
+    /^(?:bunk-v3(?:-account)?|bunk-solana-account):[0-9a-f]{64}$/.test(key)
   ) {
-    if (/^(?:bunk-v3(?:-account)?|bunk-solana-account|bunk-bitcoin-account):0{64}$/.test(key))
+    if (/^(?:bunk-v3(?:-account)?|bunk-solana-account):0{64}$/.test(key))
       throw new Error('Empty Bunk storage key');
     return key;
   }

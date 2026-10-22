@@ -1,13 +1,11 @@
 import type { Hex } from 'viem';
 import { BUNK_MAX_INDEX, bunkOwnerPath } from './bunk';
-import type { BunkBitcoinNetwork } from './bunk-bitcoin';
 import { BUNK_SOLANA_SYSTEM, bunkSolanaAddressBytes } from './bunk-solana';
 
 /** Discovery locations only: never a key-use counter, journal or signing authority. */
 export type BunkRecoveryHint = { accountIndex: number } & (
   | { family: 'evm-v3'; chainId: string; keyScope: Hex }
   | { family: 'solana-v1'; genesisHash: string; program: string }
-  | { family: 'bitcoin-v1'; network: BunkBitcoinNetwork; ownerIndices: number[] }
 );
 export interface BunkRecoveryHints {
   version: 1;
@@ -39,7 +37,6 @@ export function checkBunkRecoveryHints(input: unknown): BunkRecoveryHints {
   if (root.version !== 1 || !Array.isArray(root.accounts) || root.accounts.length > 1024)
     throw new Error('Unsupported Bunk recovery hints');
   const seen = new Set<string>();
-  let ownerCount = 0;
   const accounts = Array.from(root.accounts as unknown[], (value): BunkRecoveryHint => {
     const family = (value as Record<string, unknown> | null)?.family;
     let hint: BunkRecoveryHint;
@@ -68,19 +65,6 @@ export function checkBunkRecoveryHints(input: unknown): BunkRecoveryHints {
         throw new Error('Invalid Bunk recovery Solana identity');
       hint = { family, accountIndex, genesisHash, program };
       identity = `${family}:${genesisHash}:${program}:${accountIndex}`;
-    } else if (family === 'bitcoin-v1') {
-      const r = record(value, ['family', 'accountIndex', 'network', 'ownerIndices']);
-      const accountIndex = index(r.accountIndex);
-      const network = r.network as BunkBitcoinNetwork;
-      bunkOwnerPath({ network: { family: 'bitcoin', network }, accountIndex, ownerIndex: 0 });
-      if (!Array.isArray(r.ownerIndices) || r.ownerIndices.length > 4096 - ownerCount)
-        throw new Error('Too many Bunk recovery owner indices');
-      ownerCount += r.ownerIndices.length;
-      const ownerIndices = Array.from(r.ownerIndices as unknown[], index);
-      if (ownerIndices.some((n, i) => i > 0 && n <= (ownerIndices[i - 1] as number)))
-        throw new Error('Bunk recovery owner indices must be sorted and unique');
-      hint = { family, accountIndex, network, ownerIndices };
-      identity = `${family}:${network}:${accountIndex}`;
     } else throw new Error('Unsupported Bunk recovery protocol');
     if (seen.has(identity)) throw new Error('Duplicate Bunk recovery account');
     seen.add(identity);

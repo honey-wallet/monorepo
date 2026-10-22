@@ -62,15 +62,39 @@ export const draftMnemonic = () => createMnemonic(getRandomBytes);
 
 export { isValidMnemonic };
 
-export async function loadAccounts(): Promise<VaultAccount[]> {
-  const json = await read(KEY.accounts);
-  return json ? (JSON.parse(json) as VaultAccount[]) : [];
+/** Address families Honey no longer supports. Bitcoin was removed on 2026-10-22. */
+const RETIRED_FAMILIES = ['bitcoin'] as const;
+
+/** Drops cached addresses for retired chains; true when anything was removed. */
+function dropRetiredAddresses(accounts: VaultAccount[]): boolean {
+  let changed = false;
+  for (const account of accounts) {
+    const addresses = account.addresses as Record<string, string | undefined>;
+    for (const family of RETIRED_FAMILIES) {
+      if (family in addresses) {
+        delete addresses[family];
+        changed = true;
+      }
+    }
+  }
+  return changed;
 }
 
-/** Add NEAR to pre-existing phrase wallets once, without changing any existing address. */
+async function readAccounts(): Promise<{ accounts: VaultAccount[]; retired: boolean }> {
+  const json = await read(KEY.accounts);
+  const accounts = json ? (JSON.parse(json) as VaultAccount[]) : [];
+  return { accounts, retired: dropRetiredAddresses(accounts) };
+}
+
+export async function loadAccounts(): Promise<VaultAccount[]> {
+  return (await readAccounts()).accounts;
+}
+
+/** Add NEAR to pre-existing phrase wallets once, without changing any existing address.
+ * Also persists the removal of retired chains' cached addresses (Bitcoin). */
 export const upgradeNearAccounts = serial(async (): Promise<void> => {
-  const accounts = await loadAccounts();
-  let changed = false;
+  const { accounts, retired } = await readAccounts();
+  let changed = retired;
   for (const account of accounts) {
     if (account.source.kind !== 'phrase' || account.addresses.near) continue;
     const phrase = await read(KEY.seed(account.source.seedId));

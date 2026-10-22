@@ -9,7 +9,6 @@ const EXPLORERS: Record<Chain, { name: string; tx: (hash: string) => string }> =
   Base: { name: 'Basescan', tx: (h) => `https://basescan.org/tx/${h}` },
   Solana: { name: 'Solscan', tx: (h) => `https://solscan.io/tx/${h}` },
   NEAR: { name: 'NearBlocks', tx: (h) => `https://nearblocks.io/txns/${h}` },
-  Bitcoin: { name: 'mempool.space', tx: (h) => `https://mempool.space/tx/${h}` },
   Tron: { name: 'Tronscan', tx: (h) => `https://tronscan.org/#/transaction/${h}` },
   'XRP Ledger': { name: 'XRPScan', tx: (h) => `https://xrpscan.com/tx/${h}` },
 };
@@ -32,7 +31,7 @@ export function txReceipt(chain: Chain, seed: string) {
       ? pick(BASE58, 88)
       : chain === 'XRP Ledger'
         ? pick(HEX, 64).toUpperCase()
-        : chain === 'Bitcoin' || chain === 'Tron'
+        : chain === 'Tron'
           ? pick(HEX, 64)
           : `0x${pick(HEX, 64)}`;
   const explorer = EXPLORERS[chain];

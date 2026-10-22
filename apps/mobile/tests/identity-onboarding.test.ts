@@ -65,15 +65,16 @@ describe('after Apple / Google / email sign-in', () => {
   });
 });
 
-it('is off without a publishable key', () => {
-  expect(process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? '').toBe('');
+it('is off unless both the Supabase URL and anon key are set', () => {
+  expect(process.env.EXPO_PUBLIC_SUPABASE_URL ?? '').toBe('');
+  expect(process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '').toBe('');
   expect(IDENTITY_ENABLED).toBe(false);
 });
 
 it('recognises only the sign-in redirect as the auth callback', () => {
-  expect(isAuthCallback('honeywallet://sso-callback?rotating_token_nonce=x')).toBe(true);
-  expect(isAuthCallback('/sso-callback')).toBe(true);
-  expect(isAuthCallback('honeywallet:///sso-callback')).toBe(true);
+  expect(isAuthCallback('honeywallet://auth-callback?code=x')).toBe(true);
+  expect(isAuthCallback('/auth-callback')).toBe(true);
+  expect(isAuthCallback('honeywallet:///auth-callback')).toBe(true);
   expect(isAuthCallback('/home')).toBe(false);
-  expect(isAuthCallback('honeywallet://wc?uri=sso-callback-ish')).toBe(false);
+  expect(isAuthCallback('honeywallet://wc?uri=auth-callback-ish')).toBe(false);
 });

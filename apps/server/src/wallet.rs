@@ -27,8 +27,7 @@ pub enum Tier {
 /// One wallet on one chain.
 ///
 /// "Account" is the ERC-4337 contract on EVM and Tron, the PDA on Solana and
-/// the ledger account on XRPL. Bitcoin has no account; the record groups the
-/// wallet's address chain instead (spec §6).
+/// the ledger account on XRPL.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Account {
@@ -39,8 +38,8 @@ pub struct Account {
     pub tier: Tier,
     /// Tier A: index `i` of the next owner key the signer will use (spec §3).
     pub owner_key_index: u64,
-    /// Tier A: `hash(owner_key[i].pub)` as stored on chain. On EVM, Tron, XRPL
-    /// and Bitcoin this is the owner address itself; on Solana a sha256 in the PDA.
+    /// Tier A: `hash(owner_key[i].pub)` as stored on chain. On EVM, Tron and XRPL
+    /// this is the owner address itself; on Solana a sha256 in the PDA.
     pub owner_commitment: Option<Hash32Hex>,
     pub session: Option<SessionKey>,
     pub vault: Option<VaultState>,
@@ -80,8 +79,6 @@ pub enum SessionAnchor {
     ZeroOpsPermission { permission_id: u32 },
     /// XRPL: the account's `MessageKey` field.
     MessageKey,
-    /// Bitcoin: unfunded identity address on a dedicated path. Convention only.
-    IdentityAddress { address: String },
 }
 
 /// Tier B on-chain state (spec §11).

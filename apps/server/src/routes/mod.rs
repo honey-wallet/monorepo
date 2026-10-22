@@ -1,8 +1,8 @@
 pub mod aave;
+pub mod account_identity;
 pub mod accounts;
 pub mod capabilities;
 pub mod chains;
-pub mod clerk;
 pub mod health;
 pub mod identity;
 pub mod monitoring;

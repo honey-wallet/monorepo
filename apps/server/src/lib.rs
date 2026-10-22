@@ -15,7 +15,6 @@
 pub mod aave_service;
 pub mod bridge_monitor;
 pub mod chains;
-pub mod clerk;
 pub mod config;
 pub mod database;
 pub mod earn_catalog;
@@ -41,6 +40,7 @@ pub mod routes;
 pub mod runtime;
 pub mod session_signatures;
 pub mod submissions;
+pub mod supabase_auth;
 pub mod supervision;
 pub mod swap_review;
 pub mod telemetry;
@@ -171,12 +171,13 @@ fn router(config: &Config, health: runtime::RuntimeHealth, services: RouterServi
         work,
         capability_adapters,
     } = services;
-    // Clerk identity (optional). Config is validated at startup; a client that can't
-    // be built leaves the feature off rather than failing the whole API.
-    let clerk = clerk::ClerkVerifier::from_config(config).unwrap_or_else(|error| {
-        tracing::error!(%error, "Clerk session verification disabled");
-        None
-    });
+    // Supabase Auth identity (optional). Config is validated at startup; a client that
+    // can't be built leaves the feature off rather than failing the whole API.
+    let supabase_auth =
+        supabase_auth::SupabaseVerifier::from_config(config).unwrap_or_else(|error| {
+            tracing::error!(%error, "Supabase access-token verification disabled");
+            None
+        });
     let cors = CorsLayer::new()
         .allow_origin(config.cors_allowed_origins.clone())
         .allow_methods(tower_http::cors::Any)
@@ -233,7 +234,7 @@ fn router(config: &Config, health: runtime::RuntimeHealth, services: RouterServi
     // colocated with these handlers also receive the generous IP-level budget;
     // their route-specific wallet quotas remain in the handlers that need them.
     let private_api = Router::new()
-        .merge(routes::clerk::router(clerk))
+        .merge(routes::account_identity::router(supabase_auth))
         .merge(routes::operations::router(identity.clone(), work))
         .merge(routes::bridges::router(identity.clone(), bridges))
         .merge(routes::near_intents::router(identity.clone(), near_intents))

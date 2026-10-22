@@ -10,7 +10,6 @@ import { makeStyles, radius, useTheme } from '@/theme';
 
 /** Every EVM chain shares the Ethereum address (lib/receive.ts), so these all work. NEAR is phrase wallets only. */
 const NETWORKS = [
-  { name: 'Bitcoin', symbol: 'BTC' },
   { name: 'Solana', symbol: 'SOL' },
   { name: 'NEAR', symbol: 'NEAR' },
   { name: 'Ethereum', symbol: 'ETH' },
@@ -40,7 +39,7 @@ export default function NetworksSheet() {
         second={
           // <Text style={styles.subtitle}>One Honey wallet holds addresses on each of these.</Text>
           <Text style={styles.subtitle}>
-            Bitcoin, Solana, NEAR and 200+ EVM chains, all in one Honey wallet.
+            Solana, NEAR and 200+ EVM chains, all in one Honey wallet.
           </Text>
         }
       />

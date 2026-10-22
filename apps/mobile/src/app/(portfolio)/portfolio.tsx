@@ -53,7 +53,6 @@ type Grouping = 'Tokens' | 'Networks';
 /** Each held token's colour, matching its logo; a network takes its native token's. */
 const SEGMENT_COLOR: Record<string, string> = {
   ETH: '#627EEA',
-  BTC: '#F7931A',
   USDC: '#2775CA',
   SOL: '#9945FF',
   TRX: '#EB0029',

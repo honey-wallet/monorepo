@@ -32,8 +32,8 @@ pub struct Config {
     pub shutdown_timeout_secs: u64,
     /// Explicit relying-party origin and chain. Absent means auth is disabled.
     pub auth: Option<AuthConfig>,
-    /// Clerk session-token verification (identity only). Absent means it is off.
-    pub clerk: Option<crate::clerk::ClerkConfig>,
+    /// Supabase Auth access-token verification (identity only). Absent means it is off.
+    pub supabase_auth: Option<crate::supabase_auth::SupabaseAuthConfig>,
     pub metrics_addr: Option<SocketAddr>,
     pub otlp_traces_endpoint: Option<SecretUrl>,
     pub trace_sample_per_mille: u16,
@@ -259,7 +259,7 @@ impl Default for Config {
             dependency_timeout_ms: 1_000,
             shutdown_timeout_secs: 15,
             auth: None,
-            clerk: None,
+            supabase_auth: None,
             metrics_addr: None,
             otlp_traces_endpoint: None,
             trace_sample_per_mille: 100,
@@ -349,7 +349,7 @@ impl Config {
                     });
                 }
             },
-            clerk: crate::clerk::ClerkConfig::from_env()?,
+            supabase_auth: crate::supabase_auth::SupabaseAuthConfig::from_env()?,
             metrics_addr: parse_var("METRICS_ADDR")?,
             otlp_traces_endpoint: secret_var("HONEY_OTLP_TRACES_ENDPOINT")?,
             trace_sample_per_mille: parse_var("TRACE_SAMPLE_PER_MILLE")?
@@ -440,8 +440,17 @@ impl Config {
             });
         }
 
-        if let Some(clerk) = &self.clerk {
-            clerk.validate()?;
+        if let Some(supabase_auth) = &self.supabase_auth {
+            supabase_auth.validate()?;
+        }
+        if self
+            .database_url
+            .as_ref()
+            .is_some_and(|url| supabase_transaction_pooler(url.expose()))
+        {
+            return Err(ConfigError::Invalid {
+                name: "DATABASE_URL",
+            });
         }
         if self.trace_sample_per_mille > 1000 {
             return Err(ConfigError::Invalid {
@@ -596,6 +605,20 @@ fn secret_var(name: &'static str) -> Result<Option<SecretUrl>, ConfigError> {
     }
 }
 
+/// Supabase's shared pooler in transaction mode (port 6543) drops session state between
+/// transactions: the startup timeouts, prepared statements and the migration lock all
+/// need a session. Use the direct connection or the session-mode pooler (port 5432).
+fn supabase_transaction_pooler(url: &str) -> bool {
+    url.parse::<sqlx_postgres::PgConnectOptions>()
+        .is_ok_and(|options| {
+            options.get_port() == 6543
+                && options
+                    .get_host()
+                    .to_ascii_lowercase()
+                    .ends_with(".pooler.supabase.com")
+        })
+}
+
 fn parse_origins(raw: &str) -> Result<Vec<HeaderValue>, ConfigError> {
     raw.split(',')
         .map(str::trim)
@@ -634,6 +657,29 @@ fn parse_trusted_proxy_cidrs(raw: &str) -> Result<Vec<TrustedProxyCidr>, ConfigE
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn supabase_postgres_needs_a_session_not_the_transaction_pooler() {
+        let mut config = Config::default();
+        for ok in [
+            "postgres://postgres:pw@db.abc.supabase.co:5432/postgres?sslmode=require",
+            "postgres://postgres.abc:pw@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require",
+            "postgres://honey:honey@127.0.0.1:6543/honey",
+        ] {
+            config.database_url = Some(SecretUrl::new(ok.into()));
+            assert!(config.validate().is_ok(), "{ok}");
+        }
+        config.database_url = Some(SecretUrl::new(
+            "postgres://postgres.abc:pw@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"
+                .into(),
+        ));
+        assert!(matches!(
+            config.validate(),
+            Err(ConfigError::Invalid {
+                name: "DATABASE_URL"
+            })
+        ));
+    }
 
     #[test]
     fn telemetry_requires_bounded_sampling_and_an_explicit_safe_collector_endpoint() {

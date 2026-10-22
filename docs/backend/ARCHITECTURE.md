@@ -276,8 +276,8 @@ independent scaling, ownership or fault isolation is measured to require it.
 
 - Internal entity IDs: UUIDs. External chain/provider IDs retained separately.
 - Chain IDs: explicit namespace/reference (CAIP-style), e.g. `eip155:8453`, not
-  the existing broad `evm` enum. Solana cluster/genesis identity and Bitcoin
-  network must be explicit. Do not globally lowercase non-EVM addresses.
+  the existing broad `evm` enum. Solana cluster/genesis identity must be
+  explicit. Do not globally lowercase non-EVM addresses.
 - Asset key: chain identity + asset namespace + canonical contract/mint/reference.
   Native assets are explicit. `USDC` on two chains is never the same database key.
 - Amounts: unsigned integer base units as decimal strings at JSON boundaries;
@@ -594,9 +594,6 @@ can still materialize. Retention is action-specific, not one blanket 24-hour TTL
 - Solana: recent blockhash expiry, simulation slot, compute budget, priority fees,
   address lookup tables, token program differences and ATA creation costs. An
   expired blockhash requires a new user-reviewed signature, not modified bytes.
-- Bitcoin: UTXO selection, change derivation, dust, fee rate, RBF/CPFP policy,
-  conflicting spends and confirmation depth. Coin selection belongs to an audited
-  wallet implementation, not a generic account-balance service.
 - Tron: energy/bandwidth, activation costs, address encoding and receipt semantics.
 - XRPL: destination tags, reserve requirements, sequence/tickets, last-ledger bounds
   and distinction between provisional and validated results.

@@ -1,9 +1,8 @@
 import { secp256k1 } from '@noble/curves/secp256k1.js';
-import { ripemd160 } from '@noble/hashes/legacy.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
-import { base58, bech32 } from '@scure/base';
+import { base58 } from '@scure/base';
 import { HDKey } from '@scure/bip32';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
@@ -52,7 +51,7 @@ describe('Bunk v1 recovery vectors', () => {
   });
 
   it('keeps ordinary wallet branches intact and every Bunk component hardened', () => {
-    for (const family of ['evm', 'bitcoin', 'solana'] as const) {
+    for (const family of ['evm', 'solana'] as const) {
       const target = fixture.vectors.find((v) => v.network.family === family);
       expect(target).toBeDefined();
       if (!target) throw new Error('Missing fixture');
@@ -97,25 +96,14 @@ describe('Bunk v1 recovery vectors', () => {
     expect(owner.commitment).toBe(`0x${bytesToHex(keccak_256(rawAddress))}`);
   });
 
-  it('uses raw ed25519 keys for Solana and network-specific P2WPKH for Bitcoin', () => {
-    for (const vector of fixture.vectors.filter((v) => v.network.family !== 'evm')) {
+  it('uses raw ed25519 keys for Solana', () => {
+    const vectors = fixture.vectors.filter((v) => v.network.family === 'solana');
+    expect(vectors.length).toBeGreaterThan(0);
+    for (const vector of vectors) {
       const owner = deriveBunkOwner(seed, { ...vector, network: vector.network as BunkNetwork });
       const publicKey = hexToBytes(owner.publicKey.slice(2));
-      if (owner.network.family === 'solana') {
-        expect(base58.decode(owner.ownerAddress)).toEqual(publicKey);
-        expect(owner.commitment).toBe(`0x${bytesToHex(sha256(publicKey))}`);
-      } else if (owner.network.family === 'bitcoin') {
-        const decoded = bech32.decode(owner.ownerAddress as `${string}1${string}`);
-        expect(decoded.prefix).toBe(
-          owner.network.network === 'mainnet'
-            ? 'bc'
-            : owner.network.network === 'regtest'
-              ? 'bcrt'
-              : 'tb',
-        );
-        expect(decoded.words[0]).toBe(0);
-        expect(bech32.fromWords(decoded.words.slice(1))).toEqual(ripemd160(sha256(publicKey)));
-      }
+      expect(base58.decode(owner.ownerAddress)).toEqual(publicKey);
+      expect(owner.commitment).toBe(`0x${bytesToHex(sha256(publicKey))}`);
     }
   });
 });
@@ -144,8 +132,7 @@ describe('Bunk invalid input and exhaustion', () => {
       { family: 'solana', genesisHash: 'mainnet-beta' },
       { family: 'solana', genesisHash: '1'.repeat(33) },
       { family: 'evm', chainId: 1 },
-      { family: 'bitcoin', network: 'unknown' },
-      { family: 'bitcoin', network: '__proto__' },
+      { family: 'bitcoin', network: 'mainnet' },
       { family: 'tron' },
     ]) {
       expect(() => bunkOwnerPath({ ...ref, network: network as BunkNetwork })).toThrow();

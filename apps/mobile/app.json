@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.honeywallet.app",
+      "usesAppleSignIn": true,
       "icon": {
         "light": "./assets/images/ios-light.png",
         "dark": "./assets/images/ios-dark.png",
@@ -61,7 +62,6 @@
       "expo-secure-store",
       "expo-web-browser",
       "expo-apple-authentication",
-      "@clerk/expo",
       [
         "expo-local-authentication",
         {

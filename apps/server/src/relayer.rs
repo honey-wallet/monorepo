@@ -28,7 +28,6 @@ pub enum SubmissionRoute {
     JitoBundle,
     /// Our own node near block producers (Tron super representatives, XRPL validators).
     OwnNode,
-    MinerDirect,
 }
 
 /// Step 1 of commit-delay-reveal. Computed on the client; contains no signature.

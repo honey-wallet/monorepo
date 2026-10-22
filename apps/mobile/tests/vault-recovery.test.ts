@@ -80,6 +80,16 @@ it('adds NEAR to legacy phrase wallets, preserving existing addresses and raw EV
   await expect(privateKeyOf(imported.id, 'near')).rejects.toThrow('only works on EVM');
 });
 
+it('drops cached Bitcoin addresses from accounts saved before Bitcoin was removed', async () => {
+  const account = await startWithMnemonic(phrase, 'Primary');
+  const legacy = { ...account, addresses: { ...account.addresses, bitcoin: 'bc1qlegacy' } };
+  storage.set('honey.accounts', JSON.stringify([legacy]));
+  expect((await loadAccounts())[0]?.addresses).toEqual(account.addresses);
+  await upgradeNearAccounts();
+  expect(storage.get('honey.accounts')).not.toContain('bitcoin');
+  expect((await loadAccounts())[0]).toEqual(account);
+});
+
 it('creates a burner with recoverable keys on a distinct derivation index', async () => {
   const main = await startWithMnemonic(phrase, 'Main');
   const burner = await createAccount('Burner 1', true);

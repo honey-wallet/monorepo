@@ -57,7 +57,7 @@ export default function WelcomeScreen() {
             }
             second={
               <Text style={styles.subtitle}>
-                Bitcoin, Ethereum, Solana and more,{'\n'}safe on {DEVICE}.
+                Ethereum, Solana and more,{'\n'}safe on {DEVICE}.
               </Text>
             }
           />

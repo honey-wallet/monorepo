@@ -12,9 +12,9 @@ import { DURATION } from '@/theme/motion';
 
 const EMAIL = /^\S+@\S+\.\S+$/;
 
-/** Email sign-in, step one: Clerk emails a 6-digit code (the next screen checks it). */
+/** Email sign-in, step one: Supabase emails a 6-digit code (the next screen checks it). */
 export default function EmailScreen() {
-  // No Clerk in this build: there's no email sign-in to offer.
+  // No sign-in configured in this build: there's no email sign-in to offer.
   if (!IDENTITY_ENABLED) return <Redirect href="/welcome" />;
   return <EmailStep />;
 }
@@ -46,7 +46,7 @@ function EmailStep() {
       }
       router.push({
         pathname: '/verify',
-        params: { to: email, intent: params.intent, flow: sent.flow },
+        params: { to: email, intent: params.intent },
       });
     } catch (cause) {
       console.warn('Couldn’t send the email code', cause);

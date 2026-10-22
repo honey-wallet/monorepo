@@ -17,7 +17,6 @@ export type Token = {
 
 export const TOKENS: Token[] = [
   { symbol: 'ETH', name: 'Ethereum', amount: 0.0042, usd: 10.54, change: -5.8 },
-  { symbol: 'BTC', name: 'Bitcoin', amount: 0.00012, usd: 7.82, change: 1.24 },
   { symbol: 'SOL', name: 'Solana', amount: 0.031, usd: 4.61, change: -2.1 },
   { symbol: 'NEAR', name: 'NEAR', amount: 1.2, usd: 3.02, change: 1.6 },
   { symbol: 'USDC', name: 'USD Coin', amount: 7.08, usd: 7.08, change: 0.01 },
@@ -45,11 +44,10 @@ const visible = TOKENS.filter((t) => !t.hidden);
 export const BALANCE = visible.reduce((sum, t) => sum + t.usd, 0);
 export const BALANCE_CHANGE = visible.reduce((sum, t) => sum + (t.usd * t.change) / 100, 0);
 
-export type Chain = 'Bitcoin' | 'Ethereum' | 'Base' | 'Solana' | 'NEAR' | 'Tron' | 'XRP Ledger';
+export type Chain = 'Ethereum' | 'Base' | 'Solana' | 'NEAR' | 'Tron' | 'XRP Ledger';
 
 /** The chains Honey supports, each shown with its native token's logo. */
 export const CHAINS: { name: Chain; symbol: string }[] = [
-  { name: 'Bitcoin', symbol: 'BTC' },
   { name: 'Ethereum', symbol: 'ETH' },
   { name: 'Base', symbol: 'BASE' },
   { name: 'Solana', symbol: 'SOL' },
@@ -81,15 +79,6 @@ export const MARKET: MarketToken[] = [
     change: -5.94,
     volume: 1.85e9,
     marketCap: 284e9,
-  },
-  {
-    symbol: 'BTC',
-    name: 'Bitcoin',
-    chain: 'Bitcoin',
-    price: 80649.68,
-    change: -3.32,
-    volume: 1.42e9,
-    marketCap: 1.6e12,
   },
   {
     symbol: 'USDC',
@@ -147,7 +136,7 @@ export const MARKET: MarketToken[] = [
   },
 ];
 
-export const FAVORITES = ['ETH', 'BTC'];
+export const FAVORITES = ['ETH', 'SOL'];
 /** Placeholder rates for "Start earning". TODO: real yield source and rates. */
 export const EARN: { symbol: string; apy: number }[] = [
   { symbol: 'USDT', apy: 2.5 },
@@ -244,8 +233,8 @@ export const ACTIVITY: Activity[] = [
   {
     id: '3',
     kind: 'received',
-    symbol: 'BTC',
-    detail: '0.00012 BTC from bc1q…x7k2',
+    symbol: 'SOL',
+    detail: '0.031 SOL from 7xKX…q9Fd',
     month: 'October',
     date: 'Oct 7',
   },
@@ -428,17 +417,6 @@ export const TOKEN_INFO: Record<string, TokenInfo> = {
     holdings: [{ chain: 'Ethereum', amount: 0.0042, usd: 10.54 }],
     performance: { averageCost: 3458.97, unrealized: -3.73, realized: -12.08 },
   },
-  BTC: {
-    about:
-      'Bitcoin is the first decentralised digital currency: a fixed supply of 21 million coins, secured by proof of work and held by millions of people. New bitcoin is mined roughly every ten minutes, and the reward halves about every four years until the last coin is issued around 2140.',
-    website: 'https://bitcoin.org',
-    explorer: { label: 'Mempool', url: 'https://mempool.space' },
-    fdv: 1.69e12,
-    high52: 109114.88,
-    low52: 49121.2,
-    holdings: [{ chain: 'Bitcoin', amount: 0.00012, usd: 7.82 }],
-    performance: { averageCost: 71250.4, unrealized: 0.98, realized: 0 },
-  },
   SOL: {
     about:
       'Solana is a fast, low-fee blockchain for payments and apps. SOL pays for transactions and secures the network through staking.',
@@ -502,7 +480,6 @@ export const TOKEN_INFO: Record<string, TokenInfo> = {
 
 /** Every chain's logo, the unsupported ones too: old holdings and activity still name them. */
 const CHAIN_SYMBOLS: Record<Chain, string> = {
-  Bitcoin: 'BTC',
   Ethereum: 'ETH',
   Base: 'BASE',
   Solana: 'SOL',
@@ -614,12 +591,12 @@ export const ACTIVITY_DETAILS: Record<string, ActivityDetail> = {
     time: 'October 8, 2026 2:41 PM',
   },
   '3': {
-    amount: '0.00012 BTC',
-    usd: 7.82,
-    counterparty: 'bc1q…x7k2',
-    chain: 'Bitcoin',
-    fee: '$0.38',
-    hash: '9f3e1b07…c2d1',
+    amount: '0.031 SOL',
+    usd: 4.61,
+    counterparty: '7xKX…q9Fd',
+    chain: 'Solana',
+    fee: '<$0.01',
+    hash: '4sGjMW1s…Fq7Z',
     time: 'October 7, 2026 9:12 AM',
   },
   '4': {

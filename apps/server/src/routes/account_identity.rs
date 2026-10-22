@@ -1,26 +1,29 @@
-//! `GET /api/v1/me/clerk`: who the Clerk session token belongs to.
+//! `GET /api/v1/me/identity`: who the Supabase access token belongs to.
 //!
-//! Identity only, separate from SIWE wallet sessions: it proves a Clerk sign-in and
-//! nothing about wallets. Returns 422 `unsupported` while Clerk isn't configured.
+//! Identity only, separate from SIWE wallet sessions: it proves an account sign-in
+//! (Apple, Google or email) and nothing about wallets. Returns 422 `unsupported` while
+//! Supabase Auth isn't configured.
 
 use axum::{Json, Router, routing::get};
 use serde::Serialize;
 
-use crate::clerk::{ClerkUser, ClerkVerifier};
+use crate::supabase_auth::{SupabaseUser, SupabaseVerifier};
 
-/// Response shape mirrored in `packages/api-client/src/types.ts` (`ClerkIdentity`).
+/// Response shape mirrored in `packages/api-client/src/types.ts` (`AccountIdentity`).
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ClerkIdentity {
+pub struct AccountIdentity {
     pub user_id: String,
 }
 
-pub fn router(clerk: Option<ClerkVerifier>) -> Router {
-    Router::new().route("/me/clerk", get(me)).with_state(clerk)
+pub fn router(verifier: Option<SupabaseVerifier>) -> Router {
+    Router::new()
+        .route("/me/identity", get(me))
+        .with_state(verifier)
 }
 
-async fn me(ClerkUser(session): ClerkUser) -> Json<ClerkIdentity> {
-    Json(ClerkIdentity {
+async fn me(SupabaseUser(session): SupabaseUser) -> Json<AccountIdentity> {
+    Json(AccountIdentity {
         user_id: session.user_id,
     })
 }
@@ -35,10 +38,10 @@ mod tests {
     use tower::ServiceExt;
 
     use super::*;
-    use crate::clerk::test_support;
+    use crate::supabase_auth::test_support;
 
     async fn call(app: Router, authorization: Option<&str>) -> (StatusCode, serde_json::Value) {
-        let mut request = Request::builder().uri("/me/clerk");
+        let mut request = Request::builder().uri("/me/identity");
         if let Some(value) = authorization {
             request = request.header("authorization", value);
         }
@@ -53,7 +56,7 @@ mod tests {
 
     fn enabled() -> Router {
         router(Some(
-            ClerkVerifier::from_jwks(test_support::config(), &test_support::jwks()).unwrap(),
+            SupabaseVerifier::from_jwks(test_support::config(), &test_support::jwks()).unwrap(),
         ))
     }
 
@@ -65,11 +68,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn returns_the_clerk_user_id_for_a_valid_token() {
+    async fn returns_the_supabase_user_id_for_a_valid_token() {
         let token = test_support::sign(&test_support::claims(now()));
         let (status, body) = call(enabled(), Some(&format!("Bearer {token}"))).await;
         assert_eq!(status, StatusCode::OK);
-        assert_eq!(body, serde_json::json!({ "userId": "user_2abc" }));
+        assert_eq!(body, serde_json::json!({ "userId": test_support::USER_ID }));
     }
 
     #[tokio::test]
@@ -87,7 +90,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn is_unsupported_while_clerk_is_off() {
+    async fn is_unsupported_while_supabase_auth_is_off() {
         let token = test_support::sign(&test_support::claims(now()));
         let (status, body) = call(router(None), Some(&format!("Bearer {token}"))).await;
         assert_eq!(status, StatusCode::UNPROCESSABLE_ENTITY);

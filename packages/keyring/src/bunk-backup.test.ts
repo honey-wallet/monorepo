@@ -27,12 +27,6 @@ const hints: BunkRecoveryHints = {
       program: s.scope.program,
       accountIndex: BUNK_MAX_INDEX,
     },
-    {
-      family: 'bitcoin-v1',
-      network: 'regtest',
-      accountIndex: 9,
-      ownerIndices: [0, 87, BUNK_MAX_INDEX],
-    },
   ],
 };
 
@@ -67,7 +61,7 @@ describe('Bunk encrypted recovery backup', () => {
     expect(isBunkBackup(JSON.parse(JSON.stringify(backup)))).toBe(true);
     expect(isBackup(backup)).toBe(false);
     const serialized = JSON.stringify(backup);
-    for (const secret of ['abandon', 'evm-v3', 'ownerIndices', s.scope.program, e.keyScope])
+    for (const secret of ['abandon', 'evm-v3', 'solana-v1', s.scope.program, e.keyScope])
       expect(serialized).not.toContain(secret);
     const contents = await decryptBunkBackup(backup, PASSWORD);
     expect(contents).toEqual({
@@ -189,7 +183,7 @@ describe('Bunk recovery discovery hints', () => {
   });
 
   it('validates network identities, derivation scopes and account bounds', () => {
-    const [evmHint, solHint, btcHint] = hints.accounts;
+    const [evmHint, solHint] = hints.accounts;
     for (const account of [
       { ...evmHint, accountIndex: -1 },
       { ...evmHint, accountIndex: BUNK_MAX_INDEX + 1 },
@@ -199,30 +193,24 @@ describe('Bunk recovery discovery hints', () => {
       { ...evmHint, keyScope: `0x${'0'.repeat(64)}` },
       { ...solHint, program: 'bad' },
       { ...solHint, genesisHash: '11111111111111111111111111111111' },
-      { ...btcHint, network: 'testnet4' },
     ])
       expect(() => checkBunkRecoveryHints({ version: 1, accounts: [account] })).toThrow();
   });
 
-  it('requires sorted unique Bitcoin owners and bounds their aggregate count', () => {
-    const bitcoin = hints.accounts[2];
-    for (const ownerIndices of [[1, 1], [2, 1], [-1], [BUNK_MAX_INDEX + 1], Array(1)])
-      expect(() =>
-        checkBunkRecoveryHints({ version: 1, accounts: [{ ...bitcoin, ownerIndices }] }),
-      ).toThrow();
-    const many = Array.from({ length: 4096 }, (_, i) => i);
-    expect(
-      checkBunkRecoveryHints({ version: 1, accounts: [{ ...bitcoin, ownerIndices: many }] })
-        .accounts,
-    ).toHaveLength(1);
-    expect(() =>
-      checkBunkRecoveryHints({
-        version: 1,
-        accounts: [
-          { ...bitcoin, ownerIndices: many },
-          { ...bitcoin, accountIndex: 10, ownerIndices: [0] },
-        ],
-      }),
-    ).toThrow('Too many');
+  it('drops retired Bitcoin hints from older files and rejects them in new hints', async () => {
+    const retired = {
+      family: 'bitcoin-v1',
+      network: 'regtest',
+      accountIndex: 9,
+      ownerIndices: [0],
+    };
+    const legacy = await sealed({
+      mnemonic: PHRASE,
+      bunk: { version: 1, accounts: [hints.accounts[0], retired, hints.accounts[1]] },
+    });
+    expect((await decryptBunkBackup(legacy, PASSWORD)).bunk).toEqual(hints);
+    expect(() => checkBunkRecoveryHints({ version: 1, accounts: [retired] })).toThrow(
+      'Unsupported Bunk recovery protocol',
+    );
   });
 });

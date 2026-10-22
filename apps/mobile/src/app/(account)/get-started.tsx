@@ -30,9 +30,9 @@ type Busy = IdentityMethod | 'continue' | null;
  *   restore → Continue with Apple / Google / email, then bring the keys back (backup,
  *             phrase, key or the other device), or go straight to those
  *
- * Apple, Google and email are a Clerk account (identity only): the keys are made or
- * restored on this device either way (lib/identity-onboarding.ts). Without a Clerk key
- * (and always in the browser) only the phrase and import ways are shown.
+ * Apple, Google and email are a Supabase account (identity only): the keys are made or
+ * restored on this device either way (lib/identity-onboarding.ts). Without Supabase
+ * configured (and always in the browser) only the phrase and import ways are shown.
  */
 export default function GetStartedSheet() {
   const { mode = 'create' } = useLocalSearchParams<{ mode?: 'create' | 'restore' }>();
@@ -172,7 +172,7 @@ export default function GetStartedSheet() {
 }
 
 /**
- * Apple (iOS), Google and email, through Clerk. Once signed in: Continue (create), or
+ * Apple (iOS), Google and email, through Supabase Auth. Once signed in: Continue (create), or
  * the account's name over the restore ways, since the account can't bring keys back.
  */
 function IdentityWays({

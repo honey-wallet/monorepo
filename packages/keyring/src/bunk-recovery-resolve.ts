@@ -13,7 +13,6 @@ type Entry<F extends BunkReleaseEntry['family']> = Extract<BunkReleaseEntry, { f
 export type BunkRecoveryResolution =
   | { kind: 'evm-v3'; hint: Hint<'evm-v3'>; entry: Entry<'evm-v3'> }
   | { kind: 'solana-v1'; hint: Hint<'solana-v1'>; entry: Entry<'solana-v1'> }
-  | { kind: 'bitcoin-v1'; hint: Hint<'bitcoin-v1'> }
   | {
       kind: 'missing-release';
       hint: Hint<'evm-v3'> | Hint<'solana-v1'>;
@@ -54,7 +53,6 @@ export function resolveBunkRecoveryHints(
     }
   }
   const accounts = (hints?.accounts ?? []).map((hint): BunkRecoveryResolution => {
-    if (hint.family === 'bitcoin-v1') return { kind: 'bitcoin-v1', hint };
     if (hint.family === 'evm-v3') {
       const entry = evm.get(`${hint.chainId}:${hint.keyScope}`);
       return entry ? { kind: 'evm-v3', hint, entry } : { kind: 'missing-release', hint };

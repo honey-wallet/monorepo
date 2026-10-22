@@ -55,12 +55,6 @@ const hints: BunkRecoveryHints = {
       genesisHash: scope.genesisHash,
       program: scope.program,
     },
-    {
-      family: 'bitcoin-v1',
-      accountIndex: 9,
-      network: 'regtest',
-      ownerIndices: [0, 87, BUNK_MAX_INDEX],
-    },
   ],
 };
 const resolve = (input: unknown) => resolveBunkRecoveryHints(input, json, trustedPin);
@@ -69,7 +63,7 @@ describe('backup hint to trusted release resolution', () => {
   it('resolves both release uses, preserves sparse indices and grants no signing authority', () => {
     const plan = resolve(hints);
     expect(plan.hintsPresent).toBe(true);
-    expect(plan.accounts.map((a) => a.kind)).toEqual(['evm-v3', 'solana-v1', 'bitcoin-v1']);
+    expect(plan.accounts.map((a) => a.kind)).toEqual(['evm-v3', 'solana-v1']);
     expect(plan.accounts.map((a) => a.hint)).toEqual(hints.accounts);
     expect(plan.accounts[0]).toMatchObject({ entry: registry.entries[0] });
     expect(plan.accounts[1]).toMatchObject({ entry: registry.entries[1] });
@@ -94,7 +88,6 @@ describe('backup hint to trusted release resolution', () => {
     expect(resolveBunkRecoveryHints(hints, empty, pin(empty)).accounts.map((a) => a.kind)).toEqual([
       'missing-release',
       'missing-release',
-      'bitcoin-v1',
     ]);
   });
 
@@ -110,8 +103,8 @@ describe('backup hint to trusted release resolution', () => {
     expect(() => resolve(undefined)).toThrow();
   });
 
-  it('requires the independent exact pin even with absent hints or Bitcoin-only hints', () => {
-    for (const input of [hints, null, { version: 1, accounts: [hints.accounts[2]] }]) {
+  it('requires the independent exact pin even with absent or empty hints', () => {
+    for (const input of [hints, null, { version: 1, accounts: [] }]) {
       expect(() => resolveBunkRecoveryHints(input, `${json}\n`, trustedPin)).toThrow(
         'trusted release pin',
       );
@@ -138,16 +131,19 @@ describe('backup hint to trusted release resolution', () => {
 
   it('does not alias caller-owned hint arrays or a previous resolution', () => {
     const input = structuredClone(hints);
-    const bitcoinInput = input.accounts[2];
+    const solanaInput = input.accounts[1];
     const plan = resolve(input);
     input.accounts.length = 0;
-    const bitcoin = plan.accounts[2];
-    if (bitcoin?.kind !== 'bitcoin-v1') throw new Error('Expected Bitcoin');
-    bitcoin.hint.ownerIndices.length = 0;
-    expect(bitcoinInput).toEqual(hints.accounts[2]);
+    const solana = plan.accounts[1];
+    if (solana?.kind !== 'solana-v1') throw new Error('Expected Solana');
+    solana.hint.accountIndex = 0;
+    expect(solanaInput).toEqual(hints.accounts[1]);
     plan.registry.entries.length = 0;
-    expect(plan.accounts).toHaveLength(3);
-    expect(resolve(hints).accounts[2]).toEqual({ kind: 'bitcoin-v1', hint: hints.accounts[2] });
+    expect(plan.accounts).toHaveLength(2);
+    expect(resolve(hints).accounts[1]).toMatchObject({
+      kind: 'solana-v1',
+      hint: hints.accounts[1],
+    });
     expect(resolve(hints).registry).toEqual(registry);
   });
 

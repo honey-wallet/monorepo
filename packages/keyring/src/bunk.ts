@@ -1,11 +1,10 @@
 import { ed25519 } from '@noble/curves/ed25519.js';
 import { secp256k1 } from '@noble/curves/secp256k1.js';
 import { hmac } from '@noble/hashes/hmac.js';
-import { ripemd160 } from '@noble/hashes/legacy.js';
 import { sha256, sha512 } from '@noble/hashes/sha2.js';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
-import { base58, bech32 } from '@scure/base';
+import { base58 } from '@scure/base';
 import { HDKey } from '@scure/bip32';
 import { getAddress } from 'viem';
 
@@ -15,8 +14,7 @@ export const BUNK_MAX_INDEX = 0x7fffffff;
 
 export type BunkNetwork =
   | { family: 'evm'; chainId: string }
-  | { family: 'solana'; genesisHash: string }
-  | { family: 'bitcoin'; network: 'mainnet' | 'testnet' | 'signet' | 'regtest' };
+  | { family: 'solana'; genesisHash: string };
 
 export interface BunkOwnerRef {
   network: BunkNetwork;
@@ -34,8 +32,7 @@ export interface BunkOwnerDescriptor {
   /** SEC1 compressed secp256k1 or raw 32-byte ed25519, lowercase 0x hex. */
   publicKey: `0x${string}`;
   ownerAddress: string;
-  /** EVM: keccak256(address bytes); Solana: SHA256(raw public key).
-   * Bitcoin: HASH160(compressed public key), the 20-byte P2WPKH witness program. */
+  /** EVM: keccak256(address bytes); Solana: SHA256(raw public key). */
   commitment: `0x${string}`;
 }
 
@@ -69,11 +66,6 @@ function networkIdentity(network: BunkNetwork): { coin: number; id: bigint } {
         throw new Error('Bunk Solana genesis hash must encode exactly 32 bytes');
       }
       return { coin: 501, id: BigInt(`0x${bytesToHex(bytes)}`) };
-    }
-    case 'bitcoin': {
-      const id = { mainnet: 0n, testnet: 1n, signet: 2n, regtest: 3n }[network.network];
-      if (typeof id !== 'bigint') throw new Error('Unsupported Bunk Bitcoin network');
-      return { coin: 0, id };
     }
     default:
       throw new Error('Unsupported Bunk chain family');
@@ -163,29 +155,16 @@ export function deriveBunkOwner(seed: Uint8Array, ref: BunkOwnerRef): BunkOwnerD
       commitment = sha256(publicKey);
     } else {
       publicKey = secp256k1.getPublicKey(key, true);
-      if (ref.network.family === 'evm') {
-        const addressBytes = keccak_256(secp256k1.getPublicKey(key, false).subarray(1)).slice(-20);
-        ownerAddress = getAddress(hex(addressBytes));
-        commitment = keccak_256(addressBytes);
-      } else {
-        commitment = ripemd160(sha256(publicKey));
-        const prefix =
-          ref.network.network === 'mainnet'
-            ? 'bc'
-            : ref.network.network === 'regtest'
-              ? 'bcrt'
-              : 'tb';
-        ownerAddress = bech32.encode(prefix, [0, ...bech32.toWords(commitment)]);
-      }
+      const addressBytes = keccak_256(secp256k1.getPublicKey(key, false).subarray(1)).slice(-20);
+      ownerAddress = getAddress(hex(addressBytes));
+      commitment = keccak_256(addressBytes);
     }
     return {
       derivationVersion: BUNK_DERIVATION_VERSION,
       network:
         ref.network.family === 'evm'
           ? { family: 'evm', chainId: ref.network.chainId }
-          : ref.network.family === 'solana'
-            ? { family: 'solana', genesisHash: ref.network.genesisHash }
-            : { family: 'bitcoin', network: ref.network.network },
+          : { family: 'solana', genesisHash: ref.network.genesisHash },
       accountIndex: ref.accountIndex,
       ownerIndex: ref.ownerIndex,
       path: bunkOwnerPath(ref),

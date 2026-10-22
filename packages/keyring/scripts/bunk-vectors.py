@@ -65,11 +65,8 @@ def fixture(name, network, coin, network_id, account=0, owner=0):
     else:
         point = ec.derive_private_key(int.from_bytes(private, "big"), ec.SECP256K1()).public_key()
         public = point.public_bytes(Encoding.X962, PublicFormat.CompressedPoint)
-        if coin == 60:
-            address = keccak(point.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)[1:])[-20:]
-            commitment = keccak(address)
-        else:
-            commitment = hashlib.new("ripemd160", hashlib.sha256(public).digest()).digest()
+        address = keccak(point.public_bytes(Encoding.X962, PublicFormat.UncompressedPoint)[1:])[-20:]
+        commitment = keccak(address)
     return dict(name=name, network=network, accountIndex=account, ownerIndex=owner,
                 path=path, publicKey="0x" + public.hex(),
                 commitment="0x" + commitment.hex())
@@ -84,8 +81,6 @@ vectors = [
     fixture("evm-last-owner", dict(family="evm", chainId="1"), 60, 1, owner=2**31-1),
     fixture("solana-synthetic-first", dict(family="solana", genesisHash=base58(genesis)), 501, int.from_bytes(genesis, "big")),
     fixture("solana-synthetic-next", dict(family="solana", genesisHash=base58(genesis)), 501, int.from_bytes(genesis, "big"), owner=1),
-    *[fixture(f"bitcoin-{name}", dict(family="bitcoin", network=name), 0, i)
-      for i, name in enumerate(["mainnet", "testnet", "signet", "regtest"])],
 ]
 serialized = json.dumps(dict(
     derivationVersion=1,
