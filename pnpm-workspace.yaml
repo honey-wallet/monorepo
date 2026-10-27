@@ -5,7 +5,7 @@ packages:
 # Shared versions for tooling used by several packages. Reference with "catalog:".
 catalog:
   typescript: ~6.0.3
-  vitest: ^5.0.4
+  vitest: ^5.0.5
 
 # Only allow dependency install scripts we have reviewed.
 onlyBuiltDependencies:
